@@ -1,4 +1,4 @@
-
+import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode} from "./ltlnode";
 
 enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
@@ -51,7 +51,7 @@ function getRandomMisconceptionCode(): MisconceptionCode {
 function applyMisconception(node: LTLNode, misconception: MisconceptionCode): LTLNode {
     switch (misconception) {
         case MisconceptionCode.Precedence:
-            //return applyPrecedence(node);
+            return applyTilFirst(node, applyPrecedence);
         case MisconceptionCode.ReasonableVariant:
             //return applyReasonableVariant(node);
         case MisconceptionCode.BadProp:
@@ -61,7 +61,11 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): LT
         case MisconceptionCode.BadStateQuantification:
             //return applyBadStateQuantification(node);
         case MisconceptionCode.ExclusiveU:
-            //return applyExclusiveU(node);
+                // TODO: Find an instance of  /  x U ((not x) and y) and replace it with x U y
+                //  x U ((not x) and y) but subject wrote x U y
+
+
+            return applyTilFirst(node, applyExclusiveU);
         case MisconceptionCode.ImplicitF:
             //return applyImplicitF(node);
         case MisconceptionCode.ImplicitG:
@@ -75,4 +79,112 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): LT
 
         return node;
     }
+}
+
+
+
+
+
+// Applies f on the LTL formula up til the first time it changes a node
+function applyTilFirst(node : LTLNode, f : (node: LTLNode) => LTLNode ) : LTLNode {
+
+
+    if (node instanceof LiteralNode) {
+        return f(node);
+    }
+
+    if (node instanceof UnaryOperatorNode) {
+            
+        node.operand = f(node.operand);
+    }
+    else if (node instanceof BinaryOperatorNode) {
+
+        let op_left = f(node.left);
+        let op_right = f(node.right);
+
+        // TODO: Equality check might not work here
+
+        if (op_left != node.left) {
+            node.left = op_left;
+        }
+        else if (op_right != node.right) {
+            node.right = op_right;
+        }
+    }
+
+    return node;
+}
+
+
+// Changes all precedences in the LTL formula
+// Perhaps we need to change fewer, some at random. Let's figure it out.
+function applyPrecedence(node : LTLNode) : LTLNode {
+
+
+    if (node instanceof LiteralNode) {
+        return node;
+    }
+
+    if (node instanceof UnaryOperatorNode) {
+            
+        node.operand = applyPrecedence(node.operand);
+        return node;
+    }
+
+
+
+
+    if (node instanceof BinaryOperatorNode) {
+
+
+        // Make a random decision on which side to change
+
+        node.left = applyPrecedence(node.left);
+        node.right = applyPrecedence(node.right);
+
+        // Check if we need to adjust precedence based on child nodes
+        if (node.right instanceof BinaryOperatorNode) {
+            // Perform rotation to adjust precedence
+            let newTop = node.right;
+            node.right = newTop.left;
+            newTop.left = node;
+
+            return applyPrecedence(newTop);  // Continue to adjust up the tree
+        }
+        else if (node.left instanceof BinaryOperatorNode) {
+            // Perform rotation to adjust precedence
+            let newTop = node.left;
+            node.left = newTop.right;
+            newTop.right = node;
+
+            return applyPrecedence(newTop);  // Continue to adjust up the tree
+        }
+    }
+
+    return node;
+}
+
+
+
+
+
+
+function applyExclusiveU(node : LTLNode) : LTLNode {
+
+    // TODO: Find an instance of  /  x U ((not x) and y) and replace it with x U y
+    //  x U ((not x) and y) but subject wrote x U y
+
+
+    // This only applies it at the top level, see if we can apply it at various levels.
+
+    if (node instanceof BinaryOperatorNode && node.operator === "U") {
+        if (node.left instanceof LiteralNode && node.right instanceof BinaryOperatorNode && node.right.operator === "and") {
+            const leftOperand = node.left;
+            const rightOperand = node.right.right;
+            if (node.right.left instanceof UnaryOperatorNode && node.right.left.operator === "not" && node.right.left.operand === leftOperand) {
+                return new BinaryOperatorNode("U", leftOperand, rightOperand);
+            }
+        }
+    }
+    return node
 }
