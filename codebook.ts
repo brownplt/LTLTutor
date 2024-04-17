@@ -1,4 +1,4 @@
-import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode} from "./ltlnode";
+import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode} from "./ltlnode";
 
 enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
@@ -39,6 +39,9 @@ export default MisconceptionCode;
 
 
 
+
+
+
 function getRandomMisconceptionCode(): MisconceptionCode {
     const values = Object.values(MisconceptionCode);
     const randomIndex = Math.floor(Math.random() * values.length);
@@ -46,25 +49,40 @@ function getRandomMisconceptionCode(): MisconceptionCode {
 }
 
 
+class MutationResult {
+    node: LTLNode;
+    misconception: MisconceptionCode | null = null;
+
+    constructor(node: LTLNode, misconception: MisconceptionCode | null = null) {
+        this.node = node;
+        this.misconception = misconception;
+    }
+
+}
+
+
 // Takes a LTLNode and manipulates it to be in line with the misconception
 
-function applyMisconception(node: LTLNode, misconception: MisconceptionCode): LTLNode {
+function applyMisconception(node: LTLNode, misconception: MisconceptionCode): MutationResult {
     switch (misconception) {
         case MisconceptionCode.Precedence:
             return applyTilFirst(node, applyPrecedence);
         case MisconceptionCode.ReasonableVariant:
+
+            // Remove
+
             //return applyReasonableVariant(node);
         case MisconceptionCode.BadProp:
+
+
+            // This is the equiv of a syntax error right?
+
             //return applyBadProp(node);
         case MisconceptionCode.BadStateIndex:
             //return applyBadStateIndex(node);
         case MisconceptionCode.BadStateQuantification:
             //return applyBadStateQuantification(node);
         case MisconceptionCode.ExclusiveU:
-                // TODO: Find an instance of  /  x U ((not x) and y) and replace it with x U y
-                //  x U ((not x) and y) but subject wrote x U y
-
-
             return applyTilFirst(node, applyExclusiveU);
         case MisconceptionCode.ImplicitF:
             //return applyImplicitF(node);
@@ -75,72 +93,80 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): LT
         case MisconceptionCode.WeakU:
             //return applyWeakU(node);
         default:
-            return node;
+            return new MutationResult(node);
 
-        return node;
     }
 }
 
 
 
 
-
+// TODO: There *must* be a simpler way to do this
 // Applies f on the LTL formula up til the first time it changes a node
-function applyTilFirst(node : LTLNode, f : (node: LTLNode) => LTLNode ) : LTLNode {
+function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) : MutationResult {
 
 
-    if (node instanceof LiteralNode) {
-        return f(node);
+    // See if it applies at the top level
+    let res = f(node);
+    if (res.misconception) {
+        return res;
     }
 
+    // if unary operator, apply to operand and see if it changed.
     if (node instanceof UnaryOperatorNode) {
-            
-        node.operand = f(node.operand);
-    }
-    else if (node instanceof BinaryOperatorNode) {
-
-        let op_left = f(node.left);
-        let op_right = f(node.right);
-
-        // TODO: Equality check might not work here
-
-        if (op_left != node.left) {
-            node.left = op_left;
-        }
-        else if (op_right != node.right) {
-            node.right = op_right;
-        }
+        let res = applyTilFirst(node.operand, f);
+        node.operand = res.node;
+        res.node = node;
+        return res;
     }
 
-    return node;
+
+     if (node instanceof BinaryOperatorNode) {
+        // TODO: Maybe randomize the choice here
+        let res_left = applyTilFirst(node.left, f);
+        let res_right = applyTilFirst(node.right, f);
+
+        const randomIndex = Math.floor(Math.random() * 2);
+        var choose_left = res_left.misconception && (!res_right.misconception  || randomIndex == 0  );
+        var choose_right = res_right.misconception && (!res_left.misconception || randomIndex == 1);
+
+        if (choose_left) {
+            node.left = res_left.node;
+            res_left.node = node;
+            return res_left;
+        } else if (choose_right) {
+            node.right = res_right.node;
+            res_right.node = node;
+            return res_right;
+        }
+     }
+
+    // If nothing applied, unchanged.
+    return new MutationResult(node);
 }
 
 
 // Changes all precedences in the LTL formula
 // Perhaps we need to change fewer, some at random. Let's figure it out.
-function applyPrecedence(node : LTLNode) : LTLNode {
+function applyPrecedence(node : LTLNode) : MutationResult {
 
 
     if (node instanceof LiteralNode) {
-        return node;
+        return new MutationResult(node);
     }
 
     if (node instanceof UnaryOperatorNode) {
-            
-        node.operand = applyPrecedence(node.operand);
-        return node;
+        let res = applyPrecedence(node.operand);
+        node.operand = res.node;
+        res.node = node;
+        return res;
     }
 
-
-
-
     if (node instanceof BinaryOperatorNode) {
+        // TODO: Is this right?
 
-
-        // Make a random decision on which side to change
-
-        node.left = applyPrecedence(node.left);
-        node.right = applyPrecedence(node.right);
+        // node.left = applyPrecedence(node.left);
+        // node.right = applyPrecedence(node.right);
 
         // Check if we need to adjust precedence based on child nodes
         if (node.right instanceof BinaryOperatorNode) {
@@ -149,19 +175,11 @@ function applyPrecedence(node : LTLNode) : LTLNode {
             node.right = newTop.left;
             newTop.left = node;
 
-            return applyPrecedence(newTop);  // Continue to adjust up the tree
-        }
-        else if (node.left instanceof BinaryOperatorNode) {
-            // Perform rotation to adjust precedence
-            let newTop = node.left;
-            node.left = newTop.right;
-            newTop.right = node;
-
-            return applyPrecedence(newTop);  // Continue to adjust up the tree
+            return new MutationResult(newTop, MisconceptionCode.Precedence);
         }
     }
 
-    return node;
+    return new MutationResult(node);
 }
 
 
@@ -169,22 +187,27 @@ function applyPrecedence(node : LTLNode) : LTLNode {
 
 
 
-function applyExclusiveU(node : LTLNode) : LTLNode {
+function applyExclusiveU(node : LTLNode) : MutationResult {
 
-    // TODO: Find an instance of  /  x U ((not x) and y) and replace it with x U y
-    //  x U ((not x) and y) but subject wrote x U y
+    if (node instanceof UnaryOperatorNode) {
+        let res = applyExclusiveU(node.operand);
+        node.operand = res.node;
+        res.node = node;
+        return res;
+    }
+    else if (node instanceof BinaryOperatorNode && node.operator == "U") {
+         // Find an instance of  /  x U ((not x) and y) and replace it with x U y
+        let x = node.left;
+        let rhs = node.right;
 
+        if (rhs instanceof BinaryOperatorNode && rhs.operator == "and") {
 
-    // This only applies it at the top level, see if we can apply it at various levels.
+            let y = rhs.right;
 
-    if (node instanceof BinaryOperatorNode && node.operator === "U") {
-        if (node.left instanceof LiteralNode && node.right instanceof BinaryOperatorNode && node.right.operator === "and") {
-            const leftOperand = node.left;
-            const rightOperand = node.right.right;
-            if (node.right.left instanceof UnaryOperatorNode && node.right.left.operator === "not" && node.right.left.operand === leftOperand) {
-                return new BinaryOperatorNode("U", leftOperand, rightOperand);
+            if (rhs.left instanceof UnaryOperatorNode && rhs.left.operator == "!" && LTLNode.equiv(rhs.left.operand, x)) {
+                return new MutationResult(new UntilNode(x, y), MisconceptionCode.ExclusiveU);
             }
         }
     }
-    return node
+    return new MutationResult(node);
 }
