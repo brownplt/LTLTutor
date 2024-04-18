@@ -1,4 +1,4 @@
-import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode} from "./ltlnode";
+import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode, OrNode} from "./ltlnode";
 
 enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
@@ -67,11 +67,7 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
             return applyTilFirst(node, applyPrecedence);
         
         case MisconceptionCode.BadStateIndex:
-            // Applies to responses that use a correct term at an incorrect state index. Does not
-            // apply when a fan-out operator (F, G, U) is missing or included erroneously.
-            // Expected “x holds three states from now” but subject wrote “x holds now”
-            // Expected x U (y and F(z)) but subject wrote (x U y) and F(z)
-            //return applyBadStateIndex(node);
+            return applyTilFirst(node, applyBadStateIndex);
         case MisconceptionCode.BadStateQuantification:
             return applyTilFirst(node, applyBadStateQuantification);
         case MisconceptionCode.ExclusiveU:
@@ -221,8 +217,6 @@ function applyImplicitF(node : LTLNode) : MutationResult {
 function applyImplicitPrefix(node : LTLNode) : MutationResult {
 
     // THese are explicit examples from the codebook. Can we somehow generalize?
-
-
     if (node instanceof UntilNode) {
         
        let lhs = node.left;
@@ -368,4 +362,78 @@ function applyBadStateQuantification(node: LTLNode): MutationResult {
 
     return new MutationResult(node);
 
+}
+
+function applyBadStateIndex(node: LTLNode): MutationResult {
+
+    // Applies to responses that use a correct term at an incorrect state index. Does not
+    // apply when a fan-out operator (F, G, U) is missing or included erroneously.
+
+    // TODO: Think of others, or a general pattern?
+
+    if (node instanceof UntilNode) {
+        let lhs = node.left;
+        let rhs = node.right;
+
+        // Replace x U (y and F(z)) with (x U y) and F(z)
+        if (rhs instanceof AndNode && rhs.right instanceof FinallyNode) {
+            let new_node = new AndNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace x U (y and G(z)) with (x U y) and G(z)
+        if (rhs instanceof AndNode && rhs.right instanceof GloballyNode) {
+            let new_node = new AndNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace x U (y or F(z)) with (x U y) or F(z)
+        if (rhs instanceof OrNode && rhs.right instanceof FinallyNode) {
+            let new_node = new OrNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace x U (y or G(z)) with (x U y) or G(z)
+        if (rhs instanceof OrNode && rhs.right instanceof GloballyNode) {
+            let new_node = new OrNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace x U (y => F(z)) with (x U y) => F(z)
+        if (rhs instanceof ImpliesNode && rhs.right instanceof FinallyNode) {
+            let new_node = new ImpliesNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace x U (y => G(z)) with (x U y) => G(z)
+        if (rhs instanceof ImpliesNode && rhs.right instanceof GloballyNode) {
+            let new_node = new ImpliesNode(new UntilNode(lhs, rhs.left), rhs.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+    }
+
+    
+    if (node instanceof NextNode) {
+        let op = node.operand;
+
+        // Replace X(x and y) with X(x) and y
+        if (op instanceof AndNode) {
+            let new_node = new AndNode(new NextNode(op.left), op.right);
+            return new MutationResult(new_node, MisconceptionCode.BadStateIndex);
+        }
+
+        // Replace X(X(X(...(x)) with X(x) 
+        if (op instanceof NextNode) {
+
+            let x = op.operand;
+            while (x instanceof NextNode) {
+                x = x.operand;
+            }
+
+            return new MutationResult(new NextNode(x), MisconceptionCode.BadStateIndex);
+        }
+    }
+    
+
+    return new MutationResult(node);
 }
