@@ -30,6 +30,7 @@ export class UnaryOperatorNode extends LTLNode {
     toString() : string {
         return `${this.operator}(${this.operand.toString()})`;
     }
+
 }
 
 export class BinaryOperatorNode extends LTLNode {
@@ -75,7 +76,7 @@ export class NextNode extends UnaryOperatorNode {
     }
 }
 
-class GloballyNode extends UnaryOperatorNode {
+export class GloballyNode extends UnaryOperatorNode {
     constructor(operand) {
         super('G', operand);
     }
@@ -142,3 +143,4 @@ function normalizeNode(node: LTLNode): LTLNode {
         return node;
     }
 }
+

@@ -1,4 +1,4 @@
-import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode} from "./ltlnode";
+import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode} from "./ltlnode";
 
 enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
@@ -40,8 +40,6 @@ export default MisconceptionCode;
 
 
 
-
-
 function getRandomMisconceptionCode(): MisconceptionCode {
     const values = Object.values(MisconceptionCode);
     const randomIndex = Math.floor(Math.random() * values.length);
@@ -67,34 +65,40 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
     switch (misconception) {
         case MisconceptionCode.Precedence:
             return applyTilFirst(node, applyPrecedence);
-        case MisconceptionCode.ReasonableVariant:
-
-            // Remove
-
-            //return applyReasonableVariant(node);
-        case MisconceptionCode.BadProp:
-
-
-            // This is the equiv of a syntax error right?
-
-            //return applyBadProp(node);
+        
         case MisconceptionCode.BadStateIndex:
+            // Applies to responses that use a correct term at an incorrect state index. Does not
+            // apply when a fan-out operator (F, G, U) is missing or included erroneously.
+            // Expected “x holds three states from now” but subject wrote “x holds now”
+            // Expected x U (y and F(z)) but subject wrote (x U y) and F(z)
             //return applyBadStateIndex(node);
         case MisconceptionCode.BadStateQuantification:
-            //return applyBadStateQuantification(node);
+            return applyTilFirst(node, applyBadStateQuantification);
         case MisconceptionCode.ExclusiveU:
             return applyTilFirst(node, applyExclusiveU);
         case MisconceptionCode.ImplicitF:
-            //return applyImplicitF(node);
+            return applyTilFirst(node, applyImplicitF);
         case MisconceptionCode.ImplicitG:
-            //return applyImplicitG(node);
-        case MisconceptionCode.OtherImplicit:
-            //return applyOtherImplicit(node);
+            return applyTilFirst(node, applyImplicitG);
         case MisconceptionCode.WeakU:
-            //return applyWeakU(node);
+            return applyTilFirst(node , applyWeakU);
+
+    
+        case MisconceptionCode.OtherImplicit: 
+            // Apply known underconstrains or implicit underconstraints
+            let res = applyTilFirst(node, applyImplicitPrefix);
+            // If we can't find any, apply a general underconstraint
+            if (!res.misconception) {
+                return applyTilFirst(node, applyUnderconstraint);
+            }
+
+        case MisconceptionCode.BadProp: // This is the equiv of a syntax error right?   Could we apply a syntax error?
+
+
+        case MisconceptionCode.Unlabeled:
+        case MisconceptionCode.ReasonableVariant:
         default:
             return new MutationResult(node);
-
     }
 }
 
@@ -150,18 +154,6 @@ function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) :
 // Perhaps we need to change fewer, some at random. Let's figure it out.
 function applyPrecedence(node : LTLNode) : MutationResult {
 
-
-    if (node instanceof LiteralNode) {
-        return new MutationResult(node);
-    }
-
-    if (node instanceof UnaryOperatorNode) {
-        let res = applyPrecedence(node.operand);
-        node.operand = res.node;
-        res.node = node;
-        return res;
-    }
-
     if (node instanceof BinaryOperatorNode) {
         // TODO: Is this right?
 
@@ -189,13 +181,7 @@ function applyPrecedence(node : LTLNode) : MutationResult {
 
 function applyExclusiveU(node : LTLNode) : MutationResult {
 
-    if (node instanceof UnaryOperatorNode) {
-        let res = applyExclusiveU(node.operand);
-        node.operand = res.node;
-        res.node = node;
-        return res;
-    }
-    else if (node instanceof BinaryOperatorNode && node.operator == "U") {
+    if (node instanceof BinaryOperatorNode && node.operator == "U") {
          // Find an instance of  /  x U ((not x) and y) and replace it with x U y
         let x = node.left;
         let rhs = node.right;
@@ -210,4 +196,176 @@ function applyExclusiveU(node : LTLNode) : MutationResult {
         }
     }
     return new MutationResult(node);
+}
+
+// Just remove a G operator
+function applyImplicitG(node : LTLNode) : MutationResult {
+
+    if (node instanceof UnaryOperatorNode && node.operator == "G") {
+        return new MutationResult(node.operand, MisconceptionCode.ImplicitG);
+    }
+    return new MutationResult(node);
+}
+
+// Just remove a F operator
+function applyImplicitF(node : LTLNode) : MutationResult {
+
+    if (node instanceof UnaryOperatorNode && node.operator == "F") {
+        return new MutationResult(node.operand, MisconceptionCode.ImplicitF);
+    }
+    return new MutationResult(node);
+}
+
+
+
+function applyImplicitPrefix(node : LTLNode) : MutationResult {
+
+    // THese are explicit examples from the codebook. Can we somehow generalize?
+
+
+    if (node instanceof UntilNode) {
+        
+       let lhs = node.left;
+       let rhs = node.right;
+
+       // Find an instance of (not x) U x and replace it with F(x)
+       if (lhs instanceof NotNode && LTLNode.equiv(lhs.operand, rhs)) {
+               return new MutationResult(new FinallyNode(rhs), MisconceptionCode.OtherImplicit);
+       }
+
+
+       // Find an instance of x U G(not x) and replace it with x and F(G(not x))
+         if (rhs instanceof GloballyNode && LTLNode.equiv(lhs, rhs.operand)) {
+              return new MutationResult(new AndNode(lhs, new FinallyNode(rhs)), MisconceptionCode.OtherImplicit);
+         }
+
+    }
+
+    // Find an instance of F(x) and G(x => X(G(not x))) and replace it with F(x and X(G(not x)))
+    if (node instanceof AndNode) {
+        let lhs = node.left;
+        let rhs = node.right;
+
+        if (lhs instanceof FinallyNode && rhs instanceof GloballyNode) {
+            let rhs_operand = rhs.operand;
+            if (rhs_operand instanceof ImpliesNode) {
+                let rhs_operand_lhs = rhs_operand.left;
+                let rhs_operand_rhs = rhs_operand.right;
+
+                if (LTLNode.equiv(lhs.operand, rhs_operand_lhs) && rhs_operand_rhs instanceof NextNode && rhs_operand_rhs.operand instanceof GloballyNode && LTLNode.equiv(rhs_operand_lhs, rhs_operand_rhs.operand.operand)) {
+                    return new MutationResult(new AndNode(lhs.operand, new NextNode(rhs)), MisconceptionCode.OtherImplicit);
+                }
+            }
+        }
+    }
+
+    // Find an instance of X(x) and replace it with F(x)
+    if (node instanceof NextNode) {
+        return new MutationResult(new FinallyNode(node.operand), MisconceptionCode.OtherImplicit);
+    }
+
+
+
+   return new MutationResult(node);
+
+}
+
+
+
+// Is this what we want?
+function applyUnderconstraint(node: LTLNode): MutationResult {
+
+
+
+
+
+    // Check the type of the node
+    if (node instanceof BinaryOperatorNode) {
+        // If the node is a binary operator, remove one of its operands
+        return new MutationResult(node.left, MisconceptionCode.OtherImplicit);
+    } else if (node instanceof UnaryOperatorNode) {
+        // If the node is a unary operator, remove the operator
+        return new MutationResult(node.operand, MisconceptionCode.OtherImplicit);
+    } else {
+        // If the node is a proposition, return it as is
+        return new MutationResult(node);
+    }
+}
+
+
+function applyWeakU(node : LTLNode) : MutationResult {
+
+
+    // Applies to responses that confuse the U operator with the weak variant W, which does not
+    // guarantee that its second subterm eventually holds.
+    // Expected x U y but subject wrote F(y) and x U y
+    if (node instanceof UntilNode) {
+        // Find an instance of x U y and replace it with x U y and F(y)
+        let lhs = node.left;
+        let rhs = node.right;
+
+        let new_node = new AndNode(node, new FinallyNode(rhs));
+        return new MutationResult(new_node, MisconceptionCode.WeakU);
+    }
+
+    return new MutationResult(node);
+}
+
+
+function applyBadStateQuantification(node: LTLNode): MutationResult {
+
+    //  Applies to responses that mis-use or swap a fan-out operator (F, G, U).
+
+    // If G is used, swap with F
+    if (node instanceof GloballyNode) {
+        let op = node.operand;
+        return new MutationResult(new FinallyNode(op), MisconceptionCode.BadStateQuantification);
+    }
+
+    // If F is used, swap with G
+    if (node instanceof FinallyNode) {
+        let op = node.operand;
+        return new MutationResult(new GloballyNode(op), MisconceptionCode.BadStateQuantification);
+    }
+
+    
+    // TODO: Need more instances here
+    if (node instanceof UntilNode) {
+        let lhs = node.left;
+        let rhs = node.right;
+
+        // Generate a random number between 1 and 5
+        let randomNum = Math.floor(Math.random() * 5) + 1;
+        let new_node : LTLNode;
+
+        switch (randomNum) {
+            case 1:
+                // If x U y, replace it with F(x) U y
+                new_node = new UntilNode(new FinallyNode(lhs), rhs);
+                break;
+            case 2:
+                // If x U y, replace it with G(x) U y
+                new_node = new UntilNode(new GloballyNode(lhs), rhs);
+                break;
+
+            // This is subtle right? Does this overlap with other misconceptions?
+            case 3:
+                // If x U y, replace it with x U F(y)
+                new_node = new UntilNode(lhs, new FinallyNode(rhs));
+                break;
+            case 4:
+                // If x U y, replace it with x U G(y)
+                new_node = new UntilNode(lhs, new GloballyNode(rhs));
+                break;
+
+            default:
+                // If x U y, replace it with y U x
+                new_node = new UntilNode(rhs, lhs);
+                break;
+        }
+        return new MutationResult(new_node, MisconceptionCode.BadStateQuantification);
+    }
+
+    return new MutationResult(node);
+
 }
