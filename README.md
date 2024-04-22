@@ -1,3 +1,10 @@
+
+## Generating Parser from ANTLR
+```
+npx antlr4ts LTL.g4           
+```
+
+
 # TODO:
 
 

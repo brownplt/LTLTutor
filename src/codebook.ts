@@ -1,4 +1,4 @@
-import {LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode, OrNode} from "./ltlnode";
+import { LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode, OrNode } from "./ltlnode";
 
 enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
@@ -65,7 +65,7 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
     switch (misconception) {
         case MisconceptionCode.Precedence:
             return applyTilFirst(node, applyPrecedence);
-        
+
         case MisconceptionCode.BadStateIndex:
             return applyTilFirst(node, applyBadStateIndex);
         case MisconceptionCode.BadStateQuantification:
@@ -77,10 +77,10 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
         case MisconceptionCode.ImplicitG:
             return applyTilFirst(node, applyImplicitG);
         case MisconceptionCode.WeakU:
-            return applyTilFirst(node , applyWeakU);
+            return applyTilFirst(node, applyWeakU);
 
-    
-        case MisconceptionCode.OtherImplicit: 
+
+        case MisconceptionCode.OtherImplicit:
             // Apply known underconstrains or implicit underconstraints
             let res = applyTilFirst(node, applyImplicitPrefix);
             // If we can't find any, apply a general underconstraint
@@ -103,7 +103,7 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
 
 // TODO: There *must* be a simpler way to do this
 // Applies f on the LTL formula up til the first time it changes a node
-function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) : MutationResult {
+function applyTilFirst(node: LTLNode, f: (node: LTLNode) => MutationResult): MutationResult {
 
 
     // See if it applies at the top level
@@ -121,13 +121,13 @@ function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) :
     }
 
 
-     if (node instanceof BinaryOperatorNode) {
+    if (node instanceof BinaryOperatorNode) {
         // TODO: Maybe randomize the choice here
         let res_left = applyTilFirst(node.left, f);
         let res_right = applyTilFirst(node.right, f);
 
         const randomIndex = Math.floor(Math.random() * 2);
-        var choose_left = res_left.misconception && (!res_right.misconception  || randomIndex == 0  );
+        var choose_left = res_left.misconception && (!res_right.misconception || randomIndex == 0);
         var choose_right = res_right.misconception && (!res_left.misconception || randomIndex == 1);
 
         if (choose_left) {
@@ -139,7 +139,7 @@ function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) :
             res_right.node = node;
             return res_right;
         }
-     }
+    }
 
     // If nothing applied, unchanged.
     return new MutationResult(node);
@@ -148,7 +148,7 @@ function applyTilFirst(node : LTLNode, f : (node: LTLNode) => MutationResult ) :
 
 // Changes all precedences in the LTL formula
 // Perhaps we need to change fewer, some at random. Let's figure it out.
-function applyPrecedence(node : LTLNode) : MutationResult {
+function applyPrecedence(node: LTLNode): MutationResult {
 
     if (node instanceof BinaryOperatorNode) {
         // TODO: Is this right?
@@ -175,10 +175,10 @@ function applyPrecedence(node : LTLNode) : MutationResult {
 
 
 
-function applyExclusiveU(node : LTLNode) : MutationResult {
+function applyExclusiveU(node: LTLNode): MutationResult {
 
     if (node instanceof BinaryOperatorNode && node.operator == "U") {
-         // Find an instance of  /  x U ((not x) and y) and replace it with x U y
+        // Find an instance of  /  x U ((not x) and y) and replace it with x U y
         let x = node.left;
         let rhs = node.right;
 
@@ -195,7 +195,7 @@ function applyExclusiveU(node : LTLNode) : MutationResult {
 }
 
 // Just remove a G operator
-function applyImplicitG(node : LTLNode) : MutationResult {
+function applyImplicitG(node: LTLNode): MutationResult {
 
     if (node instanceof UnaryOperatorNode && node.operator == "G") {
         return new MutationResult(node.operand, MisconceptionCode.ImplicitG);
@@ -204,7 +204,7 @@ function applyImplicitG(node : LTLNode) : MutationResult {
 }
 
 // Just remove a F operator
-function applyImplicitF(node : LTLNode) : MutationResult {
+function applyImplicitF(node: LTLNode): MutationResult {
 
     if (node instanceof UnaryOperatorNode && node.operator == "F") {
         return new MutationResult(node.operand, MisconceptionCode.ImplicitF);
@@ -213,25 +213,24 @@ function applyImplicitF(node : LTLNode) : MutationResult {
 }
 
 
-
-function applyImplicitPrefix(node : LTLNode) : MutationResult {
+function applyImplicitPrefix(node: LTLNode): MutationResult {
 
     // THese are explicit examples from the codebook. Can we somehow generalize?
     if (node instanceof UntilNode) {
-        
-       let lhs = node.left;
-       let rhs = node.right;
 
-       // Find an instance of (not x) U x and replace it with F(x)
-       if (lhs instanceof NotNode && LTLNode.equiv(lhs.operand, rhs)) {
-               return new MutationResult(new FinallyNode(rhs), MisconceptionCode.OtherImplicit);
-       }
+        let lhs = node.left;
+        let rhs = node.right;
+
+        // Find an instance of (not x) U x and replace it with F(x)
+        if (lhs instanceof NotNode && LTLNode.equiv(lhs.operand, rhs)) {
+            return new MutationResult(new FinallyNode(rhs), MisconceptionCode.OtherImplicit);
+        }
 
 
-       // Find an instance of x U G(not x) and replace it with x and F(G(not x))
-         if (rhs instanceof GloballyNode && LTLNode.equiv(lhs, rhs.operand)) {
-              return new MutationResult(new AndNode(lhs, new FinallyNode(rhs)), MisconceptionCode.OtherImplicit);
-         }
+        // Find an instance of x U G(not x) and replace it with x and F(G(not x))
+        if (rhs instanceof GloballyNode && LTLNode.equiv(lhs, rhs.operand)) {
+            return new MutationResult(new AndNode(lhs, new FinallyNode(rhs)), MisconceptionCode.OtherImplicit);
+        }
 
     }
 
@@ -257,10 +256,7 @@ function applyImplicitPrefix(node : LTLNode) : MutationResult {
     if (node instanceof NextNode) {
         return new MutationResult(new FinallyNode(node.operand), MisconceptionCode.OtherImplicit);
     }
-
-
-
-   return new MutationResult(node);
+    return new MutationResult(node);
 
 }
 
@@ -287,7 +283,7 @@ function applyUnderconstraint(node: LTLNode): MutationResult {
 }
 
 
-function applyWeakU(node : LTLNode) : MutationResult {
+function applyWeakU(node: LTLNode): MutationResult {
 
 
     // Applies to responses that confuse the U operator with the weak variant W, which does not
@@ -295,7 +291,6 @@ function applyWeakU(node : LTLNode) : MutationResult {
     // Expected x U y but subject wrote F(y) and x U y
     if (node instanceof UntilNode) {
         // Find an instance of x U y and replace it with x U y and F(y)
-        let lhs = node.left;
         let rhs = node.right;
 
         let new_node = new AndNode(node, new FinallyNode(rhs));
@@ -322,7 +317,7 @@ function applyBadStateQuantification(node: LTLNode): MutationResult {
         return new MutationResult(new GloballyNode(op), MisconceptionCode.BadStateQuantification);
     }
 
-    
+
     // TODO: Need more instances here
     if (node instanceof UntilNode) {
         let lhs = node.left;
@@ -330,7 +325,7 @@ function applyBadStateQuantification(node: LTLNode): MutationResult {
 
         // Generate a random number between 1 and 5
         let randomNum = Math.floor(Math.random() * 5) + 1;
-        let new_node : LTLNode;
+        let new_node: LTLNode;
 
         switch (randomNum) {
             case 1:
@@ -412,7 +407,7 @@ function applyBadStateIndex(node: LTLNode): MutationResult {
         }
     }
 
-    
+
     if (node instanceof NextNode) {
         let op = node.operand;
 
@@ -433,7 +428,7 @@ function applyBadStateIndex(node: LTLNode): MutationResult {
             return new MutationResult(new NextNode(x), MisconceptionCode.BadStateIndex);
         }
     }
-    
+
 
     return new MutationResult(node);
 }
