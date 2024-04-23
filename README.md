@@ -11,6 +11,11 @@ cd test
 npx jest filename.test.ts
 ```
 
+## Running Server
+
+```
+ts-node server.ts
+```
 
 # TODO:
 

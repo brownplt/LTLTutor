@@ -1,0 +1,31 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distractor Generator</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Distractor Generator</h1>
+        <form action="/generate" method="POST">
+            <div class="form-group">
+                <label for="question">Enter your question:</label>
+                <input type="text" class="form-control" id="question" name="question" required>
+            </div>
+            <div class="form-group">
+                <label for="answer">Enter the answer:</label>
+                <input type="text" class="form-control" id="answer" name="answer" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Suggest Distractors</button>
+        </form>
+        <ul>
+            <% for (let i = 0; i < distractors.length; i++) { %>
+                <li><strong><%= distractors[i].code %></strong>: <code><%= distractors[i].formula %></code></li>
+            <% } %>
+        </ul>
+    </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

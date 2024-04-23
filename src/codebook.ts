@@ -122,7 +122,6 @@ function applyTilFirst(node: LTLNode, f: (node: LTLNode) => MutationResult): Mut
         return res;
     }
 
-
     if (node instanceof BinaryOperatorNode) {
         // TODO: Maybe randomize the choice here
         let res_left = applyTilFirst(node.left, f);

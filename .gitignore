@@ -19,3 +19,6 @@ dist/
 
 # Ignore logs
 *.log
+
+#Ignore output directory
+out

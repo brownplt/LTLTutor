@@ -4,6 +4,7 @@
         "module": "CommonJS",
         "outDir": "./out",
         "lib": ["es2017"],
-        "sourceMap": true
+        "sourceMap": true,
+        "esModuleInterop": true
     }
 }

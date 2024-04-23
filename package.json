@@ -1,0 +1,15 @@
+{
+  "name": "ltltutor",
+  "version": "1.0.0",
+  "description": "LTL Tutor Webapp",
+  "main": "src/server.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "prebuild": "copyfiles -u 1 src/views/**/* out/src/",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC"
+}
