@@ -15,8 +15,8 @@ describe('parseLTLString', () => {
         expect(ltlnode.parseLTLString('G(a)')).toBeInstanceOf(ltlnode.GloballyNode);
 
 
-        // Why does this need the parens. Hmm
-        expect(ltlnode.parseLTLString('(X(a)) && b')).toBeInstanceOf(ltlnode.AndNode);
+        expect(ltlnode.parseLTLString('X a && b')).toBeInstanceOf(ltlnode.NextNode);
+        expect(ltlnode.parseLTLString('(X a) && b')).toBeInstanceOf(ltlnode.AndNode);
         expect(ltlnode.parseLTLString('a U b')).toBeInstanceOf(ltlnode.UntilNode);
     });
 });

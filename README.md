@@ -4,6 +4,13 @@
 npx antlr4ts LTL.g4           
 ```
 
+## Running tests
+
+```
+cd test
+npx jest filename.test.ts
+```
+
 
 # TODO:
 
