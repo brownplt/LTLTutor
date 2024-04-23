@@ -277,7 +277,7 @@ export default LTLNode;
 
 
 
-function parseLTLString(s: string): LTLNode {
+export function parseLTLString(s: string): LTLNode {
     const inputStream = CharStreams.fromString(s);
     const lexer = new ltlLexer(inputStream);
     const tokenStream = new CommonTokenStream(lexer);

@@ -8,9 +8,9 @@ formula
     | formula 'U' formula      # until
     | formula '=>' formula     # implication
     | formula '<=>' formula    # equivalence
-    | 'X' formula              # X
-    | 'F' formula              # F
-    | 'G' formula              # G
+    | 'X' '(' formula ')'              # X
+    | 'F' '(' formula  ')'             # F
+    | 'G' '(' formula  ')'             # G
     | '!' formula              # not
     | '(' formula ')'          # parentheses
     | atomicFormula            # literal
