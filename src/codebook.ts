@@ -1,6 +1,6 @@
 import { LTLNode, BinaryOperatorNode, UnaryOperatorNode, LiteralNode, UntilNode, NotNode, FinallyNode, GloballyNode, AndNode, ImpliesNode, NextNode, EquivalenceNode, OrNode } from "./ltlnode";
 
-enum MisconceptionCode {
+export enum MisconceptionCode {
     /** Applies to LTL formulas that are correct up to missing parentheses. */
     Precedence = "Precedence",
 
@@ -40,14 +40,9 @@ export default MisconceptionCode;
 
 
 
-function getRandomMisconceptionCode(): MisconceptionCode {
-    const values = Object.values(MisconceptionCode);
-    const randomIndex = Math.floor(Math.random() * values.length);
-    return values[randomIndex];
-}
 
 
-class MutationResult {
+export class MutationResult {
     node: LTLNode;
     misconception: MisconceptionCode | null = null;
 
@@ -61,7 +56,7 @@ class MutationResult {
 
 // Takes a LTLNode and manipulates it to be in line with the misconception
 
-function applyMisconception(node: LTLNode, misconception: MisconceptionCode): MutationResult {
+export function applyMisconception(node: LTLNode, misconception: MisconceptionCode): MutationResult {
     switch (misconception) {
         case MisconceptionCode.Precedence:
             return applyTilFirst(node, applyPrecedence);
@@ -89,13 +84,20 @@ function applyMisconception(node: LTLNode, misconception: MisconceptionCode): Mu
             }
 
         case MisconceptionCode.BadProp: // This is the equiv of a syntax error right?   Could we apply a syntax error?
-
-
         case MisconceptionCode.Unlabeled:
         case MisconceptionCode.ReasonableVariant:
         default:
             return new MutationResult(node);
     }
+}
+
+
+
+export function getAllApplicableMisconceptions(node : LTLNode): MutationResult[] {
+    //Map apply misconception to all misconceptions and node
+    return Object.values(MisconceptionCode)
+        .map(misconception => applyMisconception(node, misconception))
+        .filter(result => result.misconception != null);
 }
 
 

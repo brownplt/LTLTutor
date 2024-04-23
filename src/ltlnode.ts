@@ -179,7 +179,7 @@ export class UnaryOperatorNode extends LTLNode {
     }
 
     toString(): string {
-        return `${this.operator}(${this.operand.toString()})`;
+        return `(${this.operator} ${this.operand.toString()})`;
     }
 
 }
