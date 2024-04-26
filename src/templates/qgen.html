@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distractor Generator</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Distractor Generator</h1>
+        <form action="/qgen" method="POST">
+            <div class="form-group">
+                
+                <label for="question">Enter your natural language question:</label>
+                <input type="text" class="form-control" id="question" name="question" required>
+            </div>
+            <div class="form-group">
+                <label for="answer">Enter the answer in LTL:</label>
+                <input type="text" class="form-control" id="answer" name="answer" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Suggest Distractors</button>
+        </form>
+
+        {% if error %}
+            <strong>Error:</strong> {{ error }}
+        {% endif %}
+
+
+        {% if distractors %}
+            <h2>Here are some potential distractors</h2>
+        {% endif %}
+        <ul>
+            {% for distractor in distractors %}
+            <li>
+                <input type="checkbox" id="{{ distractor.code }}" name="{{ distractor.formula }} : {{ distractor.code }}">
+                <label for="{{ distractor.code }}"><strong>{{ distractor.code }}</strong>: <code>{{ distractor.formula }}</code></label>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <button type="button" class="btn btn-primary" onclick="generateCSV()">Export Question</button>
+
+        <script>
+            function generateCSV() {
+
+                // Get the question and answer fields
+                var questionField = document.getElementById("question");
+                var answerField = document.getElementById("answer");
+
+                // Access the values
+                var question = questionField.value;
+                var answer = answerField.value;
+
+                // Get all the selected inputs
+                var selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
+
+                // Get the name of each checked item
+
+                var correctAnswer = {
+                    "option" : answer,
+                    "isCorrect" : true,
+                    "misconceptions" : []
+                };
+                var options = [correctAnswer];
+                selectedInputs.forEach(function(input) {
+                    var name = input.name;
+                    var nameParts = name.split(":");            
+                    var misconceptions = nameParts[1].split(",").map(misconception => misconception.trim());
+
+                    var option = {
+                        "option": nameParts[0].trim(),
+                        "isCorrect": false,
+                        "misconceptions":  misconceptions
+                    };
+                    options.push(option);
+                });
+
+
+                // Create a dictioanry to store the question and options
+                var data = {
+                    "question": question,
+                    "options": options
+                };
+
+                // Make this downloadable as JSON
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+
+                // Create a link element
+                var downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "question.json");
+                document.body.appendChild(downloadAnchorNode); // required for firefox
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            }
+        </script>
+
+
+    </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

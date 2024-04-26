@@ -1,21 +1,15 @@
 
 ## Generating Parser from ANTLR
 ```
-npx antlr4ts LTL.g4           
+antlr4 -Dlanguage=Python3 ltl.g4
 ```
 
 ## Running tests
 
-```
-cd test
-npx jest filename.test.ts
-```
+
 
 ## Running Server
 
-```
-ts-node server.ts
-```
 
 # TODO:
 
