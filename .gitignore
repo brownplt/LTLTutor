@@ -22,3 +22,32 @@ dist/
 
 #Ignore output directory
 out
+
+# Ignore virtual environment
+venv/
+# Ignore pycache
+__pycache__/
+# Ignore database files
+*.db
+# Ignore compiled Python files
+*.pyc
+# Ignore static files
+static/
+# Ignore media files
+media/
+# Ignore configuration files
+config.py
+# Ignore secret key file
+secret.key
+# Ignore log files
+*.log
+# Ignore cache files
+.cache/
+# Ignore compiled templates
+*.pyc
+# Ignore compiled translations
+*.mo
+# Ignore compiled documentation
+*.html
+# Ignore compiled documentation
+*.pdf
