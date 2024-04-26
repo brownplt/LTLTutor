@@ -1,14 +1,26 @@
 from flask import Flask, render_template, request
 from ltlnode import parse_ltl_string
 from codebook import getAllApplicableMisconceptions
+from langtoltl import LTLTranslator
+import os
 
 app = Flask(__name__)
 
+
+@app.before_first_request
+def startup():
+    with open('openai.secret.key', 'r') as file:
+        secret_key = file.read().strip()
+        os.environ['OPENAI_API_KEY'] = secret_key
+
 @app.route('/qgen', methods=['POST'])
 def qgen():
-    # Handle form POST request
-    # Access form data using request.form
-    
+    ########
+    # question = request.form.get('question')
+    # trans = LTLTranslator()
+    # LTLsuggestions = trans.natural_lang_to_ltl(question)
+    # #######
+
     answer = request.form.get('answer')
 
     # Parse the LTL string
@@ -45,11 +57,24 @@ def qgen():
         }]
         return render_template('qgen.html', error='Invalid LTL formula', distractors=distractors)
 
+
+
 @app.route('/qgen', methods=['GET'])
 def qgen_get():
     # Handle GET request
     distractors = []
     return render_template('qgen.html', distractors=distractors)
+
+
+
+
+# @app.route('/translate', methods=['POST'])
+# def translate():
+#     trans = LTLTranslator()
+#     string_to_translate = request.form.get('question')
+    
+#     LTLsuggestions = trans.natural_lang_to_ltl(string_to_translate)
+#     return asLTL
 
 
 

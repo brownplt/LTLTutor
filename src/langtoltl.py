@@ -3,11 +3,18 @@ from nl2ltl.engines.gpt.core import GPTEngine, Models
 from nl2ltl.filters.simple_filters import BasicFilter
 from nl2ltl.engines.utils import pretty
 
-engine = GPTEngine()
-filter = BasicFilter()
-utterance = "Eventually send me a Slack after receiving a Gmail"
 
-ltlf_formulas = translate(utterance, engine, filter)
-pretty(ltlf_formulas)
 
-### TODO: THis becomes a service (Present them all, with confidence?)
+### TODO: Does this translate the natural language to LTL? or LTLf?
+
+
+class LTLTranslator:
+    def __init__(self):
+        ### TODO: This is currently broken. Something is wrong with how it sets up against GPT. Need to do some digging.
+        self.engine = GPTEngine()
+        self.filter = BasicFilter()
+    
+    def natural_lang_to_ltl(self, utterance):
+        ltl_formulas = translate(utterance, self.engine, self.filter)
+        ltl_formulas = [(str(formula), ltl) for formula, ltl in ltl_formulas]
+        return ltl_formulas
