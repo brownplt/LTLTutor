@@ -4,10 +4,6 @@ from codebook import getAllApplicableMisconceptions
 
 app = Flask(__name__)
 
-@app.route('/')
-def hello():
-    return 'Hello, World!'
-
 @app.route('/qgen', methods=['POST'])
 def qgen():
     # Handle form POST request
@@ -22,8 +18,8 @@ def qgen():
         distractors = []
         for misconception in d:
             distractors.append({
-                "formula": misconception.node.toString(),
-                "code": misconception.misconception.toString()
+                "formula": str(misconception.node),
+                "code": str(misconception.misconception)
             })
 
         # Merge labels for equal formulae

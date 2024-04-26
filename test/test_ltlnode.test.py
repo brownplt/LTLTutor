@@ -21,7 +21,7 @@ class TestParseLTLString(unittest.TestCase):
 
         for input_str, expected_node in test_cases:
             with self.subTest(input=input_str, expected=expected_node):
-                self.assertIsInstance(parseLTLString(input_str), expected_node)
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
 
 if __name__ == '__main__':
     unittest.main()

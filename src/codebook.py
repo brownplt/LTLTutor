@@ -156,9 +156,13 @@ def applyImplicitPrefix(node):
     return MutationResult(node)
 
 
+
+
 def applyUnderconstraint(node):
     if isinstance(node, BinaryOperatorNode):
-        return MutationResult(node.left, MisconceptionCode.OtherImplicit)
+        n = random.choice([node.left, node.right])
+        return MutationResult(n, MisconceptionCode.OtherImplicit)
+    ## TODO: Yes, but this shouldn't remove F / G constraints (these aren't covered by the other code)
     elif isinstance(node, UnaryOperatorNode):
         return MutationResult(node.operand, MisconceptionCode.OtherImplicit)
     else:
@@ -187,20 +191,13 @@ def applyBadStateQuantification(node):
         lhs = node.left
         rhs = node.right
 
-        random_num = random.randint(1, 5)
-        new_node = None
-
-        if random_num == 1:
-            new_node = UntilNode(FinallyNode(lhs), rhs)
-        elif random_num == 2:
-            new_node = UntilNode(GloballyNode(lhs), rhs)
-        elif random_num == 3:
-            new_node = UntilNode(lhs, FinallyNode(rhs))
-        elif random_num == 4:
-            new_node = UntilNode(lhs, GloballyNode(rhs))
-        else:
-            new_node = UntilNode(rhs, lhs)
-
+        new_node = random.choice([
+            UntilNode(FinallyNode(lhs), rhs),
+            UntilNode(GloballyNode(lhs), rhs),
+            UntilNode(lhs, FinallyNode(rhs)),
+            UntilNode(lhs, GloballyNode(rhs)),
+            UntilNode(rhs, lhs)
+        ])
         return MutationResult(new_node, MisconceptionCode.BadStateQuantification)
 
     return MutationResult(node)

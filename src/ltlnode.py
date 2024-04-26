@@ -1,22 +1,29 @@
 # Description: This file contains the classes for the nodes of the LTL syntax tree.
 
 from ltlListener import ltlListener
-from antlr4 import FileStream, CommonTokenStream, ParseTreeWalker, CharStreams
+from antlr4 import CommonTokenStream, ParseTreeWalker
 from antlr4 import ParseTreeWalker, CommonTokenStream, InputStream
 from ltlLexer import ltlLexer
 from ltlParser import ltlParser
+from abc import ABC, abstractmethod
+import spot
 
-
-class LTLNode:
+class LTLNode(ABC):
     def __init__(self, type):
         self.type = type
 
+    @abstractmethod
     def __str__(self):
         pass
 
     @staticmethod
-    def equiv(a, b):
-        return str(a) == str(b)
+    def equiv(formula1, formula2):
+        # Parse the formulas
+        f1 = spot.formula(str(formula1))
+        f2 = spot.formula(str(formula2))
+
+        # Check if they are equivalent
+        return spot.formula.are_equivalent(f1, f2)
 
 
 
@@ -83,7 +90,7 @@ class ltlListenerImpl(ltlListener) :
         literalNode = LiteralNode(value)
         self.stack.append(literalNode)
 
-    def getRoot(self):
+    def getRootFormula(self):
         return self.stack[-1]
 
 
@@ -183,6 +190,6 @@ def parse_ltl_string(s):
     walker.walk(listener, tree)
 
     # Get the root of the syntax tree
-    root = listener.get_root()
+    root = listener.getRootFormula()
 
     return root

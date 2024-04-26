@@ -39,6 +39,8 @@ media/
 config.py
 # Ignore secret key file
 secret.key
+# Ignore secret key file
+*.secret.key
 # Ignore log files
 *.log
 # Ignore cache files
