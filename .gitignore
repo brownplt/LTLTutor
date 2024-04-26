@@ -49,7 +49,6 @@ secret.key
 *.pyc
 # Ignore compiled translations
 *.mo
-# Ignore compiled documentation
-*.html
+
 # Ignore compiled documentation
 *.pdf
