@@ -193,3 +193,4 @@ def parse_ltl_string(s):
     root = listener.getRootFormula()
 
     return root
+

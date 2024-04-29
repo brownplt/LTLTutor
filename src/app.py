@@ -65,8 +65,16 @@ def authorquestion_get():
 
 
 
-@app.route('/checkltlquestion', methods=['POST'])
 
+@app.route('/log', methods=['POST'])
+def log():
+    data = request.json
+
+    # TODO: Log to database
+
+
+    print(data)
+    return "OK"
 
 
 if __name__ == '__main__':

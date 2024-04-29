@@ -14,6 +14,8 @@ antlr4 -Dlanguage=Python3 ltl.g4
 # TODO:
 
 
+[] SPOT is not supported on M1 macs or Windows. Need to think of an alternative here. https://spot.lre.epita.fr/install.html
+
 
 ### Inner Loop
 - [] Question generation
@@ -36,3 +38,9 @@ antlr4 -Dlanguage=Python3 ltl.g4
     - But, how do we determine what a question tests (ie -- if a student has some misconception, how do we build a question that tests this? What about question difficulty?)
 - Determine Interleaving behavior
 - Determine distribution of questions, choose distractor from questions.
+
+
+### Authoring Tool
+
+[] Load Question Set
+[] Suggest question set
