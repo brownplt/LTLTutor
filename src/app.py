@@ -65,32 +65,7 @@ def authorquestion_get():
 
 
 
-# @app.route('/translate', methods=['POST'])
-# def translate():
-#     trans = LTLTranslator()
-#     string_to_translate = request.form.get('question')
-    
-#     LTLsuggestions = trans.natural_lang_to_ltl(string_to_translate)
-#     return asLTL
-
-
-@app.route('/exercise/<url>', methods=['GET'])
-def exercise(url):
-    # Ensure url ends with json
-    if not url.endswith('.json'):
-        return "Invalid Exercise URL"
-    
-    # Download the url and parse the JSON
-    response = requests.get(url)
-    
-    if response.status_code != 200:
-        return "Failed to download exercise"
-
-    # Parse JSON content
-    exercise_data = response.json()
-
-    return render_template('exercise.html', url=url, questions=exercise_data, exercise_name = "Dummy Exercise Name")
-
+@app.route('/checkltlquestion', methods=['POST'])
 
 
 
