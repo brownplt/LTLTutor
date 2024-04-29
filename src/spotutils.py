@@ -23,8 +23,19 @@ def isNecessaryFor(f, g):
 
 
 
+def generate_accepting_runs(automaton, max_runs=5):
+    runs = []
+    for _ in range(max_runs):
+        run = automaton.accepting_run()
+        if run:
+            # Convert run to a readable format, typically involving state and transition labels
+            trace = [(state.cond_str(), list(transition)) for state, transition in run]
+            runs.append(trace)
+        else:
+            break  # Stop if no further accepting run is found
+    return runs
 
-def generate_acceptance_condition(formula):
+def generate_traces(formula, max_traces=5):
     # Parse the LTL formula
     f = spot.formula(formula)
     
@@ -32,8 +43,8 @@ def generate_acceptance_condition(formula):
     automaton = f.translate()
     
     # Retrieve and return the acceptance condition
-    acceptance_condition = automaton.get_acceptance()
-    return acceptance_condition
+    runs = generate_accepting_runs(automaton, max_traces)
+    return runs
 
 
 
