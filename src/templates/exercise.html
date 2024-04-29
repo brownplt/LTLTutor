@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LTL Tutor: {{ exercise_name }}</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ exercise_name }}</h1>
+        <div id="questions">
+            {% for q in questions %}
+            <div class="card mt-4 question">
+                <div class="card-body">
+                    <h5 class="card-title">{{ q.question }}</h5>
+                    <ul class="list-group">
+                        {% for option in q.options %}
+                        <li class="list-group-item">
+                            <input type="radio" name="question{{ loop.index }}" class="option" value="{{ option }}">
+                            <label for="option{{ loop.index }}">{{ option }}</label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="btn btn-primary next">Next</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        // Hide all questions at the start
+        $('.question').hide();
+
+        // Show the first question
+        $('.question:first').show();
+
+        // When the "Next" button is clicked, hide the current question and show the next one
+        $('.next').click(function() {
+            $(this).closest('.question').hide().next('.question').show();
+        });
+    });
+    </script>
+</body>
+</html>

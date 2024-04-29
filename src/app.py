@@ -3,6 +3,8 @@ from ltlnode import parse_ltl_string
 from codebook import getAllApplicableMisconceptions
 from langtoltl import LTLTranslator
 import os
+import json
+import requests
 
 app = Flask(__name__)
 
@@ -13,13 +15,8 @@ def startup():
         secret_key = file.read().strip()
         os.environ['OPENAI_API_KEY'] = secret_key
 
-@app.route('/qgen', methods=['POST'])
-def qgen():
-    ########
-    # question = request.form.get('question')
-    # trans = LTLTranslator()
-    # LTLsuggestions = trans.natural_lang_to_ltl(question)
-    # #######
+@app.route('/authorquestion', methods=['POST'])
+def authorquestion():
 
     answer = request.form.get('answer')
 
@@ -49,21 +46,21 @@ def qgen():
                 "formula": "-",
                 "code": "No applicable misconceptions"
             })
-        return render_template('qgen.html', distractors=distractors, error="")
+        return render_template('authorquestion.html', distractors=distractors, error="")
     except Exception as e:
         distractors = [{
             "formula": "-",
             "code": "Invalid LTL formula"
         }]
-        return render_template('qgen.html', error='Invalid LTL formula', distractors=distractors)
+        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors)
 
 
 
-@app.route('/qgen', methods=['GET'])
-def qgen_get():
+@app.route('/authorquestion', methods=['GET'])
+def authorquestion_get():
     # Handle GET request
     distractors = []
-    return render_template('qgen.html', distractors=distractors)
+    return render_template('authorquestion.html', distractors=distractors)
 
 
 
@@ -75,6 +72,25 @@ def qgen_get():
     
 #     LTLsuggestions = trans.natural_lang_to_ltl(string_to_translate)
 #     return asLTL
+
+
+@app.route('/exercise/<url>', methods=['GET'])
+def exercise(url):
+    # Ensure url ends with json
+    if not url.endswith('.json'):
+        return "Invalid Exercise URL"
+    
+    # Download the url and parse the JSON
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        return "Failed to download exercise"
+
+    # Parse JSON content
+    exercise_data = response.json()
+
+    return render_template('exercise.html', url=url, questions=exercise_data, exercise_name = "Dummy Exercise Name")
+
 
 
 
