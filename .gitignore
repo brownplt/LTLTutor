@@ -53,3 +53,5 @@ secret.key
 # Include all files in the static directory
 !static/*
 !static/js
+
+myenv

@@ -6,15 +6,23 @@ import os
 import json
 import requests
 import random
+import sys
+import feedbackgenerator
+import spotutils
+
+
 
 app = Flask(__name__)
 
 
 @app.before_first_request
 def startup():
-    with open('openai.secret.key', 'r') as file:
-        secret_key = file.read().strip()
-        os.environ['OPENAI_API_KEY'] = secret_key
+    try:
+        with open('openai.secret.key', 'r') as file:
+            secret_key = file.read().strip()
+            os.environ['OPENAI_API_KEY'] = secret_key
+    except:
+        print("No Secret Key found", file=sys.stderr)
 
 @app.route('/authorquestion', methods=['POST'])
 def authorquestion():
@@ -79,22 +87,39 @@ def exercise():
     ### We can come up with a better way to rearrange questions here ### 
     random.shuffle(data)
 
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name) )
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name) 
 
 
 
 @app.route('/getfeedback', methods=['POST'])
 def loganswer():
     data = request.json
-    print(data)
 
+
+
+
+    # Generate feedback
+    student_selection = data['selected_option']
+    correct_answer = data['correct_option']
+    isCorrect = data['correct']
+    misconceptions = data['misconceptions']
+
+    
     # We want to build the model here
     # Log to database
 
-    
-    data['feedback'] = "This is a piece of feedback that would be generated."
+    to_return = {}
 
-    return json.dumps(data)
+
+    if not isCorrect:
+        # All responses are w.r.t the correct answer (that is -- correct answer subsumes ...)
+        to_return = feedbackgenerator.getRelationship(correct_answer, student_selection)
+
+        
+        correct_traces = spotutils.generate_traces(correct_answer)
+        incorrect_traces = spotutils.generate_traces(student_selection)
+
+    return json.dumps(to_return)
 
 
 
