@@ -1,101 +1,201 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Distractor Generator</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script>
+
+        function addDistractor() {
+            var distractorList = document.getElementById("distractorList");
+            var newDistractor = document.createElement("li");
+            // Generate a random name starting with distractor
+            let name = "distractor" + Math.floor(Math.random() * 1000);
+
+            // Add input fields with placeholder text
+            newDistractor.innerHTML = '<input type="text" class="form-control" name="' + name + '" placeholder="Enter distractor">' +
+                '<textarea class="form-control" name="' + name + '_misconceptions" placeholder="Enter misconceptions (comma separated)"></textarea>';
+
+            distractorList.appendChild(newDistractor);
+        }
+
+
+        function addQuestion() {
+
+            // Get the question and answer fields
+            var questionField = document.getElementById("question");
+            var answerField = document.getElementById("answer");
+
+            // Access the values
+            var question = questionField.value;
+            var answer = answerField.value;
+
+            // Get all the selected inputs
+            var selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
+
+            // Get the name of each checked item
+
+            var correctAnswer = {
+                "option": answer,
+                "isCorrect": true,
+                "misconceptions": []
+            };
+            var options = [correctAnswer];
+            selectedInputs.forEach(function (input) {
+                var name = input.name;
+                var nameParts = name.split(":");
+                var misconceptions = nameParts[1].split(",").map(misconception => misconception.trim());
+
+                var option = {
+                    "option": nameParts[0].trim(),
+                    "isCorrect": false,
+                    "misconceptions": misconceptions
+                };
+                options.push(option);
+            });
+
+
+            // Get all the elements in the list distractorList
+            var manualDistractors = document.getElementById("distractorList").getElementsByTagName("li");
+            //Get the value of each element
+            for (var i = 0; i < manualDistractors.length; i++) {
+                var option = {
+                    "option": manualDistractors[i].getElementsByTagName("input")[0].value,
+                    "isCorrect": false,
+                    "misconceptions": manualDistractors[i].getElementsByTagName("textarea")[0].value.split(",").map(misconception => misconception.trim())
+                };
+                options.push(option);
+            }
+
+
+            var data = {
+                "question": question,
+                "options": options
+            };
+
+
+            console.log(data);
+
+            // Add data as a child of the exercise_set div
+            var exerciseSet = document.getElementById("exercise_set");
+            var newQuestion = document.createElement("div");
+            newQuestion.innerHTML = '<h3>' + question + '</h3>';
+            newQuestion.innerHTML += '<ul>';
+            options.forEach(function (option) {
+                newQuestion.innerHTML += '<li>' + option.option + '</li>';
+            });
+            newQuestion.innerHTML += '</ul>';
+            let asJSON = JSON.stringify(data);
+            let hiddenJSON = document.createElement("div");
+            hiddenJSON.className = "questionJSON";
+            hiddenJSON.innerText = asJSON;
+            hiddenJSON.style.display = "none";
+            newQuestion.appendChild(hiddenJSON);
+
+            exerciseSet.appendChild(newQuestion);
+
+
+            // Clear the question and answer fields
+            questionField.value = "";
+            answerField.value = "";
+
+            // Clear the generated div
+            var generated = document.getElementById("generated");
+            generated.innerHTML = "";
+
+
+            // TODO: BUG: THIS IS NOT SAVED WHEN THE FORM IS RESUBMITTED
+            
+
+        }
+
+
+        function downloadExercise() {
+            var exerciseSet = document.getElementById("exercise_set");
+            var questions = exerciseSet.getElementsByClassName("questionJSON");
+            var data = [];
+            for (var i = 0; i < questions.length; i++) {
+                data.push(JSON.parse(questions[i].innerText));
+            }
+            var blob = new Blob([JSON.stringify(data)], {
+                type: "application/json"
+            });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = "exercise.json";
+            a.click();
+        }
+
+
+
+    </script>
 </head>
+
 <body>
     <div class="container">
-        <h1>Distractor Generator</h1>
+        <h1>Exercise Generator</h1>
+
         <form action="/authorquestion" method="POST">
             <div class="form-group">
-                
+
                 <label for="question">Enter your natural language question:</label>
+
+                {% if question %}
+                <input type="text" class="form-control" id="question" name="question" value="{{ question }}" required>
+                {% else %}
+
                 <input type="text" class="form-control" id="question" name="question" required>
+                {% endif %}
             </div>
             <div class="form-group">
                 <label for="answer">Enter the answer in LTL:</label>
+                {% if answer %}
+                <input type="text" class="form-control" id="answer" name="answer" value="{{ answer }}" required>
+                {% else %}
                 <input type="text" class="form-control" id="answer" name="answer" required>
+                {% endif %}
             </div>
             <button type="submit" class="btn btn-primary">Suggest Distractors</button>
+            <button type="button" class="btn btn-primary" onclick="addDistractor()">Add Distractor</button>
         </form>
 
-        {% if error %}
+        <div class="container" id="generated">
+
+            {% if error %}
             <strong>Error:</strong> {{ error }}
-        {% endif %}
+            {% endif %}
 
 
-        {% if distractors %}
+            {% if distractors %}
             <h2>Here are some potential distractors</h2>
-        {% endif %}
-        <ul>
-            {% for distractor in distractors %}
-            <li>
-                <input type="checkbox" id="{{ distractor.code }}" name="{{ distractor.formula }} : {{ distractor.code }}">
-                <label for="{{ distractor.code }}"><strong>{{ distractor.code }}</strong>: <code>{{ distractor.formula }}</code></label>
-            </li>
-            {% endfor %}
-        </ul>
+            {% endif %}
+            <ul>
+                {% for distractor in distractors %}
+                <li>
+                    <input type="checkbox" id="{{ distractor.code }}"
+                        name="{{ distractor.formula }} : {{ distractor.code }}">
+                    <label for="{{ distractor.code }}"><strong>{{ distractor.code }}</strong>:
+                        <code>{{ distractor.formula }}</code></label>
+                </li>
+                {% endfor %}
 
-        <button type="button" class="btn btn-primary" onclick="exportQuestion()">Export Question</button>
+            </ul>
 
-        <script>
-            function exportQuestion() {
+            <ul id="distractorList">
+                <!-- Existing distractors -->
+            </ul>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="addQuestion()">Add Question</button>
+        <br>
+    </div>
 
-                // Get the question and answer fields
-                var questionField = document.getElementById("question");
-                var answerField = document.getElementById("answer");
-
-                // Access the values
-                var question = questionField.value;
-                var answer = answerField.value;
-
-                // Get all the selected inputs
-                var selectedInputs = document.querySelectorAll('input[type="checkbox"]:checked');
-
-                // Get the name of each checked item
-
-                var correctAnswer = {
-                    "option" : answer,
-                    "isCorrect" : true,
-                    "misconceptions" : []
-                };
-                var options = [correctAnswer];
-                selectedInputs.forEach(function(input) {
-                    var name = input.name;
-                    var nameParts = name.split(":");            
-                    var misconceptions = nameParts[1].split(",").map(misconception => misconception.trim());
-
-                    var option = {
-                        "option": nameParts[0].trim(),
-                        "isCorrect": false,
-                        "misconceptions":  misconceptions
-                    };
-                    options.push(option);
-                });
-
-
-                // Create a dictioanry to store the question and options
-                var data = {
-                    "question": question,
-                    "options": options
-                };
-
-                // Make this downloadable as JSON
-                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-
-                // Create a link element
-                var downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "question.json");
-                document.body.appendChild(downloadAnchorNode); // required for firefox
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
-            }
-        </script>
-
-
+    <div class="container" id="exercise_set">
+        <h2>Exercise Set</h2>
+        <button type="button" class="btn btn-primary" onclick="downloadExercise()">Download Exercise As JSON</button>
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

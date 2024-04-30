@@ -19,6 +19,7 @@ def startup():
 def authorquestion():
 
     answer = request.form.get('answer')
+    question = request.form.get('question')
 
     # Parse the LTL string
     try:
@@ -44,15 +45,15 @@ def authorquestion():
         if len(distractors) == 0:
             distractors.append({
                 "formula": "-",
-                "code": "No applicable misconceptions"
+                "code": "Could not determine applicable distractors."
             })
-        return render_template('authorquestion.html', distractors=distractors, error="")
+        return render_template('authorquestion.html', distractors=distractors, error="", answer=answer, question=question)
     except Exception as e:
         distractors = [{
             "formula": "-",
             "code": "Invalid LTL formula"
         }]
-        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors)
+        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors, answer=answer, question=question)
 
 
 
@@ -71,7 +72,7 @@ def exercise():
     with open(path_to_json, 'r') as file:
         data = json.load(file)  # Load file content as JSON
     
-    return render_template('exercise.html', questions=data)
+    return render_template('exercise.html' )
 
 
 
