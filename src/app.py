@@ -64,6 +64,31 @@ def authorquestion_get():
 
 
 
+@app.route('/exercise', methods=['POST', 'GET'])
+def exercise():
+    ## Eventually, load this from a URL, that comes as part of the exercise
+    path_to_json = os.path.join(app.static_folder, 'example_exercise.json')
+    with open(path_to_json, 'r') as file:
+        data = json.load(file)  # Load file content as JSON
+    
+    return render_template('exercise.html', questions=data)
+
+
+
+@app.route('/getfeedback', methods=['POST'])
+def loganswer():
+    data = request.json
+    print(data)
+
+    # We want to build the model here
+    # Log to database
+
+    
+    data['feedback'] = "This is a piece of feedback that would be generated."
+
+    return json.dumps(data)
+
+
 
 
 @app.route('/log', methods=['POST'])
@@ -71,7 +96,6 @@ def log():
     data = request.json
 
     # TODO: Log to database
-
 
     print(data)
     return "OK"

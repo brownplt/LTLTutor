@@ -6,7 +6,7 @@ from antlr4 import ParseTreeWalker, CommonTokenStream, InputStream
 from ltlLexer import ltlLexer
 from ltlParser import ltlParser
 from abc import ABC, abstractmethod
-import spot
+#import spot ### TODO: Fix this import
 
 class LTLNode(ABC):
     def __init__(self, type):
@@ -18,12 +18,16 @@ class LTLNode(ABC):
 
     @staticmethod
     def equiv(formula1, formula2):
-        # Parse the formulas
-        f1 = spot.formula(str(formula1))
-        f2 = spot.formula(str(formula2))
 
-        # Check if they are equivalent
-        return spot.formula.are_equivalent(f1, f2)
+
+        return str(formula1) == str(formula2)
+
+        # # Parse the formulas
+        # f1 = spot.formula(str(formula1))
+        # f2 = spot.formula(str(formula2))
+
+        # # Check if they are equivalent
+        # return spot.formula.are_equivalent(f1, f2)
 
 
 

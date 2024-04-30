@@ -23,8 +23,8 @@
                         {% for option in q.options %}
                         <li class="list-group-item">
                             <input type="radio" name="option{{ loop.index }}" class="option" 
-                                    value="{{ option }}" 
-                                    data-misconceptions="{{ option.misconceptions | safe }}"
+                                    value="{{ option.option }}" 
+                                    data-misconceptions="{{ option.misconceptions }}"
                                     data-correct = "{{ option.isCorrect }}">
                             <label for="option{{ loop.index }}">{{ option.option }}</label>
                         </li>
@@ -37,6 +37,11 @@
                 </div>
             </div>
             {% endfor %}
+        </div>
+
+
+        <div id="feedback">
+
         </div>
     </div>
 
@@ -55,7 +60,11 @@
 
         // When the "Next" button is clicked, hide the current question and show the next one
         $('.next').click(function() {
+            // Empty the feedback div
+            $('#feedback').empty();
             $(this).closest('.question').hide().next('.question').show();
+
+            // TODO: When done, show a section that says exercise done.
         });
     });
     </script>
