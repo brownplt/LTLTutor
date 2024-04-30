@@ -1,0 +1,31 @@
+[{
+    "question": "The red light is always on",
+    "options": [
+        {
+            "option": "(G r)",
+            "isCorrect": true,
+            "misconceptions": []
+        },
+        {
+            "option": "((G r) U (! r))",
+            "isCorrect": false,
+            "misconceptions": [
+                "MisconceptionCode.BadStateQuantification"
+            ]
+        },
+        {
+            "option": "(! r)",
+            "isCorrect": false,
+            "misconceptions": [
+                "MisconceptionCode.OtherImplicit"
+            ]
+        },
+        {
+            "option": "((r U (! r)) && (F (! r)))",
+            "isCorrect": false,
+            "misconceptions": [
+                "MisconceptionCode.WeakU"
+            ]
+        }
+    ]
+}]

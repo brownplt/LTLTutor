@@ -31,8 +31,7 @@ __pycache__/
 *.db
 # Ignore compiled Python files
 *.pyc
-# Ignore static files
-static/
+
 # Ignore media files
 media/
 # Ignore configuration files
@@ -52,3 +51,6 @@ secret.key
 
 # Ignore compiled documentation
 *.pdf
+
+# Include all files in the static directory
+!static
