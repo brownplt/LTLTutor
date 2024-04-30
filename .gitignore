@@ -4,9 +4,7 @@ node_modules/
 # Ignore built output
 dist/
 
-# Ignore TypeScript build artifacts
-*.js
-*.js.map
+
 
 # Ignore editor-specific files
 .vscode/
@@ -53,4 +51,5 @@ secret.key
 *.pdf
 
 # Include all files in the static directory
-!static
+!static/*
+!static/js
