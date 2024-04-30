@@ -75,17 +75,24 @@
             };
 
 
-            console.log(data);
-
             // Add data as a child of the exercise_set div
             var exerciseSet = document.getElementById("exercise_set");
             var newQuestion = document.createElement("div");
-            newQuestion.innerHTML = '<h3>' + question + '</h3>';
-            newQuestion.innerHTML += '<ul>';
+            newQuestion.classList.add("card");
+            
+
+            // Format this better
+            newQuestion.innerHTML = '<h4 class="card-title">' + question + '</h4>';
+
+
+            let qoptions = document.createElement("div");
+            qoptions.classList.add("card-body");
+            qoptions.innerHTML = '<ul class="card-text">'
             options.forEach(function (option) {
-                newQuestion.innerHTML += '<li>' + option.option + '</li>';
+                qoptions.innerHTML += '<li>' + option.option + '</li>';
             });
-            newQuestion.innerHTML += '</ul>';
+            qoptions.innerHTML += '</ul>';
+            newQuestion.appendChild(qoptions);
             let asJSON = JSON.stringify(data);
             let hiddenJSON = document.createElement("div");
             hiddenJSON.className = "questionJSON";
@@ -106,7 +113,7 @@
 
 
             // TODO: BUG: THIS IS NOT SAVED WHEN THE FORM IS RESUBMITTED
-            
+
 
         }
 
@@ -127,7 +134,6 @@
             a.download = "exercise.json";
             a.click();
         }
-
 
 
     </script>
@@ -157,9 +163,20 @@
                 <input type="text" class="form-control" id="answer" name="answer" required>
                 {% endif %}
             </div>
+            <input type="hidden" id="exercisesofar" name="exercisesofar">
             <button type="submit" class="btn btn-primary">Suggest Distractors</button>
             <button type="button" class="btn btn-primary" onclick="addDistractor()">Add Distractor</button>
         </form>
+        <script>
+
+            document.querySelector('form').addEventListener('submit', function (e) {
+                let x = document.getElementById('exercise_set').innerHTML;
+                // Copy the content of the div into the hidden input field
+                document.getElementById('exercisesofar').value = document.getElementById('exercise_set').innerHTML;
+            });
+
+
+        </script>
 
         <div class="container" id="generated">
 
@@ -192,8 +209,12 @@
     </div>
 
     <div class="container" id="exercise_set">
+        {% if exerciseset %}
+        {{ exerciseset |safe }}
+        {% else %}
         <h2>Exercise Set</h2>
         <button type="button" class="btn btn-primary" onclick="downloadExercise()">Download Exercise As JSON</button>
+        {% endif %}
     </div>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>

@@ -5,6 +5,7 @@ from langtoltl import LTLTranslator
 import os
 import json
 import requests
+import random
 
 app = Flask(__name__)
 
@@ -20,6 +21,7 @@ def authorquestion():
 
     answer = request.form.get('answer')
     question = request.form.get('question')
+    exercise_so_far = request.form.get('exercisesofar')
 
     # Parse the LTL string
     try:
@@ -47,13 +49,13 @@ def authorquestion():
                 "formula": "-",
                 "code": "Could not determine applicable distractors."
             })
-        return render_template('authorquestion.html', distractors=distractors, error="", answer=answer, question=question)
+        return render_template('authorquestion.html', distractors=distractors, error="", answer=answer, question=question, exerciseset = exercise_so_far)
     except Exception as e:
         distractors = [{
             "formula": "-",
             "code": "Invalid LTL formula"
         }]
-        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors, answer=answer, question=question)
+        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors, answer=answer, question=question, exerciseset = exercise_so_far)
 
 
 
@@ -72,7 +74,12 @@ def exercise():
     with open(path_to_json, 'r') as file:
         data = json.load(file)  # Load file content as JSON
     
-    return render_template('exercise.html' )
+    exercise_name = "DUMMY"
+
+    ### We can come up with a better way to rearrange questions here ### 
+    random.shuffle(data)
+
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name) )
 
 
 
