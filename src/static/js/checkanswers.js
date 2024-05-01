@@ -81,6 +81,11 @@ function displayServerResponse(response) {
 
     if (disjoint) {
         feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
+
+
+        // I want to show img/disjoint.png here
+        feedback_string += "<br> <img src='/static/img/disjoint.png' alt='disjoint' > <br> ";
+
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
         }
@@ -88,6 +93,7 @@ function displayServerResponse(response) {
     }
     else if (subsumed) {
         feedback_string += "Your selection is an overconstraint of the correct answer. That is, your selection is more restrictive than the correct answer.";
+        feedback_string += "<br> <img src='/static/img/subsumes.png' alt='subsumption' > <br> ";
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
         }
@@ -95,12 +101,14 @@ function displayServerResponse(response) {
     }
     else if (contained) {
         feedback_string += "Your selection is an underconstraint of the correct answer. ";
+        feedback_string += "<br> <img src='/static/img/contained.png' alt='containment' > <br> ";
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
         }
     }
     else {
         feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
+        feedback_string += "<br> <img src='/static/img/overlap.png' alt='overlapping answers' > <br> ";
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
         }
