@@ -20,11 +20,12 @@ class FeedbackGenerator:
 
     def getCEWords(self):
         if self.disjoint():
-            return spotutils.generate_traces(self.student_selection)
+            return spotutils.generate_accepted_traces(self.student_selection)
         elif self.isSubsumed():
             return spotutils.generate_traces(f_accepted=self.correct_answer, f_rejected=self.student_selection)
         elif self.isContained():
             return spotutils.generate_traces(f_accepted=self.student_selection, f_rejected=self.correct_answer)
+        ### What about the case where there is partial overlap.
         else:
-            return []
+            return spotutils.generate_traces(f_accepted=self.student_selection, f_rejected=self.correct_answer)
 

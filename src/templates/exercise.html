@@ -22,7 +22,7 @@
                     <ul class="list-group">
                         {% for option in q.options %}
                         <li class="list-group-item">
-                            <input type="radio" name="option{{ loop.index }}" class="option" 
+                            <input type="radio" name="option" id="{{ loop.index }}" class="option" 
                                     value="{{ option.option }}" 
                                     data-misconceptions="{{ option.misconceptions }}"
                                     data-correct = "{{ option.isCorrect }}">

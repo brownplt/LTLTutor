@@ -114,7 +114,7 @@ def loganswer():
         to_return['subsumed'] = fgen.isSubsumed()
         to_return['contained'] = fgen.isContained()
         to_return['disjoint'] = fgen.disjoint()
-        to_return['ce_words'] = fgen.getCEWords()
+        to_return['cewords'] = fgen.getCEWords()
     return json.dumps(to_return)
 
 

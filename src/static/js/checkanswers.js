@@ -43,7 +43,7 @@ async function getfeedback(button) {
         let misconceptions = JSON.parse(misconception_string);
         console.log(misconceptions);
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: " + correct_option.value + "</p>";
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option.value + "</code></p>";
     }
 
 
@@ -64,7 +64,7 @@ async function getfeedback(button) {
 
 function displayServerResponse(response) {
 
-
+    let feedback_div = document.querySelector('#feedback');
     // First, parse the response.
 
     let disjoint = response.disjoint;
@@ -73,26 +73,42 @@ function displayServerResponse(response) {
     let cewords = response.cewords;
 
 
+    console.log(cewords)
+
     let ce_trace = (cewords.length > 0) ? cewords[Math.floor(Math.random() * cewords.length)] : null;
 
     var feedback_string = "";
 
     if (disjoint) {
         feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
-        feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+        if (ce_trace) {
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+        }
+
     }
     else if (subsumed) {
-        feedback_string += "Your selection is an overconstraint of the correct answer. ";
-        feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
+        feedback_string += "Your selection is an overconstraint of the correct answer. That is, your selection is more restrictive than the correct answer.";
+        if (ce_trace) {
+            feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
+        }
+        
     }
     else if (contained) {
         feedback_string += "Your selection is an underconstraint of the correct answer. ";
-        feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+        if (ce_trace) {
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+        }
+    }
+    else {
+        feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
+        if (ce_trace) {
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+        }
     }
 
 
     let responseAsHTMLElement = document.createElement('div');
-    responseAsHTMLElement.innerHTML = response.feedback;
+    responseAsHTMLElement.innerHTML = feedback_string;
     feedback_div.appendChild(responseAsHTMLElement);
 
 

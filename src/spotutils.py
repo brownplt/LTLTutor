@@ -73,12 +73,13 @@ def generate_accepting_words(automaton, max_runs=5):
         if run:
             # Convert run to a word that the automaton accepts
             word = spot.twa_word(run)
+            word = str(word)
             words.append(word)
         else:
             break  # Stop if no further accepting run is found
     return words
 
-def generate_traces(formula, max_traces=5):
+def generate_accepted_traces(formula, max_traces=5):
     # Parse the LTL formula
     f = spot.formula(formula)
     
