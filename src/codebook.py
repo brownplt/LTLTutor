@@ -49,11 +49,10 @@ def applyMisconception(node, misconception):
 
 
 def getAllApplicableMisconceptions(node):
-    return [
-        applyMisconception(node, misconception)
-        for misconception in MisconceptionCode
-        if applyMisconception(node, misconception).misconception is not None
-    ]
+    xs = [        applyMisconception(node, misconception)    for misconception in MisconceptionCode]
+    xs = [ x  for x in xs if (x is not None and x.misconception is not None) ]
+    return xs
+    
 
 
 def applyTilFirst(node, f):

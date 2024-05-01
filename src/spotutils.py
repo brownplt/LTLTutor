@@ -97,7 +97,7 @@ def generate_traces(f_accepted, f_rejected, max_traces=5):
     f_a = spot.formula(f_accepted)
     f_r = spot.formula.Not(spot.formula(f_rejected))
 
-    f = spot.product(f_a, f_r )
+    f = spot.formula.And([f_a, f_r])
     automaton = f.translate()
     runs = generate_accepting_words(automaton, max_traces)
     #w.as_automaton() shows the run as an automaton.

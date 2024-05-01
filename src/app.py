@@ -24,6 +24,11 @@ def startup():
     except:
         print("No Secret Key found", file=sys.stderr)
 
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/authorquestion', methods=['POST'])
 def authorquestion():
 
@@ -111,8 +116,8 @@ def loganswer():
     to_return = {}
     if not isCorrect:
         fgen = FeedbackGenerator(correct_answer, student_selection)
-        to_return['subsumed'] = fgen.isSubsumed()
-        to_return['contained'] = fgen.isContained()
+        to_return['subsumed'] = fgen.correctAnswerSubsumes()
+        to_return['contained'] = fgen.correctAnswerContained()
         to_return['disjoint'] = fgen.disjoint()
         to_return['cewords'] = fgen.getCEWords()
     return json.dumps(to_return)
