@@ -14,7 +14,7 @@ antlr4 -Dlanguage=Python3 ltl.g4
 # TODO:
 
 
-[] SPOT is not supported on M1 macs or Windows. Need to think of an alternative here. https://spot.lre.epita.fr/install.html
+[x] SPOT is not supported on M1 macs or Windows. Need to think of an alternative here. https://spot.lre.epita.fr/install.html
 
 
 ### Inner Loop
@@ -42,5 +42,5 @@ antlr4 -Dlanguage=Python3 ltl.g4
 
 ### Authoring Tool
 
-[] Load Question Set
+[] Load Question Set from JSON
 [] Suggest question set

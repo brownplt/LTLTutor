@@ -80,14 +80,30 @@ def authorquestion_get():
 
 
 
-@app.route('/exercise', methods=['POST', 'GET'])
+@app.route('/exercise', methods=['POST'])
 def exercise():
-    ## Eventually, load this from a URL, that comes as part of the exercise
-    path_to_json = os.path.join(app.static_folder, 'example_exercise.json')
-    with open(path_to_json, 'r') as file:
-        data = json.load(file)  # Load file content as JSON
+
+
+    sourceuri = request.form.get('sourceuri')
+    if not sourceuri.endswith('.json'):
+        return "Invalid sourceuri. Must end with .json"
     
-    exercise_name = "DUMMY"
+    # Get the name of the JSON file from the URI
+    exercise_name = os.path.basename(sourceuri) or "Exercise"
+    exercise_name = exercise_name.replace('.json', '')
+
+    if sourceuri.startswith('preload:'):
+        sourceuri = sourceuri.replace('preload:', '')
+        path_to_json = os.path.join(app.static_folder, sourceuri)
+        with open(path_to_json, 'r') as file:
+            data = json.load(file)  # Load file content as JSON
+    else:
+        # Load the exercise from the sourceuri
+        response = requests.get(sourceuri)
+        if response.status_code != 200:
+            return "Error loading exercise"
+        data = response.json()
+
 
     ### We can come up with a better way to rearrange questions here ### 
     random.shuffle(data)
