@@ -7,7 +7,7 @@ import json
 import requests
 import random
 import sys
-import feedbackgenerator
+from feedbackgenerator import FeedbackGenerator
 import spotutils
 
 
@@ -106,19 +106,15 @@ def loganswer():
 
     
     # We want to build the model here
-    # Log to database
+    # Log misconceptions to database.
 
     to_return = {}
-
-
     if not isCorrect:
-        # All responses are w.r.t the correct answer (that is -- correct answer subsumes ...)
-        to_return = feedbackgenerator.getRelationship(correct_answer, student_selection)
-
-        
-        correct_traces = spotutils.generate_traces(correct_answer)
-        incorrect_traces = spotutils.generate_traces(student_selection)
-
+        fgen = FeedbackGenerator(correct_answer, student_selection)
+        to_return['subsumed'] = fgen.isSubsumed()
+        to_return['contained'] = fgen.isContained()
+        to_return['disjoint'] = fgen.disjoint()
+        to_return['ce_words'] = fgen.getCEWords()
     return json.dumps(to_return)
 
 

@@ -56,12 +56,47 @@ async function getfeedback(button) {
     }
 
     let response = await postFeedback(data);
+    displayServerResponse(response);
+
+    }
+
+
+
+function displayServerResponse(response) {
+
+
+    // First, parse the response.
+
+    let disjoint = response.disjoint;
+    let subsumed = response.subsumed;
+    let contained = response.contained;
+    let cewords = response.cewords;
+
+
+    let ce_trace = (cewords.length > 0) ? cewords[Math.floor(Math.random() * cewords.length)] : null;
+
+    var feedback_string = "";
+
+    if (disjoint) {
+        feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
+        feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+    }
+    else if (subsumed) {
+        feedback_string += "Your selection is an overconstraint of the correct answer. ";
+        feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
+    }
+    else if (contained) {
+        feedback_string += "Your selection is an underconstraint of the correct answer. ";
+        feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+    }
+
+
     let responseAsHTMLElement = document.createElement('div');
     responseAsHTMLElement.innerHTML = response.feedback;
     feedback_div.appendChild(responseAsHTMLElement);
 
-    }
 
+}
 
 async function postFeedback(data) {
     try {

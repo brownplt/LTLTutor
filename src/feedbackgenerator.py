@@ -1,21 +1,30 @@
 import spotutils
 
 
-def getRelationship(formula1, formula2):
-    """
-    Returns the relationship between two formulas.
-    :param formula1: The first formula.
-    :param formula2: The second formula.
-    :return: The relationship between the two formulas.
-    """
+class FeedbackGenerator:
 
+    def __init__(self, correct, student):
+        self.correct_answer = correct
+        self.student_selection = student
+
+
+    def isSubsumed(self):
+        return spotutils.isNecessaryFor(self.correct_answer, self.student_selection)
     
-    f1_subsumes_f2 = spotutils.isNecessaryFor(formula1, formula2)
-    f2_subsumes_f1 = spotutils.isNecessaryFor(formula2, formula1)
-    disjoint = spotutils.areDisjoint(formula1, formula2)
+    def isContained(self):
+        return spotutils.isNecessaryFor(self.student_selection, self.correct_answer)
+    
+    def disjoint(self):
+        return spotutils.areDisjoint(self.correct_answer, self.student_selection)
 
-    return {
-        'subsumed': f1_subsumes_f2,
-        'contained': f2_subsumes_f1,
-        'disjoint': disjoint
-    }
+
+    def getCEWords(self):
+        if self.disjoint():
+            return spotutils.generate_traces(self.student_selection)
+        elif self.isSubsumed():
+            return spotutils.generate_traces(f_accepted=self.correct_answer, f_rejected=self.student_selection)
+        elif self.isContained():
+            return spotutils.generate_traces(f_accepted=self.student_selection, f_rejected=self.correct_answer)
+        else:
+            return []
+
