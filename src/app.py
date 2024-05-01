@@ -124,11 +124,13 @@ def loganswer():
     correct_answer = data['correct_option']
     isCorrect = data['correct']
     misconceptions = data['misconceptions']
+    question_text = data['question_text']
+    question_options = data['question_options']
 
+    ## TODO: Now log ALL these fields to the database. Also get user id somehow.
     
     # We want to build the model here
     # Log misconceptions to database.
-
     to_return = {}
     if not isCorrect:
         fgen = FeedbackGenerator(correct_answer, student_selection)

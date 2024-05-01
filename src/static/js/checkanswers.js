@@ -3,8 +3,16 @@ async function getfeedback(button) {
     let parent_node = button.parentNode;
     
 
-    //parent node has a list of radio buttons. Find the selected
-    // radio button
+    let question_text = parent_node.querySelector('.card-title').innerText;
+
+
+    let all_radios = parent_node.querySelectorAll('input[type=radio]');
+    // For each radio button, get value and data-misconception fields
+    var question_options = Array.from(all_radios).map(r => ({
+        value: r.value,
+        misconceptions: r.dataset.misconceptions
+    }));
+
     let selected_radio = parent_node.querySelector('input[type=radio]:checked');
 
     //if no radio button is selected, show an alert that no radio button is selected
@@ -20,6 +28,9 @@ async function getfeedback(button) {
     // Find that radio button
     // Select the radio button where 'dataset.correct' is true
     var correct_option = parent_node.querySelector('input[data-correct="True"]');
+
+
+
 
 
 
@@ -52,12 +63,13 @@ async function getfeedback(button) {
         selected_option: selected_option,
         correct_option: correct_option.value,
         correct: correct,
-        misconceptions: selected_radio.dataset.misconceptions
+        misconceptions: selected_radio.dataset.misconceptions,
+        question_text: question_text,
+        question_options : question_options
     }
 
-    let response = await postFeedback(data);
-    displayServerResponse(response);
-
+        let response = await postFeedback(data);
+        displayServerResponse(response);
     }
 
 
@@ -72,8 +84,6 @@ function displayServerResponse(response) {
     let contained = response.contained;
     let cewords = response.cewords;
 
-
-    console.log(cewords)
 
     let ce_trace = (cewords.length > 0) ? cewords[Math.floor(Math.random() * cewords.length)] : null;
 

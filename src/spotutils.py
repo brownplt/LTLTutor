@@ -119,7 +119,7 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
     # Need to do the correct kind of manipulation here
     ltl_priorities_string = to_priority_string(ltl_priorities)
 
-    f = spot.randltl(atoms, tree_size=tree_size, ltl_priorities = ltl_priorities)
+    f = spot.randltl(atoms, tree_size=tree_size, ltl_priorities = ltl_priorities_string)
     
     ### TODO: Need to change from SPOT output to our output
     #Ex. spot      p1 U (p2 R (p3 & !p4))
