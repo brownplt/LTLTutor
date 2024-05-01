@@ -30,6 +30,10 @@ antlr4 -Dlanguage=Python3 ltl.g4
 - [] LTL to English?- How can we determine 
 
 
+- [] LTL trace -> visualization. This helps generate satisfying and *not* satisfying trace examples.
+  - [] Can do this to change the kind of question (From Formula selection -> trace satisfaction)
+
+
 ### Outer Loop
 
 - [] Implement student model

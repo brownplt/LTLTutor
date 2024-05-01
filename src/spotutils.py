@@ -3,26 +3,25 @@ import spot
 
 
 DEFAULT_LTL_PRIORITIES = {
-
-"ap" : 3,
-"false": 1,
-"true":1,
-"not":1,
-"F":1,
-"G":1,
-"X":1,
-"Closure":0, ## ?
-"equiv":1,
-"implies":1,
-"xor":0,
-"R":0,
-"U":1,
-"W":0,
-"M":0,
-"and":1,
-"or":1,
-"EConcat":0,
-"UConcat":0
+    "ap" : 3,
+    "false": 1,
+    "true":1,
+    "not":1,
+    "F":1,
+    "G":1,
+    "X":1,
+    "Closure":0, ## ?
+    "equiv":1,
+    "implies":1,
+    "xor":0,
+    "R":0,
+    "U":1,
+    "W":0,
+    "M":0,
+    "and":1,
+    "or":1,
+    "EConcat":0,
+    "UConcat":0
 }
 
 
@@ -106,6 +105,12 @@ def generate_traces(f_accepted, f_rejected, max_traces=5):
 
 
 # https://spot-sandbox.lrde.epita.fr/notebooks/examples%20(read%20only)/randltl.ipynb
+
+## TODO: Need to generate some sort of transform from Misconceptions to ltl_priorities
+## That is -- each misconception should have some weight around related concepts
+### Some are obvious : Implicit G means, add more G
+### Some are less obvious: eg "BadStateIndex"
+
 def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
     
     def to_priority_string(d):
