@@ -1,18 +1,13 @@
 from flask import Flask, render_template, request
 from ltlnode import parse_ltl_string
 from codebook import getAllApplicableMisconceptions
-from langtoltl import LTLTranslator
 import os
 import json
-import requests
-import random
 import sys
 from feedbackgenerator import FeedbackGenerator
-import spotutils
 from logger import Logger
 import ast
-from datetime import datetime
-
+import exerciseprocessor
 
 app = Flask(__name__)
 
@@ -83,10 +78,8 @@ def authorquestion_get():
 
 
 
-@app.route('/exercise', methods=['POST'])
-def exercise():
-
-
+@app.route('/exercise/<kind>', methods=['POST'])
+def exercise(kind):
     sourceuri = request.form.get('sourceuri')
     if not sourceuri.endswith('.json'):
         return "Invalid sourceuri. Must end with .json"
@@ -94,36 +87,35 @@ def exercise():
     # Get the name of the JSON file from the URI
     exercise_name = os.path.basename(sourceuri) or "Exercise"
     exercise_name = exercise_name.replace('.json', '')
+    exercise_name = exercise_name.replace('preload:', '')
 
-    if sourceuri.startswith('preload:'):
-        sourceuri = sourceuri.replace('preload:', '')
-        path_to_json = os.path.join(app.static_folder, sourceuri)
-        with open(path_to_json, 'r') as file:
-            data = json.load(file)  # Load file content as JSON
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+    except:
+        return "Error loading exercise"
+
+    if kind == "tracesatisfaction":
+        data = exerciseprocessor.exercise_eng2ltl_to_tracesatisfaction(data)
+        exercise_name = "Trace Satisfaction " + exercise_name
+        return render_template('tracesatexercise.html', questions=data, exercise_name=exercise_name) 
+    elif kind == "englishtoltl":
+        exercise_name = "English to LTL " + exercise_name
+        return render_template('engtoltlexercise.html', questions=data, exercise_name=exercise_name) 
     else:
-        # Load the exercise from the sourceuri
-        response = requests.get(sourceuri)
-        if response.status_code != 200:
-            return "Error loading exercise"
-        data = response.json()
+        return "Unknown exercise type"
 
 
-    ### We can come up with a better way to rearrange questions here ### 
-    random.shuffle(data)
-
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name) 
+@app.route('/getfeedback/<questiontype>', methods=['POST'])
+def loganswer(questiontype):
 
 
-
-@app.route('/getfeedback', methods=['POST'])
-def loganswer():
     data = request.json
 
-    # Generate feedback
+
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
     isCorrect = data['correct']
-
 
     misconceptions = ast.literal_eval(data['misconceptions'])
     question_text = data['question_text']
@@ -132,15 +124,21 @@ def loganswer():
     ## TODO: Need to establish student ID and plough it through ## 
     answer_logger.logStudentResponse(studentId = 1, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect)
 
-    to_return = {}
-    if not isCorrect:
-        fgen = FeedbackGenerator(correct_answer, student_selection)
-        to_return['subsumed'] = fgen.correctAnswerSubsumes()
-        to_return['contained'] = fgen.correctAnswerContained()
-        to_return['disjoint'] = fgen.disjoint()
-        to_return['cewords'] = fgen.getCEWords()
-    return json.dumps(to_return)
 
+    if questiontype == "english_to_ltl":
+        to_return = {}
+        if not isCorrect:
+            fgen = FeedbackGenerator(correct_answer, student_selection)
+            to_return['subsumed'] = fgen.correctAnswerSubsumes()
+            to_return['contained'] = fgen.correctAnswerContained()
+            to_return['disjoint'] = fgen.disjoint()
+            to_return['cewords'] = fgen.getCEWords()
+        return json.dumps(to_return)
+    elif questiontype == "trace_satisfaction":
+        if not isCorrect:
+            return "No further feedback currently available for Trace Satisfaction exercises."
+    else:
+        return "Something went wrong. No further feedback."
 
 
 

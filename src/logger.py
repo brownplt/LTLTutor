@@ -25,6 +25,7 @@ class StudentResponse(Base):
     question_text = Column(String)
     question_options = Column(String)
     correct_answer = Column(Boolean)
+    question_type = Column(String)
 
 
 class Logger:
@@ -60,7 +61,7 @@ class Logger:
         session.add(log)
         session.commit()
     
-    def logStudentResponse(self, studentId, misconceptions, question_text, question_options, correct_answer):
+    def logStudentResponse(self, studentId, misconceptions, question_text, question_options, correct_answer, questiontype):
 
         ## HACK: Shouldn't have to do this here  again ##
         if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
@@ -79,9 +80,12 @@ class Logger:
                 raise ValueError("question_options should be a string")
             if not isinstance(correct_answer, bool):
                 raise ValueError("correct_answer should be a boolean")
+            if not isinstance(questiontype, str):
+                raise ValueError("questiontype should be a string")
 
             log = StudentResponse(student_id=studentId, timestamp=datetime.datetime.now(), 
-                                  misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer)
+                                  misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
+                                  question_type=questiontype)
             self.record(log)
     
     def getStudentLogs(self, studentId, lookback_days=30):

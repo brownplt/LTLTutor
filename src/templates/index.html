@@ -16,22 +16,47 @@
         <p>This is a default landing page with links to exercise and author question.</p>
 
 
+        
+
         <div class="container">
-                <h4> Load a Custom Exercise from JSON </h4>
-                <form action="/exercise" method="post">
+                <h4> Load an Exercise from JSON </h4>
+                <form id="exerciseForm"   action="/exercise/englishtoltl" method="post">
+
+
+                    <h5> Choose exercise presentation modality  </h5>
+                    <select id="exerciseSelect" onchange="changeAction()">
+                        <option value="englishtoltl" selected>English to LTL</option>
+                        <option value="tracesatisfaction">Trace Satisfaction</option>
+                    </select>
+
+
+
                     <textarea name="sourceuri" placeholder="Enter the public URI of your JSON exercise"></textarea>
                     <button type="submit">Load</button>
 
-                    <h3>Or choose a pre-loaded exercise</h3>
-                    <button type="submit" onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:emsys.json';">Load EmSys '23</button>
+                    <p>Or choose a pre-loaded exercise
+                        <ul>
+                            <li> <button type="submit" onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:emsys.json';">Load EmSys '23</button> </li>
+                        </ul>
+                    </p>
+
+
                 </form>
 
             </div>
-            <div class="container">
-                <a class="nav-link" href="/authorquestion">Author An Exercise</a>
-            </div>
+    <div class="container">
+        <h2>OR</h2>
+        <h3><a class="nav-link" href="/authorquestion">Author An Exercise</a></h3>
+    </div>
 
     </div>
+    <script>
+        function changeAction() {
+            var form = document.getElementById('exerciseForm');
+            var select = document.getElementById('exerciseSelect');
+            form.action = '/exercise/' + select.value;
+        }
+    </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

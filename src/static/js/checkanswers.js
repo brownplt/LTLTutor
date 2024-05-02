@@ -1,4 +1,68 @@
-async function getfeedback(button) {
+/// TODO: Clean this up, unify functions, etc.
+
+async function tracesat_getfeedback(button) {
+    
+    let parent_node = button.parentNode;
+    let question_text = parent_node.querySelector('.card-title').innerText;
+
+
+    let all_radios = parent_node.querySelectorAll('input[type=radio]');
+    // For each radio button, get value and data-misconception fields
+    var question_options = Array.from(all_radios).map(r => ({
+        value: r.value,
+        misconceptions: r.dataset.misconceptions
+    }));
+
+    let selected_radio = parent_node.querySelector('input[type=radio]:checked');
+
+    //if no radio button is selected, show an alert that no radio button is selected
+    if(selected_radio == null) {
+        alert("Please select an option");
+        return;
+    }
+
+    //get the selected option
+    let selected_option = selected_radio.value;
+
+    // There is a radio button where the 'dataset.correct' attribute is set to true
+    // Find that radio button
+    // Select the radio button where 'dataset.correct' is true
+    var correct_option = parent_node.querySelector('input[data-correct="True"]');
+
+    //Get the div with id feedback
+    let feedback_div = document.querySelector('#feedback');
+    let correct = selected_option == correct_option.value;
+
+    if (selected_option == correct_option.value) {
+        // Make the background of the selected radio button green
+        selected_radio.parentNode.style.backgroundColor = "green";
+        // Add a message to the feedback div
+        feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
+    }
+    else {
+        selected_radio.parentNode.style.backgroundColor = "red";
+        correct_option.parentNode.style.backgroundColor = "green";
+
+        misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
+        let misconceptions = JSON.parse(misconception_string);
+        console.log(misconceptions);
+        // Add a message to the feedback div
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option.value + "</code></p>";
+    }
+
+    let data = {
+        selected_option: selected_option,
+        correct_option: correct_option.value,
+        correct: correct,
+        misconceptions: selected_radio.dataset.misconceptions,
+        question_text: question_text,
+        question_options : question_options
+    }
+    let response = await postFeedback(data);
+    console.log(response);
+}
+
+async function engtoltl_getfeedback(button) {
     
     let parent_node = button.parentNode;
     
