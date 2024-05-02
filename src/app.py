@@ -9,11 +9,14 @@ import random
 import sys
 from feedbackgenerator import FeedbackGenerator
 import spotutils
-
+from logger import Logger
+import ast
+from datetime import datetime
 
 
 app = Flask(__name__)
 
+answer_logger = Logger()
 
 @app.before_first_request
 def startup():
@@ -116,21 +119,19 @@ def exercise():
 def loganswer():
     data = request.json
 
-
-
-
     # Generate feedback
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
     isCorrect = data['correct']
-    misconceptions = data['misconceptions']
-    question_text = data['question_text']
-    question_options = data['question_options']
 
-    ## TODO: Now log ALL these fields to the database. Also get user id somehow.
-    
-    # We want to build the model here
-    # Log misconceptions to database.
+
+    misconceptions = ast.literal_eval(data['misconceptions'])
+    question_text = data['question_text']
+    question_options = json.dumps(data['question_options'])
+
+    ## TODO: Need to establish student ID and plough it through ## 
+    answer_logger.logStudentResponse(studentId = 1, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect)
+
     to_return = {}
     if not isCorrect:
         fgen = FeedbackGenerator(correct_answer, student_selection)
@@ -151,6 +152,29 @@ def log():
 
     print(data)
     return "OK"
+
+
+## TODO: Remove this eventually
+@app.route('/viewstudentlogs/<id>', methods=['GET'])
+def viewstudentlogs(id):
+
+    student_id = int(id)
+
+    logs = answer_logger.getStudentLogs(studentId=student_id, lookback_days=30)
+
+    to_return = {}
+    for log in logs:
+        to_return[log.id] = {
+            "student_id": log.student_id,
+            "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            "misconception": log.misconception,
+            "question_text": log.question_text,
+            "question_options": log.question_options,
+            "correct_answer": log.correct_answer
+        }
+
+
+    return json.dumps(to_return)
 
 
 if __name__ == '__main__':

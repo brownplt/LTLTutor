@@ -2,47 +2,102 @@
 
 ### TODO: Very much work in progress
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import logging
+import os
+from sqlalchemy import inspect
+from sqlalchemy.orm import scoped_session, sessionmaker
 
-### TODO ###
-## This should wrap python logging module
-## and eventually log somewhere.
 
-### OR ###
-## This should batch logs to a database
-## Maybe use SQLAlchemy for this.
+STUDENT_RESPONSE_TABLE = 'student_responses'
 
 Base = declarative_base()
 
 ### This needs to be significantly extended ###
-class Log(Base):
-    __tablename__ = 'answer_logs'
+class StudentResponse(Base):
+    __tablename__ = STUDENT_RESPONSE_TABLE
     id = Column(Integer, primary_key=True)
     student_id = Column(Integer)
-    date = Column(DateTime)
-    concept = Column(String)
+    timestamp = Column(DateTime)
+    misconception = Column(String)
+    question_text = Column(String)
+    question_options = Column(String)
+    correct_answer = Column(Boolean)
+
 
 class Logger:
     def __init__(self):
-        self.engine = create_engine('sqlite:///logs.db')
+
+
+
+
+
+        
+        # Get the directory of the current script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Create a path to the database file
+        db_path = os.path.join(script_dir, 'database.db')
+
+        # Create the engine
+        self.engine = create_engine(f'sqlite:///{db_path}')
+
+        #self.engine = create_engine('sqlite://')
         Base.metadata.create_all(self.engine)
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.session_factory = sessionmaker(bind=self.engine)
+        self.Session = scoped_session(self.session_factory)
+
+        self.inspector = inspect(self.engine)
+        if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
+            Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
+
+
     
-    def record(self, log_entry):
-        self.session.add(log_entry)
-        self.session.commit()
+    def record(self, log):
+        session = self.Session()
+        session.add(log)
+        session.commit()
     
-    ## We should log all responses here (NL Question, Correct Answer, Options, Selected, misconceptions, timestamp, isCorrect
-    def logMisconceptions(self, studentId, misconceptions):
+    def logStudentResponse(self, studentId, misconceptions, question_text, question_options, correct_answer):
+
+        ## HACK: Shouldn't have to do this here  again ##
+        if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
+            Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
+
         for misconception in misconceptions:
-            log = Log(student_id=studentId, date=datetime.datetime.now(), code=misconception)
+
+            ## Ensure everything is of the correct type
+            if not isinstance(studentId, int):
+                studentId = int("studentId should be an integer")
+            if not isinstance(misconception, str):
+                raise ValueError("misconception should be a string")
+            if not isinstance(question_text, str):
+                raise ValueError("question_text should be a string")
+            if not isinstance(question_options, str):
+                raise ValueError("question_options should be a string")
+            if not isinstance(correct_answer, bool):
+                raise ValueError("correct_answer should be a boolean")
+
+            log = StudentResponse(student_id=studentId, timestamp=datetime.datetime.now(), 
+                                  misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer)
             self.record(log)
     
     def getStudentLogs(self, studentId, lookback_days=30):
+
+
+        if not isinstance(studentId, int):
+            studentId = int("studentId should be an integer")
+
+        ## HACK: Shouldn't have to do this here  again ##
+        
+        if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
+            Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
+
+        session = self.Session()
+
         lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
-        logs = self.session.query(Log).filter(Log.student_id == studentId, Log.date >= lookback_date).all()
+        logs = session.query(StudentResponse).filter(StudentResponse.student_id == studentId, StudentResponse.timestamp >= lookback_date).all()
         return logs
 
