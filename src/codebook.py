@@ -4,9 +4,6 @@ from ltlnode import *
 
 class MisconceptionCode(Enum):
     Precedence = "Precedence"
-    ReasonableVariant = "ReasonableVariant"
-    Unlabeled = "Unlabeled"
-    BadProp = "BadProp"
     BadStateIndex = "BadStateIndex"
     BadStateQuantification = "BadStateQuantification"
     ExclusiveU = "ExclusiveU"
@@ -14,6 +11,41 @@ class MisconceptionCode(Enum):
     ImplicitG = "ImplicitG"
     OtherImplicit = "OtherImplicit"
     WeakU = "WeakU"
+    #### Ignoring these codes since they have no relevance here ###
+    #Unlabeled = "Unlabeled"
+    #BadProp = "BadProp"
+    #ReasonableVariant = "ReasonableVariant"
+
+
+    def associatedOperators(self):
+
+        TEMPORAL_OPERATORS = [FinallyNode.operator, GloballyNode.operator, UntilNode.operator, NextNode.operator]
+        k = random.randint(1, len(TEMPORAL_OPERATORS))
+        TEMPORAL_SUBSET = random.choices(TEMPORAL_OPERATORS, k=k)
+
+        if self == MisconceptionCode.Precedence:
+            ### All binary operators (ie operator.value for every class that inherits from BinaryOperatorNode) ###
+            return [cls.operator for cls in BinaryOperatorNode.__subclasses__()]
+        elif self == MisconceptionCode.BadStateIndex:
+            ## Tricky -- default to a subset of temporally meaningful operators (U, X, G, F) ##
+            return TEMPORAL_SUBSET
+        elif self == MisconceptionCode.BadStateQuantification:
+            # Applies to responses that mis-use or swap a fan-out operator (F, G, U).
+            return [FinallyNode.operator, GloballyNode.operator, UntilNode.operator]
+        elif self == MisconceptionCode.ExclusiveU:
+            return [UntilNode.operator]
+        elif self == MisconceptionCode.ImplicitF:
+            return [FinallyNode.operator]
+        elif self == MisconceptionCode.ImplicitG:
+            return [GloballyNode.operator]
+        elif self == MisconceptionCode.WeakU:
+            return [UntilNode.operator]
+        elif self == MisconceptionCode.OtherImplicit:
+            ### TODO: This one is tricky, less meaningful...
+            ## But ensure that Next and Until are present ##
+            return list(set([UntilNode.operator, NextNode.operator] + TEMPORAL_SUBSET))
+        else:
+            return []
 
 
 class MutationResult:
@@ -42,8 +74,8 @@ def applyMisconception(node, misconception):
         if not res.misconception:
             return applyTilFirst(node, applyUnderconstraint)
         return res
-    elif misconception in [MisconceptionCode.BadProp, MisconceptionCode.Unlabeled, MisconceptionCode.ReasonableVariant]:
-        return MutationResult(node)
+    # elif misconception in [MisconceptionCode.BadProp, MisconceptionCode.Unlabeled, MisconceptionCode.ReasonableVariant]:
+    #     return MutationResult(node)
     else:
         return MutationResult(node)
 

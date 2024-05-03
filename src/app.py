@@ -142,9 +142,20 @@ def loganswer(questiontype):
 
 
 
-@app.route('/log', methods=['POST'])
-def log():
+@app.route('/newexercise', methods=['GET'])
+def newexercise():
     data = request.json
+
+    ## Generate a new execise for the current user
+
+    ### First get that users logs from the database
+    
+    ## Update this later to get the user ID from the session
+    userId = 1
+    
+    user_logs = answer_logger.getStudentLogs(studentId=userId, lookback_days=30)
+
+    ## Then generate a new exercise based on that knowledge profile
 
     # TODO: Log to database
 

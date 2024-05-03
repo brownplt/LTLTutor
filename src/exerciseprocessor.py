@@ -55,8 +55,7 @@ def question_eng2ltl_to_tracesatisfaction(question):
         
         if len(trace_choices) == 0:
 
-            ## TODO: We should generate a random trace here!
-
+            ## TODO: We should generate a random traces here
             continue
         else:
             newoptions.append( {
@@ -64,9 +63,15 @@ def question_eng2ltl_to_tracesatisfaction(question):
                 'isCorrect': isCorrect,
                 'misconceptions': misconceptions
             })
+
+    # Convert newoptions to a dictionary and then back to a list,
+    ## so there are no duplicate options
+    newoptions = list({option['option']: option for option in newoptions}.values())
     tracesat_question['options'] = newoptions
     return tracesat_question
 
 def exercise_eng2ltl_to_tracesatisfaction(exercise):
     questions = [question_eng2ltl_to_tracesatisfaction(question) for question in exercise] 
     return questions
+
+

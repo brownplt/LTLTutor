@@ -105,3 +105,4 @@ class Logger:
         logs = session.query(StudentResponse).filter(StudentResponse.student_id == studentId, StudentResponse.timestamp >= lookback_date).all()
         return logs
 
+
