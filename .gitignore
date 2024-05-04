@@ -4,8 +4,6 @@ node_modules/
 # Ignore built output
 dist/
 
-
-
 # Ignore editor-specific files
 .vscode/
 .idea/
@@ -55,7 +53,7 @@ secret.key
 !static/js
 !static/*.json
 
-json
+
 !src/static/emsys.json
 
 myenv
