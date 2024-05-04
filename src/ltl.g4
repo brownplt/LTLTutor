@@ -18,4 +18,4 @@ formula
 
 atomicFormula: ID;
 
-ID: [a-zA-Z0-9]+;
+ID : [A-WY-Za-z0-9]+ ;
