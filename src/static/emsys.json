@@ -3,12 +3,12 @@
         "question": "Whenever the Engine light is on, it is off in the next state and on again in the state after that.",
         "options": [
             {
-                "option": "G(e => X(! e) && (X(X e)))",
+                "option": "G(e -> X(! e) & (X(X e)))",
                 "isCorrect": true,
                 "misconceptions": []
             },
             {
-                "option": "(G (e => ((F (! e)) && (F e))))",
+                "option": "(G (e -> ((F (! e)) & (F e))))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateIndex",
@@ -16,14 +16,14 @@
                 ]
             },
             {
-                "option": "(F (e => ((F (! e)) && (F e))))",
+                "option": "(F (e -> ((F (! e)) & (F e))))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateQuantification"
                 ]
             },
             {
-                "option": "(e => ((F (! e)) && (F e)))",
+                "option": "(e -> ((F (! e)) & (F e)))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.ImplicitG"
@@ -35,19 +35,19 @@
         "question": "The engine cannot stay on 3 states in a row",
         "options": [
             {
-                "option": "! F(e && (X e) & (X (X e)))",
+                "option": "! F(e & (X e) & (X (X e)))",
                 "isCorrect": true,
                 "misconceptions": []
             },
             {
-                "option": "(! (e && (F e)))",
+                "option": "(! (e & (F e)))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateQuantification"
                 ]
             },
             {
-                "option": "(e && (F e))",
+                "option": "(e & (F e))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.OtherImplicit"
