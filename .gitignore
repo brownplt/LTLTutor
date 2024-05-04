@@ -53,5 +53,9 @@ secret.key
 # Include all files in the static directory
 !static/*
 !static/js
+!static/*.json
+
+json
+!src/static/emsys.json
 
 myenv
