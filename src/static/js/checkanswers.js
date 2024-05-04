@@ -58,7 +58,7 @@ async function tracesat_getfeedback(button) {
         question_text: question_text,
         question_options : question_options
     }
-    let response = await postFeedback(data);
+    let response = await postFeedback(data, "trace_satisfaction");
     console.log(response);
 }
 
@@ -132,7 +132,7 @@ async function engtoltl_getfeedback(button) {
         question_options : question_options
     }
 
-        let response = await postFeedback(data);
+        let response = await postFeedback(data, "english_to_ltl");``
         displayServerResponse(response);
     }
 
@@ -196,9 +196,10 @@ function displayServerResponse(response) {
 
 }
 
-async function postFeedback(data) {
+async function postFeedback(data, questiontype) {
     try {
-        const response = await fetch('/getfeedback', {
+        uri = `/getfeedback/${questiontype}`;
+        const response = await fetch(uri, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

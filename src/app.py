@@ -8,6 +8,7 @@ from feedbackgenerator import FeedbackGenerator
 from logger import Logger
 import ast
 import exerciseprocessor
+import exercisebuilder
 
 app = Flask(__name__)
 
@@ -122,7 +123,7 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     ## TODO: Need to establish student ID and plough it through ## 
-    answer_logger.logStudentResponse(studentId = 1, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect)
+    answer_logger.logStudentResponse(studentId = 1, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype)
 
 
     if questiontype == "english_to_ltl":
@@ -144,22 +145,24 @@ def loganswer(questiontype):
 
 @app.route('/newexercise', methods=['GET'])
 def newexercise():
-    data = request.json
 
     ## Generate a new execise for the current user
 
-    ### First get that users logs from the database
+
     
     ## Update this later to get the user ID from the session
     userId = 1
     
     user_logs = answer_logger.getStudentLogs(studentId=userId, lookback_days=30)
-
+    ### First get that users logs from the database
+    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
     ## Then generate a new exercise based on that knowledge profile
+    x = exercise_builder.build_exercise(literals = ['a', 'b', 'c'], complexity = 10, num_questions = 2)
 
-    # TODO: Log to database
 
-    print(data)
+
+
+
     return "OK"
 
 

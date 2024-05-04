@@ -16,10 +16,19 @@ class MisconceptionCode(Enum):
     #BadProp = "BadProp"
     #ReasonableVariant = "ReasonableVariant"
 
+    @classmethod
+    def from_string(cls, code_str):
+        if "MisconceptionCode" in code_str:
+            code_str = code_str.split(".")[-1]
+        try:
+            return cls(code_str)
+        except ValueError:
+            return None
+
 
     def associatedOperators(self):
 
-        TEMPORAL_OPERATORS = [FinallyNode.operator, GloballyNode.operator, UntilNode.operator, NextNode.operator]
+        TEMPORAL_OPERATORS = ["F", "G", "U", "X"]
         k = random.randint(1, len(TEMPORAL_OPERATORS))
         TEMPORAL_SUBSET = random.choices(TEMPORAL_OPERATORS, k=k)
 
@@ -43,7 +52,7 @@ class MisconceptionCode(Enum):
         elif self == MisconceptionCode.OtherImplicit:
             ### TODO: This one is tricky, less meaningful...
             ## But ensure that Next and Until are present ##
-            return list(set([UntilNode.operator, NextNode.operator] + TEMPORAL_SUBSET))
+            return list(set(["U", "X"] + TEMPORAL_SUBSET))
         else:
             return []
 

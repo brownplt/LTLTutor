@@ -38,7 +38,7 @@ class ltlParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'||'", "'&&'", "'U'", "'=>'", "'<=>'", 
+    literalNames = [ "<INVALID>", "'|'", "'&'", "'U'", "'->'", "'<->'", 
                      "'X'", "'F'", "'G'", "'!'", "'('", "')'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 

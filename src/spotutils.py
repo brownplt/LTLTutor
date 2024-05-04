@@ -10,7 +10,6 @@ DEFAULT_LTL_PRIORITIES = {
     "F":1,
     "G":1,
     "X":1,
-    "Closure":0, ## ?
     "equiv":1,
     "implies":1,
     "xor":0,
@@ -20,8 +19,11 @@ DEFAULT_LTL_PRIORITIES = {
     "M":0,
     "and":1,
     "or":1,
-    "EConcat":0,
-    "UConcat":0
+
+    ## Aren't these PSL not LTL
+    # "EConcat":0,
+    # "UConcat":0,
+    # "Closure":0, ## ?
 }
 
 
