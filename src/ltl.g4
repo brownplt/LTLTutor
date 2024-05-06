@@ -2,20 +2,27 @@ grammar ltl;
 
 ltl: formula EOF;
 
+X : 'X' ;
+F : 'F' ;
+G : 'G' ;
+NOT : '!' ;
+OR : '|' ;
+AND : '&' ;
+U : 'U' ;
+IMPLIES : '->' ;
+EQUIV : '<->' ;
+ID : [A-EH-TVWYZa-z0-9]+ ;
+
 formula
-    : formula '|' formula     # disjunction
-    | formula '&' formula     # conjunction
-    | formula 'U' formula      # until
-    | formula '->' formula     # implication
-    | formula '<->' formula    # equivalence
-    | 'X' formula             # X
-    | 'F' formula              # F
-    | 'G' formula            # G
-    | '!' formula              # not
+    : formula OR formula     # disjunction
+    | formula AND formula     # conjunction
+    | formula U formula      # until
+    | formula IMPLIES formula     # implication
+    | formula EQUIV formula    # equivalence
+    | X formula             # X
+    | F formula              # F
+    | G formula            # G
+    | NOT formula              # not
     | '(' formula ')'          # parentheses
-    | atomicFormula            # literal
+    | ID                      # literal
     ;
-
-atomicFormula: ID;
-
-ID : [A-WY-Za-z0-9]+ ;

@@ -116,14 +116,5 @@ class ltlListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ltlParser#atomicFormula.
-    def enterAtomicFormula(self, ctx:ltlParser.AtomicFormulaContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#atomicFormula.
-    def exitAtomicFormula(self, ctx:ltlParser.AtomicFormulaContext):
-        pass
-
-
 
 del ltlParser
