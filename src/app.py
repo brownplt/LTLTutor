@@ -159,7 +159,7 @@ def newexercise():
     ## Then generate a new exercise based on that knowledge profile
     x = exercise_builder.build_exercise(literals = ['a', 'b', 'c'], complexity = 10, num_questions = 2)
 
-
+    ## TODO: 1 is top, 0 bottom
 
 
 
