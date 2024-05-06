@@ -143,12 +143,12 @@ def loganswer(questiontype):
 
 
 
-@app.route('/newexercise', methods=['GET'])
-def newexercise():
+@app.route('/newexercise/<kind>', methods=['GET'])
+def newexercise(kind):
 
     ## Generate a new execise for the current user
 
-
+    exercise_name = "Adaptively Generated Exercise"
     
     ## Update this later to get the user ID from the session
     userId = 1
@@ -157,13 +157,23 @@ def newexercise():
     ### First get that users logs from the database
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
     ## Then generate a new exercise based on that knowledge profile
-    x = exercise_builder.build_exercise(literals = ['a', 'b', 'c'], complexity = 10, num_questions = 2)
 
+    ### We will fix this soon
+    data = exercise_builder.build_exercise(literals = ["r", "g", "b"], complexity = 10, num_questions = 2)
+
+    
     ## TODO: 1 is top, 0 bottom
 
 
-
-    return "OK"
+    if kind == "tracesatisfaction":
+        data = exerciseprocessor.exercise_eng2ltl_to_tracesatisfaction(data)
+        exercise_name = "Trace Satisfaction " + exercise_name
+        return render_template('tracesatexercise.html', questions=data, exercise_name=exercise_name) 
+    elif kind == "englishtoltl":
+        exercise_name = "English to LTL " + exercise_name
+        return render_template('engtoltlexercise.html', questions=data, exercise_name=exercise_name) 
+    else:
+        return "Unknown exercise type"
 
 
 ## TODO: Remove this eventually

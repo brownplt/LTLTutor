@@ -4,6 +4,8 @@ from collections import defaultdict
 import codebook
 from codebook import MisconceptionCode
 import ltlnode
+import random
+import string
 
 class ExerciseBuilder:
     def __init__(self, userLogs):
@@ -129,9 +131,6 @@ class ExerciseBuilder:
                                                   tree_size = tree_size, 
                                                   ltl_priorities = self.ltl_priorities, 
                                                   num_formulae = num_questions)
-        
-
-        ### PSL TO LTL is not ideal ###
 
         # Generate the exercises
         questions = []
@@ -139,28 +138,40 @@ class ExerciseBuilder:
             # Generate the exercise
             ltl = ltlnode.parse_ltl_string(answer)
             d = codebook.getAllApplicableMisconceptions(ltl)
-            distractors = []
+            options = []
             for misconception in d:
-                distractors.append({
-                    "formula": str(misconception.node),
-                    "code": str(misconception.misconception)
+                options.append({
+                    "option": str(misconception.node),
+                    "isCorrect": False,
+                    "misconceptions": [str(misconception.misconception)]
                 })
 
             # Merge labels for equal formulae
-            mergedDistractors = []
-            for distractor in distractors:
-                existingDistractor = next((d for d in mergedDistractors if d['formula'] == distractor['formula']), None)
-                if existingDistractor:
-                    existingDistractor['code'] += f", {distractor['code']}"
+            merged_options = []
+            for option in options:
+                existing_option = next((o for o in merged_options if o['option'] == option['option']), None)
+                if existing_option:
+                    existing_option['misconceptions'] += option['misconceptions']
                 else:
-                    mergedDistractors.append(distractor)
-            distractors = mergedDistractors
-            
-            if len(distractors) == 0:
+                    merged_options.append(option)
+
+            if len(merged_options) == 0:
                 continue
-            else:
-                questions.append({
-                    "answer": answer,
-                    "distractors": distractors
-                })
+
+            # Add the correct answer
+            merged_options.append({
+                "option": answer,
+                "isCorrect": True,
+                "misconceptions": []
+            })
+
+            questions.append({
+                "question": self.gen_nl_question(answer),
+                "options": merged_options
+            })
         return questions
+    
+    def gen_nl_question(self, formula):
+        formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
+        return f"Which of the following options represent the sentence: '{formula_eng}' ?"
+

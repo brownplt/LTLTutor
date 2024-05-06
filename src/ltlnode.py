@@ -8,12 +8,29 @@ from ltlParser import ltlParser
 from abc import ABC, abstractmethod
 from spotutils import areEquivalent
 
+
+## Should these come from the lexer instead of being placed here
+IMPLIES_SYMBOL = '->'
+EQUIVALENCE_SYMBOL = '<->'
+AND_SYMBOL = '&'
+OR_SYMBOL = '|'
+NOT_SYMBOL = '!'
+NEXT_SYMBOL = 'X'
+GLOBALLY_SYMBOL = 'G'
+FINALLY_SYMBOL = 'F'
+UNTIL_SYMBOL = 'U'
+
 class LTLNode(ABC):
     def __init__(self, type):
         self.type = type
 
     @abstractmethod
     def __str__(self):
+        pass
+
+
+    @abstractmethod
+    def __to_english__(self):
         pass
 
     @staticmethod
@@ -96,6 +113,9 @@ class UnaryOperatorNode(LTLNode):
 
     def __str__(self):
         return f'({self.operator} {str(self.operand)})'
+    
+    def __to_english__(self):
+        return f"{self.operator} of {self.operand.__to_english__()}"
 
 
 class BinaryOperatorNode(LTLNode):
@@ -107,6 +127,9 @@ class BinaryOperatorNode(LTLNode):
 
     def __str__(self):
         return f'({str(self.left)} {self.operator} {str(self.right)})'
+    
+    def __to_english__(self):
+        return f"{self.operator} of {self.left.__to_english__()}, {self.right.__to_english__()} "
 
 
 class LiteralNode(LTLNode):
@@ -116,51 +139,80 @@ class LiteralNode(LTLNode):
 
     def __str__(self):
         return self.value
+    
+    def __to_english__(self):
+        return self.value
 
 
 class UntilNode(BinaryOperatorNode):
     def __init__(self, left, right):
-        super().__init__('U', left, right)
+        super().__init__(UNTIL_SYMBOL, left, right)
+
+    def __to_english__(self):
+        return f"{self.left.__to_english__()} holds until {self.right.__to_english__()} holds."
 
 
 class NextNode(UnaryOperatorNode):
     def __init__(self, operand):
-        super().__init__('X', operand)
+        super().__init__(NEXT_SYMBOL, operand)
+
+    def __to_english__(self):
+        return f"{self.operand.__to_english__()} holds in the next state."
 
 
 class GloballyNode(UnaryOperatorNode):
     def __init__(self, operand):
-        super().__init__('G', operand)
+        super().__init__(GLOBALLY_SYMBOL, operand)
+
+    def __to_english__(self):
+        return f"It is always the case that {self.operand.__to_english__()} holds."
 
 
 class FinallyNode(UnaryOperatorNode):
     def __init__(self, operand):
-        super().__init__('F', operand)
+        super().__init__(FINALLY_SYMBOL, operand)
+
+    def __to_english__(self):
+        return f"It is eventually the case that {self.operand.__to_english__()} holds."
 
 
 class OrNode(BinaryOperatorNode):
     def __init__(self, left, right):
-        super().__init__('||', left, right)
+        super().__init__(OR_SYMBOL, left, right)
+
+    def __to_english__(self):
+        return f"{self.left.__to_english__()} or {self.right.__to_english__()} hold."
 
 
 class AndNode(BinaryOperatorNode):
     def __init__(self, left, right):
-        super().__init__('&&', left, right)
+        super().__init__(AND_SYMBOL, left, right)
+
+    def __to_english__(self):
+        return f"{self.left.__to_english__()} and {self.right.__to_english__()} hold."
 
 
 class NotNode(UnaryOperatorNode):
     def __init__(self, operand):
-        super().__init__('!', operand)
+        super().__init__(NOT_SYMBOL, operand)
 
+    def __to_english__(self):
+        return f"{self.operand.__to_english__()} does not hold."
 
 class ImpliesNode(BinaryOperatorNode):
     def __init__(self, left, right):
-        super().__init__('=>', left, right)
+        super().__init__(IMPLIES_SYMBOL, left, right)
+
+    def __to_english__(self):
+        return f"If {self.left.__to_english__()} then {self.right.__to_english__()}."
 
 
 class EquivalenceNode(BinaryOperatorNode):
     def __init__(self, left, right):
-        super().__init__('<=>', left, right)
+        super().__init__(EQUIVALENCE_SYMBOL, left, right)
+
+    def __to_english__(self):
+        return f"{self.left.__to_english__()} if and only if {self.right.__to_english__()}."
 
 
 
