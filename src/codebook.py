@@ -28,31 +28,31 @@ class MisconceptionCode(Enum):
 
     def associatedOperators(self):
 
-        TEMPORAL_OPERATORS = ["F", "G", "U", "X"]
+        TEMPORAL_OPERATORS = [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol, NextNode.symbol]
         k = random.randint(1, len(TEMPORAL_OPERATORS))
         TEMPORAL_SUBSET = random.choices(TEMPORAL_OPERATORS, k=k)
 
         if self == MisconceptionCode.Precedence:
             ### All binary operators (ie operator.value for every class that inherits from BinaryOperatorNode) ###
-            return [cls.operator for cls in BinaryOperatorNode.__subclasses__()]
+            return [cls.symbol for cls in BinaryOperatorNode.__subclasses__()]
         elif self == MisconceptionCode.BadStateIndex:
             ## Tricky -- default to a subset of temporally meaningful operators (U, X, G, F) ##
             return TEMPORAL_SUBSET
         elif self == MisconceptionCode.BadStateQuantification:
             # Applies to responses that mis-use or swap a fan-out operator (F, G, U).
-            return [FinallyNode.operator, GloballyNode.operator, UntilNode.operator]
+            return [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol]
         elif self == MisconceptionCode.ExclusiveU:
-            return [UntilNode.operator]
+            return [UntilNode.symbol]
         elif self == MisconceptionCode.ImplicitF:
-            return [FinallyNode.operator]
+            return [FinallyNode.symbol]
         elif self == MisconceptionCode.ImplicitG:
-            return [GloballyNode.operator]
+            return [GloballyNode.symbol]
         elif self == MisconceptionCode.WeakU:
-            return [UntilNode.operator]
+            return [UntilNode.symbol]
         elif self == MisconceptionCode.OtherImplicit:
             ### TODO: This one is tricky, less meaningful...
             ## But ensure that Next and Until are present ##
-            return list(set(["U", "X"] + TEMPORAL_SUBSET))
+            return list(set([UntilNode.symbol, NextNode.symbol] + TEMPORAL_SUBSET))
         else:
             return []
 
@@ -139,28 +139,28 @@ def applyPrecedence(node):
 
 
 def applyExclusiveU(node):
-    if isinstance(node, BinaryOperatorNode) and node.operator == "U":
+    if isinstance(node, BinaryOperatorNode) and node.operator == UntilNode.symbol:
         x = node.left
         rhs = node.right
 
-        if isinstance(rhs, BinaryOperatorNode) and rhs.operator == "and":
+        if isinstance(rhs, BinaryOperatorNode) and rhs.operator == AndNode.symbol:
             y = rhs.right
 
-            if isinstance(rhs.left, UnaryOperatorNode) and rhs.left.operator == "!" and LTLNode.equiv(rhs.left.operand, x):
+            if isinstance(rhs.left, UnaryOperatorNode) and rhs.left.operator == NotNode.symbol and LTLNode.equiv(rhs.left.operand, x):
                 return MutationResult(UntilNode(x, y), MisconceptionCode.ExclusiveU)
 
     return MutationResult(node)
 
 
 def applyImplicitG(node):
-    if isinstance(node, UnaryOperatorNode) and node.operator == "G":
+    if isinstance(node, UnaryOperatorNode) and node.operator == GloballyNode.symbol:
         return MutationResult(node.operand, MisconceptionCode.ImplicitG)
 
     return MutationResult(node)
 
 
 def applyImplicitF(node):
-    if isinstance(node, UnaryOperatorNode) and node.operator == "F":
+    if isinstance(node, UnaryOperatorNode) and node.operator == FinallyNode.symbol:
         return MutationResult(node.operand, MisconceptionCode.ImplicitF)
 
     return MutationResult(node)

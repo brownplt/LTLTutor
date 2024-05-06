@@ -1,7 +1,8 @@
 /// TODO: Clean this up, unify functions, etc.
 
+
 async function tracesat_getfeedback(button) {
-    
+
     let parent_node = button.parentNode;
     let question_text = parent_node.querySelector('.card-title').innerText;
 
@@ -16,7 +17,7 @@ async function tracesat_getfeedback(button) {
     let selected_radio = parent_node.querySelector('input[type=radio]:checked');
 
     //if no radio button is selected, show an alert that no radio button is selected
-    if(selected_radio == null) {
+    if (selected_radio == null) {
         alert("Please select an option");
         return;
     }
@@ -38,6 +39,15 @@ async function tracesat_getfeedback(button) {
         selected_radio.parentNode.style.backgroundColor = "green";
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
+        try {
+            // Increment the correct count
+            let correctCountElement = document.getElementById('correctCount');
+            let currentCount = parseInt(correctCountElement.innerText);
+            correctCountElement.innerText = currentCount + 1;
+        }
+        catch (error) {
+            console.err("Something went wrong. Could not increment correctness count.");
+        }
     }
     else {
         selected_radio.parentNode.style.backgroundColor = "red";
@@ -48,6 +58,15 @@ async function tracesat_getfeedback(button) {
         console.log(misconceptions);
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option.value + "</code></p>";
+
+        // Increment the incorrect count
+        try {
+            let incorrectCountElement = document.getElementById('incorrectCount');
+            let currentCount = parseInt(incorrectCountElement.innerText);
+            incorrectCountElement.innerText = currentCount + 1;
+        } catch (error) {
+            console.err("Something went wrong. Could not modify correctness count.");
+        }
     }
 
     let data = {
@@ -56,16 +75,16 @@ async function tracesat_getfeedback(button) {
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
-        question_options : question_options
+        question_options: question_options
     }
     let response = await postFeedback(data, "trace_satisfaction");
     console.log(response);
 }
 
 async function engtoltl_getfeedback(button) {
-    
+
     let parent_node = button.parentNode;
-    
+
 
     let question_text = parent_node.querySelector('.card-title').innerText;
 
@@ -80,7 +99,7 @@ async function engtoltl_getfeedback(button) {
     let selected_radio = parent_node.querySelector('input[type=radio]:checked');
 
     //if no radio button is selected, show an alert that no radio button is selected
-    if(selected_radio == null) {
+    if (selected_radio == null) {
         alert("Please select an option");
         return;
     }
@@ -129,12 +148,12 @@ async function engtoltl_getfeedback(button) {
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
-        question_options : question_options
+        question_options: question_options
     }
 
-        let response = await postFeedback(data, "english_to_ltl");``
-        displayServerResponse(response);
-    }
+    let response = await postFeedback(data, "english_to_ltl"); ``
+    displayServerResponse(response);
+}
 
 
 
@@ -171,7 +190,7 @@ function displayServerResponse(response) {
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
         }
-        
+
     }
     else if (contained) {
         feedback_string += "Your selection is an underconstraint of the correct answer. ";

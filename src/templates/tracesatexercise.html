@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>LTL Tutor: {{ exercise_name }}</title>
     <!-- Include Bootstrap CSS -->
@@ -8,9 +9,14 @@
 
 
 </head>
+
 <body>
     <div class="container">
         <h1>{{ exercise_name }}</h1>
+        <div id="progress">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0"
+                aria-valuemax="100"></div>
+        </div>
         <div id="questions">
             {% for q in questions %}
             <div class="card mt-4 question">
@@ -22,10 +28,9 @@
                     <ul class="list-group">
                         {% for option in q.options %}
                         <li class="list-group-item">
-                            <input type="radio" name="option" id="{{ loop.index }}" class="option" 
-                                    value="{{ option.option }}" 
-                                    data-misconceptions="{{ option.misconceptions }}"
-                                    data-correct = "{{ option.isCorrect }}">
+                            <input type="radio" name="option" id="{{ loop.index }}" class="option"
+                                value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
+                                data-correct="{{ option.isCorrect }}">
                             <label for="option{{ loop.index }}">{{ option.option }}</label>
                         </li>
                         {% endfor %}
@@ -43,6 +48,11 @@
         <div id="feedback">
 
         </div>
+        <div id="done" style="display: none;">
+            <h2>Exercise done!</h2>
+            <p>Correct answers: <span id="correctCount">0</span></p>
+            <p>Incorrect answers: <span id="incorrectCount">0</span></p>
+        </div>
     </div>
 
     <!-- Include Bootstrap JS and jQuery -->
@@ -51,22 +61,34 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
-    $(document).ready(function() {
-        // Hide all questions at the start
-        $('.question').hide();
+        $(document).ready(function () {
+            // Hide all questions at the start
+            $('.question').hide();
 
-        // Show the first question
-        $('.question:first').show();
+            // Show the first question
+            $('.question:first').show();
 
-        // When the "Next" button is clicked, hide the current question and show the next one
-        $('.next').click(function() {
-            // Empty the feedback div
-            $('#feedback').empty();
-            $(this).closest('.question').hide().next('.question').show();
+            // When the "Next" button is clicked, hide the current question and show the next one
+            $('.next').click(function () {
+                // Empty the feedback div
+                $('#feedback').empty();
+                var nextQuestion = $(this).closest('.question').hide().next('.question');
+                if (nextQuestion.length) {
+                    // If there is a next question, show it
+                    nextQuestion.show();
+                } else {
+                    // If there are no more questions, show the "done" section
+                    $('#done').show();
+                }
 
-            // TODO: When done, show a section that says exercise done.
+                // Update the progress bar
+                var progressBar = $('.progress-bar');
+                var newProgress = parseInt(progressBar.attr('aria-valuenow')) + progressIncrement;
+                progressBar.attr('aria-valuenow', newProgress);
+                progressBar.css('width', newProgress + '%');
+            });
         });
-    });
     </script>
 </body>
+
 </html>
