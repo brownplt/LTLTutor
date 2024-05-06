@@ -172,6 +172,7 @@ class ExerciseBuilder:
         return questions
     
     def gen_nl_question(self, formula):
+        ## Oof this is suprt broken
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
         return f"Which of the following options represent the sentence: '{formula_eng}' ?"
 
