@@ -18,6 +18,8 @@ answer_logger = Logger()
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
 
+
+
 @app.before_first_request
 def startup():
     try:
@@ -96,6 +98,7 @@ def exercise(kind):
 
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+
         data = exerciseprocessor.randomize_questions(data)
     except:
         return "Error loading exercise"
@@ -163,6 +166,7 @@ def newexercise(kind):
     ### TODO: Exercise should involve the literals the user has encountered?
     data = exercise_builder.build_exercise(literals = ["r", "g", "b"], complexity = 10, num_questions = 2)
 
+
     
     ## TODO: 1 is top, 0 bottom
 
@@ -197,6 +201,7 @@ def viewstudentlogs(id):
 
 
     return json.dumps(to_return)
+
 
 
 if __name__ == '__main__':
