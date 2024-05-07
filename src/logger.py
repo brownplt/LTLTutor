@@ -1,11 +1,10 @@
-##  {'date': '2023-01-01', 'concept': 'Concept A', 'frequency': 5}, ##
+
 
 ### TODO: Very much work in progress
 import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-import logging
 import os
 from sqlalchemy import inspect
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -85,19 +84,12 @@ class Logger:
             self.record(log)
     
     def getUserLogs(self, userId, lookback_days=30):
-
-
         if not isinstance(userId, str):
             raise ValueError("userId should be an integer")
-
-        ## HACK: Shouldn't have to do this here  again ##
-        # if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
-        #     Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
 
         session = self.Session()
 
         lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
         logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
         return logs
-
 

@@ -1,46 +1,50 @@
-/// TODO: Clean this up, unify functions, etc.
 
 
-async function tracesat_getfeedback(button) {
+function getQuestionText(parentNode) {
+    return parentNode.querySelector('.card-title').innerText;
+}
 
-    let parent_node = button.parentNode;
-    let question_text = parent_node.querySelector('.card-title').innerText;
+function getQuestionOptions(parentNode) {
 
-
-    let all_radios = parent_node.querySelectorAll('input[type=radio]');
-
-    // For each radio button, make the background transparent
-    Array.from(all_radios).forEach(radio => {
-        radio.parentNode.style.backgroundColor = "transparent";
-    });
-    
-    // For each radio button, get value and data-misconception fields
-    var question_options = Array.from(all_radios).map(r => ({
+    let allRadios = parentNode.querySelectorAll('input[type=radio]');
+    return Array.from(allRadios).map(r => ({
         value: r.value,
         misconceptions: r.dataset.misconceptions
     }));
+}
 
-    let selected_radio = parent_node.querySelector('input[type=radio]:checked');
 
-    //if no radio button is selected, show an alert that no radio button is selected
-    if (selected_radio == null) {
+function getSelectedRadio(parentNode) {
+    let selectedRadio =  parentNode.querySelector('input[type=radio]:checked');
+    if (selectedRadio == null) {
         alert("Please select an option");
-        return;
+    }
+    return selectedRadio;
+}
+function getCorrectRadio(parent_node) {
+    var correct_option = parent_node.querySelector('input[data-correct="True"]');
+    return correct_option;
+}
+
+function show_feedback(parent_node) {
+
+    let all_radios = parent_node.querySelectorAll('input[type=radio]');
+    Array.from(all_radios).forEach(radio => {
+        radio.parentNode.style.backgroundColor = "transparent";
+    });
+    let selected_radio = getSelectedRadio(parent_node);
+
+    if (selected_radio == null) {
+        return false;
     }
 
-    //get the selected option
     let selected_option = selected_radio.value;
-
-    // There is a radio button where the 'dataset.correct' attribute is set to true
-    // Find that radio button
-    // Select the radio button where 'dataset.correct' is true
-    var correct_option = parent_node.querySelector('input[data-correct="True"]');
-
-    //Get the div with id feedback
+    let correct_radio = getCorrectRadio(parent_node);
+    let correct_option = correct_radio.value;
     let feedback_div = document.querySelector('#feedback');
-    let correct = selected_option == correct_option.value;
+    let correct = selected_option == correct_option;
 
-    if (selected_option == correct_option.value) {
+    if (correct) {
         // Make the background of the selected radio button green
         selected_radio.parentNode.style.backgroundColor = "green";
         // Add a message to the feedback div
@@ -57,13 +61,13 @@ async function tracesat_getfeedback(button) {
     }
     else {
         selected_radio.parentNode.style.backgroundColor = "red";
-        correct_option.parentNode.style.backgroundColor = "green";
+        correct_radio.parentNode.style.backgroundColor = "green";
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         let misconceptions = JSON.parse(misconception_string);
         console.log(misconceptions);
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option.value + "</code></p>";
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option + "</code></p>";
 
         // Increment the incorrect count
         try {
@@ -75,105 +79,61 @@ async function tracesat_getfeedback(button) {
         }
     }
 
+    return correct;
+}
+
+async function tracesat_getfeedback(button) {
+
+    let parent_node = button.parentNode;
+    let question_text = getQuestionText(parent_node);
+
+    let selected_radio = getSelectedRadio(parent_node);
+    if (selected_radio == null) {
+        return;
+    }
+
+    let correct_option = getCorrectRadio(parent_node).value;
+    let question_options = getQuestionOptions(parent_node);
+    let correct = show_feedback(parent_node);
+
     let data = {
-        selected_option: selected_option,
-        correct_option: correct_option.value,
+        selected_option: selected_radio.value,
+        correct_option: correct_option,
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options
     }
     let response = await postFeedback(data, "trace_satisfaction");
-    console.log(response);
 }
 
 async function engtoltl_getfeedback(button) {
-
     let parent_node = button.parentNode;
+    let question_text = getQuestionText(parent_node);
 
-
-    let question_text = parent_node.querySelector('.card-title').innerText;
-
-
-
-    let all_radios = parent_node.querySelectorAll('input[type=radio]');
-
-    // For each radio button, make the background transparent
-    Array.from(all_radios).forEach(radio => {
-        radio.parentNode.style.backgroundColor = "transparent";
-    });
-
-
-    // For each radio button, get value and data-misconception fields
-    var question_options = Array.from(all_radios).map(r => ({
-        value: r.value,
-        misconceptions: r.dataset.misconceptions
-    }));
-
-    let selected_radio = parent_node.querySelector('input[type=radio]:checked');
-
-    //if no radio button is selected, show an alert that no radio button is selected
+    let selected_radio = getSelectedRadio(parent_node);
     if (selected_radio == null) {
-        alert("Please select an option");
         return;
     }
-
-    //get the selected option
-    let selected_option = selected_radio.value;
-
-    // There is a radio button where the 'dataset.correct' attribute is set to true
-    // Find that radio button
-    // Select the radio button where 'dataset.correct' is true
-    var correct_option = parent_node.querySelector('input[data-correct="True"]');
+    let correct_option = getCorrectRadio(parent_node).value;
+    let question_options = getQuestionOptions(parent_node);
+    let correct = show_feedback(parent_node);
 
 
-
-
-
-
-    //Get the div with id feedback
-    let feedback_div = document.querySelector('#feedback');
-
-
-    let correct = selected_option == correct_option.value;
-
-    if (selected_option == correct_option.value) {
-        // Make the background of the selected radio button green
-        selected_radio.parentNode.style.backgroundColor = "green";
-        // Add a message to the feedback div
-        feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
-    }
-    else {
-
-
-
-
-        selected_radio.parentNode.style.backgroundColor = "red";
-        correct_option.parentNode.style.backgroundColor = "green";
-
-        misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
-        let misconceptions = JSON.parse(misconception_string);
-        console.log(misconceptions);
-        // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option.value + "</code></p>";
-    }
-
-
+    // TODO: SOme kind of error getting correct_option
 
     let data = {
-        selected_option: selected_option,
-        correct_option: correct_option.value,
+        selected_option: selected_radio.value,
+        correct_option: correct_option,
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options
     }
 
-    let response = await postFeedback(data, "english_to_ltl"); ``
+    let response = await postFeedback(data, "english_to_ltl");
     displayServerResponse(response);
 }
-
-
 
 function displayServerResponse(response) {
 
@@ -184,52 +144,62 @@ function displayServerResponse(response) {
     let subsumed = response.subsumed;
     let contained = response.contained;
     let cewords = response.cewords;
-
-
     let ce_trace = (cewords.length > 0) ? cewords[Math.floor(Math.random() * cewords.length)] : null;
+
+
+
+    function get_mermaid_diagram(trace) {
+        let edges = edgesFromSpotString(trace);
+        let diagramText = mermaidGraphFromEdgesList(edges);
+        return diagramText;
+    }
+
+    let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
+    ce_trace_img = "<div id='generated_ltl_trace'>" + ce_trace_img + "</div>";
 
     var feedback_string = "";
 
     if (disjoint) {
         feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
 
-
-        // I want to show img/disjoint.png here
-        feedback_string += "<br> <img src='/static/img/disjoint.png' alt='disjoint' > <br> ";
-
         if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
 
+        feedback_string += "<br> <img src='/static/img/disjoint.png' alt='disjoint' > <br> ";
     }
     else if (subsumed) {
-        feedback_string += "Your selection is an overconstraint of the correct answer. That is, your selection is more restrictive than the correct answer.";
+        feedback_string += "Your selection is more restrictive than the correct answer.";
         feedback_string += "<br> <img src='/static/img/subsumes.png' alt='subsumption' > <br> ";
         if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace;
+            feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace_img;
         }
 
     }
     else if (contained) {
-        feedback_string += "Your selection is an underconstraint of the correct answer. ";
-        feedback_string += "<br> <img src='/static/img/contained.png' alt='containment' > <br> ";
+        feedback_string += "Your selection is more permissive than the correct answer. ";
         if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
+        feedback_string += "<br> <img src='/static/img/contained.png' alt='containment' > <br> ";
+
     }
     else {
         feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
-        feedback_string += "<br> <img src='/static/img/overlap.png' alt='overlapping answers' > <br> ";
         if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace;
+            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
+        feedback_string += "<br> <img src='/static/img/overlap.png' alt='overlapping answers' > <br> ";
     }
-
 
     let responseAsHTMLElement = document.createElement('div');
     responseAsHTMLElement.innerHTML = feedback_string;
     feedback_div.appendChild(responseAsHTMLElement);
 
+    let traceElement = document.getElementById('generated_ltl_trace');
+    if (traceElement) {
+        mermaid.init(undefined, traceElement);
+    }
 
 }
 
