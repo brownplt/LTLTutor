@@ -49,6 +49,10 @@ function show_feedback(parent_node) {
         selected_radio.parentNode.style.backgroundColor = "green";
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
+        feedback_div.classList.add('alert');
+        feedback_div.classList.add('alert-success');
+        feedback_div.classList.remove('alert-warning');
+
         try {
             // Increment the correct count
             let correctCountElement = document.getElementById('correctCount');
@@ -68,7 +72,9 @@ function show_feedback(parent_node) {
         console.log(misconceptions);
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option + "</code></p>";
-
+        feedback_div.classList.add('alert');
+        feedback_div.classList.remove('alert-success');
+        feedback_div.classList.add('alert-warning');
         // Increment the incorrect count
         try {
             let incorrectCountElement = document.getElementById('incorrectCount');

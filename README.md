@@ -43,3 +43,4 @@ antlr4 -Dlanguage=Python3 ltl.g4
 - Determine Interleaving behavior [!!]
 - Determine distribution of questions, choose distractor from questions. [!!]
 - [] Export report of learning
+- [] Interleave question types

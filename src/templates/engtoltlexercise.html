@@ -30,7 +30,7 @@
                                     value="{{ option.option }}" 
                                     data-misconceptions="{{ option.misconceptions }}"
                                     data-correct = "{{ option.isCorrect }}">
-                            <label for="option{{ loop.index }}">{{ option.option }}</label>
+                            <label for="option{{ loop.index }}"><code>{{ option.option }}</code></label>
                         </li>
                         {% endfor %}
 
@@ -82,7 +82,8 @@
                 $('#done').show();
             }
 
-            // Update the progress bar
+        // Update the progress bar
+
         var progressBar = $('.progress-bar');
         var newProgress = parseInt(progressBar.attr('aria-valuenow')) + progressIncrement;
         progressBar.attr('aria-valuenow', newProgress);
