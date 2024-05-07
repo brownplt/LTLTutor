@@ -14,6 +14,10 @@ app = Flask(__name__)
 
 answer_logger = Logger()
 
+
+DEFAULT_USERID = "defaultuser"
+USERID_COOKIE = "ltluserid"
+
 @app.before_first_request
 def startup():
     try:
@@ -112,8 +116,6 @@ def loganswer(questiontype):
 
 
     data = request.json
-
-
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
     isCorrect = data['correct']
@@ -122,8 +124,10 @@ def loganswer(questiontype):
     question_text = data['question_text']
     question_options = json.dumps(data['question_options'])
 
+    userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
+
     ## TODO: Need to establish student ID and plough it through ## 
-    answer_logger.logStudentResponse(studentId = 1, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype)
+    answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype)
 
 
     if questiontype == "english_to_ltl":
@@ -146,19 +150,17 @@ def loganswer(questiontype):
 @app.route('/newexercise/<kind>', methods=['GET'])
 def newexercise(kind):
 
-    ## Generate a new execise for the current user
+    exercise_name = "Generated Exercise"
+    
+    # Get a cookie from the request
+    userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
 
-    exercise_name = "Adaptively Generated Exercise"
     
-    ## Update this later to get the user ID from the session
-    userId = 1
-    
-    user_logs = answer_logger.getStudentLogs(studentId=userId, lookback_days=30)
+    user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
     ### First get that users logs from the database
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
-    ## Then generate a new exercise based on that knowledge profile
 
-    ### We will fix this soon
+    ### TODO: Exercise should involve the literals the user has encountered?
     data = exercise_builder.build_exercise(literals = ["r", "g", "b"], complexity = 10, num_questions = 2)
 
     
@@ -180,14 +182,12 @@ def newexercise(kind):
 @app.route('/viewstudentlogs/<id>', methods=['GET'])
 def viewstudentlogs(id):
 
-    student_id = int(id)
-
-    logs = answer_logger.getStudentLogs(studentId=student_id, lookback_days=30)
+    logs = answer_logger.getUserLogs(userId=id, lookback_days=30)
 
     to_return = {}
     for log in logs:
         to_return[log.id] = {
-            "student_id": log.student_id,
+            "user_id": log.student_id,
             "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             "misconception": log.misconception,
             "question_text": log.question_text,

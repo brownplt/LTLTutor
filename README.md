@@ -40,11 +40,8 @@ antlr4 -Dlanguage=Python3 ltl.g4
 - [] Choose questions, given knowledge of student's misconceptions (ie - student model)
     - This shouldbe some kind of hybrid recommender system (1. What do you think you need help with, 2. What do we know you don't understand)
     - But, how do we determine what a question tests (ie -- if a student has some misconception, how do we build a question that tests this? What about question difficulty?)
-- Determine Interleaving behavior
-- Determine distribution of questions, choose distractor from questions.
+- Determine Interleaving behavior [!!]
+- Determine distribution of questions, choose distractor from questions. [!!]
 
 
-### Authoring Tool
 
-[] Load Question Set from JSON
-[] Suggest question set

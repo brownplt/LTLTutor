@@ -19,7 +19,7 @@ Base = declarative_base()
 class StudentResponse(Base):
     __tablename__ = STUDENT_RESPONSE_TABLE
     id = Column(Integer, primary_key=True)
-    student_id = Column(Integer)
+    user_id = Column(String)
     timestamp = Column(DateTime)
     misconception = Column(String)
     question_text = Column(String)
@@ -30,10 +30,6 @@ class StudentResponse(Base):
 
 class Logger:
     def __init__(self):
-
-
-
-
 
         
         # Get the directory of the current script
@@ -61,7 +57,7 @@ class Logger:
         session.add(log)
         session.commit()
     
-    def logStudentResponse(self, studentId, misconceptions, question_text, question_options, correct_answer, questiontype):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype):
 
         ## HACK: Shouldn't have to do this here  again ##
         if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
@@ -70,8 +66,8 @@ class Logger:
         for misconception in misconceptions:
 
             ## Ensure everything is of the correct type
-            if not isinstance(studentId, int):
-                studentId = int("studentId should be an integer")
+            if not isinstance(userId, str):
+                raise ValueError("userId should be an integer")
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
             if not isinstance(question_text, str):
@@ -83,26 +79,25 @@ class Logger:
             if not isinstance(questiontype, str):
                 raise ValueError("questiontype should be a string")
 
-            log = StudentResponse(student_id=studentId, timestamp=datetime.datetime.now(), 
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
                                   question_type=questiontype)
             self.record(log)
     
-    def getStudentLogs(self, studentId, lookback_days=30):
+    def getUserLogs(self, userId, lookback_days=30):
 
 
-        if not isinstance(studentId, int):
-            studentId = int("studentId should be an integer")
+        if not isinstance(userId, str):
+            raise ValueError("userId should be an integer")
 
         ## HACK: Shouldn't have to do this here  again ##
-        
-        if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
-            Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
+        # if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
+        #     Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
 
         session = self.Session()
 
         lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
-        logs = session.query(StudentResponse).filter(StudentResponse.student_id == studentId, StudentResponse.timestamp >= lookback_date).all()
+        logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
         return logs
 
 

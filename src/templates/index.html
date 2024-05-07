@@ -6,13 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor Name Placeholder</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
 </head>
 
 <body>
 
 
     <div class="container mt-4">
-        <h1>Welcome to LTL Tutor</h1>
+        <h1 >LTL Tutor</h1>
+        <p id="userid_field"> </p>
+
 
         <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#explanation" aria-expanded="false" aria-controls="explanation">
             Toggle LTL Explanation

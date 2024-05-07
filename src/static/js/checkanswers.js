@@ -8,6 +8,12 @@ async function tracesat_getfeedback(button) {
 
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
+
+    // For each radio button, make the background transparent
+    Array.from(all_radios).forEach(radio => {
+        radio.parentNode.style.backgroundColor = "transparent";
+    });
+    
     // For each radio button, get value and data-misconception fields
     var question_options = Array.from(all_radios).map(r => ({
         value: r.value,
@@ -89,7 +95,15 @@ async function engtoltl_getfeedback(button) {
     let question_text = parent_node.querySelector('.card-title').innerText;
 
 
+
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
+
+    // For each radio button, make the background transparent
+    Array.from(all_radios).forEach(radio => {
+        radio.parentNode.style.backgroundColor = "transparent";
+    });
+
+
     // For each radio button, get value and data-misconception fields
     var question_options = Array.from(all_radios).map(r => ({
         value: r.value,
@@ -130,6 +144,10 @@ async function engtoltl_getfeedback(button) {
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
     }
     else {
+
+
+
+
         selected_radio.parentNode.style.backgroundColor = "red";
         correct_option.parentNode.style.backgroundColor = "green";
 
