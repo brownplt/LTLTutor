@@ -80,7 +80,7 @@
                 ]
             },
             {
-                "option": "((F red) & (red -> X(G !red))",
+                "option": "(F red) & (red -> X(G (!red))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.ImplicitG"
@@ -97,14 +97,14 @@
                 "misconceptions": []
             },
             {
-                "option": "(! (red & (F red)))",
+                "option": "! (red & (F red))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateQuantification"
                 ]
             },
             {
-                "option": "(! ((r & (F r)) & (F r)))",
+                "option": "! ((r & (F r)) & (X (F r)))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateIndex"
@@ -129,7 +129,7 @@
                 ]
             },
             {
-                "option": "((red -> blue) | blue)",
+                "option": "(red -> blue) | blue",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.ImplicitG",

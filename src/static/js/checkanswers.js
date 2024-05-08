@@ -30,7 +30,8 @@ function show_feedback(parent_node) {
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
     Array.from(all_radios).forEach(radio => {
-        radio.parentNode.style.backgroundColor = "transparent";
+        //radio.parentNode.style.backgroundColor = "transparent";
+        radio.parentNode.style.outline = "none";
     });
     let selected_radio = getSelectedRadio(parent_node);
 
@@ -46,7 +47,11 @@ function show_feedback(parent_node) {
 
     if (correct) {
         // Make the background of the selected radio button green
-        selected_radio.parentNode.style.backgroundColor = "green";
+
+
+        selected_radio.parentNode.style.outline = "2px solid green";
+
+
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
         feedback_div.classList.add('alert');
@@ -64,8 +69,8 @@ function show_feedback(parent_node) {
         }
     }
     else {
-        selected_radio.parentNode.style.backgroundColor = "red";
-        correct_radio.parentNode.style.backgroundColor = "green";
+        selected_radio.parentNode.style.outline = "2px solid red";
+        correct_radio.parentNode.style.outline = "2px solid green";
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         let misconceptions = JSON.parse(misconception_string);
@@ -165,6 +170,10 @@ function displayServerResponse(response) {
 
     var feedback_string = "";
 
+    if (!ce_trace) {
+        console.log("Could not generate a counterexample trace.")
+    }
+
     if (disjoint) {
         feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
 
@@ -173,13 +182,15 @@ function displayServerResponse(response) {
         }
 
         feedback_string += "<br> <img src='/static/img/disjoint.png' alt='disjoint' > <br> ";
+
     }
     else if (subsumed) {
         feedback_string += "Your selection is more restrictive than the correct answer.";
-        feedback_string += "<br> <img src='/static/img/subsumes.png' alt='subsumption' > <br> ";
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace_img;
         }
+        feedback_string += "<br> <img src='/static/img/subsumes.png' alt='subsumption' > <br> ";
+
 
     }
     else if (contained) {
