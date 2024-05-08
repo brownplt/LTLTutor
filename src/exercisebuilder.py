@@ -127,11 +127,13 @@ class ExerciseBuilder:
         ## TODO: Find a better mapping between complexity and tree size
         tree_size = complexity
 
+        ## First generate a large pool
+        pool_size = 2*num_questions
         question_answers = spotutils.gen_rand_ltl(atoms = literals, 
                                                   tree_size = tree_size, 
                                                   ltl_priorities = self.ltl_priorities, 
-                                                  num_formulae = num_questions)
-
+                                                  num_formulae = pool_size)
+        
         # Generate the exercises
         questions = []
         for answer in question_answers:
@@ -169,7 +171,11 @@ class ExerciseBuilder:
                 "question": self.gen_nl_question(answer),
                 "options": merged_options
             })
-        return questions
+
+        ## Make sure we have enough questions
+        chosen_questions = random.sample(questions, min(num_questions, len(questions)))
+    
+        return chosen_questions
     
     def gen_nl_question(self, formula):
         ## Oof this is super broken

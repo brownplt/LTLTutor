@@ -168,7 +168,7 @@ def newexercise(kind):
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
 
     ### TODO: Exercise should involve the literals the user has encountered?
-    data = exercise_builder.build_exercise(literals = ["r", "g", "b"], complexity = 10, num_questions = 2)
+    data = exercise_builder.build_exercise(literals = ["r", "y", "z"], complexity = 10, num_questions = 5)
 
 
     
