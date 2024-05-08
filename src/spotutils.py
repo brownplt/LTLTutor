@@ -1,24 +1,28 @@
 import spot
 
 
-
+DEFAULT_WEIGHT = 5
+DEFAULT_WEIGHT_TEMPORAL = 7
 DEFAULT_LTL_PRIORITIES = {
-    "ap" : 3,
+    "ap" : DEFAULT_WEIGHT, 
+
+    "F": DEFAULT_WEIGHT_TEMPORAL,
+    "G": DEFAULT_WEIGHT_TEMPORAL,
+    "X": DEFAULT_WEIGHT_TEMPORAL,
+
+    "U": DEFAULT_WEIGHT_TEMPORAL,
+    "and": DEFAULT_WEIGHT,
+    "or": DEFAULT_WEIGHT,
+    "equiv": DEFAULT_WEIGHT,
+    "implies":DEFAULT_WEIGHT,
+    "not": DEFAULT_WEIGHT,
+    ## TODO: Examine: Perhaps not so many trues and falses?
     "false": 1,
     "true":1,
-    "not":1,
-    "F":1,
-    "G":1,
-    "X":1,
-    "equiv":1,
-    "implies":1,
-    "xor":0,
-    "R":0,
-    "U":1,
     "W":0,
     "M":0,
-    "and":1,
-    "or":1,
+    "xor":0,
+    "R":0,
 
     ## Aren't these PSL not LTL
     # "EConcat":0,

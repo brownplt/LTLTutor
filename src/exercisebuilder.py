@@ -7,12 +7,25 @@ import ltlnode
 import random
 import string
 
+## TODO
+# Normalize LTL priorities
+
+
 class ExerciseBuilder:
     def __init__(self, userLogs):
         self.userLogs = userLogs
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
    
+    
+    def normalize_ltl_priorities(self):
+        temporal_operators = ["X", "F", "G", "U"]
+        #to_consider = [op for op in self.ltl_priorities.keys() if op in temporal_operators]
+        # Normalize the weights of keys in temporal_operators, in the range of 0 to 10
+        max_weight = max([self.ltl_priorities[op] for op in temporal_operators])
+
+        for op in temporal_operators:
+            self.ltl_priorities[op] = round(self.ltl_priorities[op] * 10 / max_weight)
 
     def aggregateLogs(self, bucketsizeinhours=1):
         # Create an empty dictionary to store the buckets
@@ -117,7 +130,8 @@ class ExerciseBuilder:
                     ## This is where ML comes in.
                     
                     self.ltl_priorities[operator] = round(self.ltl_priorities[operator] * ((2 * weight) ** 2))
-
+            ## TODO: Do we want this normalization?
+            self.normalize_ltl_priorities()
 
 
     def build_exercise(self, literals, complexity, num_questions):
@@ -178,7 +192,6 @@ class ExerciseBuilder:
         return chosen_questions
     
     def gen_nl_question(self, formula):
-        ## Oof this is super broken
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
         return formula_eng
 
