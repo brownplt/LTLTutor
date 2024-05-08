@@ -34,6 +34,10 @@ def startup():
 def index():
     return render_template('index.html')
 
+@app.route('/ltl')
+def ltl():
+    return render_template('ltl.html')
+
 @app.route('/authorquestion', methods=['POST'])
 def authorquestion():
 
