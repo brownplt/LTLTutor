@@ -93,7 +93,7 @@ function show_feedback(parent_node) {
     return correct;
 }
 
-async function tracesat_getfeedback(button) {
+async function tracesatisfaction_getfeedback(button) {
 
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
@@ -118,7 +118,7 @@ async function tracesat_getfeedback(button) {
     let response = await postFeedback(data, "trace_satisfaction");
 }
 
-async function engtoltl_getfeedback(button) {
+async function englishtoltl_getfeedback(button) {
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
 
@@ -150,6 +150,15 @@ function displayServerResponse(response) {
 
     let feedback_div = document.querySelector('#feedback');
     // First, parse the response.
+
+    // TODO: Fix this, too rigid right now.
+    if (typeof response === 'string') {
+        feedback_div.innerHTML += response;
+        return;
+    }
+    else if (response.error) {
+        return;
+    }
 
     let disjoint = response.disjoint;
     let subsumed = response.subsumed;
@@ -233,10 +242,9 @@ async function postFeedback(data, questiontype) {
         if (response.ok) {
             const responseData = await response.json();
             return responseData;
-        } else {
-            return { error: 'Failed to generate feedback' }
-        }
+        } 
     } catch (error) {
         console.error(error);
     }
+    return { error: 'Failed to generate further feedback' }
 }

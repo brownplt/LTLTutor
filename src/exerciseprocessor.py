@@ -18,6 +18,7 @@ def load_questions_from_sourceuri(sourceuri, staticfolderpath):
         return response.json()
 
 
+## TODO: Maybe we want to change this to ensure some degree of interleaving.
 def randomize_questions(data):
     # Randomize question order
     random.shuffle(data)
@@ -29,49 +30,49 @@ def randomize_questions(data):
     return data
 
 
-def question_eng2ltl_to_tracesatisfaction(question):
+# def question_eng2ltl_to_tracesatisfaction(question):
 
-    tracesat_question = {}
+#     tracesat_question = {}
 
-    nat_lang = question['question']
-    options = question['options']
-    newoptions = []
+#     nat_lang = question['question']
+#     options = question['options']
+#     newoptions = []
 
-    correct_options = [option for option in options if option['isCorrect']]
+#     correct_options = [option for option in options if option['isCorrect']]
 
-    assert len(correct_options) == 1 # there should be exactly one correct option
-    correct_option = correct_options[0]
-    tracesat_question['question'] = correct_option['option']
-    newoptions = []
-    for option in options:
-        f = option['option']
-        isCorrect = option['isCorrect']
-        misconceptions = option['misconceptions']
+#     assert len(correct_options) == 1 # there should be exactly one correct option
+#     correct_option = correct_options[0]
+#     tracesat_question['question'] = correct_option['option']
+#     newoptions = []
+#     for option in options:
+#         f = option['option']
+#         isCorrect = option['isCorrect']
+#         misconceptions = option['misconceptions']
 
-        if isCorrect: 
-            trace_choices = spotutils.generate_accepted_traces(f)
-        else:
-            trace_choices = spotutils.generate_traces(f_accepted=f, f_rejected=correct_option['option'])
+#         if isCorrect: 
+#             trace_choices = spotutils.generate_accepted_traces(f)
+#         else:
+#             trace_choices = spotutils.generate_traces(f_accepted=f, f_rejected=correct_option['option'])
         
-        if len(trace_choices) == 0:
+#         if len(trace_choices) == 0:
 
-            ## TODO: We should generate a random traces here
-            continue
-        else:
-            newoptions.append( {
-                'option': random.choice(trace_choices),
-                'isCorrect': isCorrect,
-                'misconceptions': misconceptions
-            })
+#             ## TODO: We should generate a random traces here
+#             continue
+#         else:
+#             newoptions.append( {
+#                 'option': random.choice(trace_choices),
+#                 'isCorrect': isCorrect,
+#                 'misconceptions': misconceptions
+#             })
 
-    # Convert newoptions to a dictionary and then back to a list,
-    ## so there are no duplicate options
-    newoptions = list({option['option']: option for option in newoptions}.values())
-    tracesat_question['options'] = newoptions
-    return tracesat_question
+#     # Convert newoptions to a dictionary and then back to a list,
+#     ## so there are no duplicate options
+#     newoptions = list({option['option']: option for option in newoptions}.values())
+#     tracesat_question['options'] = newoptions
+#     return tracesat_question
 
-def exercise_eng2ltl_to_tracesatisfaction(exercise):
-    questions = [question_eng2ltl_to_tracesatisfaction(question) for question in exercise] 
-    return questions
+# def exercise_eng2ltl_to_tracesatisfaction(exercise):
+#     questions = [question_eng2ltl_to_tracesatisfaction(question) for question in exercise] 
+#     return questions
 
 

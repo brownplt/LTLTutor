@@ -13,85 +13,9 @@
 
 
     <div class="container mt-4">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
-            <a class="navbar-brand" href="#">LTL Tutor</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/ltl">LTL Documentation</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-toggle="collapse" href="#loader" aria-expanded="false"
-                            aria-controls="loader">
-                            Load an exercise from JSON
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" data-toggle="dropdown"
-                           href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                           Adaptive Exercises</a>
-                        <div class="dropdown-menu">
-                          <a class="dropdown-item" href="/newexercise/tracesatisfaction">Trace Satisfaction</a>
-                          <a class="dropdown-item" href="/newexercise/englishtoltl">English to LTL</a>
-                        </div>
-                      </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/authorquestion">Author An Exercise</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        {% include 'navbar.html' %}
         <p class="badge badge-light" id="userid_field"> </p>
-
-        <div class="collapse" id="loader">
-            <h5> Load An Exercise from JSON</h5>
-            <form id="exerciseForm" action="/exercise/englishtoltl" method="post">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-12">
-                            <select id="exerciseSelect" onchange="changeAction()" class="form-control">
-                                <option value="" disabled selected>Choose question type</option>
-                                <option value="englishtoltl" >English to LTL</option>
-                                <option value="tracesatisfaction">Trace Satisfaction</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <textarea name="sourceuri" placeholder="Enter the public URI of your JSON exercise" class="form-control mt-2"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12">
-                            <p class="mt-2">Or choose a pre-authored exercise:</p>
-                            <ul>
-                                <li class="alert-secondary" onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:emsys.json';">EmSys '23</li>
-                                <li class="alert-secondary" onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:1710exercise.json';">LFS '24</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary mt-2">Load</button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-
-
-
-
-        </div>
-
     </div>
-    <script>
-        function changeAction() {
-            var form = document.getElementById('exerciseForm');
-            var select = document.getElementById('exerciseSelect');
-            form.action = '/exercise/' + select.value;
-        }
-    </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

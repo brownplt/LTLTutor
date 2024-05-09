@@ -9,16 +9,14 @@ from logger import Logger
 import ast
 import exerciseprocessor
 import exercisebuilder
+import random
 
 app = Flask(__name__)
 
 answer_logger = Logger()
 
-
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
-
-
 
 @app.before_first_request
 def startup():
@@ -37,6 +35,10 @@ def index():
 @app.route('/ltl')
 def ltl():
     return render_template('ltl.html')
+
+@app.route('/loadfromjson')
+def loadfromjson():
+    return render_template('loadfromjson.html')
 
 @app.route('/authorquestion', methods=['POST'])
 def authorquestion():
@@ -89,8 +91,8 @@ def authorquestion_get():
 
 
 
-@app.route('/exercise/<kind>', methods=['POST'])
-def exercise(kind):
+@app.route('/exercise/predefined', methods=['POST'])
+def exercise():
     sourceuri = request.form.get('sourceuri')
     if not sourceuri.endswith('.json'):
         return "Invalid sourceuri. Must end with .json"
@@ -102,20 +104,11 @@ def exercise(kind):
 
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-
         data = exerciseprocessor.randomize_questions(data)
     except:
         return "Error loading exercise"
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
 
-    if kind == "tracesatisfaction":
-        data = exerciseprocessor.exercise_eng2ltl_to_tracesatisfaction(data)
-        exercise_name = "Trace Satisfaction " + exercise_name
-        return render_template('tracesatexercise.html', questions=data, exercise_name=exercise_name) 
-    elif kind == "englishtoltl":
-        exercise_name = "English to LTL " + exercise_name
-        return render_template('engtoltlexercise.html', questions=data, exercise_name=exercise_name) 
-    else:
-        return "Unknown exercise type"
 
 
 @app.route('/getfeedback/<questiontype>', methods=['POST'])
@@ -154,36 +147,24 @@ def loganswer(questiontype):
 
 
 
-@app.route('/newexercise/<kind>', methods=['GET'])
-def newexercise(kind):
+@app.route('/exercise/generate', methods=['GET'])
+def newexercise():
 
-    exercise_name = "Generated Exercise"
-    
     # Get a cookie from the request
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
 
+
+    num_questions = random.randint(3, 8)
+
+    ## TODO: Try and do better than this
+    exercise_name = "Personalized Exercise for " + userId
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
-    ### First get that users logs from the database
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
 
-    ### TODO: Exercise should involve the literals the user has encountered?
-    data = exercise_builder.build_exercise(literals = ["r", "y", "z"], complexity = 10, num_questions = 5)
-
-
-    
-    ## TODO: 1 is top, 0 bottom
-
-
-    if kind == "tracesatisfaction":
-        data = exerciseprocessor.exercise_eng2ltl_to_tracesatisfaction(data)
-        exercise_name = "Trace Satisfaction " + exercise_name
-        return render_template('tracesatexercise.html', questions=data, exercise_name=exercise_name) 
-    elif kind == "englishtoltl":
-        exercise_name = "English to LTL " + exercise_name
-        return render_template('engtoltlexercise.html', questions=data, exercise_name=exercise_name) 
-    else:
-        return "Unknown exercise type"
+    ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
+    data = exercise_builder.build_exercise(literals = ["r", "y", "z"], num_questions = num_questions)
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
 
 
 ## TODO: Remove this eventually
