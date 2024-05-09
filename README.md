@@ -7,6 +7,14 @@ export FLASK_APP=app.py # set FLASK_APP=app.py on Windows
 flask run
 ```
 
+To deploy to Heroku:
+
+```
+heroku create <app-name> # Only do this once
+git push heroku master
+```
+
+
 ## Re-Generating Parser from ANTLR
 ```
 antlr4 -Dlanguage=Python3 ltl.g4
