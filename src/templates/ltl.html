@@ -10,156 +10,84 @@
 </head>
 
 <body>
+    {% include 'navbar.html' %}
 
+    <div id="explanation">
 
-    <div class="container mt-4">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
-            <a class="navbar-brand" href="/">LTL Tutor</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" data-toggle="dropdown"
-                           href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                           Adaptive Exercises</a>
-                        <div class="dropdown-menu">
-                          <a class="dropdown-item" href="/newexercise/tracesatisfaction">Trace Satisfaction</a>
-                          <a class="dropdown-item" href="/newexercise/englishtoltl">English to LTL</a>
-                        </div>
-                      </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/authorquestion">Author An Exercise</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-
-
-
-        <!-- <div id="explanationold">
-            <p>
-                Linear Temporal Logic (LTL) is a .... fill.
-            </p>
-
-            <p>Let's break down LTL syntax, as used by this tutor:</p>
-            <ol>
-                <li><strong>Atomic Formulae</strong>: These are the basic building blocks of LTL formulae. They
-                    represent simple properties of the system, like "the light is green" or "the temperature is below 30
-                    degrees." In the grammar, these are represented by lowercase identifiers (e.g.,
-                    <code>lightgreen</code>).
-                </li>
-                <li><strong>Logical Operators</strong>:
-                    <ul>
-                        <li><strong>Disjunction (<code>|</code>)</strong>: This operator combines two formulas and
-                            evaluates
-                            to true if either of them is true. For example, if we have a formula <code> a | b</code>, it
-                            means "a or b."</li>
-                        <li><strong>Conjunction (<code>&</code>)</strong>: This combines two formulas and evaluates to
-                            true only if both of them are true. For instance, <code>a & b</code> means "a and b."</li>
-                        <li><strong>Until (<code>U</code>)</strong>: This operator represents a temporal relationship
-                            between two formulas. It evaluates to true if the first formula remains true until the
-                            second
-                            formula becomes true. For instance, <code>a U b</code> means "a until b."</li>
-                        <li><strong>Implication (<code>-></code>)</strong>: This operator represents logical
-                            implication. It evaluates to false only if the first formula is true and the second formula
-                            is false. For example, <code>a -&gt; b</code> means "if a, then b."</li>
-                        <li><strong>Equivalence (<code>&lt;-&gt;</code>)</strong>: This operator denotes logical
-                            equivalence. It evaluates to true if both formulas have the same truth value. For instance,
-                            <code>a &lt;-&gt; b</code> means "a if and only if b."
-                        </li>
-                        <li><strong>Next (<code>X</code>)</strong>: This operator represents the next state in the
-                            system. It evaluates to true if the formula is true in the next state. For example,
-                            <code>X a</code> means "a holds in the next state."
-                        </li>
-                        <li><strong>Eventually or Finally (<code>F</code>)</strong>: This operator asserts that a
-                            formula will become true at some point in the future. For instance, <code>F a</code> means
-                            "eventually a."</li>
-                        <li><strong>Globally (<code>G</code>)</strong>: This operator asserts that a formula is always
-                            true from the current state onwards. For example, <code>G a</code> means "a holds from this
-                            point on."</li>
-                        <li><strong>Negation (<code>!</code>)</strong>: This operator negates a formula. It evaluates to
-                            true if the formula is false and vice versa. For instance, <code>!a</code> means "not a."
-                        </li>
-                        <li><strong>Parentheses</strong>: These are used to group subformulas together and specify the
-                            order of operations.</li>
-                    </ul>
-                </li>
-            </ol>
-            <p>Using this grammar, we can create expressions like <code>G (lightgreen -&gt; (X !red))</code> to assert
-                that the traffic light is always green, and if it turns red at any point, it will be green in the next
-                state.</p>
-        </div>
- -->
-
-        <div id="explanation">
-
-            <p>Let's break down LTL syntax, as used by this tutor:</p>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Example</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Atomic Formulae</strong></td>
-                        <td>These represent simple properties of the system, like "the light is green" or "the temperature is below 30 degrees."</td>
-                        <td><code>lightgreen</code></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Disjunction (<code>|</code>)</strong></td>
-                        <td>This operator combines two formulas and evaluates to true if either of them is true.</td>
-                        <td><code>a | b</code> (means "a or b")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Conjunction (<code>&</code>)</strong></td>
-                        <td>This combines two formulas and evaluates to true only if both of them are true.</td>
-                        <td><code>a & b</code> (means "a and b")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Until (<code>U</code>)</strong></td>
-                        <td>This operator represents a temporal relationship between two formulas. It evaluates to true if the first formula remains true until the second formula becomes true.</td>
-                        <td><code>a U b</code> (means "a until b")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Implication (<code>-></code>)</strong></td>
-                        <td>This operator represents logical implication. It evaluates to false only if the first formula is true and the second formula is false.</td>
-                        <td><code>a -> b</code> (means "if a, then b")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Equivalence (<code><-></code>)</strong></td>
-                        <td>This operator denotes logical equivalence. It evaluates to true if both formulas have the same truth value.</td>
-                        <td><code>a <-> b</code> (means "a if and only if b")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Next (<code>X</code>)</strong></td>
-                        <td>This operator represents the next state in the system. It evaluates to true if the formula is true in the next state.</td>
-                        <td><code>X a</code> (means "in the next state, a")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Eventually or Finally (<code>F</code>)</strong></td>
-                        <td>This operator asserts that a formula will become true at some point in the future.</td>
-                        <td><code>F a</code> (means "eventually a")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Globally (<code>G</code>)</strong></td>
-                        <td>This operator asserts that a formula is always true from the current state onwards.</td>
-                        <td><code>G a</code> (means "a holds from this point on")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Negation (<code>!</code>)</strong></td>
-                        <td>This operator negates a formula. It evaluates to true if the formula is false and vice versa.</td>
-                        <td><code>!a</code> (means "not a")</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Parentheses</strong></td>
-                        <td>These are used to group subformulas together and specify the order of operations.</td>
-                        <td><code>(a & b)</code> (means "a and b, evaluated together")</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <p>Let's break down LTL syntax, as used by this tutor:</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Atomic Formulae</strong></td>
+                    <td>These represent simple properties of the system, like "the light is green" or "the temperature
+                        is below 30 degrees."</td>
+                    <td><code>lightgreen</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Disjunction (<code>|</code>)</strong></td>
+                    <td>This operator combines two formulas and evaluates to true if either of them is true.</td>
+                    <td><code>a | b</code> (means "a or b")</td>
+                </tr>
+                <tr>
+                    <td><strong>Conjunction (<code>&</code>)</strong></td>
+                    <td>This combines two formulas and evaluates to true only if both of them are true.</td>
+                    <td><code>a & b</code> (means "a and b")</td>
+                </tr>
+                <tr>
+                    <td><strong>Until (<code>U</code>)</strong></td>
+                    <td>This operator represents a temporal relationship between two formulas. It evaluates to true if
+                        the first formula remains true until the second formula becomes true.</td>
+                    <td><code>a U b</code> (means "a until b")</td>
+                </tr>
+                <tr>
+                    <td><strong>Implication (<code>-></code>)</strong></td>
+                    <td>This operator represents logical implication. It evaluates to false only if the first formula is
+                        true and the second formula is false.</td>
+                    <td><code>a -> b</code> (means "if a, then b")</td>
+                </tr>
+                <tr>
+                    <td><strong>Equivalence (<code><-></code>)</strong></td>
+                    <td>This operator denotes logical equivalence. It evaluates to true if both formulas have the same
+                        truth value.</td>
+                    <td><code>a <-> b</code> (means "a if and only if b")</td>
+                </tr>
+                <tr>
+                    <td><strong>Next (<code>X</code>)</strong></td>
+                    <td>This operator represents the next state in the system. It evaluates to true if the formula is
+                        true in the next state.</td>
+                    <td><code>X a</code> (means "in the next state, a")</td>
+                </tr>
+                <tr>
+                    <td><strong>Eventually or Finally (<code>F</code>)</strong></td>
+                    <td>This operator asserts that a formula will become true at some point in the future.</td>
+                    <td><code>F a</code> (means "eventually a")</td>
+                </tr>
+                <tr>
+                    <td><strong>Globally (<code>G</code>)</strong></td>
+                    <td>This operator asserts that a formula is always true from the current state onwards.</td>
+                    <td><code>G a</code> (means "a holds from this point on")</td>
+                </tr>
+                <tr>
+                    <td><strong>Negation (<code>!</code>)</strong></td>
+                    <td>This operator negates a formula. It evaluates to true if the formula is false and vice versa.
+                    </td>
+                    <td><code>!a</code> (means "not a")</td>
+                </tr>
+                <tr>
+                    <td><strong>Parentheses</strong></td>
+                    <td>These are used to group subformulas together and specify the order of operations.</td>
+                    <td><code>(a & b)</code> (means "a and b, evaluated together")</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     </div>
 
 

@@ -1,6 +1,7 @@
 [
     {
         "question": "Whenever the Engine light is on, it is off in the next state and on again in the state after that.",
+        "type" : "engtoltl",
         "options": [
             {
                 "option": "G(e -> X(! e) & (X(X e)))",
@@ -33,6 +34,7 @@
     },
     {
         "question": "The engine cannot stay on 3 states in a row",
+        "type" : "engtoltl",
         "options": [
             {
                 "option": "! F(e & (X e) & (X (X e)))",

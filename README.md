@@ -22,8 +22,6 @@ antlr4 -Dlanguage=Python3 ltl.g4
 # TODO:
 
 
-
-
 ### Inner Loop
 - [] Question generation
     - [] Generate answer from Natural Language (Maybe using `nl2ltl`)
@@ -39,3 +37,4 @@ antlr4 -Dlanguage=Python3 ltl.g4
    - [] Interleave question types
 - Determine distribution of questions, choose distractor from questions (if possible?)
   - [] Export report of learning
+- [] Complexity

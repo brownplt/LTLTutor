@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LTL Tutor: {{ exercise_name }}</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
+
+</head>
+
+<body>
+    <div class="container">
+
+        {% include 'navbar.html' %}
+        <h1>{{ exercise_name }}</h1>
+
+        <div id="questions">
+            {% for q in questions %}
+            <div class="card mt-4 question">
+                <div class="card-body">
+                    <p class="text-muted"> Question <span id="current_question_count">0</span> of {{ questions | length}} </p>
+                    <h5 class="card-title">
+                        {% if q.type == "englishtoltl" %}
+                        Which of the following LTL formulae best represents this English sentence?
+                        {% elif q.type == "tracesatisfaction" %}
+                        Which of the following traces satisfy the following LTL formula?
+                        {% else %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Unrecognized Question type! </strong>
+                        </div>
+                        {% endif %}
+                    </h5>
+                    <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question
+                        }}
+                    </h5>
+
+                    <ul class="list-group">
+                        {% for option in q.options %}
+                        <li class="list-group-item">
+                            <input type="radio" name="option" id="{{ loop.index }}" class="option"
+                                value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
+                                data-correct="{{ option.isCorrect }}">
+                            <label for="option{{ loop.index }}">
+                                {% if q.type == "tracesatisfaction" %}
+                                <div class="ltltrace"> {{ option.option }} </div>
+                                {% else %}
+                                <code>{{ option.option }}</code>
+                                {% endif %}
+                            </label>
+                        </li>
+                        {% endfor %}
+
+
+                    </ul>
+                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this)">Check Answer</button>
+                    <!-- TODO: Disable this, and then re-enable -->
+                    <button class="btn btn-primary next">Next Question</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+
+        <div id="feedback">
+
+        </div>
+
+        <div id="done" style="display: none;" class="alert alert-dark" role="alert">
+            <h4 class="alert-heading">Well done! You have completed the exercise</h4>
+
+            <p>You got <span id="correctCount">0</span> questions correct and </p>
+            <span id="incorrectCount">0</span> questions incorrect.</p>
+
+        </div>
+    </div>
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Hide all questions at the start
+            $('.question').hide();
+
+            // Show the first question
+            $('.question:first').show();
+
+            // When the "Next" button is clicked, hide the current question and show the next one
+            $('.next').click(function () {
+                // Empty the feedback div
+                $('#feedback').empty();
+                var nextQuestion = $(this).closest('.question').hide().next('.question');
+                if (nextQuestion.length) {
+                    // If there is a next question, show it
+                    nextQuestion.show();
+                } else {
+                    // If there are no more questions, show the "done" section
+                    $('#done').show();
+                }
+
+                // Update the progress bar
+                var qcount = document.getElementById('current_question_count');
+                qcount.innerHTML = parseInt(qcount.innerHTML) + 1;
+            });
+        });
+    </script>
+</body>
+
+</html>
