@@ -18,6 +18,8 @@ git push heroku master
 - To scale to a certain number of dynos: heroku ps:scale web=<n> --app ltltutor
 
 - [] Currently, Heroku deployment isn't working because of SPOT installation
+  - May have to use either the Conda buildpack: https://github.com/heroku-python/conda-buildpack
+  - Or the APT buildpack: https://github.com/heroku/heroku-buildpack-apt
 
 
 ## Re-Generating Parser from ANTLR
