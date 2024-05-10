@@ -14,6 +14,11 @@ heroku create <app-name> # Only do this once
 git push heroku master
 ```
 
+- To scale to 0 dynos (aka off): heroku ps:scale web=0 --app ltltutor
+- To scale to a certain number of dynos: heroku ps:scale web=<n> --app ltltutor
+
+- [] Currently, Heroku deployment isn't working because of SPOT installation
+
 
 ## Re-Generating Parser from ANTLR
 ```
