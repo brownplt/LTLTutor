@@ -11,7 +11,7 @@ To deploy to Heroku:
 
 ```
 heroku create <app-name> # Only do this once
-git push heroku master
+git push heroku main
 ```
 
 - To scale to 0 dynos (aka off): heroku ps:scale web=0 --app ltltutor
