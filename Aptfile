@@ -1,3 +1,8 @@
+## Trying custom build fork
+
+:key:lrde:https://www.lrde.epita.fr/repo/debian.gpg
+:repo:lrde:deb http://www.lrde.epita.fr/repo/debian/ stable
+
 # Custom Apt buildpack
 spot 
 libspot-dev 

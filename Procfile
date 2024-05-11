@@ -1,1 +1,1 @@
-web: ./add-apt-repositories.sh && cd src && gunicorn app:app
+web: cd src && gunicorn app:app
