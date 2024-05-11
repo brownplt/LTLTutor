@@ -1,7 +1,7 @@
 ## Trying custom build fork
 
 :key:lrde:https://www.lrde.epita.fr/repo/debian.gpg
-:repo:deb http://www.lrde.epita.fr/repo/debian/ stable main
+:repo:deb http://www.lrde.epita.fr/repo/debian/ stable
 
 # Custom Apt buildpack
 spot 
