@@ -19,14 +19,14 @@ answer_logger = Logger()
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
 
-@app.before_first_request
-def startup():
-    try:
-        with open('openai.secret.key', 'r') as file:
-            secret_key = file.read().strip()
-            os.environ['OPENAI_API_KEY'] = secret_key
-    except:
-        print("No Secret Key found", file=sys.stderr)
+# @app.before_first_request
+# def startup():
+#     try:
+#         with open('openai.secret.key', 'r') as file:
+#             secret_key = file.read().strip()
+#             os.environ['OPENAI_API_KEY'] = secret_key
+#     except:
+#         print("No Secret Key found", file=sys.stderr)
 
 
 @app.route('/')
