@@ -174,10 +174,30 @@
                     placeholder="Enter Exercise Name" required>
             </div>
 
-            <form action="/authorquestion" method="POST">
-                <div class="form-group shadow">
 
-                    <label for="question">Enter your natural language question:</label>
+
+            <form action="/authorquestion" method="POST">
+                <div class="form-group">
+
+
+                    <label for="kind">Question kind:</label>
+
+
+                    <select class="form-control" id="kind" name="kind" required>
+                        {% if kind == "englishtoltl" %}
+                        <option value="englishtoltl" selected>English to LTL</option>
+                        <option value="tracesatisfaction">Trace Satisfaction</option>
+                        {% elif kind == "tracesatisfaction" %}
+                        <option value="englishtoltl">English to LTL</option>
+                        <option value="tracesatisfaction" selected>Trace Satisfaction</option>
+                        {% else %}
+                        <option value="englishtoltl">English to LTL</option>
+                        <option value="tracesatisfaction">Trace Satisfaction</option>
+                        {% endif %}
+                    </select>
+
+
+                    <label for="question">Question:</label>
 
                     {% if question %}
                     <input type="text" class="form-control" id="question" name="question" value="{{ question }}"
@@ -188,7 +208,7 @@
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="answer">Enter the answer in LTL:</label>
+                    <label for="answer">Answer:</label>
                     {% if answer %}
                     <input type="text" class="form-control" id="answer" name="answer" value="{{ answer }}" required>
                     {% else %}
@@ -239,7 +259,8 @@
                 </ul>
             </div>
             <div class="container">
-                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="addQuestion()">Save Question</button>
+                <button type="button" class="btn btn-primary btn-lg btn-block" onclick="addQuestion()">Save
+                    Question</button>
             </div>
         </div>
 
