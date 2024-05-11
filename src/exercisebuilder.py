@@ -30,6 +30,8 @@ class ExerciseBuilder:
         #to_consider = [op for op in self.ltl_priorities.keys() if op in temporal_operators]
         # Normalize the weights of keys in temporal_operators, in the range of 0 to 10
         xs =[ self.ltl_priorities[op] for op in temporal_operators]
+
+        
         max_weight = max(xs)
         max_weight = max(1, max_weight)
 
@@ -88,11 +90,14 @@ class ExerciseBuilder:
                 weight += weight_change
                 previous_frequency = frequency
 
-            weights[concept] = max(weight, 0)  # Ensure weights don't go negative
+            weights[concept] = max(weight, 1)  # Ensure weights don't go negative
 
-        max_weight = max(weights.values())
-        for concept in weights:
-            weights[concept] /= max_weight
+        ## Why is weights empty ever?
+
+        ## TODO: Do we want this normalization, given we normalize the LTL priorities?
+        # max_weight = max(weights.values())
+        # for concept in weights:
+        #     weights[concept] /= max_weight
 
         return weights
 

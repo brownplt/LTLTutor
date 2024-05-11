@@ -11,5 +11,7 @@ RUN conda init bash && \
 
 WORKDIR /src
 
-CMD . /opt/conda/etc/profile.d/conda.sh && conda activate myenv && python app.py
+#flask run --host=0.0.0.0
+
+CMD . /opt/conda/etc/profile.d/conda.sh && conda activate myenv && flask run --host=0.0.0.0
 
