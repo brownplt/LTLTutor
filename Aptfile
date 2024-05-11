@@ -1,0 +1,5 @@
+# Custom Apt buildpack
+spot 
+libspot-dev 
+spot-doc 
+python3-spot
