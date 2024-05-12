@@ -15,7 +15,8 @@ class ExerciseBuilder:
 
     MAX_TRACES = 10
 
-    TRACESAT = "tracesatisfaction"
+    TRACESATMC = "tracesatisfaction_mc"
+    TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
     def __init__(self, userLogs):
@@ -140,7 +141,7 @@ class ExerciseBuilder:
     def choose_question_kind(self):
         ## TODO: Maybe this can be more sophisticated, looking at the kinds of questions students
         ## have gotten wrong in the past
-        return random.choice([self.TRACESAT, self.ENGLISHTOLTL])
+        return random.choice([self.TRACESATMC, self.ENGLISHTOLTL, self.TRACESATYN])
 
     def get_tree_size(self):
         ## TODO: Determine complexity somehow, maybe based on the number of misconceptions encountered
@@ -165,12 +166,12 @@ class ExerciseBuilder:
         for answer in question_answers:
             kind = self.choose_question_kind()
 
-            if kind == self.TRACESAT:
-                question = self.build_tracesat_question(answer)
+            if kind == self.TRACESATMC:
+                question = self.build_tracesat_mc_question(answer)
             elif kind == self.ENGLISHTOLTL:
                 question = self.build_english_to_ltl_question(answer)
-            else:
-                question = None
+            elif kind == self.TRACESATYN:
+                question = self.build_tracesat_yn_question(answer)
 
             if question is not None:
                 questions.append(question)
@@ -228,7 +229,7 @@ class ExerciseBuilder:
 
 
 
-    def build_tracesat_question(self, answer):
+    def build_tracesat_mc_question(self, answer):
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
@@ -272,6 +273,59 @@ class ExerciseBuilder:
 
         return {
             "question": parenthesized_answer,
-            "type": self.TRACESAT,
+            "type": self.TRACESATMC,
             "options": trace_options
         }
+
+
+
+
+    def build_tracesat_yn_question(self, answer):
+        formulae = self.get_options_with_misconceptions_as_formula(answer)
+        parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
+        
+        if formulae is None:
+            ## Generate a trace to accept the formula
+            potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
+            misconceptions = []
+        else:
+            ## Choose a random option
+            formula = random.choice(formulae)
+            isCorrect = formula['isCorrect']
+            if isCorrect: 
+                potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
+            else:
+                potential_trace_choices = spotutils.generate_traces(f_accepted=formula, f_rejected=parenthesized_answer)
+            misconceptions = formula['misconceptions']
+        
+        if len(potential_trace_choices) == 0:
+            return None
+        
+        trace_option = random.choice(potential_trace_choices)
+
+        ## THink about this
+        yes_misconceptions = [] if isCorrect else misconceptions
+        no_misconceptions = misconceptions if isCorrect else []
+        options = [
+
+            {
+              'option': 'Yes',
+              'isCorrect': isCorrect,
+               'misconceptions': yes_misconceptions
+             },
+            {
+              'option': 'No',
+              'isCorrect': not isCorrect,
+              'misconceptions': no_misconceptions
+            }
+
+        ]
+
+        ## TODO: This needs to be fixed, trace_option needs tobe found.
+        return {
+            "question": parenthesized_answer,
+            "trace": trace_option,
+            "type": self.TRACESATYN,
+            "options": options
+        }
+        

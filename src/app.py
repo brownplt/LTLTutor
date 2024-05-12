@@ -175,7 +175,7 @@ def loganswer(questiontype):
             to_return['disjoint'] = fgen.disjoint()
             to_return['cewords'] = fgen.getCEWords()
         return json.dumps(to_return)
-    elif questiontype == "trace_satisfaction":
+    elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
             return "No further feedback currently available for Trace Satisfaction exercises."
     else:

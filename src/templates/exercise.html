@@ -25,8 +25,10 @@
                     <h5 class="card-title">
                         {% if q.type == "englishtoltl" %}
                         Which of the following LTL formulae best represents this English sentence?
-                        {% elif q.type == "tracesatisfaction" %}
+                        {% elif q.type == "tracesatisfaction_mc" %}
                         Which of the following traces satisfy the following LTL formula?
+                        {% elif q.type == "tracesatisfaction_yn" %}
+                        Does this trace satisfy the following LTL formula?
                         {% else %}
                         <div class="alert alert-danger" role="alert">
                             <strong>Unrecognized Question type! </strong>
@@ -36,6 +38,11 @@
                     <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question
                         }}
                     </h5>
+
+                    <!-- only for y/n questions -->
+                    {% if q.type == "tracesatisfaction_yn" %}
+                    <div class="ltltrace"> {{ q.trace }} </div>
+                    {% endif %}
 
                     <ul class="list-group">
                         {% for option in q.options %}

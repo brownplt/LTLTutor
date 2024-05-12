@@ -93,7 +93,7 @@ function show_feedback(parent_node) {
     return correct;
 }
 
-async function tracesatisfaction_getfeedback(button) {
+async function tracesatisfaction_mc_getfeedback(button) {
 
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
@@ -116,6 +116,32 @@ async function tracesatisfaction_getfeedback(button) {
         question_options: question_options
     }
     let response = await postFeedback(data, "trace_satisfaction");
+}
+
+
+async function tracesatisfaction_yn_getfeedback(button) {
+
+    let parent_node = button.parentNode;
+    let question_text = getQuestionText(parent_node);
+
+    let selected_radio = getSelectedRadio(parent_node);
+    if (selected_radio == null) {
+        return;
+    }
+
+    let correct_option = getCorrectRadio(parent_node).value;
+    let question_options = getQuestionOptions(parent_node);
+    let correct = show_feedback(parent_node);
+
+    let data = {
+        selected_option: selected_radio.value,
+        correct_option: correct_option,
+        correct: correct,
+        misconceptions: selected_radio.dataset.misconceptions,
+        question_text: question_text,
+        question_options: question_options
+    }
+    let response = await postFeedback(data, "trace_satisfaction_yn");
 }
 
 async function englishtoltl_getfeedback(button) {

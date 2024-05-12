@@ -38,18 +38,15 @@ antlr4 -Dlanguage=Python3 ltl.g4
 
 
 ### Inner Loop
-- [] Question generation
-    - [] Generate answer from Natural Language (Maybe using `nl2ltl`)
-- [] LTL -> Natural Language
 
 - [] Improve distractor generator. Currently so-so.
+  - [] FOr traces, ensure that each state specifies a truth value for each variable (1 --> all are true)
 - [] Move `userId` from Cookie to something else.
+- [] Introduce a third question type: Yes/No trace satisfaction (add an explanation field also!)
+  - However, how would we determine *misconception* if someone gets a trace where the correct answer was `Yes`, and someone says `No`? Do we just have *no* misconception?
 
 ### Outer Loop
-
-
-- Determine Interleaving behavior
-   - [] Interleave question types
+ 
 - Determine distribution of questions, choose distractor from questions (if possible?)
   - [] Export report of learning
 - [] Complexity
