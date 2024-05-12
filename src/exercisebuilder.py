@@ -288,6 +288,7 @@ class ExerciseBuilder:
             ## Generate a trace to accept the formula
             potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             misconceptions = []
+            isCorrect = True
         else:
             ## Choose a random option
             formula = random.choice(formulae)
@@ -295,7 +296,7 @@ class ExerciseBuilder:
             if isCorrect: 
                 potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             else:
-                potential_trace_choices = spotutils.generate_traces(f_accepted=formula, f_rejected=parenthesized_answer)
+                potential_trace_choices = spotutils.generate_traces(f_accepted=str(formula), f_rejected=parenthesized_answer)
             misconceptions = formula['misconceptions']
         
         if len(potential_trace_choices) == 0:
