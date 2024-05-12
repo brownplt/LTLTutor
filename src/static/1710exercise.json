@@ -1,6 +1,7 @@
 [
     {
         "question": "The green light is never off",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "G(green)",
@@ -26,6 +27,7 @@
     },
     {
         "question": "Whenever the Red light is on, it is off in the next state and on again in the state after that. ",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "(G (red -> (X !red) & (X (X red)) ))",
@@ -59,6 +61,7 @@
     },
     {
         "question": "The Red light is on in exactly one state (not necessarily the first state).",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "(F red) & (G (red -> X(G !red)))",
@@ -90,6 +93,7 @@
     },
     {
         "question": "Red light cannot stay on for three states in a row. ",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "! F(red & (X red) & (X (X red)))",
@@ -114,6 +118,7 @@
     },
     {
         "question": "Whenever the Red light is on, the Blue light will be on then or at some point in the future. ",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "(G (red -> (blue | (F blue))))",
@@ -147,6 +152,7 @@
     },
     {
         "question": "The Red light is on for zero or more states, and then turns off and remains off in the future.",
+        "kind": "englishtoltl",
         "options": [
             {
                 "option": "(F (G !red))",
@@ -173,6 +179,183 @@
                 "misconceptions": [
                     "MisconceptionCode.ImplicitG"
                 ]
+            }
+        ]
+    },
+    {
+        "question": "G(red | blue)",
+        "kind": "tracesatisfaction_yn",
+        "trace": "red & !green & !blue; !red & !green & !blue; r & g & b; cycle{!red & green & !blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "F(red & green)",
+        "kind": "tracesatisfaction_yn",
+        "trace": "!red & !green & !blue; !red & !green & blue; r & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.OtherImplicit"]
+            },
+            {
+                "option": "No",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "(G (X red))",
+        "kind": "tracesatisfaction_yn",
+        "trace": "!red & green & blue; red & !green & blue; !red & !green & !blue; cycle{!red & green & blue; red & green & blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateQuantification"]
+            },
+            {
+                "option": "No",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "red",
+        "kind": "tracesatisfaction_yn",
+        "trace": "!red & green & blue; red & green & blue; red & green & blue; cycle{red & green & blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateIndex"]
+            },
+            {
+                "option": "No",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "F red",
+        "kind": "tracesatisfaction_yn",
+        "trace": "red & !green & !blue; !red & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateIndex"]
+            }
+        ]
+    },
+    {
+        "question": "! (G blue)",
+        "kind": "tracesatisfaction_yn",
+        "trace": "!red & !green & blue; !red & !green & blue; cycle{!red & !green & !blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateQuantification"]
+            },
+            {
+                "option": "No",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "G (red -> X (X ( X (red))))",
+        "kind": "tracesatisfaction_yn",
+        "trace": "!red & !green & !blue; red & green & blue; red & green & blue; !red & !green & !blue;cycle{red & green & blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateIndex"]
+            }
+        ]
+    },
+    {
+        "question": "X X X red",
+        "options": [
+            {
+                "option": "red & !green & !blue; !red & !green & !blue; !red & !green & !blue; red & !green & !blue; cycle{!red & !green & !blue}",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "1; red; 1; !red; cycle{1}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateIndex"
+                ]
+            },
+            {
+                "option": "1; 1; red; !red; cycle{1}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "red U green",
+        "kind": "tracesatisfaction_yn",
+        "trace": "red & !green & blue; red & !green & blue; red & !green & blue; red & green & blue;cycle{!red & !green & blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.ExclusiveU"]
+            }
+        ]
+    },
+    {
+        "question": "red U blue",
+        "kind": "tracesatisfaction_yn",
+        "trace": "red & !green & !blue;red & !green & !blue;red & !green & !blue;cycle{red & !green & !blue}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.WeakU"]
             }
         ]
     }

@@ -12,8 +12,6 @@ class NodeRepr {
             this.vars = ors[Math.floor(Math.random() * ors.length)];
         }
 
-
-
         this.id = Math.random().toString(36).substring(2, 8);
     }
 
@@ -84,10 +82,6 @@ function edgesFromSpotString(sr) {
 
     let parts = sr.split(';');
     let edges = []
-
-
-
-
     let states = parts.map(part => new NodeRepr(part));
 
 

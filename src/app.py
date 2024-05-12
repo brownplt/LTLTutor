@@ -53,11 +53,16 @@ def authorquestion():
         if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
             ltl = parse_ltl_string(question)
 
+
         elif kind == "englishtoltl":
             ltl = parse_ltl_string(answer)
         else:
             return "Invalid question type"
         
+        
+
+        ## TODO: Fix: getAllApplicableMisconceptions actually modifies ltl. 
+        ## Solution is for it to deep copy somewhere.
         d = getAllApplicableMisconceptions(ltl)
         distractors = []
         for misconception in d:
@@ -76,16 +81,12 @@ def authorquestion():
                 mergedDistractors.append(distractor)
 
         distractors = mergedDistractors
-
-
-
-
         new_distractors = []
         added_traces = set([answer])
         ## IF the kind is trace satisfaction_mc, we need to generate traces for each distractor:
         if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
-
-            answer_formula = str(ltl)
+            # This is only true for trace_satisaction questions
+            answer_formula = question
             
             for distractor in distractors:
                 f = distractor['formula']
