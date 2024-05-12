@@ -15,7 +15,43 @@
     <div class="container mt-4">
         {% include 'navbar.html' %}
         <p class="badge badge-light" id="userid_field"> </p>
+
+
+        <p> If you have not used this tool before, we recommend either <href a="/ltl">Going through LTL
+                documentation</a>.
+                If you are familiar with LTL, we recommend trying one of the following pre-loaded exercises </p>
+
+        <form id="exerciseForm" action="/exercise/predefined" method="post">
+            <div class="container">
+                <form></form>
+
+                <div class="row">
+                    <div class="col-12">
+                        <p class="mt-2">Choose an exercise:</p>
+                        <ul>
+                            <li class="alert-secondary"
+                                onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:emsys.json';">
+                                EmSys '23 (Very short exercise)</li>
+                            <li class="alert-secondary"
+                                onclick="document.querySelector('textarea[name=sourceuri]').value = 'preload:1710exercise.json';">
+                                LFS '24 (Longer exercise)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary mt-2">Load</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <p> Once you have done this, you can start loading <a class="nav-link" href="/exercise/generate"
+                aria-expanded="false">
+                Personalized Exercises
+            </a>
+        </p>
     </div>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
