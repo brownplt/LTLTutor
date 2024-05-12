@@ -50,7 +50,7 @@ def authorquestion():
     exercise_so_far = request.form.get('exercisesofar')
 
     try:
-        if kind == "tracesatisfaction":
+        if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
             ltl = parse_ltl_string(question)
 
         elif kind == "englishtoltl":
@@ -82,8 +82,8 @@ def authorquestion():
 
         new_distractors = []
         added_traces = set([answer])
-        ## IF the kind is trace satisfaction, we need to generate traces for each distractor:
-        if kind == "tracesatisfaction":
+        ## IF the kind is trace satisfaction_mc, we need to generate traces for each distractor:
+        if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
 
             answer_formula = str(ltl)
             
@@ -99,6 +99,7 @@ def authorquestion():
                         'code': ms
                     })
                     added_traces.add(c)
+        
 
         distractors = new_distractors
         if len(distractors) == 0:
@@ -106,6 +107,8 @@ def authorquestion():
                 "formula": "-",
                 "code": "Could not determine applicable distractors."
             })
+
+
 
         return render_template('authorquestion.html', distractors=distractors, error="", answer=answer, question=question, exerciseset = exercise_so_far, kind = kind)
     
@@ -185,10 +188,11 @@ def loganswer(questiontype):
 
 @app.route('/exercise/generate', methods=['GET'])
 def newexercise():
-
     # Get a cookie from the request
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
 
+    ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
+    LITERALS = ["r", "x", "y"]
 
     num_questions = random.randint(3, 8)
 
@@ -198,9 +202,8 @@ def newexercise():
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
 
-    ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
-    data = exercise_builder.build_exercise(literals = ["r", "y", "z"], num_questions = num_questions)
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
+    data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name, literals = LITERALS)
 
 
 ## TODO: Remove this eventually

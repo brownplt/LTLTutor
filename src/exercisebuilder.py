@@ -277,9 +277,6 @@ class ExerciseBuilder:
             "options": trace_options
         }
 
-
-
-
     def build_tracesat_yn_question(self, answer):
         formulae = self.get_options_with_misconceptions_as_formula(answer)
         parenthesized_answer = str(ltlnode.parse_ltl_string(answer))

@@ -3,6 +3,11 @@
 
 <head>
     <title>LTL Tutor: {{ exercise_name }}</title>
+    {% if literals %}
+    <script type="text/javascript">
+        var literals = JSON.parse('{{ literals | tojson | safe }}');
+    </script>
+    {% endif %}
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>

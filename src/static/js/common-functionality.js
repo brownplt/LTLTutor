@@ -2,11 +2,26 @@
 class NodeRepr {
 
     constructor(vars) {
+        
         this.vars = vars.trim();
+
+        // Do we want to only choose one of the 'ors'?
+        // If so, we can choose a random one
+        if (this.vars.includes('|')) {
+            let ors = this.vars.split('|');
+            this.vars = ors[Math.floor(Math.random() * ors.length)];
+        }
+
+
+
         this.id = Math.random().toString(36).substring(2, 8);
     }
 
     toString() {
+
+
+        // TODO: Do we want &s?
+        // return `${this.id}["${this.vars.replace(/&/g, ',')}"]`;
         return `${this.id}["${this.vars}"]`;
     }
 }
@@ -71,6 +86,8 @@ function edgesFromSpotString(sr) {
     let edges = []
 
 
+
+
     let states = parts.map(part => new NodeRepr(part));
 
 
@@ -91,6 +108,12 @@ function edgesFromSpotString(sr) {
         states = states.concat(cycle_states);
     }
 
+
+
+    //Call ensure_literals on each state
+    states = states.map(state => ensure_literals(state));
+
+
     // For each part, get the next part and add it to the edges array
     for (let i = 1; i < states.length; i += 1) {
         let current = states[i - 1];
@@ -110,4 +133,39 @@ function mermaidGraphFromEdgesList(edges) {
     });
 
     return diagramText;
+}
+
+function ensure_literals(node) {
+    
+    if (!literals)
+        return node;
+    
+    let vars = node.vars.trim();
+
+    if (vars == "1") {
+        let xs = literals.join(" & ");
+        node.vars = xs;
+        return node;
+    }
+
+    if (vars == "0") {
+        let xs = literals.map(literal => `!${literal}`).join(" & ");
+        node.vars = xs;
+        return node;
+    }
+
+
+    // I want a list of all the lowercase words in vars
+    let vars_words = vars.match(/\b[a-z0-9]+\b/g);
+
+    // If any word in literals is not in vars_words, we add it ( or ! it) to vars
+    let missing_literals = literals.filter(literal => !vars_words.includes(literal));
+
+    for (let literal of missing_literals) {
+        // TODO: Choose between adding the literal or adding the negation of the literal
+        let x = Math.random() < 0.5 ? literal : `!${literal}`;
+        vars = `${vars} & ${x}`;
+    }
+    node.vars = vars;
+    return node;
 }
