@@ -34,4 +34,4 @@ EXPOSE 5000
 # Make RUN commands use the new environment
 SHELL ["/bin/bash", "-c"]
 
-CMD /bin/bash -c "source /venv/bin/activate && flask run --host=0.0.0.0 --port=${PORT:-5000}"
+CMD /bin/bash -c "source /venv/bin/activate && python app.py"

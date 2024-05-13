@@ -18,7 +18,9 @@ git push heroku main
 ```
 
 - To scale to 0 dynos (aka off): heroku ps:scale web=0 --app ltltutor
-- To scale to a certain number of dynos: heroku ps:scale web=<n> --app ltltutor
+- To scale to a certain number of dynos: heroku ps:scale web=1 --app ltltutor
+
+(or n instead of 1)
 
 - [] Currently, Heroku deployment isn't working because of SPOT installation
   - May have to use either the Conda buildpack: https://github.com/heroku-python/conda-buildpack

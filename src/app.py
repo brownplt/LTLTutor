@@ -12,6 +12,10 @@ import exercisebuilder
 import random
 import spotutils
 
+
+
+port = os.getenv('PORT', default='5000')
+
 app = Flask(__name__)
 
 answer_logger = Logger()
@@ -227,5 +231,7 @@ def viewstudentlogs(type):
         return render_template('model.html', complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
     else:
         return "Invalid type"
+    
+
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=int(port))
