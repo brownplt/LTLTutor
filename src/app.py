@@ -220,10 +220,11 @@ def viewstudentlogs(type):
         exercise_builder = exercisebuilder.ExerciseBuilder(logs)
         model = exercise_builder.get_model()
 
+        misconception_weights = model['misconception_weights']
+        misconceptions_over_time = model['misconceptions_over_time']
+        complexity = model['complexity']
 
-
-        return json.dumps(model['misconception_weights'])
-        #return render_template('model.html')
+        return render_template('model.html', complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
     else:
         return "Invalid type"
 if __name__ == '__main__':

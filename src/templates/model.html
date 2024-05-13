@@ -5,16 +5,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
+            var misconceptionWeightChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ misconception_weights.keys() | list | tojson }},
+            datasets: [{
+                label: 'Estimated Weight',
+                data: {{ misconception_weights.values() | list | tojson }},
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+                    }]
+                },
+            options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+            });
+        });
+    </script>
+    <style>
+        .infograph {
+            max-width: 50vw;
+            /* 80% of viewport width */
+            max-height: 50vh;
+            /* 80% of viewport height */
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="container mt-4">
         <h1> Work in Progress </h1>
+
+        <p> Current Complexity Level {{ complexity }}</p>
+
+        <div class="container infograph">
+            <h3>Estimated Distribution of Misconceptions</h3>
+            <canvas id="estimatedMisconceptions"></canvas>
+        </div>
+
+        <div class="container infograph">
+            <h3>Misconceptions Identified Over Time</h3>
+            <canvas id="misconceptionsSeenOverTime"></canvas>
+        </div>
+
+
+
         <p> This page is still under construction. </p>
     </div>
+
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
