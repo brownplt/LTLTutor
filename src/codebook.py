@@ -1,6 +1,7 @@
 from enum import Enum
 import random
 from ltlnode import *
+import copy
 
 class MisconceptionCode(Enum):
     Precedence = "Precedence"
@@ -89,7 +90,10 @@ def applyMisconception(node, misconception):
         return MutationResult(node)
 
 
-def getAllApplicableMisconceptions(node):
+def getAllApplicableMisconceptions(node_orig):
+
+
+    node = copy.deepcopy(node_orig)
     xs = [        applyMisconception(node, misconception)    for misconception in MisconceptionCode]
     xs = [ x  for x in xs if (x is not None and x.misconception is not None) ]
     return xs
