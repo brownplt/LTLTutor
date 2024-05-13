@@ -164,7 +164,7 @@ class NextNode(UnaryOperatorNode):
 
 
     def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}Next, it will be the case that {self.operand.__to_english__(depth+1)}"
+        return f"\n{self.get_indent(depth)}next, {self.operand.__to_english__(depth+1)}"
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -173,7 +173,7 @@ class GloballyNode(UnaryOperatorNode):
         super().__init__(GloballyNode.symbol, operand)
 
     def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}It is always the case that {self.operand.__to_english__(depth+1)}"
+        return f"\n{self.get_indent(depth)}always, {self.operand.__to_english__(depth+1)}"
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -182,7 +182,7 @@ class FinallyNode(UnaryOperatorNode):
         super().__init__(FinallyNode.symbol, operand)
 
     def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}Eventually, {self.operand.__to_english__(depth+1)}"
+        return f"\n{self.get_indent(depth)}eventually, {self.operand.__to_english__(depth+1)}"
 
 
 class OrNode(BinaryOperatorNode):
@@ -211,7 +211,7 @@ class NotNode(UnaryOperatorNode):
         super().__init__(NotNode.symbol, operand)
 
     def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}It is not the case that {self.operand.__to_english__(depth+1)}."
+        return f"\n{self.get_indent(depth)}not {self.operand.__to_english__(depth+1)}."
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -219,7 +219,7 @@ class ImpliesNode(BinaryOperatorNode):
         super().__init__(ImpliesNode.symbol, left, right)
 
     def __to_english__(self,depth=0):
-        return f"\n{self.get_indent(depth)}If {self.left.__to_english__(depth+1)} then {self.right.__to_english__(depth+1)}."
+        return f"\n{self.get_indent(depth)}if {self.left.__to_english__(depth+1)} then {self.right.__to_english__(depth+1)}."
 
 
 class EquivalenceNode(BinaryOperatorNode):
