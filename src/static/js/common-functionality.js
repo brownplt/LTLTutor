@@ -49,6 +49,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Call build graph for each trace element, ie every element with class "ltltrace"
     let traceElements = document.querySelectorAll('.ltltrace');
     traceElements.forEach(traceElement => {
+        console.log("LTL Trace:")
+        console.log(traceElement)
         buildGraph(traceElement);
         mermaid.init(undefined, traceElement);
     });

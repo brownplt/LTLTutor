@@ -1,7 +1,7 @@
 [
     {
         "question": "The green light is never off",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "G(green)",
@@ -27,7 +27,7 @@
     },
     {
         "question": "Whenever the Red light is on, it is off in the next state and on again in the state after that. ",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "(G (red -> (X !red) & (X (X red)) ))",
@@ -61,7 +61,7 @@
     },
     {
         "question": "The Red light is on in exactly one state (not necessarily the first state).",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "(F red) & (G (red -> X(G !red)))",
@@ -93,7 +93,7 @@
     },
     {
         "question": "Red light cannot stay on for three states in a row. ",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "! F(red & (X red) & (X (X red)))",
@@ -118,7 +118,7 @@
     },
     {
         "question": "Whenever the Red light is on, the Blue light will be on then or at some point in the future. ",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "(G (red -> (blue | (F blue))))",
@@ -152,7 +152,7 @@
     },
     {
         "question": "The Red light is on for zero or more states, and then turns off and remains off in the future.",
-        "kind": "englishtoltl",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "(F (G !red))",
@@ -184,7 +184,7 @@
     },
     {
         "question": "G(red | blue)",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue; !red & !green & !blue; r & g & b; cycle{!red & green & !blue}",
         "options": [
             {
@@ -201,7 +201,7 @@
     },
     {
         "question": "F(red & green)",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "!red & !green & !blue; !red & !green & blue; r & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
         "options": [
             {
@@ -218,7 +218,7 @@
     },
     {
         "question": "(G (X red))",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "!red & green & blue; red & !green & blue; !red & !green & !blue; cycle{!red & green & blue; red & green & blue}",
         "options": [
             {
@@ -235,7 +235,7 @@
     },
     {
         "question": "red",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "!red & green & blue; red & green & blue; red & green & blue; cycle{red & green & blue}",
         "options": [
             {
@@ -252,7 +252,7 @@
     },
     {
         "question": "F red",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue; !red & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
         "options": [
             {
@@ -269,7 +269,7 @@
     },
     {
         "question": "! (G blue)",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "!red & !green & blue; !red & !green & blue; cycle{!red & !green & !blue}",
         "options": [
             {
@@ -286,7 +286,7 @@
     },
     {
         "question": "G (red -> X (X ( X (red))))",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "!red & !green & !blue; red & green & blue; red & green & blue; !red & !green & !blue;cycle{red & green & blue}",
         "options": [
             {
@@ -327,7 +327,7 @@
     },
     {
         "question": "red U green",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "red & !green & blue; red & !green & blue; red & !green & blue; red & green & blue;cycle{!red & !green & blue}",
         "options": [
             {
@@ -344,7 +344,7 @@
     },
     {
         "question": "red U blue",
-        "kind": "tracesatisfaction_yn",
+        "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue;red & !green & !blue;red & !green & !blue;cycle{red & !green & !blue}",
         "options": [
             {

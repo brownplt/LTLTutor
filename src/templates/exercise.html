@@ -36,17 +36,19 @@
                         Does this trace satisfy the following LTL formula?
                         {% else %}
                         <div class="alert alert-danger" role="alert">
-                            <strong>Unrecognized Question type! </strong>
+                            <strong>Unrecognized Question type! {{ q.type }}</strong>
                         </div>
                         {% endif %}
                     </h5>
-                    <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question
-                        }}
-                    </h5>
 
-                    <!-- only for y/n questions -->
+
                     {% if q.type == "tracesatisfaction_yn" %}
-                    <div class="ltltrace"> {{ q.trace }} </div>
+                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;"><code>{{ q.question}}</code></h6>
+                        <div class="ltltrace"> {{ q.trace }} </div>
+                    {% elif q.type == "tracesatisfaction_mc" %}
+                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;"><code>{{ q.question}}</code></h6>
+                    {% else %}
+                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}</h6>
                     {% endif %}
 
                     <ul class="list-group">
