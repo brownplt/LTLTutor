@@ -40,15 +40,15 @@
                         </div>
                         {% endif %}
                     </h5>
-
+                    <hr>
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;"><code>{{ q.question}}</code></h6>
+                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
                         <div class="ltltrace"> {{ q.trace }} </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;"><code>{{ q.question}}</code></h6>
+                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
                     {% else %}
-                        <h6 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}</h6>
+                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}</h5>
                     {% endif %}
 
                     <ul class="list-group">
