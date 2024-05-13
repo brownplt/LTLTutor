@@ -2,7 +2,7 @@
 class NodeRepr {
 
     constructor(vars) {
-        
+
         this.vars = vars.trim();
 
         // Do we want to only choose one of the 'ors'?
@@ -16,8 +16,6 @@ class NodeRepr {
     }
 
     toString() {
-
-
         // TODO: Do we want &s?
         // return `${this.id}["${this.vars.replace(/&/g, ',')}"]`;
         return `${this.id}["${this.vars}"]`;
@@ -63,7 +61,7 @@ function buildGraph(traceElement) {
     traceElement.setAttribute('aria-label', trace);
     traceElement.setAttribute('role', 'img');
 
-    traceElement.textContent = diagramText;    
+    traceElement.textContent = diagramText;
 }
 
 
@@ -83,13 +81,10 @@ function edgesFromSpotString(sr) {
     let parts = sr.split(';');
     let edges = []
     let states = parts.map(part => new NodeRepr(part));
-
-
     let cycleCandidate = states[states.length - 1];
 
     // TODO: AFAIK, but look out:
     //Cycle must happen at the very end, we cannot have nested cycles 
-
     if (cycleCandidate.vars.startsWith('cycle')) {
 
         let cycled_content = getCycleContent(cycleCandidate.vars);
@@ -103,9 +98,13 @@ function edgesFromSpotString(sr) {
     }
 
 
-
-    //Call ensure_literals on each state
-    states = states.map(state => ensure_literals(state));
+    try {
+        //Call ensure_literals on each state
+        states = states.map(state => ensure_literals(state));
+    }
+    catch (e) {
+        console.log(e);
+    }
 
 
     // For each part, get the next part and add it to the edges array
@@ -130,12 +129,12 @@ function mermaidGraphFromEdgesList(edges) {
 }
 
 function ensure_literals(node) {
-    
+
     if (typeof literals === 'undefined' || literals === null) {
         return node;
     }
 
-    
+
     let vars = node.vars.trim();
 
     if (vars == "1") {
@@ -149,7 +148,6 @@ function ensure_literals(node) {
         node.vars = xs;
         return node;
     }
-
 
     // I want a list of all the lowercase words in vars
     let vars_words = vars.match(/\b[a-z0-9]+\b/g);
