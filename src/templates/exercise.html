@@ -108,6 +108,9 @@
             $('.next').click(function () {
                 // Empty the feedback div
                 $('#feedback').empty();
+                $('#feedback').removeClass();
+
+
                 var nextQuestion = $(this).closest('.question').hide().next('.question');
                 if (nextQuestion.length) {
                     // If there is a next question, show it
