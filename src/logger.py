@@ -66,7 +66,7 @@ class Logger:
 
             ## Ensure everything is of the correct type
             if not isinstance(userId, str):
-                raise ValueError("userId should be an integer")
+                raise ValueError("userId should be a string")
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
             if not isinstance(question_text, str):
@@ -85,7 +85,7 @@ class Logger:
     
     def getUserLogs(self, userId, lookback_days=30):
         if not isinstance(userId, str):
-            raise ValueError("userId should be an integer")
+            raise ValueError("userId should be a string")
 
         session = self.Session()
 

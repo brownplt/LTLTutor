@@ -19,15 +19,6 @@ answer_logger = Logger()
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
 
-# @app.before_first_request
-# def startup():
-#     try:
-#         with open('openai.secret.key', 'r') as file:
-#             secret_key = file.read().strip()
-#             os.environ['OPENAI_API_KEY'] = secret_key
-#     except:
-#         print("No Secret Key found", file=sys.stderr)
-
 
 @app.route('/')
 def index():
@@ -203,16 +194,16 @@ def newexercise():
 
 
 
-@app.route('/getmymodel/<type>', methods=['GET'])
+@app.route('/getmy/<type>', methods=['GET'])
 def viewstudentlogs(type):
 
     userId = request.cookies.get(USERID_COOKIE)
     if not userId:
         return "Could not identify user, no model available."
     
-    logs = answer_logger.getUserLogs(userId=id, lookback_days=30)
+    logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
-    if (type == "raw"):
+    if (type == "logs"):
 
         to_return = {}
         for log in logs:
@@ -225,11 +216,15 @@ def viewstudentlogs(type):
                 "correct_answer": log.correct_answer
             }
         return json.dumps(to_return)
-    else:
+    elif (type == "model"):
         exercise_builder = exercisebuilder.ExerciseBuilder(logs)
         model = exercise_builder.get_model()
-        return json.dumps(to_return)
-        #return render_template('model.html')
 
+
+
+        return json.dumps(model['misconception_weights'])
+        #return render_template('model.html')
+    else:
+        return "Invalid type"
 if __name__ == '__main__':
     app.run()
