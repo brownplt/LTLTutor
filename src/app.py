@@ -223,10 +223,7 @@ def viewstudentlogs(id):
             "question_options": log.question_options,
             "correct_answer": log.correct_answer
         }
-
-
     return json.dumps(to_return)
-
 
 
 if __name__ == '__main__':

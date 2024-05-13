@@ -22,12 +22,20 @@ class NodeRepr {
     }
 }
 
+
+function generateUUID() { 
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+            v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 function ensureUserId() {
     // Check if the cookie exists
     if (document.cookie.indexOf("ltluserid") === -1) {
-        // Prompt the user for a value
-        var userId = prompt("No userID found. Please enter your user ID:");
-
+        // Generate UserId from a GUID
+        var userId = generateUUID();
         // Set the cookie with the user ID
         document.cookie = "ltluserid=" + userId;
     }
