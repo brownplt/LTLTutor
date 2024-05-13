@@ -10,7 +10,7 @@ RUN conda init bash && \
     pip install -r requirements.txt
 
 WORKDIR /src
-
+EXPOSE 5000
 #flask run --host=0.0.0.0
 
 CMD . /opt/conda/etc/profile.d/conda.sh && conda activate myenv && flask run --host=0.0.0.0
