@@ -23,6 +23,8 @@ class ExerciseBuilder:
         self.userLogs = userLogs
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
+
+        ## TODO: We want complexity to be persistent for user, and scale up or down.
         self.complexity = 5
    
     
@@ -94,11 +96,17 @@ class ExerciseBuilder:
             weights[concept] = max(weight, 1)  # Ensure weights don't go negative
 
         ## Why is weights empty ever?
+        if len(weights) == 0:
+            return weights
+        
+        max_weight = max(weights.values())
+        if max_weight == 0:
+            ## WHEN WOULD THIS HAPPEN?
+            return weights
+        
 
-        ## TODO: Do we want this normalization, given we normalize the LTL priorities?
-        # max_weight = max(weights.values())
-        # for concept in weights:
-        #     weights[concept] /= max_weight
+        for concept in weights:
+            weights[concept] /= max_weight
 
         return weights
 
@@ -227,8 +235,6 @@ class ExerciseBuilder:
             "options": options
         }
 
-
-
     def build_tracesat_mc_question(self, answer):
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
@@ -328,3 +334,13 @@ class ExerciseBuilder:
             "options": options
         }
         
+
+    def get_model(self):
+        buckets = self.aggregateLogs()
+        misconception_weights = self.calculate_misconception_weights()
+
+        return {
+            "misconception_weights": misconception_weights,
+            "misconceptions_over_time": buckets,
+            "complexity": self.complexity
+        }

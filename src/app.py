@@ -130,7 +130,6 @@ def authorquestion_get():
     return render_template('authorquestion.html', distractors=distractors)
 
 
-
 @app.route('/exercise/predefined', methods=['POST'])
 def exercise():
     sourceuri = request.form.get('sourceuri')
@@ -154,7 +153,6 @@ def exercise():
 @app.route('/getfeedback/<questiontype>', methods=['POST'])
 def loganswer(questiontype):
 
-
     data = request.json
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
@@ -165,10 +163,7 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
-
-    ## TODO: Need to establish student ID and plough it through ## 
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype)
-
 
     if questiontype == "english_to_ltl":
         to_return = {}
@@ -207,24 +202,34 @@ def newexercise():
     return render_template('exercise.html', questions=data, exercise_name=exercise_name, literals = LITERALS)
 
 
-## TODO: Remove this eventually
-@app.route('/viewstudentlogs/<id>', methods=['GET'])
-def viewstudentlogs(id):
 
+@app.route('/getmymodel/<type>', methods=['GET'])
+def viewstudentlogs(type):
+
+    userId = request.cookies.get(USERID_COOKIE)
+    if not userId:
+        return "Could not identify user, no model available."
+    
     logs = answer_logger.getUserLogs(userId=id, lookback_days=30)
 
-    to_return = {}
-    for log in logs:
-        to_return[log.id] = {
-            "user_id": log.student_id,
-            "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            "misconception": log.misconception,
-            "question_text": log.question_text,
-            "question_options": log.question_options,
-            "correct_answer": log.correct_answer
-        }
-    return json.dumps(to_return)
+    if (type == "raw"):
 
+        to_return = {}
+        for log in logs:
+            to_return[log.id] = {
+                "user_id": log.student_id,
+                "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                "misconception": log.misconception,
+                "question_text": log.question_text,
+                "question_options": log.question_options,
+                "correct_answer": log.correct_answer
+            }
+        return json.dumps(to_return)
+    else:
+        exercise_builder = exercisebuilder.ExerciseBuilder(logs)
+        model = exercise_builder.get_model()
+        return json.dumps(to_return)
+        #return render_template('model.html')
 
 if __name__ == '__main__':
     app.run()
