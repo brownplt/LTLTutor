@@ -303,6 +303,7 @@
     },
     {
         "question": "X X X red",
+        "type": "tracesatisfaction_mc",
         "options": [
             {
                 "option": "red & !green & !blue; !red & !green & !blue; !red & !green & !blue; red & !green & !blue; cycle{!red & !green & !blue}",
