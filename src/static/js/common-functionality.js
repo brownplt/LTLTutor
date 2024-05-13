@@ -81,13 +81,10 @@ function edgesFromSpotString(sr) {
     let parts = sr.split(';');
     let edges = []
     let states = parts.map(part => new NodeRepr(part));
-
-
     let cycleCandidate = states[states.length - 1];
 
     // TODO: AFAIK, but look out:
     //Cycle must happen at the very end, we cannot have nested cycles 
-
     if (cycleCandidate.vars.startsWith('cycle')) {
 
         let cycled_content = getCycleContent(cycleCandidate.vars);
