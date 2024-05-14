@@ -45,6 +45,7 @@
                     {% if q.type == "tracesatisfaction_yn" %}
                         <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
                         <div class="ltltrace"> {{ q.trace }} </div>
+                        <div id="alttrace"> Alt Trace: <code> {{ q.trace}}</code> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
                         <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
                     {% else %}
@@ -58,7 +59,7 @@
                                 value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
                                 data-correct="{{ option.isCorrect }}">
                             <label for="option{{ loop.index }}">
-                                {% if q.type == 'tracesatisfaction_yn' or q.type == 'tracesatisfaction_mc' %}
+                                {% if q.type == 'tracesatisfaction_mc' %}
                                 <div class="ltltrace"> {{ option.option }} </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
