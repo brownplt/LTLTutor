@@ -89,10 +89,13 @@ $(document).ready(function() {
     console.log("Found " + traceElements.length + " trace elements");
 
     traceElements.forEach(traceElement => {
+
+        console.log("Building graph for trace element with id: ", traceElement.id)
+
         var oldTraceVal = traceElement.innerText;
         try {
             buildGraph(traceElement);
-            mermaid.init(undefined, traceElement);
+//            mermaid.init(undefined, traceElement);
         }
         catch (e) {
             console.log("Error in buildGraph");
