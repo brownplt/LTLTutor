@@ -20,6 +20,7 @@
     <div class="container">
 
         {% include 'navbar.html' %}
+        <p class="badge badge-light" id="userid_field"> </p>
         <h1>{{ exercise_name }}</h1>
 
         <div id="questions">
@@ -64,8 +65,8 @@
                                 data-correct="{{ option.isCorrect }}">
                             <label for="{{ qindex }}option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
-                                <div class="ltltrace"> {{ option.option }} </div>
-                                <div> Alt Trace: <code> {{ q.trace}}</code> </div>
+                                <div class="ltltrace" id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.option }} </div>
+                                <div> Alt Trace: <code> {{ option.option }}</code> </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
                                 {% endif %}
@@ -125,13 +126,6 @@
                     // If there are no more questions, show the "done" section
                     $('#done').show();
                 }
-
-                // Update the progress bar
-
-                // TODO: This is not updating for some reason
-                var qcount = document.getElementById('current_question_count');
-                let new_qc = parseInt(qcount.innerHTML) + 1;
-                qcount.innerHTML = new_qc;
             });
         });
     </script>

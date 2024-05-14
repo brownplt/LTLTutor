@@ -188,7 +188,7 @@ def newexercise():
     num_questions = random.randint(3, 8)
 
     ## TODO: Try and do better than this
-    exercise_name = "Personalized Exercise for " + userId
+    exercise_name = "Generated Exercise"
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)

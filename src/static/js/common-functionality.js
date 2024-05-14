@@ -66,7 +66,7 @@ function ensureUserId() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+$(document).ready(function() {
     ensureUserId();
 
     // Get the value of the cookie ltluserid and store it in a variable
@@ -76,12 +76,29 @@ document.addEventListener("DOMContentLoaded", function () {
     if (uidfield) {
         uidfield.innerText = userId;
     }
+});
 
+$(document).ready(function() {
     // Call build graph for each trace element, ie every element with class "ltltrace"
+
+    console.log("Building graphs for all trace elements");
+
+
     let traceElements = document.querySelectorAll('.ltltrace');
+
+    console.log("Found " + traceElements.length + " trace elements");
+
     traceElements.forEach(traceElement => {
-        buildGraph(traceElement);
-        mermaid.init(undefined, traceElement);
+        var oldTraceVal = traceElement.innerText;
+        try {
+            buildGraph(traceElement);
+            mermaid.init(undefined, traceElement);
+        }
+        catch (e) {
+            console.log("Error in buildGraph");
+            console.log(e);
+            traceElement.innerText = oldTraceVal + " (Error: " + e + ")";
+        }
     });
 
 });
@@ -138,7 +155,6 @@ function edgesFromSpotString(sr) {
     catch (e) {
         console.log("Ensure literals failed")
         console.log(e);
-
     }
 
 
