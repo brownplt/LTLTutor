@@ -32,10 +32,17 @@ def randomize_questions(data):
 
 
 class NodeRepr:
+
+
+
+
     def __init__(self, vars):
         self.vars = vars.strip()
 
         ## TODO: Or logic
+        if not self.vars.startswith('cycle') and self.vars.contains('|'):
+            vs = self.vars.split('|')[0]
+            self.vars = vs
 
         self.id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
 
