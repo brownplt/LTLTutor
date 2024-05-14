@@ -24,9 +24,10 @@
 
         <div id="questions">
             {% for q in questions %}
+            {%set qindex = loop.index %}
             <div class="card mt-4 question">
                 <div class="card-body">
-                    <p class="text-muted"> Question <span id="current_question_count">0</span> of {{ questions | length}} </p>
+                    <p class="text-muted"> Question {{ qindex }} of {{ questions | length}} </p>
                     <h5 class="card-title">
                         {% if q.type == "englishtoltl" %}
                         Which of the following LTL formulae best represents this English sentence?
@@ -58,10 +59,10 @@
                     <ul class="list-group">
                         {% for option in q.options %}
                         <li class="list-group-item">
-                            <input type="radio" name="option{{ loop.index }}" id="{{ loop.index }}" class="option"
+                            <input type="radio" name="{{ qindex }}option{{ loop.index }}" id="{{ qindex }}option{{ loop.index }}" class="option"
                                 value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
                                 data-correct="{{ option.isCorrect }}">
-                            <label for="option{{ loop.index }}">
+                            <label for="{{ qindex }}option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
                                 <div class="ltltrace"> {{ option.option }} </div>
                                 <div> Alt Trace: <code> {{ q.trace}}</code> </div>
