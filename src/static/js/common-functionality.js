@@ -130,7 +130,9 @@ function edgesFromSpotString(sr) {
         states = states.map(state => ensure_literals(state));
     }
     catch (e) {
+        console.log("Ensure literals failed")
         console.log(e);
+
     }
 
 

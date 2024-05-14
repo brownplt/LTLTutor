@@ -58,7 +58,7 @@
                                 value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
                                 data-correct="{{ option.isCorrect }}">
                             <label for="option{{ loop.index }}">
-                                {% if q.type == "tracesatisfaction" %}
+                                {% if q.type == 'tracesatisfaction_yn' or q.type == 'tracesatisfaction_mc' %}
                                 <div class="ltltrace"> {{ option.option }} </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
