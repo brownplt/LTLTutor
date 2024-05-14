@@ -169,7 +169,7 @@ def loganswer(questiontype):
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
             to_return['cewords'] = fgen.getCEWords()
-            to_return['mermaid'] = [exerciseprocessor.change_traces_to_mermaid(w) for w in fgen.getCEWords()]
+            to_return['mermaid'] = [exerciseprocessor.genMermaidGraphFromSpotTrace(w, literals = []) for w in fgen.getCEWords()]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:

@@ -191,7 +191,8 @@ function displayServerResponse(response) {
     let contained = response.contained;
     let cewords = response.cewords;
     let wordsasmermaid = response.mermaid;
-    let r = Math.floor(Math.random() * cewords.length);
+
+    let r = (cewords.length > 0) ? Math.floor(Math.random() * cewords.length) : -1;
     let ce_trace = (cewords.length > 0) ? cewords[r] : null;
     let ce_mermaid = (cewords.length > 0) ? wordsasmermaid[r] : null;
 

@@ -40,7 +40,7 @@ class NodeRepr:
         self.vars = vars.strip()
 
         ## TODO: Or logic
-        if (not self.vars.startswith('cycle')) and "|" in self.vars.contains():
+        if (not self.vars.startswith('cycle')) and "|" in self.vars:
             vs = self.vars.split('|')[0]
             self.vars = vs
 
