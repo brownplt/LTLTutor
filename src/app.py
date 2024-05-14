@@ -139,6 +139,7 @@ def exercise():
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = [])
     except:
         return "Error loading exercise"
     return render_template('exercise.html', questions=data, exercise_name=exercise_name)
@@ -168,6 +169,7 @@ def loganswer(questiontype):
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
             to_return['cewords'] = fgen.getCEWords()
+            to_return['mermaid'] = [exerciseprocessor.change_traces_to_mermaid(w) for w in fgen.getCEWords()]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
@@ -194,7 +196,9 @@ def newexercise():
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name, literals = LITERALS)
+    data = exerciseprocessor.randomize_questions(data)
+    data = exerciseprocessor.change_traces_to_mermaid(data, literals = LITERALS)
+    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
 
 
 

@@ -3,11 +3,7 @@
 
 <head>
     <title>LTL Tutor: {{ exercise_name }}</title>
-    {% if literals %}
-    <script type="text/javascript">
-        var literals = JSON.parse('{{ literals | tojson | safe }}');
-    </script>
-    {% endif %}
+
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -16,16 +12,10 @@
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> 
+
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
     <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
-    <style>
-        .mermaid {
-            display: block;
-            margin: 0 auto;
-            width: 100%;
-        }
-    </style>
 </head>
 
 <body>
@@ -57,16 +47,16 @@
                     <hr>
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
-                        <code>{{ q.question}}</code></h5>
-                    <div class="ltltrace" id="q{{qindex}}_yn_trace"> {{ q.trace }} </div>
-                    <div id="{{ qindex }}alttrace_sat"> Alt Trace: <code> {{ q.trace}}</code> </div>
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
+                            <code> {{ q.question}} </code></h5>
+                        <pre class="mermaid" id="q{{qindex}}_yn_trace"> {{ q.mermaid | safe}}  </pre>
+                        <div id="{{ qindex }}alttrace_sat"> Alt Trace: <code> {{ q.trace}}</code> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
-                        <code>{{ q.question}}</code></h5>
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
+                            <code>{{ q.question}}</code></h5>
                     {% else %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}
-                    </h5>
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}
+                        </h5>
                     {% endif %}
 
                     <ul class="list-group">
@@ -77,8 +67,8 @@
                                 data-correct="{{ option.isCorrect }}">
                             <label for="{{ qindex }}option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
-                                <div class="ltltrace" id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.option }} </div>
-                                <div> Alt Trace: <code> {{ option.option }}</code> </div>
+                                    <pre class="mermaid" id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
+                                    <div> Alt Trace: <code> {{ option.option }}</code> </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
                                 {% endif %}

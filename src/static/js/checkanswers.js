@@ -190,18 +190,14 @@ function displayServerResponse(response) {
     let subsumed = response.subsumed;
     let contained = response.contained;
     let cewords = response.cewords;
-    let ce_trace = (cewords.length > 0) ? cewords[Math.floor(Math.random() * cewords.length)] : null;
+    let wordsasmermaid = response.mermaid;
+    let r = Math.floor(Math.random() * cewords.length);
+    let ce_trace = (cewords.length > 0) ? cewords[r] : null;
+    let ce_mermaid = (cewords.length > 0) ? wordsasmermaid[r] : null;
 
 
-
-    function get_mermaid_diagram(trace) {
-        let edges = edgesFromSpotString(trace);
-        let diagramText = mermaidGraphFromEdgesList(edges);
-        return diagramText;
-    }
-
-    let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
-    ce_trace_img = "<div id='generated_ltl_trace'>" + ce_trace_img + "</div>";
+    // let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
+    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid'>" + ce_mermaid + "</pre> <br> Alt trace: " + ce_trace;
 
     var feedback_string = "";
 

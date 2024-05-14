@@ -3,7 +3,8 @@ import os
 import requests
 import json
 import spotutils
-
+import re
+from exercisebuilder import ExerciseBuilder
 
 def load_questions_from_sourceuri(sourceuri, staticfolderpath):
     if sourceuri.startswith('preload:'):
@@ -30,49 +31,103 @@ def randomize_questions(data):
     return data
 
 
-# def question_eng2ltl_to_tracesatisfaction(question):
+class NodeRepr:
+    def __init__(self, vars):
+        self.vars = vars.strip()
 
-#     tracesat_question = {}
+        ## TODO: Or logic
 
-#     nat_lang = question['question']
-#     options = question['options']
-#     newoptions = []
+        self.id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
 
-#     correct_options = [option for option in options if option['isCorrect']]
+    def __str__(self):
+        return f'{self.id}["{self.vars}"]'
 
-#     assert len(correct_options) == 1 # there should be exactly one correct option
-#     correct_option = correct_options[0]
-#     tracesat_question['question'] = correct_option['option']
-#     newoptions = []
-#     for option in options:
-#         f = option['option']
-#         isCorrect = option['isCorrect']
-#         misconceptions = option['misconceptions']
 
-#         if isCorrect: 
-#             trace_choices = spotutils.generate_accepted_traces(f)
-#         else:
-#             trace_choices = spotutils.generate_traces(f_accepted=f, f_rejected=correct_option['option'])
+def mermaidFromSpotTrace(sr, literals):   
+    sr = sr.strip()
+
+    def getCycleContent(string):
+        match = re.match(r'.*\{([^}]*)\}', string)
+        return match.group(1) if match else ""
+
+    def ensure_literals(node):
+        if literals == []:
+            return node
         
-#         if len(trace_choices) == 0:
+        vars = node.vars.strip()
 
-#             ## TODO: We should generate a random traces here
-#             continue
-#         else:
-#             newoptions.append( {
-#                 'option': random.choice(trace_choices),
-#                 'isCorrect': isCorrect,
-#                 'misconceptions': misconceptions
-#             })
+        if vars == "1":
+            xs = ' & '.join(literals)
+            node.vars = xs
+            return node
 
-#     # Convert newoptions to a dictionary and then back to a list,
-#     ## so there are no duplicate options
-#     newoptions = list({option['option']: option for option in newoptions}.values())
-#     tracesat_question['options'] = newoptions
-#     return tracesat_question
+        if vars == "0":
+            xs = ' & '.join([f'!{literal}' for literal in literals])
+            node.vars = xs
+            return node
 
-# def exercise_eng2ltl_to_tracesatisfaction(exercise):
-#     questions = [question_eng2ltl_to_tracesatisfaction(question) for question in exercise] 
-#     return questions
+        vars_words = re.findall(r'\b[a-z0-9]+\b', vars)
+        missing_literals = [literal for literal in literals if literal not in vars_words]
 
+        for literal in missing_literals:
+            x = literal if random.random() < 0.5 else f'!{literal}'
+            vars = f'{vars} & {x}'
+
+        node.vars = vars
+        return node
+
+    if sr == "":
+        return []
+
+    parts = sr.split(';')
+    edges = []
+    states = [NodeRepr(part) for part in parts]
+    cycleCandidate = states[-1]
+
+    if cycleCandidate.vars.startswith('cycle'):
+        cycled_content = getCycleContent(cycleCandidate.vars)
+        cycle_states = [NodeRepr(part) for part in cycled_content.split(';')]
+        cycle_states.append(cycle_states[0])
+        states.pop()
+        states.extend(cycle_states)
+
+    try:
+        states = [ensure_literals(state) for state in states]
+    except Exception as e:
+        print("Ensure literals failed")
+        print(e)
+
+    for i in range(1, len(states)):
+        current = states[i - 1]
+        next = states[i]
+        edges.append((current, next))
+
+    return edges
+
+
+def mermaidGraphFromEdgesList(edges):
+    diagramText = 'flowchart LR;\n'
+
+    for edge in edges:
+        diagramText += f'{str(edge[0])}-->{str(edge[1])};'
+
+    return diagramText
+
+def genMermaidGraphFromSpotTrace(sr, literals):
+    edges = mermaidFromSpotTrace(sr, literals)
+    return mermaidGraphFromEdgesList(edges)
+
+
+
+def change_traces_to_mermaid(data, literals):
+
+    for k in data:
+        if k['type'] == ExerciseBuilder.TRACESATMC:
+            for option in k['options']:
+                sr = option['option']
+                option['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
+        elif k['type'] == ExerciseBuilder.TRACESATYN:
+            sr = k['trace']
+            k['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
+    return data
 
