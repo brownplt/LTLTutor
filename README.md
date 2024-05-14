@@ -55,3 +55,8 @@ antlr4 -Dlanguage=Python3 ltl.g4
 - Determine distribution of questions, choose distractor from questions (if possible?)
   - [] Export report of learning
 - [] Complexity
+
+
+## Engineering Debt
+
+- While psycopg2-binary is convenient for development and avoids the need for PostgreSQL client libraries, it's not recommended for production due to potential issues with the statically linked libraries. However, it's generally fine for many use cases, especially in smaller projects or where environment control (like on personal or managed servers) limits easy installation of the regular psycopg2.
