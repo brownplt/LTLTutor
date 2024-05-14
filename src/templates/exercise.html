@@ -43,24 +43,28 @@
                     <hr>
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
-                        <div class="ltltrace"> {{ q.trace }} </div>
-                        <div id="alttrace"> Alt Trace: <code> {{ q.trace}}</code> </div>
+                    <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
+                        <code>{{ q.question}}</code></h5>
+                    <div class="ltltrace"> {{ q.trace }} </div>
+                    <div id="alttrace_sat"> Alt Trace: <code> {{ q.trace}}</code> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula: <code>{{ q.question}}</code></h5>
+                    <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
+                        <code>{{ q.question}}</code></h5>
                     {% else %}
-                        <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}</h5>
+                    <h5 id="question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}
+                    </h5>
                     {% endif %}
 
                     <ul class="list-group">
                         {% for option in q.options %}
                         <li class="list-group-item">
-                            <input type="radio" name="option" id="{{ loop.index }}" class="option"
+                            <input type="radio" name="option{{ loop.index }}" id="{{ loop.index }}" class="option"
                                 value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
                                 data-correct="{{ option.isCorrect }}">
                             <label for="option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
                                 <div class="ltltrace"> {{ option.option }} </div>
+                                <div> Alt Trace: <code> {{ q.trace}}</code> </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
                                 {% endif %}
@@ -122,9 +126,11 @@
                 }
 
                 // Update the progress bar
+
+                // TODO: This is not updating for some reason
                 var qcount = document.getElementById('current_question_count');
-                console.log("qcount", parseInt(qcount.innerHTML))
-                qcount.innerHTML = parseInt(qcount.innerHTML) + 1;
+                let new_qc = parseInt(qcount.innerHTML) + 1;
+                qcount.innerHTML = new_qc;
             });
         });
     </script>

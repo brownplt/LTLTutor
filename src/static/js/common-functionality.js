@@ -5,17 +5,18 @@ class NodeRepr {
 
         this.vars = vars.trim();
 
+        // Remove ORs for now
         // Do we want to only choose one of the 'ors'?
         // If so, we can choose a random one
-        if (this.vars.includes('|') && !this.vars.includes('cycle')) {
+        // if (this.vars.includes('|') && !this.vars.includes('cycle')) {
 
 
-            let ors = this.vars.split('|');
-            this.vars = ors[Math.floor(Math.random() * ors.length)];
+        //     let ors = this.vars.split('|');
+        //     this.vars = ors[Math.floor(Math.random() * ors.length)];
             
-            // Deal with cycles later
-            console.log("Found OR in vars and chose ", this.vars)
-        }
+        //     // Deal with cycles later
+        //     console.log("Found OR in vars and chose ", this.vars)
+        // }
 
         this.id = Math.random().toString(36).substring(2, 8);
     }
