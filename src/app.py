@@ -173,9 +173,9 @@ def loganswer(questiontype):
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
-            return "No further feedback currently available for Trace Satisfaction exercises."
-    else:
-        return "Something went wrong. No further feedback."
+            return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
+    
+    return { "message": "No further feedback." }
 
 
 
@@ -216,7 +216,7 @@ def viewstudentlogs(type):
         to_return = {}
         for log in logs:
             to_return[log.id] = {
-                "user_id": log.student_id,
+                "user_id": log.user_id,
                 "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 "misconception": log.misconception,
                 "question_text": log.question_text,

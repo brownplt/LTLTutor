@@ -67,15 +67,12 @@ class Logger:
 
     
     def record(self, log):
+        print("Recording log")
         session = self.Session()
         session.add(log)
         session.commit()
     
     def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype):
-
-        ## HACK: Shouldn't have to do this here  again ##
-        if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
-            Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
 
         for misconception in misconceptions:
 

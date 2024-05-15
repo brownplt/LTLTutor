@@ -47,12 +47,14 @@ class ExerciseBuilder:
             self.ltl_priorities[op] = round(self.ltl_priorities[op] * 9 / max_weight) + 1
 
     def aggregateLogs(self, bucketsizeinhours=1):
+
+        concept_history = defaultdict(list)
+
         # Create an empty dictionary to store the buckets
         buckets = defaultdict(lambda: defaultdict(int))
 
         # Iterate over the log entries
         for log in self.userLogs:
-            # Parse the timestamp string into a datetime object
             timestamp = log.timestamp
             # Calculate the bucket for the log entry
             bucket = timestamp.replace(minute=0, second=0, microsecond=0)
@@ -61,19 +63,19 @@ class ExerciseBuilder:
             # Add the log entry to the corresponding bucket
             misconception = log.misconception
             buckets[bucket][misconception] += 1
-        return buckets
+
+                # Organize misconceptions by bucket and sort by date
+        for bucket, misconceptions in buckets.items():
+            for misconception, frequency in misconceptions.items():
+                concept_history[misconception].append((bucket, frequency))
+        
+        return concept_history
 
 
     def calculate_misconception_weights(self):
 
-        buckets = self.aggregateLogs()
-        concept_history = defaultdict(list)
+        concept_history = self.aggregateLogs()
         weights = {}
-
-        # Organize misconceptions by bucket and sort by date
-        for bucket, misconceptions in buckets.items():
-            for misconception, frequency in misconceptions.items():
-                concept_history[misconception].append((bucket, frequency))
 
         for concept, entries in concept_history.items():
             entries.sort()  # Sort by date
