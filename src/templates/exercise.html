@@ -7,19 +7,26 @@
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
-        <!-- Include Bootstrap JS and jQuery -->
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script> 
+     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>  
 
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
     <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
+
 </head>
 
 <body>
     <div class="container">
+        <body>
+            <script type="module">
+             
+              mermaid.initialize({ startOnLoad: false });
+            </script>
+          </body>
 
         {% include 'navbar.html' %}
         <p class="badge badge-light" id="userid_field"> </p>
@@ -50,7 +57,7 @@
                         <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
                             <code> {{ q.question}} </code></h5>
                         <pre class="mermaid" id="q{{qindex}}_yn_trace"> {{ q.mermaid | safe}}  </pre>
-                        <div id="{{ qindex }}alttrace_sat"> Alt Trace: <code> {{ q.trace}}</code> </div>
+                        <div class="text-muted" id="{{ qindex }}alttrace_sat">Trace Alt: <code> {{ q.trace}}</code> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
                         <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">Formula:
                             <code>{{ q.question}}</code></h5>
@@ -68,7 +75,7 @@
                             <label for="{{ qindex }}option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
                                     <pre class="mermaid" id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
-                                    <div> Alt Trace: <code> {{ option.option }}</code> </div>
+                                    <div class="text-muted"> Trace Alt: <code> {{ option.option }}</code> </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
                                 {% endif %}
@@ -106,21 +113,32 @@
         $(document).ready(function () {
             // Hide all questions at the start
             $('.question').hide();
-
+    
             // Show the first question
             $('.question:first').show();
-
+            // Initialize mermaid for the first question
+            setTimeout(function() {
+                $('.question:first').find('.mermaid').each(function () {
+                    mermaid.init(undefined, $(this));
+                });
+            }, 0);
+    
             // When the "Next" button is clicked, hide the current question and show the next one
             $('.next').click(function () {
                 // Empty the feedback div
                 $('#feedback').empty();
                 $('#feedback').removeClass();
-
-
+    
                 var nextQuestion = $(this).closest('.question').hide().next('.question');
                 if (nextQuestion.length) {
                     // If there is a next question, show it
                     nextQuestion.show();
+                    // Find all elements of type mermaid that are children of the next question and render them
+                    setTimeout(function() {
+                        nextQuestion.find('.mermaid').each(function () {
+                            mermaid.init(undefined, $(this));
+                        });
+                    }, 100);
                 } else {
                     // If there are no more questions, show the "done" section
                     $('#done').show();

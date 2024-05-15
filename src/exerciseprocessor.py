@@ -33,8 +33,7 @@ def randomize_questions(data):
 
 class NodeRepr:
 
-
-
+    VAR_SEPARATOR = '&'
 
     def __init__(self, vars):
         self.vars = vars.strip()
@@ -44,9 +43,16 @@ class NodeRepr:
             vs = self.vars.split('|')[0]
             self.vars = vs
 
-        self.id = ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=8))
+        self.vars = self.vars.replace('&', self.VAR_SEPARATOR)
+        self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
     def __str__(self):
+
+        if '{' in self.vars or '}' in self.vars:
+            print("Warning: Found curly braces in vars")
+            print(self.vars)
+            self.vars = self.vars.replace('{', '').replace('}', '')
+        self.vars = self.vars.replace('(', '').replace(')', '')
         return f'{self.id}["{self.vars}"]'
 
 
@@ -64,12 +70,12 @@ def mermaidFromSpotTrace(sr, literals):
         vars = node.vars.strip()
 
         if vars == "1":
-            xs = ' & '.join(literals)
+            xs = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
             node.vars = xs
             return node
 
         if vars == "0":
-            xs = ' & '.join([f'!{literal}' for literal in literals])
+            xs = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
             node.vars = xs
             return node
 
@@ -78,7 +84,7 @@ def mermaidFromSpotTrace(sr, literals):
 
         for literal in missing_literals:
             x = literal if random.random() < 0.5 else f'!{literal}'
-            vars = f'{vars} & {x}'
+            vars = f'{vars} {NodeRepr.VAR_SEPARATOR} {x}'
 
         node.vars = vars
         return node
@@ -91,11 +97,11 @@ def mermaidFromSpotTrace(sr, literals):
     states = [NodeRepr(part) for part in parts]
     cycleCandidate = states[-1]
 
-    if cycleCandidate.vars.startswith('cycle'):
+    if 'cycle' in cycleCandidate.vars:
         cycled_content = getCycleContent(cycleCandidate.vars)
         cycle_states = [NodeRepr(part) for part in cycled_content.split(';')]
         cycle_states.append(cycle_states[0])
-        states.pop()
+        states.remove(cycleCandidate)
         states.extend(cycle_states)
 
     try:
