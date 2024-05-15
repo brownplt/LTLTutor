@@ -19,13 +19,13 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
-    def __init__(self, userLogs):
+    def __init__(self, userLogs, complexity=5):
         self.userLogs = userLogs
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
 
         ## TODO: We want complexity to be persistent for user, and scale up or down.
-        self.complexity = 5
+        self.complexity = complexity
    
     
     def normalize_ltl_priorities(self):

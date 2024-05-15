@@ -12,6 +12,8 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 STUDENT_RESPONSE_TABLE = 'student_responses'
 
+GENERATED_EXERCISE_TABLE = 'generated_exercise'
+
 # import os
 # from flask_sqlalchemy import SQLAlchemy
 
@@ -22,7 +24,7 @@ STUDENT_RESPONSE_TABLE = 'student_responses'
 
 Base = declarative_base()
 
-### This needs to be significantly extended ###
+
 class StudentResponse(Base):
     __tablename__ = STUDENT_RESPONSE_TABLE
     id = Column(Integer, primary_key=True)
@@ -34,6 +36,14 @@ class StudentResponse(Base):
     correct_answer = Column(Boolean)
     question_type = Column(String)
 
+
+class GeneratedExercise(Base):
+    __tablename__ = GENERATED_EXERCISE_TABLE
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String)
+    timestamp = Column(DateTime)
+    exercise_data = Column(String)
+    complexity = Column(Integer)
 
 class Logger:
     def __init__(self):
@@ -105,3 +115,23 @@ class Logger:
         logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
         return logs
 
+
+
+
+
+    def recordGeneratedExercise(self, userId, exercise_data):
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+        if not isinstance(exercise_data, str):
+            raise ValueError("exercise_data should be a string")
+        
+        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data)
+        self.record(log)
+
+    def getComplexity(self, userId):
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+
+        session = self.Session()
+        complexity = session.query(GeneratedExercise.complexity).filter(GeneratedExercise.user_id == userId).order_by(GeneratedExercise.timestamp.desc()).first()
+        return complexity[0] if complexity else None

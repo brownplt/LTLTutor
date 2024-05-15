@@ -193,11 +193,16 @@ def newexercise():
     exercise_name = "Generated Exercise"
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
-    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs)
+
+    complexity = answer_logger.getComplexity(userId=userId)       
+    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
     data = exerciseprocessor.change_traces_to_mermaid(data, literals = LITERALS)
+
+    answer_logger.recordGeneratedExercise(userId, json.dumps(data))
+
     return render_template('exercise.html', questions=data, exercise_name=exercise_name)
 
 
