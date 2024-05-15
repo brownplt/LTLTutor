@@ -12,7 +12,7 @@ import exercisebuilder
 import random
 import spotutils
 from jinja2 import Environment, select_autoescape
-
+from itertools import chain
 
 
 port = os.getenv('PORT', default='5000')
@@ -24,16 +24,11 @@ answer_logger = Logger()
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
 
+@app.template_filter('flatten')
+def flatten(lst):
+    return list(chain.from_iterable(lst))
 
-
-@app.template_filter('strftime')
-def _jinja2_filter_datetime(date, fmt=None):
-    native = date.replace(tzinfo=None)
-    format='%b %d, %Y' if fmt is None else fmt
-    return native.strftime(format)
-
-
-app.jinja_env.filters['strftime'] = _jinja2_filter_datetime
+app.jinja_env.filters['flatten'] = flatten
 
 
 @app.route('/')
@@ -246,7 +241,30 @@ def viewstudentlogs(type):
         model = exercise_builder.get_model()
 
         misconception_weights = model['misconception_weights']
+        
         misconceptions_over_time = model['misconceptions_over_time']
+
+
+
+        # I want to make sure that if a misconception is not present for a given timestamp,
+        # it's value for that timestamp is 0.
+        # So I need to fill in the gaps in the dictionary.
+        # I will do this by iterating over all timestamps and adding the missing ones.
+        all_timestamps = set()
+        for key, value in misconceptions_over_time.items():
+            for dt, freq in value:
+                all_timestamps.add(dt)
+
+        # Then, for each misconception, I will add the missing timestamps with a frequency of 0.
+        for key, value in misconceptions_over_time.items():
+            for dt in all_timestamps:
+                if dt not in [dt for dt, freq in value]:
+                    value.append((dt, 0))
+
+        for key, value in misconceptions_over_time.items():
+            misconceptions_over_time[key] = [(dt.timestamp(), freq) for dt, freq in value]
+
+
         complexity = model['complexity']
 
         return render_template('model.html', complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
