@@ -34,11 +34,14 @@ DEFAULT_LTL_PRIORITIES = {
 def areEquivalent(formula1, formula2):
     
     # Parse the formulas
-    f1 = spot.formula(str(formula1))
-    f2 = spot.formula(str(formula2))
+    # f1 = spot.formula(str(formula1))
+    # f2 = spot.formula(str(formula2))
 
     # Check if they are equivalent
-    return spot.formula.are_equivalent(f1, f2)
+    #return spot.formula.are_equivalent(f1, f2)
+    return isSufficientFor(formula1, formula2) and isNecessaryFor(formula1, formula2)
+
+
 
 '''
 Returns true if f => g is a tautology

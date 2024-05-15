@@ -11,6 +11,7 @@ import exerciseprocessor
 import exercisebuilder
 import random
 import spotutils
+from jinja2 import Environment, select_autoescape
 
 
 
@@ -22,6 +23,17 @@ answer_logger = Logger()
 
 DEFAULT_USERID = "defaultuser"
 USERID_COOKIE = "ltluserid"
+
+
+
+@app.template_filter('strftime')
+def _jinja2_filter_datetime(date, fmt=None):
+    native = date.replace(tzinfo=None)
+    format='%b %d, %Y' if fmt is None else fmt
+    return native.strftime(format)
+
+
+app.jinja_env.filters['strftime'] = _jinja2_filter_datetime
 
 
 @app.route('/')
