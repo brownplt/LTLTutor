@@ -268,23 +268,6 @@
         ]
     },
     {
-        "question": "! (G blue)",
-        "type": "tracesatisfaction_yn",
-        "trace": "!red & !green & blue; !red & !green & blue; cycle{!red & !green & !blue}",
-        "options": [
-            {
-                "option": "Yes",
-                "isCorrect": false,
-                "misconceptions": ["MisconceptionCode.BadStateQuantification"]
-            },
-            {
-                "option": "No",
-                "isCorrect": true,
-                "misconceptions": []
-            }
-        ]
-    },
-    {
         "question": "G (red -> X (X ( X (red))))",
         "type": "tracesatisfaction_yn",
         "trace": "!red & !green & !blue; red & green & blue; red & green & blue; !red & !green & !blue;cycle{red & green & blue}",
