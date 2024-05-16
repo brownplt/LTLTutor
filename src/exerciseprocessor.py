@@ -54,39 +54,38 @@ class NodeRepr:
         asStr = asStr.replace('(', '').replace(')', '')
         return f'{self.id}["{asStr}"]'
 
-def mermaidFromSpotTrace(sr, literals):   
-    sr = sr.strip()
+def ensure_literals(node, literals):
+    if literals == []:
+        return node
+    
+    vars = node.vars.strip()
 
-    def getCycleContent(string):
-        match = re.match(r'.*\{([^}]*)\}', string)
-        return match.group(1) if match else ""
-
-    def ensure_literals(node):
-        if literals == []:
-            return node
-        
-        vars = node.vars.strip()
-
-        if vars == "1":
-            xs = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
-            node.vars = xs
-            return node
-
-        if vars == "0":
-            xs = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
-            node.vars = xs
-            return node
-
-        vars_words = re.findall(r'\b[a-z0-9]+\b', vars)
-        missing_literals = [literal for literal in literals if literal not in vars_words]
-
-        for literal in missing_literals:
-            x = literal if random.random() < 0.5 else f'!{literal}'
-            vars = f'{vars} {NodeRepr.VAR_SEPARATOR} {x}'
-
-        node.vars = vars
+    if vars == "1":
+        xs = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
+        node.vars = xs
         return node
 
+    if vars == "0":
+        xs = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
+        node.vars = xs
+        return node
+
+    vars_words = re.findall(r'\b[a-z0-9]+\b', vars)
+    missing_literals = [literal for literal in literals if literal not in vars_words]
+
+    for literal in missing_literals:
+        x = literal if random.random() < 0.5 else f'!{literal}'
+        vars = f'{vars} {NodeRepr.VAR_SEPARATOR} {x}'
+
+    node.vars = vars
+    return node
+
+def getCycleContent(string):
+    match = re.match(r'.*\{([^}]*)\}', string)
+    return match.group(1) if match else ""
+
+def mermaidFromSpotTrace(sr, literals):   
+    sr = sr.strip()
     if sr == "":
         return []
 
@@ -108,7 +107,7 @@ def mermaidFromSpotTrace(sr, literals):
     edges = []
 
     try:
-        states = [ensure_literals(state) for state in states]
+        states = [ensure_literals(state, literals) for state in states]
     except Exception as e:
         print("Ensure literals failed")
         print(e)
@@ -131,6 +130,22 @@ def mermaidGraphFromEdgesList(edges):
 def genMermaidGraphFromSpotTrace(sr, literals):
     edges = mermaidFromSpotTrace(sr, literals)
     return mermaidGraphFromEdgesList(edges)
+
+
+def expandSpotTrace(sr, literals):
+    sr = sr.strip()
+    if sr == "":
+        return []
+
+
+
+
+
+    simple_split = sr.split(';')
+
+    expanded = [ ensure_literals(s, literals) for s in simple_split]
+    return expanded.join(';')
+
 
 
 def change_traces_to_mermaid(data, literals):
