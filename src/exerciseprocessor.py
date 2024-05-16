@@ -160,12 +160,12 @@ def change_traces_to_mermaid(data, literals):
                 sr = expandSpotTrace(sr, literals)
                 option['option'] = sr
 
-                option['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
+                option['mermaid'] = genMermaidGraphFromSpotTrace(sr)
         elif k['type'] == ExerciseBuilder.TRACESATYN:
             sr = k['trace']
             sr = expandSpotTrace(sr, literals)
 
             k['trace'] = sr
-            k['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
+            k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
     return data
 
