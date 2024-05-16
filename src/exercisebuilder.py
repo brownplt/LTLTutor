@@ -160,6 +160,11 @@ class ExerciseBuilder:
 
     def build_exercise(self, literals, num_questions):
 
+
+        VACCUOUS = "1"
+        FALSE = "0"
+
+
         self.set_weights()
 
         ## TODO: Find a better mapping between complexity and tree size
@@ -174,6 +179,11 @@ class ExerciseBuilder:
         # Generate the exercises
         questions = []
         for answer in question_answers:
+
+
+            if answer == VACCUOUS or answer == FALSE:
+                continue
+
             kind = self.choose_question_kind()
 
             if kind == self.TRACESATMC:

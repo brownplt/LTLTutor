@@ -83,7 +83,7 @@
                 ]
             },
             {
-                "option": "(F red) & (red -> X(G (!red))",
+                "option": "(F red) & (red -> X(G (!red)))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.ImplicitG"
