@@ -58,8 +58,26 @@ class MisconceptionCode(Enum):
             return []
 
     ## Return an explanation for each misconception code ##
+
     def explanation(self):
-        pass
+        if self == MisconceptionCode.Precedence:
+            return "Misconception: Precedence - This code represents a misconception related to the precedence of operators in the LTL formula."
+        elif self == MisconceptionCode.BadStateIndex:
+            return "Misconception: BadStateIndex - This code represents a misconception related to the indexing of states in the LTL formula."
+        elif self == MisconceptionCode.BadStateQuantification:
+            return "Misconception: BadStateQuantification - This code represents a misconception related to the quantification of states in the LTL formula."
+        elif self == MisconceptionCode.ExclusiveU:
+            return "Misconception: ExclusiveU - This code represents a misconception related to the usage of the exclusive until operator (U) in the LTL formula."
+        elif self == MisconceptionCode.ImplicitF:
+            return "Misconception: ImplicitF - This code represents a misconception related to the implicit usage of the finally operator (F) in the LTL formula."
+        elif self == MisconceptionCode.ImplicitG:
+            return "Misconception: ImplicitG - This code represents a misconception related to the implicit usage of the globally operator (G) in the LTL formula."
+        elif self == MisconceptionCode.OtherImplicit:
+            return "Misconception: OtherImplicit - This code represents a misconception related to other implicit operators in the LTL formula."
+        elif self == MisconceptionCode.WeakU:
+            return "The until (U) operator evaluates to true if the first formula remains true until some point in the future when the second formula becomes true. "
+        else:
+            return "No explanation available for this misconception code."
 
 class MutationResult:
     def __init__(self, node, misconception=None):

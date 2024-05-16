@@ -252,6 +252,7 @@ class ExerciseBuilder:
         if options is None:
             return None
         
+
         parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
         
         trace_options = []
@@ -282,7 +283,8 @@ class ExerciseBuilder:
             trace_options.append( {
                 'option': random.choice(trace_choices),
                 'isCorrect': isCorrect,
-                'misconceptions': misconceptions
+                'misconceptions': misconceptions,
+                'generatedFromFormula': formula
             })
     
 
@@ -292,27 +294,33 @@ class ExerciseBuilder:
         return {
             "question": parenthesized_answer,
             "type": self.TRACESATMC,
-            "options": trace_options
+            "options": trace_options,
         }
 
     def build_tracesat_yn_question(self, answer):
         formulae = self.get_options_with_misconceptions_as_formula(answer)
         parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
         
+
+
+        feedbackString = "No further feedback is available."
+        # So no misconceptions forthcoming...
+        ## TODO: Should we even generate a question one here?
         if formulae is None:
             ## Generate a trace to accept the formula
             potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             misconceptions = []
-            isCorrect = True
+            yesIsCorrect = True
         else:
             ## Choose a random option
             formula = random.choice(formulae)
-            isCorrect = formula['isCorrect']
+            yesIsCorrect = formula['isCorrect']
             formula_asString = formula['option']
-            if isCorrect: 
+            if yesIsCorrect: 
                 potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             else:
                 potential_trace_choices = spotutils.generate_traces(f_accepted=formula_asString, f_rejected=parenthesized_answer)
+                feedbackString = f"The trace is accepted by the formula <code>{formula_asString}</code>, but not by the formula <code>{parenthesized_answer}</code>."
             misconceptions = formula['misconceptions']
         
         if len(potential_trace_choices) == 0:
@@ -320,30 +328,31 @@ class ExerciseBuilder:
         
         trace_option = random.choice(potential_trace_choices)
 
-        ## THink about this
-        yes_misconceptions = [] if isCorrect else misconceptions
-        no_misconceptions = misconceptions if isCorrect else []
+        ## THink about this -- how can we give feedback here!
+        yes_misconceptions = [] if yesIsCorrect else misconceptions
+        no_misconceptions = misconceptions if yesIsCorrect else []
+
         options = [
 
             {
               'option': 'Yes',
-              'isCorrect': isCorrect,
+              'isCorrect': yesIsCorrect,
                'misconceptions': yes_misconceptions
              },
             {
               'option': 'No',
-              'isCorrect': not isCorrect,
+              'isCorrect': not yesIsCorrect,
               'misconceptions': no_misconceptions
             }
 
         ]
 
-        ## TODO: This needs to be fixed, trace_option needs tobe found.
         return {
             "question": parenthesized_answer,
             "trace": trace_option,
             "type": self.TRACESATYN,
-            "options": options
+            "options": options,
+            'feedback': feedbackString
         }
         
 
