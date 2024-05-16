@@ -185,16 +185,16 @@
     {
         "question": "G(red | blue)",
         "type": "tracesatisfaction_yn",
-        "trace": "red & !green & !blue; !red & !green & !blue; r & g & b; cycle{!red & green & !blue}",
+        "trace": "red & !green & !blue; !red & !green & blue; red & green & blue; cycle{!red & green & !blue}",
         "options": [
             {
                 "option": "Yes",
-                "isCorrect": true,
+                "isCorrect": false,
                 "misconceptions": []
             },
             {
                 "option": "No",
-                "isCorrect": false,
+                "isCorrect": true,
                 "misconceptions": []
             }
         ]
@@ -202,7 +202,7 @@
     {
         "question": "F(red & green)",
         "type": "tracesatisfaction_yn",
-        "trace": "!red & !green & !blue; !red & !green & blue; r & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
+        "trace": "!red & !green & !blue; !red & !green & blue; red & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
         "options": [
             {
                 "option": "Yes",
@@ -350,13 +350,13 @@
         "options": [
             {
                 "option": "Yes",
-                "isCorrect": true,
-                "misconceptions": []
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.WeakU"]
             },
             {
                 "option": "No",
-                "isCorrect": false,
-                "misconceptions": ["MisconceptionCode.WeakU"]
+                "isCorrect": true,
+                "misconceptions": []
             }
         ]
     }
