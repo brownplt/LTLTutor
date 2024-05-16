@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>LTL Tutor: {{ exercise_name }}</title>
+    <title>LTL Tutor</title>
 
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -23,13 +23,12 @@
     <div class="container">
         <body>
             <script type="module">
-             
               mermaid.initialize({ startOnLoad: false });
             </script>
           </body>
 
         {% include 'navbar.html' %}
-        <p class="badge badge-light" id="userid_field"> </p>
+       
         <h1>{{ exercise_name }}</h1>
 
         <div id="questions">
@@ -111,6 +110,8 @@
 
     <script>
         $(document).ready(function () {
+            const ui_load_timeout_delay = 150;
+
             // Hide all questions at the start
             $('.question').hide();
     
@@ -138,7 +139,7 @@
                         nextQuestion.find('.mermaid').each(function () {
                             mermaid.init(undefined, $(this));
                         });
-                    }, 100);
+                    }, ui_load_timeout_delay);
                 } else {
                     // If there are no more questions, show the "done" section
                     $('#done').show();

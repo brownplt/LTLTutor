@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report</title>
+    <title>LTL Tutor: Model Report</title>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@1.1.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -70,6 +70,10 @@
             While the data is real, the visualizations here are still in development.
         </div>
 
+
+
+
+
         <div class="container fluid">
             <h3 class="display-4">Question Complexity</h3>
             <p class="lead">Generated Exercises for you are being served at Complexity Score {{ complexity }} </p>
@@ -104,7 +108,7 @@
                         {% for key, value in misconceptions_over_time.items() %}
                     {
                         label: '{{ key }}',
-                            data: { { value | map(attribute = '1') | list | tojson } },
+                            data: {{ value | map(attribute = '1') | list | tojson }},
                         fill: false,
                             borderColor: getRandomColor(),
                                 tension: 0.1

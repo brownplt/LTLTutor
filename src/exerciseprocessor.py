@@ -47,7 +47,7 @@ class NodeRepr:
         self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
     def __str__(self):
-        asStr = self.vars.copy()
+        asStr = self.vars
         if '{' in asStr or '}' in asStr:
             print("Warning: Found curly braces in vars")
             print(asStr)
