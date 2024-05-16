@@ -57,6 +57,9 @@ class MisconceptionCode(Enum):
         else:
             return []
 
+    ## Return an explanation for each misconception code ##
+    def explanation(self):
+        pass
 
 class MutationResult:
     def __init__(self, node, misconception=None):

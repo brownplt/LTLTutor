@@ -151,6 +151,11 @@ def genMermaidGraphFromSpotTrace(sr):
 
 
 
+def expand_single_trace(sr, literals):
+    sr = expandSpotTrace(sr, literals)
+    return genMermaidGraphFromSpotTrace(sr)
+
+
 def change_traces_to_mermaid(data, literals):
 
     for k in data:
