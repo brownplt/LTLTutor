@@ -2,7 +2,6 @@ import random
 import os
 import requests
 import json
-import spotutils
 import re
 from exercisebuilder import ExerciseBuilder
 
@@ -55,7 +54,6 @@ class NodeRepr:
         asStr = asStr.replace('(', '').replace(')', '')
         return f'{self.id}["{asStr}"]'
 
-
 def mermaidFromSpotTrace(sr, literals):   
     sr = sr.strip()
 
@@ -92,17 +90,22 @@ def mermaidFromSpotTrace(sr, literals):
     if sr == "":
         return []
 
-    parts = sr.split(';')
-    edges = []
-    states = [NodeRepr(part) for part in parts]
-    cycleCandidate = states[-1]
 
-    if 'cycle' in cycleCandidate.vars:
-        cycled_content = getCycleContent(cycleCandidate.vars)
-        cycle_states = [NodeRepr(part) for part in cycled_content.split(';')]
+    ## Assuming only one cycle.
+    prefix_split = sr.split('cycle', 1)
+    prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
+    states = [NodeRepr(part) for part in prefix_parts]
+
+    ## Would be weird to not have a cycle, but we allow for it.
+    if len(prefix_parts) > 1:
+        cycle = prefix_split[1]
+        # Cycle candidate has no string 'cycle' in it here.
+        cycled_content = getCycleContent(cycle)
+        cycle_states = [NodeRepr(part) for part in cycled_content.split(';') if part.strip() != ""]
         cycle_states.append(cycle_states[0])
-        states.remove(cycleCandidate)
         states.extend(cycle_states)
+
+    edges = []
 
     try:
         states = [ensure_literals(state) for state in states]
@@ -117,7 +120,6 @@ def mermaidFromSpotTrace(sr, literals):
 
     return edges
 
-
 def mermaidGraphFromEdgesList(edges):
     diagramText = 'flowchart LR;\n'
 
@@ -129,7 +131,6 @@ def mermaidGraphFromEdgesList(edges):
 def genMermaidGraphFromSpotTrace(sr, literals):
     edges = mermaidFromSpotTrace(sr, literals)
     return mermaidGraphFromEdgesList(edges)
-
 
 
 def change_traces_to_mermaid(data, literals):
