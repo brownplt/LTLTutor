@@ -16,24 +16,22 @@ function getCookie(name) {
 }
 
 
-function generateUUID() { 
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0,
-            v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 function ensureUserId() {
     // Check if the cookie exists
-
     var noUserId = document.cookie.indexOf(USERIDKEY) === -1 || getCookie(USERIDKEY) == null || getCookie(USERIDKEY) == "";
 
     if (noUserId) {
-        // Generate UserId from a GUID
-        var userId = generateUUID();
-        // Set the cookie with the user ID
-        document.cookie = "ltluserid=" + userId;
+
+        $('#userIdModal').removeClass('d-none');
+        // Make a request to the server to get a new user ID
+        fetch('/getuserid')
+            .then(response => response.text())  // convert the response to text
+            .then(userId => {
+                // Set the cookie with the user ID
+                document.cookie = USERIDKEY + "=" + userId + "; path=/";
+            })
+            .catch(error => console.error('Error Generating User Id:', error));
     }
 }
 
@@ -41,11 +39,15 @@ $(document).ready(function() {
     ensureUserId();
 
     // Get the value of the cookie ltluserid and store it in a variable
-    var userId = "User: " + document.cookie.split('; ').find(row => row.startsWith('ltluserid')).split('=')[1];
+    var userId = getCookie(USERIDKEY);
+
+
+
+
     var uidfield = document.getElementById("userid_field");
 
     if (uidfield) {
-        uidfield.innerText = userId;
+        uidfield.innerText = "User: " +  userId;
     }
 });
 

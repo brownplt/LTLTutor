@@ -47,13 +47,13 @@ class NodeRepr:
         self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
     def __str__(self):
-
-        if '{' in self.vars or '}' in self.vars:
+        asStr = self.vars.copy()
+        if '{' in asStr or '}' in asStr:
             print("Warning: Found curly braces in vars")
-            print(self.vars)
-            self.vars = self.vars.replace('{', '').replace('}', '')
-        self.vars = self.vars.replace('(', '').replace(')', '')
-        return f'{self.id}["{self.vars}"]'
+            print(asStr)
+            asStr = asStr.replace('{', '').replace('}', '')
+        asStr = asStr.replace('(', '').replace(')', '')
+        return f'{self.id}["{asStr}"]'
 
 
 def mermaidFromSpotTrace(sr, literals):   

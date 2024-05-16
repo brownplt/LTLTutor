@@ -11,9 +11,9 @@ import exerciseprocessor
 import exercisebuilder
 import random
 import spotutils
-from jinja2 import Environment, select_autoescape
 from itertools import chain
-
+import uuid
+import requests
 
 port = os.getenv('PORT', default='5000')
 
@@ -271,6 +271,31 @@ def viewstudentlogs(type):
     else:
         return "Invalid type"
     
+
+
+
+
+@app.route('/getuserid')
+def getuserid():
+    username = str(uuid.uuid4())
+    try:
+        # Make a request to the Random Word API to get 2 random words
+        response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            words = response.json()
+            # Concatenate the two words with a hyphen
+            username = '-'.join(words)
+            
+    except Exception as e:
+        print("Error generating username:", e)
+        
+
+    # Return a GUID if there's an error
+    return username
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(port))
