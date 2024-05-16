@@ -82,15 +82,24 @@
 
 
                     </ul>
-                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this)">Check Answer</button>
+
+
+                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this); enableNextButton(this)">Check Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
-                    <button class="btn btn-primary next">Next Question</button>
+                    <button class="btn btn-primary next" disabled>Next Question</button>
+
                 </div>
             </div>
             {% endfor %}
         </div>
 
-
+        <script>
+            function enableNextButton(checkAnswerButton) {
+                var parent = checkAnswerButton.parentNode;
+                var nextButton = parent.getElementsByClassName('next')[0];
+                nextButton.disabled = false;
+            }
+        </script>
         <div id="feedback">
 
         </div>
