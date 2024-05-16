@@ -54,37 +54,62 @@ class NodeRepr:
         asStr = asStr.replace('(', '').replace(')', '')
         return f'{self.id}["{asStr}"]'
 
-def ensure_literals(node, literals):
+def expandSpotTrace(sr, literals):
+
     if literals == []:
-        return node
+        return sr
+
+    sr = sr.strip()
+    if sr == "":
+        return ""
+
+    def expandState(s):
+
+        true_conj = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
+        false_conj = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
+
+        # I want to replace every instance
+        s = re.sub(r'\b1\b', true_conj, s)
+        s = re.sub(r'\b0\b', false_conj, s)
+        
+        vars_words = re.findall(r'\b[a-z0-9]+\b', s)
+        missing_literals = [literal for literal in literals if literal not in vars_words]
+
+        for literal in missing_literals:
+            x = literal if random.random() < 0.5 else f'!{literal}'
+            s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
+        return s
     
-    vars = node.vars.strip()
+    prefix_split = sr.split('cycle', 1)
+    prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
 
-    if vars == "1":
-        xs = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
-        node.vars = xs
-        return node
+    prefix_expanded = [ expandState(s) for s in prefix_parts]
+    prefix_string = ';'.join(prefix_expanded)
 
-    if vars == "0":
-        xs = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
-        node.vars = xs
-        return node
+    ## Would be weird to not have a cycle, but we allow for it.
+    if len(prefix_split) > 1:
+        cycle = prefix_split[1]
+        cycled_content = getCycleContent(cycle)
+        cycle_parts = [expandState(s) for s in cycled_content.split(';') if s.strip() != ""]
+        
+    else:
+        cycle_parts = []
 
-    vars_words = re.findall(r'\b[a-z0-9]+\b', vars)
-    missing_literals = [literal for literal in literals if literal not in vars_words]
+    cycle_string = "cycle{" +  ';'.join(cycle_parts) + "}"
 
-    for literal in missing_literals:
-        x = literal if random.random() < 0.5 else f'!{literal}'
-        vars = f'{vars} {NodeRepr.VAR_SEPARATOR} {x}'
 
-    node.vars = vars
-    return node
+    if prefix_string == "":
+        return cycle_string
+    if cycle_string == "":
+        return prefix_string
+
+    return prefix_string + ";" + cycle_string
 
 def getCycleContent(string):
     match = re.match(r'.*\{([^}]*)\}', string)
     return match.group(1) if match else ""
 
-def mermaidFromSpotTrace(sr, literals):   
+def mermaidFromSpotTrace(sr):   
     sr = sr.strip()
     if sr == "":
         return []
@@ -96,7 +121,7 @@ def mermaidFromSpotTrace(sr, literals):
     states = [NodeRepr(part) for part in prefix_parts]
 
     ## Would be weird to not have a cycle, but we allow for it.
-    if len(prefix_parts) > 1:
+    if len(prefix_split) > 1:
         cycle = prefix_split[1]
         # Cycle candidate has no string 'cycle' in it here.
         cycled_content = getCycleContent(cycle)
@@ -105,13 +130,6 @@ def mermaidFromSpotTrace(sr, literals):
         states.extend(cycle_states)
 
     edges = []
-
-    try:
-        states = [ensure_literals(state, literals) for state in states]
-    except Exception as e:
-        print("Ensure literals failed")
-        print(e)
-
     for i in range(1, len(states)):
         current = states[i - 1]
         next = states[i]
@@ -127,24 +145,9 @@ def mermaidGraphFromEdgesList(edges):
 
     return diagramText
 
-def genMermaidGraphFromSpotTrace(sr, literals):
-    edges = mermaidFromSpotTrace(sr, literals)
+def genMermaidGraphFromSpotTrace(sr):
+    edges = mermaidFromSpotTrace(sr)
     return mermaidGraphFromEdgesList(edges)
-
-
-def expandSpotTrace(sr, literals):
-    sr = sr.strip()
-    if sr == "":
-        return []
-
-
-
-
-
-    simple_split = sr.split(';')
-
-    expanded = [ ensure_literals(s, literals) for s in simple_split]
-    return expanded.join(';')
 
 
 
@@ -154,9 +157,15 @@ def change_traces_to_mermaid(data, literals):
         if k['type'] == ExerciseBuilder.TRACESATMC:
             for option in k['options']:
                 sr = option['option']
+                sr = expandSpotTrace(sr, literals)
+                option['option'] = sr
+
                 option['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
         elif k['type'] == ExerciseBuilder.TRACESATYN:
             sr = k['trace']
+            sr = expandSpotTrace(sr, literals)
+
+            k['trace'] = sr
             k['mermaid'] = genMermaidGraphFromSpotTrace(sr, literals)
     return data
 
