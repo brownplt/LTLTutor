@@ -26,11 +26,21 @@ function getCorrectRadio(parent_node) {
     return correct_option;
 }
 
+
+function getGeneratedFromFormulaIfExists(radioButton) {
+
+    let formula = radioButton.dataset.generatedfromformula;
+    if (formula) {
+        return formula;
+    }
+    return null;
+}
+
+
 function show_feedback(parent_node) {
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
     Array.from(all_radios).forEach(radio => {
-        //radio.parentNode.style.backgroundColor = "transparent";
         radio.parentNode.style.outline = "none";
     });
     let selected_radio = getSelectedRadio(parent_node);
@@ -47,8 +57,6 @@ function show_feedback(parent_node) {
 
     if (correct) {
         // Make the background of the selected radio button green
-
-
         selected_radio.parentNode.style.outline = "2px solid green";
 
 
@@ -80,6 +88,23 @@ function show_feedback(parent_node) {
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
         feedback_div.classList.add('alert-warning');
+
+
+        // Check if parent_node has a child of class 'predeterminedfeedback'
+        let predetermined_feedback = parent_node.querySelector('.predeterminedfeedback');
+
+        let selectedAnswerFormula = getGeneratedFromFormulaIfExists(selected_radio);
+        let correctAnswerFormula = getGeneratedFromFormulaIfExists(correct_radio);
+
+
+        if (predetermined_feedback) {
+            predetermined_feedback = predetermined_feedback.innerHTML;
+            feedback_div.innerHTML += "<p>" + predetermined_feedback + "</p>";
+        }
+        if (selectedAnswerFormula && correctAnswerFormula) {
+            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <code>" + selectedAnswerFormula + "</code> but not <code>" +  correctAnswerFormula + "</code></p>";
+        }
+
         // Increment the incorrect count
         try {
             let incorrectCountElement = document.getElementById('incorrectCount');
