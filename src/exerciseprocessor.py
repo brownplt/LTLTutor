@@ -65,6 +65,9 @@ def expandSpotTrace(sr, literals):
 
     def expandState(s):
 
+        ## TODO: This is wrong -- 1 means taqutology, always true no matter what
+        ## 0 means always false no matter what (aka unsat).
+        ## So the assignment of variables for 1 doesn't matter
         true_conj = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
         false_conj = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
 
