@@ -5,10 +5,10 @@ import codebook
 from codebook import MisconceptionCode
 import ltlnode
 import random
-import string
+import re
 
-## TODO
-# Normalize LTL priorities
+
+
 
 
 class ExerciseBuilder:
@@ -201,7 +201,13 @@ class ExerciseBuilder:
         return chosen_questions
     
     def gen_nl_question(self, formula):
+
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
+        #print("Generating NL question for " + formula + " and got " + str(formula_eng))
+
+        ### If there are multiple '.' in a row, replace with a single '.'
+        formula_eng = re.sub(r'\.{2,}', '.', formula_eng)
+        
         return formula_eng
 
 
