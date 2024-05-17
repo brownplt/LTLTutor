@@ -75,6 +75,9 @@ class Logger:
         if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
             Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
 
+        if GENERATED_EXERCISE_TABLE not in self.inspector.get_table_names():
+            Base.metadata.tables[GENERATED_EXERCISE_TABLE].create(self.engine)
+
     def record(self, log):
         session = self.Session()
         session.add(log)
