@@ -35,6 +35,7 @@ class StudentResponse(Base):
     question_options = Column(String)
     correct_answer = Column(Boolean)
     question_type = Column(String)
+    mp_class = Column(String)
 
 
 class GeneratedExercise(Base):
@@ -74,15 +75,12 @@ class Logger:
         if STUDENT_RESPONSE_TABLE not in self.inspector.get_table_names():
             Base.metadata.tables[STUDENT_RESPONSE_TABLE].create(self.engine)
 
-
-    
     def record(self, log):
-        print("Recording log")
         session = self.Session()
         session.add(log)
         session.commit()
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class):
 
         for misconception in misconceptions:
 
@@ -99,10 +97,14 @@ class Logger:
                 raise ValueError("correct_answer should be a boolean")
             if not isinstance(questiontype, str):
                 raise ValueError("questiontype should be a string")
+            if not isinstance(mp_class, str):
+                raise ValueError("mp_class should be a string")
+            
+
 
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype)
+                                  question_type=questiontype, mp_class=mp_class)
             self.record(log)
     
     def getUserLogs(self, userId, lookback_days=30):

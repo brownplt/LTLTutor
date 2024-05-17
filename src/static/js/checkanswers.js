@@ -1,7 +1,7 @@
 
 
 function getQuestionText(parentNode) {
-    return parentNode.querySelector('.card-title').innerText;
+    return parentNode.querySelector('.actualQuestion').innerText;
 }
 
 function getQuestionOptions(parentNode) {
@@ -118,8 +118,40 @@ function show_feedback(parent_node) {
     return correct;
 }
 
+
+function get_formula_for_MP_Classification(parent_node, question_type) {
+    
+    
+    // ## If it is a eng to ltl, mp class is calculated from the correct answer
+    // ## If it is a tracesat y_n question, mp class is calculated from the formula backing the tracesat question
+    // ## If it is a tracesat multiple choice question, mp class is calculated from the formula backing the correct answer
+    if (question_type == "trace_satisfaction_yn") {
+        // I think this is correct
+        let f = getQuestionText(parent_node);
+        return f;
+    }
+    else if (question_type == "trace_satisfaction_mc") {
+        // Both should work here I think.
+        
+        // let cr = getCorrectRadio(parent_node);
+        // return cr.dataset.generatedfromformula;
+
+        let f = getQuestionText(parent_node);
+        return f;
+    }
+    else if (question_type == "english_to_ltl") {
+        let cr = getCorrectRadio(parent_node);
+        return cr.value;
+    }
+    else {
+        return "";
+    }
+}
+
+
 async function tracesatisfaction_mc_getfeedback(button) {
 
+    const QUESTION_TYPE = "trace_satisfaction_mc";
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
 
@@ -138,14 +170,16 @@ async function tracesatisfaction_mc_getfeedback(button) {
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
-        question_options: question_options
+        question_options: question_options,
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
     }
-    let response = await postFeedback(data, "trace_satisfaction");
+    let response = await postFeedback(data, QUESTION_TYPE);
 }
 
 
 async function tracesatisfaction_yn_getfeedback(button) {
 
+    const QUESTION_TYPE = "trace_satisfaction_yn";
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
 
@@ -164,12 +198,17 @@ async function tracesatisfaction_yn_getfeedback(button) {
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
-        question_options: question_options
+        question_options: question_options,
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
     }
-    let response = await postFeedback(data, "trace_satisfaction_yn");
+    let response = await postFeedback(data, QUESTION_TYPE);
 }
 
 async function englishtoltl_getfeedback(button) {
+
+
+    const QUESTION_TYPE = "english_to_ltl";
+
     let parent_node = button.parentNode;
     let question_text = getQuestionText(parent_node);
 
@@ -190,10 +229,11 @@ async function englishtoltl_getfeedback(button) {
         correct: correct,
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
-        question_options: question_options
+        question_options: question_options,
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
     }
 
-    let response = await postFeedback(data, "english_to_ltl");
+    let response = await postFeedback(data, QUESTION_TYPE);
     displayServerResponse(response);
 }
 

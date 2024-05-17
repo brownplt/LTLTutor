@@ -26,7 +26,6 @@
               mermaid.initialize({ startOnLoad: false });
             </script>
           </body>
-
         {% include 'navbar.html' %}
        
         <h1>{{ exercise_name }}</h1>
@@ -57,13 +56,13 @@
                     
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" >Formula: <code> {{ q.question}} </code></h5>
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" >Formula: <code class="actualQuestion"> {{ q.question}} </code></h5>
                         <pre class="mermaid" id="q{{qindex}}_yn_trace"> {{ q.mermaid | safe}}  </pre>
                         <div class="text-muted" id="{{ qindex }}alttrace_sat">Trace Alt: <code> {{ q.trace}}</code> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: <code>{{ q.question}}</code></h5>
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: <code class="actualQuestion">{{ q.question}}</code></h5>
                     {% else %}
-                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2" style="white-space: pre-wrap;">{{ q.question}}
+                        <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion" style="white-space: pre-wrap;">{{ q.question}}
                         </h5>
                     {% endif %}
 

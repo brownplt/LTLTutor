@@ -166,8 +166,15 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
-    answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype)
 
+    # If response has a mp_class field, log it
+    if 'formula_for_mp_class' in data:
+        to_classify = data['formula_for_mp_class']
+        mp_class = spotutils.get_mana_pneulli_class(to_classify)
+    else:
+        mp_class = ""
+
+    answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype, mp_class = mp_class)
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
@@ -181,7 +188,8 @@ def loganswer(questiontype):
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
             return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
-    
+    else:
+        return { "message": "INVALID QUESTION TYPE!!." }
     return { "message": "No further feedback." }
 
 
