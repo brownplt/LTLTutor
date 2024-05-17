@@ -1,29 +1,41 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+# from transformers import pipeline
+# import spacy
 
-# Initialize the language model
-def initialize_model():
-    model_name = 'gpt2'
-    model = GPT2LMHeadModel.from_pretrained(model_name)
-    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-    return model, tokenizer
+# nlp = spacy.load("en_core_web_sm")
 
+# generator = pipeline('text-generation', model='distilgpt2')
 
-model, tokenizer = initialize_model()
-
-
-# Generate text using the language model
-def generate_text(model, tokenizer, prompt):
-    inputs = tokenizer.encode(prompt, return_tensors='pt')
-    outputs = model.generate(inputs, max_length=50, num_return_sequences=1)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+# # Function to generate a grammatically correct sentence using a transformer model
+# def generate_grammatically_correct_sentence(english_sentence):
+#     prompt = f"Translate this logical expression to a grammatically correct English sentence: {english_sentence}."
+#     result = generator(prompt, max_length=50, num_return_sequences=1)
+#     return result[0]['generated_text']
 
 
-def ltl_to_english_sentence(ltl_formula):
-    english_phrases = ltl_formula.__to_english__()
-    prompt = english_phrases
+# def ltl_to_english_sentence(ltl_formula):
+#     print("Translating " + str(ltl_formula) + " to English")
+#     english_phrases = ltl_formula.__to_english__()
+#     prompt = english_phrases
+#     print("Symbolic pass: " + prompt)
 
-    print("Translating " + str(ltl_formula) + " to English (GPT-2 model)...")
+#     #english_sentence = generate_text(model, tokenizer, prompt)
 
-    english_sentence = generate_text(model, tokenizer, prompt)
-    print("Translation complete, result: " + english_sentence)
-    return english_sentence
+#     doc = nlp(prompt)
+#     corrected_sentence = ' '.join([token.text for token in doc])
+
+
+#     print("After SpaCy pass (directly on symbolic): " + corrected_sentence)
+
+#     y = generate_grammatically_correct_sentence(prompt)
+#     print("After transformer pass (directly on symbolic): " + y)
+
+
+#     return corrected_sentence
+
+
+# from transformers import pipeline
+
+
+
+
+

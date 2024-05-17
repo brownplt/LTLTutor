@@ -34,3 +34,5 @@ zipp
 psycopg2-binary
 transformers
 torch
+spacy
+sentencepiece

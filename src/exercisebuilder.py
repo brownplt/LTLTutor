@@ -6,10 +6,24 @@ from codebook import MisconceptionCode
 import ltlnode
 import random
 import string
-import ltltoeng
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 
-## TODO
-# Normalize LTL priorities
+model_name = 't5-base'
+model = T5ForConditionalGeneration.from_pretrained(model_name)
+tokenizer = T5Tokenizer.from_pretrained(model_name)
+
+def paraphrase_sentence(sentence):
+
+    # T5 uses a task-specific prefix, e.g., "translate English to German: "
+    input_text = "paraphrase: " + sentence
+    inputs = tokenizer.encode(input_text, return_tensors='pt')
+
+    outputs = model.generate(inputs, max_length=100, num_return_sequences=1, temperature=1.5)
+
+    paraphrase = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    return paraphrase
+
 
 
 class ExerciseBuilder:
@@ -202,9 +216,15 @@ class ExerciseBuilder:
         return chosen_questions
     
     def gen_nl_question(self, formula):
-        formula_eng = ltlnode.parse_ltl_string(formula)
-        as_sentence = ltltoeng.ltl_to_english_sentence(formula_eng)
-        return as_sentence
+
+        formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
+        print("Generating NL question for " + formula + " and got " + str(formula_eng))
+
+        #TODO: Other potential interventions, including smoothing sentences.
+        paraphrased = paraphrase_sentence(formula_eng)
+        print("Paraphrased: " + paraphrased)
+        
+        return paraphrased
 
 
     def get_options_with_misconceptions_as_formula(self, answer):

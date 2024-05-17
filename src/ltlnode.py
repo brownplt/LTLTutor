@@ -8,6 +8,10 @@ from ltlParser import ltlParser
 from abc import ABC, abstractmethod
 from spotutils import areEquivalent
 
+## We use this for Grammatical englsih generation
+import spacy
+nlp = spacy.load("en_core_web_sm")
+
 
 ## Should these come from the lexer instead of being placed here
 IMPLIES_SYMBOL = '->'
@@ -20,9 +24,9 @@ GLOBALLY_SYMBOL = 'G'
 FINALLY_SYMBOL = 'F'
 UNTIL_SYMBOL = 'U'
 
+  
+
 class LTLNode(ABC):
-
-
     def __init__(self, type):
         self.type = type
 
@@ -32,15 +36,26 @@ class LTLNode(ABC):
 
 
     @abstractmethod
-    def __to_english__(self, depth=0):
+    def __to_english__(self):
         pass
 
     @staticmethod
     def equiv(formula1, formula2):
         areEquivalent(formula1, formula2)
 
-    def get_indent(self, depth):
-        return '  ' * depth
+    def corrected_sentence(self, text):
+         # Use SpaCy to parse the text
+        doc = nlp(text)
+
+        # Iterate over the sentences in the text, capitalize each one, and store them in a list
+        sentences = [sent.text.capitalize() for sent in doc.sents]
+
+        # Join the capitalized sentences back together into a single string
+        capitalized_text = ' '.join(sentences)
+
+        return capitalized_text
+
+
 
 class ltlListenerImpl(ltlListener) :
     def __init__(self):
@@ -118,8 +133,8 @@ class UnaryOperatorNode(LTLNode):
     def __str__(self):
         return f'({self.operator} {str(self.operand)})'
     
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.operator} of {self.operand.__to_english__(depth+1)}"
+    def __to_english__(self):
+        return self.__str__()
 
 
 class BinaryOperatorNode(LTLNode):
@@ -132,8 +147,8 @@ class BinaryOperatorNode(LTLNode):
     def __str__(self):
         return f'({str(self.left)} {self.operator} {str(self.right)})'
     
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.operator} of {self.left.__to_english__(depth+1)}, {self.right.__to_english__(depth+1)} "
+    def __to_english__(self):
+        return self.__str__()
 
 
 class LiteralNode(LTLNode):
@@ -144,8 +159,8 @@ class LiteralNode(LTLNode):
     def __str__(self):
         return self.value
     
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.value} holds"
+    def __to_english__(self):
+        return f"'{self.value}' holds."
 
 
 class UntilNode(BinaryOperatorNode):
@@ -153,8 +168,11 @@ class UntilNode(BinaryOperatorNode):
     def __init__(self, left, right):
         super().__init__(UntilNode.symbol, left, right)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.left.__to_english__(depth+1)} until {self.right.__to_english__(depth+1)}"
+    def __to_english__(self):
+        lhs = self.left.__to_english__()
+        rhs = self.right.__to_english__()
+        english = f"{lhs} until {rhs}."
+        return self.corrected_sentence(english)
 
 
 class NextNode(UnaryOperatorNode):
@@ -162,9 +180,10 @@ class NextNode(UnaryOperatorNode):
     def __init__(self, operand):
         super().__init__(NextNode.symbol, operand)
 
-
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}next, {self.operand.__to_english__(depth+1)}"
+    def __to_english__(self):
+        op = self.operand.__to_english__()
+        english = f"in the next state, {op}."
+        return self.corrected_sentence(english)
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -172,8 +191,10 @@ class GloballyNode(UnaryOperatorNode):
     def __init__(self, operand):
         super().__init__(GloballyNode.symbol, operand)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}always, {self.operand.__to_english__(depth+1)}"
+    def __to_english__(self):
+        op = self.operand.__to_english__()
+        english = f"from this point on, {op}."
+        return self.corrected_sentence(english)
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -181,8 +202,10 @@ class FinallyNode(UnaryOperatorNode):
     def __init__(self, operand):
         super().__init__(FinallyNode.symbol, operand)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}eventually, {self.operand.__to_english__(depth+1)}"
+    def __to_english__(self):
+        op = self.operand.__to_english__()
+        english = f"eventually, {op}."
+        return self.corrected_sentence(english)
 
 
 class OrNode(BinaryOperatorNode):
@@ -192,8 +215,11 @@ class OrNode(BinaryOperatorNode):
     def __init__(self, left, right):
         super().__init__(OrNode.symbol, left, right)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.left.__to_english__(depth+1)} or {self.right.__to_english__(depth)}"
+    def __to_english__(self):
+        lhs = self.left.__to_english__()
+        rhs = self.right.__to_english__()
+        english = f"{lhs} or {rhs}."
+        return self.corrected_sentence(english)
 
 
 class AndNode(BinaryOperatorNode):
@@ -201,8 +227,11 @@ class AndNode(BinaryOperatorNode):
     def __init__(self, left, right):
         super().__init__(AndNode.symbol, left, right)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.left.__to_english__(depth+1)} and {self.right.__to_english__(depth+1)}"
+    def __to_english__(self):
+        lhs = self.left.__to_english__()
+        rhs = self.right.__to_english__()
+        english = f"{lhs} and {rhs}."
+        return self.corrected_sentence(english)
 
 
 class NotNode(UnaryOperatorNode):
@@ -210,8 +239,10 @@ class NotNode(UnaryOperatorNode):
     def __init__(self, operand):
         super().__init__(NotNode.symbol, operand)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}not {self.operand.__to_english__(depth+1)}."
+    def __to_english__(self):
+        op = self.operand.__to_english__()
+        english = f"it is not the case that {op}."
+        return self.corrected_sentence(english)
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -219,7 +250,10 @@ class ImpliesNode(BinaryOperatorNode):
         super().__init__(ImpliesNode.symbol, left, right)
 
     def __to_english__(self,depth=0):
-        return f"\n{self.get_indent(depth)}if {self.left.__to_english__(depth+1)} then {self.right.__to_english__(depth+1)}."
+        lhs = self.left.__to_english__()
+        rhs = self.right.__to_english__()
+        english = f"if {lhs} then {rhs}."
+        return self.corrected_sentence(english)
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -227,8 +261,11 @@ class EquivalenceNode(BinaryOperatorNode):
     def __init__(self, left, right):
         super().__init__(EquivalenceNode.symbol, left, right)
 
-    def __to_english__(self, depth=0):
-        return f"\n{self.get_indent(depth)}{self.left.__to_english__()} if and only if {self.right.__to_english__(depth+1)}"
+    def __to_english__(self):
+        lhs = self.left.__to_english__()
+        rhs = self.right.__to_english__()
+        english = f"{lhs} if and only if {rhs}."
+        return self.corrected_sentence(english)
 
 
 
