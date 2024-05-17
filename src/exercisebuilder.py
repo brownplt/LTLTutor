@@ -6,6 +6,7 @@ from codebook import MisconceptionCode
 import ltlnode
 import random
 import string
+import ltltoeng
 
 ## TODO
 # Normalize LTL priorities
@@ -201,8 +202,9 @@ class ExerciseBuilder:
         return chosen_questions
     
     def gen_nl_question(self, formula):
-        formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
-        return formula_eng
+        formula_eng = ltlnode.parse_ltl_string(formula)
+        as_sentence = ltltoeng.ltl_to_english_sentence(formula_eng)
+        return as_sentence
 
 
     def get_options_with_misconceptions_as_formula(self, answer):

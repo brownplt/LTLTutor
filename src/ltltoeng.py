@@ -21,5 +21,9 @@ def generate_text(model, tokenizer, prompt):
 def ltl_to_english_sentence(ltl_formula):
     english_phrases = ltl_formula.__to_english__()
     prompt = english_phrases
+
+    print("Translating " + str(ltl_formula) + " to English (GPT-2 model)...")
+
     english_sentence = generate_text(model, tokenizer, prompt)
+    print("Translation complete, result: " + english_sentence)
     return english_sentence

@@ -32,3 +32,5 @@ urllib3==2.2.1
 Werkzeug 
 zipp 
 psycopg2-binary
+transformers
+torch
