@@ -4,6 +4,10 @@ function getQuestionText(parentNode) {
     return parentNode.querySelector('.actualQuestion').innerText;
 }
 
+function getQuestionTrace(parentNode) {
+    return parentNode.querySelector('.actualQuestionTrace').innerText;
+}
+
 function getQuestionOptions(parentNode) {
 
     let allRadios = parentNode.querySelectorAll('input[type=radio]');
@@ -181,7 +185,7 @@ async function tracesatisfaction_yn_getfeedback(button) {
 
     const QUESTION_TYPE = "trace_satisfaction_yn";
     let parent_node = button.parentNode;
-    let question_text = getQuestionText(parent_node);
+    let question_text = getQuestionText(parent_node) + "\n" + getQuestionTrace(parent_node);
 
     let selected_radio = getSelectedRadio(parent_node);
     if (selected_radio == null) {
@@ -220,9 +224,6 @@ async function englishtoltl_getfeedback(button) {
     let question_options = getQuestionOptions(parent_node);
     let correct = show_feedback(parent_node);
 
-
-    // TODO: SOme kind of error getting correct_option
-
     let data = {
         selected_option: selected_radio.value,
         correct_option: correct_option,
@@ -250,6 +251,11 @@ function displayServerResponse(response) {
     else if (response.error) {
         return;
     }
+    // else if (response.message) {
+    //     return response.message;
+    // }
+
+    // TODO: Fix this to allow for different response feedback.
 
     let disjoint = response.disjoint;
     let subsumed = response.subsumed;
