@@ -7,6 +7,7 @@ import ltlnode
 import random
 import string
 from transformers import T5Tokenizer, T5ForConditionalGeneration
+import re
 
 model_name = 't5-base'
 model = T5ForConditionalGeneration.from_pretrained(model_name)
@@ -219,6 +220,9 @@ class ExerciseBuilder:
 
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
         print("Generating NL question for " + formula + " and got " + str(formula_eng))
+
+        ### If there are multiple '.' in a row, replace with a single '.'
+        formula_eng = re.sub(r'\.{2,}', '.', formula_eng)
 
         #TODO: Other potential interventions, including smoothing sentences.
         paraphrased = paraphrase_sentence(formula_eng)

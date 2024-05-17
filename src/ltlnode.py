@@ -160,7 +160,7 @@ class LiteralNode(LTLNode):
         return self.value
     
     def __to_english__(self):
-        return f"'{self.value}' holds."
+        return f"'{self.value}' holds"
 
 
 class UntilNode(BinaryOperatorNode):
