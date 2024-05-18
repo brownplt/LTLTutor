@@ -41,6 +41,15 @@
     <strong>Welcome New User</strong>  In order to generate personalized exercises, we store a randomly generated user ID as a 
     browser cookie. This ID is anonymous, non-reverse engineerable, and is used to generate personalized exercises.
     If you do not consent, please close this tab and do not use this site.
+    <p> If you have not used this tool before, we recommend <a href="/ltl"><button>Going through LTL documentation</button></a>. </p>
+
+    <form action="/exercise/predefined" method="post">
+        <input type="hidden" name="sourceuri" value="preload:1710exercise.json">
+        <p>If you are familiar with LTL, we recommend starting with this <button type="submit">pre-loaded exercise</button> </p>
+    </form>
 </div>
+
+
+
 
 <p class="badge badge-light" id="userid_field"> </p>
