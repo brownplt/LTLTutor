@@ -39,10 +39,7 @@ function ensureUserId() {
             })
             .catch(error => console.error('Error Generating User Id:', error));
     }
-    else if ($("knownUserContainer").length) {
-        // Only show this if 'knownUserContainer' exists
-        $("knownUserContainer").removeClass('d-none');
-    }
+    
 }
 
 $(document).ready(function() {
