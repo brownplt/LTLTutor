@@ -47,10 +47,6 @@ $(document).ready(function() {
 
     // Get the value of the cookie ltluserid and store it in a variable
     var userId = getCookie(USERIDKEY);
-
-
-
-
     var uidfield = document.getElementById("userid_field");
 
     if (uidfield) {
