@@ -33,7 +33,19 @@ app.jinja_env.filters['flatten'] = flatten
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+
+
+    userId = request.cookies.get(USERID_COOKIE)
+
+    if not userId:
+        return render_template('index.html')
+    
+    logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
+    exercise_builder = exercisebuilder.ExerciseBuilder(logs)
+    model = exercise_builder.get_model()
+    misconception_weights = model['misconception_weights']
+
+    return render_template('index.html', misconception_weights = misconception_weights)
 
 @app.route('/ltl')
 def ltl():

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
-    
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -15,6 +15,7 @@
 
 <body>
 
+    {% if misconception_weights %}
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
@@ -40,6 +41,7 @@
             });
         });
     </script>
+    {% endif %}
 
     <style>
         .infograph {
@@ -50,91 +52,33 @@
         }
     </style>
 
-
-
     <div class="container mt-4">
         {% include 'navbar.html' %}
 
-        
-        <div class="container d-none" id="knownUserContainer" >
+        <div class="container d-none" id="knownUserContainer">
             <h4> Welcome back!</h4>
 
+            <div class="container">
+
+                <h5> </button><a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
+                <p>This exercises will be based on your history of misconceptions and complexity level, paying higher
+                    attention to more recent misconceptions you have demonstrated. These exercises can be generated
+                    indefinitely,
+                    and will continuously adapt to your LTL proficiency.</p>
+
+                <p> If you feel like you are ready to be done with the tutor, test yourself with this exercise: [HERE BE
+                    A LINK TO A POST EXERCISE] </p>
+            </div>
 
             <p class="lead">Generated Exercises for you are being served at Complexity Score {{ complexity }} </p>
+
 
             <div class="container">
                 <h3 class="display-4">Estimated Distribution of Misconceptions</h3>
                 <canvas id="estimatedMisconceptions"></canvas>
             </div>
-
-
-            <div class="container-fluid">
-                <div class="container">
-                    <h3 class="display-4">Misconceptions Identified Over Time</h3>
-                    <canvas id="misconceptionsSeenOverTime"></canvas>
-                    <script>
-                        function getRandomColor() {
-                            var r = Math.floor(Math.random() * 256);
-                            var g = Math.floor(Math.random() * 256);
-                            var b = Math.floor(Math.random() * 256);
-                            return 'rgb(' + r + ', ' + g + ', ' + b + ')';
-                        }
-    
-                        var ctx = document.getElementById('misconceptionsSeenOverTime').getContext('2d');
-                        var chart = new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: {{ misconceptions_over_time.values() | map(attribute = '0') | flatten | list | tojson }},
-                        datasets: [
-                            {% for key, value in misconceptions_over_time.items() %}
-                        {
-                            label: '{{ key }}',
-                                data: {{ value | map(attribute = '1') | list | tojson }},
-                            fill: false,
-                                borderColor: getRandomColor(),
-                                    tension: 0.1
-                        },
-                        {% endfor %}
-                            ]
-                        },
-                        options: {
-                            scales: {
-                                x: {
-                                    type: 'linear',
-                                        beginAtZero: false,
-                                            title: {
-                                        display: true,
-                                            text: 'Timestamp'
-                                    }
-                                },
-                                y: {
-                                    beginAtZero: true
-                                }
-                            }
-                        }
-                    });
-                    </script>
-                </div>
-            </div>
-
         </div>
-
-
-        <div class="container">
-
-            <h5> </button><a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
-            <p>This exercises will be based on your history of misconceptions and complexity level, paying higher
-                attention to more recent misconceptions you have demonstrated. These exercises can be generated indefinitely,
-                and will continuously adapt to your LTL proficiency.</p>
-
-            <p> If you feel like you are ready to be done with the tutor, test yourself with this exercise: [HERE BE A LINK TO A POST EXERCISE] </p>
-        </div>
-
-
-
     </div>
-    
-
 </body>
 
 </html>

@@ -29,6 +29,7 @@ function ensureUserId() {
             .then(response => response.text())  // convert the response to text
             .then(userId => {
                 // Set the cookie with the user ID
+                //TODO: Make this a persistent cookie
                 document.cookie = USERIDKEY + "=" + userId + "; path=/";
             })
             .catch(error => console.error('Error Generating User Id:', error));
