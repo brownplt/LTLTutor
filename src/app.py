@@ -211,13 +211,19 @@ def newexercise():
     # Get a cookie from the request
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
 
+
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
-    LITERALS = ["r", "x", "y"]
+    literals_pool = list("abcdehijklnopqstvz")
+    num_literals = random.randint(2, 5)
+    LITERALS = random.sample(literals_pool, num_literals)
 
     num_questions = random.randint(3, 8)
 
     ## TODO: Try and do better than this
-    exercise_name = "Generated Exercise"
+    try:
+        exercise_name = "Generated Exercise: " + generate_new_name()
+    except Exception as e:
+        exercise_name = "Generated Exercise"
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
@@ -299,22 +305,26 @@ def viewstudentlogs(type):
 def getuserid():
     username = str(uuid.uuid4())
     try:
-        # Make a request to the Random Word API to get 2 random words
-        response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
-        
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            words = response.json()
-            # Concatenate the two words with a hyphen
-            username = '-'.join(words)
-            
+        return generate_new_name()
     except Exception as e:
         print("Error generating username:", e)
-        
+        return username
 
-    # Return a GUID if there's an error
-    return username
+def generate_new_name():
+
+    # Make a request to the Random Word API to get 2 random words
+    response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the JSON response
+        words = response.json()
+        # Concatenate the two words with a hyphen
+        username = '-'.join(words)
+        return username
+    else:
+        # Raise an exception if the request was unsuccessful
+        response.raise_for_status()
 
 
 if __name__ == '__main__':
