@@ -211,8 +211,11 @@ def newexercise():
     # Get a cookie from the request
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
 
+
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
-    LITERALS = ["r", "x", "y"]
+    literals_pool = list("abcdehijklnopqstvz")
+    num_literals = random.randint(2, 5)
+    LITERALS = random.sample(literals_pool, num_literals)
 
     num_questions = random.randint(3, 8)
 
