@@ -141,7 +141,7 @@ def mermaidFromSpotTrace(sr):
     return edges
 
 def mermaidGraphFromEdgesList(edges):
-    diagramText = 'flowchart LR;\n'
+    diagramText = 'flowchart LR;'
 
     for edge in edges:
         diagramText += f'{str(edge[0])}-->{str(edge[1])};'

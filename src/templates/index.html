@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
-    
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@1.1.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -15,19 +17,66 @@
 
 <body>
 
+    {% if misconception_weights %}
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
+            var misconceptionWeightChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ misconception_weights.keys() | list | tojson }},
+            datasets: [{
+                label: 'Estimated Weight',
+                data: {{ misconception_weights.values() | list | tojson }},
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+                    }]
+                },
+            options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+            });
+        });
+    </script>
+    {% endif %}
+
+    <style>
+        .infograph {
+            max-width: 50vw;
+            /* 80% of viewport width */
+            max-height: 50vh;
+            /* 80% of viewport height */
+        }
+    </style>
+
     <div class="container mt-4">
         {% include 'navbar.html' %}
 
+        <div class="container" id="knownUserContainer">
+           
+            <div class="container">
 
-        <p> If you have not used this tool before, we recommend <a href="/ltl"><button>Going through LTL documentation</button></a>. </p>
+                <h5> </button><a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
+                <p> based on your history of misconceptions and complexity level. Exercises can be generated
+                    indefinitely, and weight recently seen misconceptions more heavily. More details on your misconceptions
+                are available on the <a href="/getmy/model">User Model</a> page.</p>
 
-        <form action="/exercise/predefined" method="post">
-            <input type="hidden" name="sourceuri" value="preload:1710exercise.json">
-            <p>If you are familiar with LTL, we recommend starting with this <button type="submit">pre-loaded exercise</button> </p>
-        </form>
-        <p> You can also  </button><a href="/exercise/generate"> <button>load personalized exercises </button></a>, though these are most useful after you have completed the pre-loaded exercise.</p>
+                <p> If you feel like you are ready to be done with the tutor, test yourself with
+                <button>this exit ticket</button> (not yet available) </p>
+            </div>
+            <hr>
+
+            <div class="container">
+                <h5 class="display-4">Estimated Distribution of Misconceptions</h5>
+                <canvas id="estimatedMisconceptions"></canvas>
+            </div>
+        </div>
     </div>
-
 </body>
 
 </html>

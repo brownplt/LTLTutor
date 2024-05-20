@@ -44,19 +44,21 @@ antlr4 -Dlanguage=Python3 ltl.g4
 
 ### Inner Loop
 
-- [] Improve distractor generator. Currently so-so.
-  - [] FOr traces, ensure that each state specifies a truth value for each variable (1 --> all are true)
+
 - [] Move `userId` from Cookie to something else.
-- [] Introduce a third question type: Yes/No trace satisfaction (add an explanation field also!)
-  - However, how would we determine *misconception* if someone gets a trace where the correct answer was `Yes`, and someone says `No`? Do we just have *no* misconception?
+- [] Introduce a third question type:
+  - [x] Yes/No trace satisfaction (add an explanation field also!)
+  - [] However, how would we determine *misconception* if someone gets a trace where the correct answer was `Yes`, and someone says `No`? Do we just have *no* misconception?
 
 ### Outer Loop
- 
-- Determine distribution of questions, choose distractor from questions (if possible?)
-  - [] Export report of learning
+
 - [] Complexity
 
 
 ## Engineering Debt
 
 - While psycopg2-binary is convenient for development and avoids the need for PostgreSQL client libraries, it's not recommended for production due to potential issues with the statically linked libraries. However, it's generally fine for many use cases, especially in smaller projects or where environment control (like on personal or managed servers) limits easy installation of the regular psycopg2.
+
+- MERMAID renders are bad, and often time out :(
+  - I think the solution is here: See https://mermaid.js.org/config/usage.html?id=usage
+

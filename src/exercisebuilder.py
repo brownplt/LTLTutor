@@ -153,14 +153,16 @@ class ExerciseBuilder:
     def get_tree_size(self):
         ## TODO: Determine complexity somehow, maybe based on the number of misconceptions encountered
         ## and then create a mapping to tree size
+
+        ## Complexity, perhaps can be a combination of tree size
+        ## Expression heirarchy? Number of literals?
+        ## Mana Pneuli class? Maybe we need something else here?
         return self.complexity
 
     def build_exercise(self, literals, num_questions):
 
-
-        VACCUOUS = "1"
-        FALSE = "0"
-
+        TAUTOLOGY = "1"
+        UNSAT = "0"
 
         self.set_weights()
 
@@ -178,7 +180,7 @@ class ExerciseBuilder:
         for answer in question_answers:
 
 
-            if answer == VACCUOUS or answer == FALSE:
+            if answer == TAUTOLOGY or answer == UNSAT:
                 continue
 
             kind = self.choose_question_kind()
