@@ -62,25 +62,31 @@ def expandSpotTrace(sr, literals):
     sr = sr.strip()
     if sr == "":
         return ""
+    
+
+    def randomlyConjoionMissingLiterals(s, missing_literals):
+        for literal in missing_literals:
+            x = literal if random.random() < 0.5 else f'!{literal}'
+            s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
+        return s
 
     def expandState(s):
 
-        ## TODO: This is wrong -- 1 means taqutology, always true no matter what
-        ## 0 means always false no matter what (aka unsat).
-        ## So the assignment of variables for 1 doesn't matter
-        true_conj = f" {NodeRepr.VAR_SEPARATOR} ".join(literals)
-        false_conj = f" {NodeRepr.VAR_SEPARATOR} ".join([f'!{literal}' for literal in literals])
+        TAUTOLOGY = r'\b1\b'
+        UNSAT = r'\b0\b'
 
         # I want to replace every instance
-        s = re.sub(r'\b1\b', true_conj, s)
-        s = re.sub(r'\b0\b', false_conj, s)
+
+        random_literal_assignment = randomlyConjoionMissingLiterals("", literals)
+        unsat_text = "UNSAT"
+        s = re.sub(TAUTOLOGY, random_literal_assignment, s)
+        ## TODO: Is this right?
+        s = re.sub(UNSAT, unsat_text, s)
         
         vars_words = re.findall(r'\b[a-z0-9]+\b', s)
         missing_literals = [literal for literal in literals if literal not in vars_words]
 
-        for literal in missing_literals:
-            x = literal if random.random() < 0.5 else f'!{literal}'
-            s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
+        s = randomlyConjoionMissingLiterals(s, missing_literals)
         return s
     
     prefix_split = sr.split('cycle', 1)
