@@ -120,37 +120,27 @@
     </div>
 
 
-    <script type="module">
-        mermaid.initialize({ startOnLoad: true });
-    </script>
     <script>
         $(document).ready(function () {
-
+            mermaid.initialize({ startOnLoad: true });
+            const ui_load_timeout_delay = 150;
             async function renderMermaidDiagram(graphElement) {
 
-                await mermaid.run({
-                    querySelector: '.mermaid',
-                    });
-
-
-                return;
+                //setTimeout(function() {
                 const id = graphElement.attr('id');
-                const graphDefinition = graphElement.text();
-
+ 
                 if (!id )
                 {
                     console.error("Mermaid diagram element does not have an id attribute");
                     console.error(graphElement);
                     return;
                 }
-                console.log("Rendering mermaid diagram for element with id: " + id);
-                console.log(graphDefinition);
-
-                await mermaid.render(id, graphDefinition);
+                await mermaid.run({
+                    querySelector: id,
+                    });
+                //}, ui_load_timeout_delay);
             };
 
-
-            const ui_load_timeout_delay = 150;
 
             // Hide all questions at the start
             $('.question').hide();
@@ -158,11 +148,11 @@
             // Show the first question
             $('.question:first').show();
             // Initialize mermaid for the first question
-            setTimeout(function() {
+            //setTimeout(function() {
                 $('.question:first').find('.mermaid').each(function () {
                     renderMermaidDiagram($(this));
                 });
-            }, ui_load_timeout_delay);
+            //}, ui_load_timeout_delay);
     
             // When the "Next" button is clicked, hide the current question and show the next one
             $('.next').click(function () {
@@ -175,11 +165,11 @@
                     // If there is a next question, show it
                     nextQuestion.show();
                     // Find all elements of type mermaid that are children of the next question and render them
-                    setTimeout(function() {
+                    //setTimeout(function() {
                         nextQuestion.find('.mermaid').each(function () {
                             renderMermaidDiagram($(this))
                         });
-                    }, ui_load_timeout_delay);
+                    //}, ui_load_timeout_delay);
                 } else {
                     // If there are no more questions, show the "done" section
                     $('#done').show();
