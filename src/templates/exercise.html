@@ -121,14 +121,31 @@
 
 
     <script type="module">
-        mermaid.initialize({ startOnLoad: false });
+        mermaid.initialize({ startOnLoad: true });
     </script>
     <script>
         $(document).ready(function () {
 
             async function renderMermaidDiagram(graphElement) {
-                const id = graphElement.id;
-                const graphDefinition = graphElement.innerText;
+
+                await mermaid.run({
+                    querySelector: '.mermaid',
+                    });
+
+
+                return;
+                const id = graphElement.attr('id');
+                const graphDefinition = graphElement.text();
+
+                if (!id )
+                {
+                    console.error("Mermaid diagram element does not have an id attribute");
+                    console.error(graphElement);
+                    return;
+                }
+                console.log("Rendering mermaid diagram for element with id: " + id);
+                console.log(graphDefinition);
+
                 await mermaid.render(id, graphDefinition);
             };
 
