@@ -86,7 +86,7 @@ function show_feedback(parent_node) {
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         let misconceptions = JSON.parse(misconception_string);
-        console.log(misconceptions);
+
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option + "</code></p>";
         feedback_div.classList.add('alert');

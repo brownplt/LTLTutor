@@ -124,26 +124,17 @@
         $(document).ready(function () {
             mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
-            function renderMermaidDiagram(graphElement) {
+            function renderMermaidDiagram(graphElements) {
 
-                //setTimeout(function() {
-                const id = graphElement.attr('id');
- 
-                if (!id )
-                {
-                    console.error("Mermaid diagram element does not have an id attribute");
-                    console.error(graphElement);
-                    return;
-                }
                 mermaid.run({
-                    querySelector: "#" + id,
-                    }).then(() => {
-                        console.log("Mermaid diagram rendered for " + id + " successfully");
+                    nodes: graphElements
+                }).then((data) => {
+                        console.log("Mermaid diagram rendered for " + graphElements + " successfully");
+                        console.log(data);
                     }).catch((err) => {
                         console.error("Error rendering mermaid diagram");
                         console.error(err);
                     });
-                //}, ui_load_timeout_delay);
             };
 
 
@@ -154,9 +145,9 @@
             $('.question:first').show();
             // Initialize mermaid for the first question
 
-            $('.question:first').find('.mermaid').each(function () {
-                renderMermaidDiagram($(this));
-            });
+            let first_question_to_render = $('.question:first').find('.mermaid').get();
+
+            renderMermaidDiagram(first_question_to_render);
     
             // When the "Next" button is clicked, hide the current question and show the next one
             $('.next').click(function () {
@@ -167,9 +158,10 @@
                 var nextQuestion = $(this).closest('.question').hide().next('.question');
                 if (nextQuestion.length) {
                     nextQuestion.show();
-                    nextQuestion.find('.mermaid').each(function () {
-                        renderMermaidDiagram($(this))
-                    });
+
+                    let to_render = nextQuestion.find('.mermaid').get();
+
+                    renderMermaidDiagram(to_render);
                 } else {
                     // If there are no more questions, show the "done" section
                     $('#done').show();

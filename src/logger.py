@@ -60,7 +60,14 @@ class Logger:
             # Get the directory of the current script
             script_dir = os.path.dirname(os.path.abspath(__file__))
             # Create a path to the database file
-            db_path = os.path.join(os.path.join(script_dir, 'db'), 'database.db')
+            db_dir = os.path.join(script_dir, 'db')
+
+            # Create directory db_dir if it doesn't exist
+            if not os.path.exists(db_dir):
+                os.makedirs(db_dir)
+
+
+            db_path = os.path.join(db_dir, 'database.db')
             print("Using file-based database at ", db_path)
             # Create the engine
             self.engine = create_engine(f'sqlite:///{db_path}')
