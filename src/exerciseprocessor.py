@@ -65,10 +65,13 @@ def expandSpotTrace(sr, literals):
         return ""
     
 
-    def randomlyConjoionMissingLiterals(s, missing_literals):
+    def randomlyConjoinMissingLiterals(s, missing_literals):
         for literal in missing_literals:
             x = literal if random.random() < 0.5 else f'!{literal}'
-            s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
+            if s == "":
+                s = x
+            else:
+                s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
         return s
 
     def expandState(s):
@@ -78,16 +81,15 @@ def expandSpotTrace(sr, literals):
 
         # I want to replace every instance
 
-        random_literal_assignment = randomlyConjoionMissingLiterals("", literals)
+        random_literal_assignment = randomlyConjoinMissingLiterals("", literals)
         unsat_text = "UNSAT"
         s = re.sub(TAUTOLOGY, random_literal_assignment, s)
-        ## TODO: Is this right?
         s = re.sub(UNSAT, unsat_text, s)
         
         vars_words = re.findall(r'\b[a-z0-9]+\b', s)
         missing_literals = [literal for literal in literals if literal not in vars_words]
 
-        s = randomlyConjoionMissingLiterals(s, missing_literals)
+        s = randomlyConjoinMissingLiterals(s, missing_literals)
         return s
     
     prefix_split = sr.split('cycle', 1)
