@@ -4,6 +4,7 @@ import requests
 import json
 import re
 from exercisebuilder import ExerciseBuilder
+import ltlnode
 
 def load_questions_from_sourceuri(sourceuri, staticfolderpath):
     if sourceuri.startswith('preload:'):
@@ -183,3 +184,24 @@ def change_traces_to_mermaid(data, literals):
             k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
     return data
 
+
+
+def getFormulaLiterals(ltlFormula):
+
+    n = ltlnode.parse_ltl_string(ltlFormula)
+
+    literals = set()
+    # Now traverse this node getting all literals' values
+
+    
+    def getLiterals(n):
+        if type(n) is ltlnode.LiteralNode:
+            literals.add(n.value)
+        elif type(n) is ltlnode.UnaryOperatorNode:
+            getLiterals(n.operand)
+        elif type(n) is ltlnode.BinaryOperatorNode:
+            getLiterals(n.left)
+            getLiterals(n.right)
+    
+    getLiterals(n)
+    return literals

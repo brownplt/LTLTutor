@@ -178,27 +178,31 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
-
+    mp_class = ""
+    mp_formula_literals = []
     # If response has a mp_class field, log it
     if 'formula_for_mp_class' in data:
         to_classify = data['formula_for_mp_class']
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
-    else:
-        mp_class = ""
+        mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
+
 
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype, mp_class = mp_class)
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
+
             fgen = FeedbackGenerator(correct_answer, student_selection)
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
             to_return['cewords'] = fgen.getCEWords()
-            to_return['mermaid'] = [exerciseprocessor.genMermaidGraphFromSpotTrace(w) for w in fgen.getCEWords()]
+            to_return['mermaid'] = [exerciseprocessor.expand_single_trace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
+
+            ## TODO: TraceSat: Ensure that we say we have some sort of stepper or something.
             return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
     else:
         return { "message": "INVALID QUESTION TYPE!!." }

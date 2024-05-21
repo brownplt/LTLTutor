@@ -17,25 +17,33 @@
 
 <body>
 
-    {% if misconception_weights %}
+    {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
+    {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
-            var misconceptionWeightChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: {{ misconception_weights.keys() | list | tojson }},
-            datasets: [{
-                label: 'Estimated Weight',
-                data: {{ misconception_weights.values() | list | tojson }},
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
+
+            // Generate an array of random colors
+            var colors = Array.from({ length: {{ misconception_weights.keys() | length }}}, () => `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.2)`);
+
+        var misconceptionWeightChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ misconception_weights.keys() | list | tojson }},
+        datasets: [{
+            label: 'Concepts',
+            data: {{ misconception_weights.values() | list | tojson }},
+            backgroundColor: colors,
+            borderColor: colors,
             borderWidth: 1
                     }]
                 },
-            options: {
+        options: {
             scales: {
                 y: {
+                    ticks: {
+                        display: false
+                    },
                     beginAtZero: true
                 }
             }
@@ -44,38 +52,43 @@
         });
     </script>
     {% endif %}
+    {% endif %}
 
     <style>
         .infograph {
             max-width: 50vw;
-            /* 80% of viewport width */
             max-height: 50vh;
-            /* 80% of viewport height */
         }
     </style>
 
     <div class="container mt-4">
         {% include 'navbar.html' %}
 
-        <div class="container" id="knownUserContainer">
-           
-            <div class="container">
+        <div class="container">
 
-                <h5> </button><a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
-                <p> based on your history of misconceptions and complexity level. Exercises can be generated
-                    indefinitely, and weight recently seen misconceptions more heavily. More details on your misconceptions
-                are available on the <a href="/getmy/model">User Model</a> page.</p>
-
-                <p> If you feel like you are ready to be done with the tutor, test yourself with
-                <button>this exit ticket</button> (not yet available) </p>
-            </div>
-            <hr>
-
-            <div class="container">
-                <h5 class="display-4">Estimated Distribution of Misconceptions</h5>
-                <canvas id="estimatedMisconceptions"></canvas>
-            </div>
+            <h5> <a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
+            <p> based on your previous responses. Exercises can be generated
+                indefinitely, and weight recent errors more heavily. More details are available on your
+                <a href="/getmy/model">User Model</a> page.
+            </p>
+            <p> If you feel like you are ready to be done with the tutor, test yourself with
+                <button>this exit ticket</button> (not yet available)
+            </p>
         </div>
+        <hr>
+        {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
+        <div class="container">
+            <h6 class="display-4">Concepts your should Review</h6>
+            <canvas id="estimatedMisconceptions"></canvas>
+        </div>
+        {% else %}
+        <div class="alert-secondary alert">
+            <strong> Concepts your should review </strong>
+            <p>A breakdown of the concepts your should review will show up
+                once you have completed a few more exercises.
+            </p>
+        </div>
+        {% endif %}
     </div>
 </body>
 
