@@ -55,7 +55,7 @@
                         <pre class="mermaid" id="q{{qindex}}_yn_trace"> {{ q.mermaid | safe}}  </pre>
 
                         <!-- WHAT CAN WE DOUBLE THESE? -->
-                        <div class="text-muted" id="{{ qindex }}alttrace_sat">Trace Alt: <code class="actualQuestionTrace"> {{ q.trace}}</code> </div>
+                        <div class="text-muted" id="{{ qindex }}alttrace_sat">Trace Alt: <pre class="actualQuestionTrace"> {{ q.trace}}</pre> </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
                         <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: <code class="actualQuestion">{{ q.question}}</code></h5>
                     {% else %}
@@ -78,7 +78,7 @@
                             <label for="{{ qindex }}option{{ loop.index }}">
                                 {% if q.type == 'tracesatisfaction_mc' %}
                                     <pre class="mermaid" id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
-                                    <div class="text-muted"> Trace Alt: <code> {{ option.option }}</code> </div>
+                                    <div class="text-muted"> Trace Alt: <pre> {{ option.option }}</pre> </div>
                                 {% else %}
                                 <code>{{ option.option }}</code>
                                 {% endif %}
