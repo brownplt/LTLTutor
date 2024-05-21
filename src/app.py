@@ -218,7 +218,7 @@ def newexercise():
 
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
     literals_pool = list("abcdehijknpqstvz")
-    num_literals = random.randint(2, 5)
+    num_literals = random.randint(2, 4)
     LITERALS = random.sample(literals_pool, num_literals)
 
     num_questions = random.randint(3, 8)
