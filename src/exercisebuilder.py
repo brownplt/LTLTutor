@@ -23,25 +23,6 @@ class ExerciseBuilder:
         ## TODO: We want complexity to be persistent for user, and scale up or down.
         self.complexity = complexity
    
-    
-    ## TODO: This is not quite it :(
-    def normalize_ltl_priorities(self):
-        temporal_operators = ["X", "F", "G", "U"]
-        #to_consider = [op for op in self.ltl_priorities.keys() if op in temporal_operators]
-        # Normalize the weights of keys in temporal_operators, in the range of 0 to 10
-        xs =[ self.ltl_priorities[op] for op in temporal_operators]
-
-        
-        max_weight = max(xs)
-        max_weight = max(1, max_weight)
-
-        if max_weight < spotutils.DEFAULT_WEIGHT:
-            ## Increase base complexity
-            # TODO: This is not great, since we haven't logged previous complexity.
-            self.complexity += 2
-
-        for op in temporal_operators:
-            self.ltl_priorities[op] = round(self.ltl_priorities[op] * 9 / max_weight) + 1
 
     def aggregateLogs(self, bucketsizeinhours=1):
 
@@ -151,9 +132,7 @@ class ExerciseBuilder:
                     newval = round(self.ltl_priorities[operator] * scale(weight))
                     self.ltl_priorities[operator] = newval
 
-            ## TODO: Do we want this normalization?
-            #self.normalize_ltl_priorities()
-            print("Priotities now are " + str(self.ltl_priorities))
+            #print("Priotities now are " + str(self.ltl_priorities))
 
 
     def choose_question_kind(self):
