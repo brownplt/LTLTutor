@@ -6,13 +6,28 @@
     </script>
 
     <div class="card-body">
-      <h4 class="card-title"></h4>
-      <p class="card-text">
+        <h4 class="card-title">Review: Fan Out Operators</h4>
+        <p class="card-text">
 
-    
-
-      </p>
+            The operators <code>F</code>, <code>G</code>, and <code>U</code> dictate how propositions fan out over time:
+        <ul>
+            <li><code>F p</code> guarantees that the proposition <code>p</code> will hold true at least once in the
+                future.
+                It doesn't specify when, just that it will happen, potentially even in the current state.
+                For example, <code>F p</code> means that <code>p</code> could be true now or at any future moment.</li>
+            <li><code>G p</code> asserts that the proposition <code>p</code> must hold in all states,
+                starting from the current state and continuing indefinitely.
+                <code>G p</code> means <code>p</code> is required to be true not just now but in every future state as
+                well.
+            </li>
+            <li><code>p U q</code> specifies that <code>p</code> holds in every state until <code>q</code> becomes true.
+                Crucially, <code>q</code> must eventually become true for the formula to be satisfied.</li>
+        </ul>
+        If you find yourself swapping these operators or using them incorrectly,
+        focus on what each specifically dictates about the states where the conditions must be met.
+        For example, swapping <code>F</code> and <code>G</code> would mean changing from an event
+        that happens at least once to a condition that must always hold. These are very different requirements!
+        </p>
 
     </div>
-  </div>
-  
+</div>
