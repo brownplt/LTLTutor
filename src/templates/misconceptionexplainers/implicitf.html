@@ -1,0 +1,41 @@
+<div class="card">
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+
+    <div class="card-body">
+      <h4 class="card-title">Review: Finally (<code>F</code>) </h4>
+      <p class="card-text">
+
+        In LTL, the formula <code>F p</code> asserts that <code>p</code> will eventually be true.
+        This means that <code>p</code> can be true in the current state, but it doesn't have to be. What's required is that 
+        <code>p</code> becomes true at least once in any future state, including potentially the present state.
+        Importantly, <code> F p</code> doesn't specify when <code>p</code> will become true, only that it will 
+        definitely become true.
+
+        Thus this trace satisfies the formula <code>F p</code>:
+
+
+        <pre class="mermaid"> 
+            flowchart LR;
+            n1["!p"]-->n2["p"];
+            n2["p"]-->n2["p"];  
+        </pre>
+
+        and so does this trace:
+
+        <pre class="mermaid"> 
+            flowchart LR;
+            n1["!p"]-->n2["!p"];
+            n2["!p"]-->n3["!p"];
+            n3["!p"]-->n4["p"];
+            n4["p"]-->n3["!p"];
+        </pre>
+
+      </p>
+
+    </div>
+  </div>
+  
