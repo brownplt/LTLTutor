@@ -205,6 +205,9 @@ def change_traces_to_mermaid(data, literals):
             for option in k['options']:
                 sr = option['option']
                 sr = expandSpotTrace(sr, literals)
+
+                print(f"When generating options: Expanded: {option['option']} to {sr}")
+
                 option['option'] = sr
 
                 option['mermaid'] = genMermaidGraphFromSpotTrace(sr)

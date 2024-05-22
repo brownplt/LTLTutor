@@ -272,7 +272,7 @@ function displayServerResponse(response) {
 
 
     // let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
-    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid' aria-label='"+ ce_trace + " '>" + ce_mermaid + "</pre> ";
+    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid'>" + ce_mermaid + "</pre> <br> Alt Trace: " + ce_trace;
 
     var feedback_string = "";
 

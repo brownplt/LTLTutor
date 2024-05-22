@@ -332,6 +332,7 @@ class ExerciseBuilder:
         if len(potential_trace_choices) == 0:
             return None
         
+        # TODO: Should this be expanded?
         trace_option = random.choice(potential_trace_choices)
 
         ## THink about this -- how can we give feedback here!
