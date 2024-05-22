@@ -6,12 +6,11 @@ from codebook import MisconceptionCode
 import ltlnode
 import random
 import re
-
+import math
 
 class ExerciseBuilder:
 
     MAX_TRACES = 10
-
     TRACESATMC = "tracesatisfaction_mc"
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
@@ -25,6 +24,7 @@ class ExerciseBuilder:
         self.complexity = complexity
    
     
+    ## TODO: This is not quite it :(
     def normalize_ltl_priorities(self):
         temporal_operators = ["X", "F", "G", "U"]
         #to_consider = [op for op in self.ltl_priorities.keys() if op in temporal_operators]
@@ -61,22 +61,32 @@ class ExerciseBuilder:
             misconception = log.misconception
             buckets[bucket][misconception] += 1
 
-                # Organize misconceptions by bucket and sort by date
+        # Organize misconceptions by bucket and sort by date
         for bucket, misconceptions in buckets.items():
             for misconception, frequency in misconceptions.items():
                 concept_history[misconception].append((bucket, frequency))
         
+
+        # For all concepts, add them at 0 frequency to all buckets where they are missing
+
+        # I want a list of all MisconceptionCode from enum MisconceptionCode
+        all_misconceptions = [str(m) for m in MisconceptionCode]
+
+        for misconception in all_misconceptions:
+            if misconception not in concept_history:
+                concept_history[misconception] = []
         return concept_history
 
 
+   
     def calculate_misconception_weights(self):
-
         concept_history = self.aggregateLogs()
         weights = {}
+        default_weight = 0.5  # This is a parameter you can adjust
 
         for concept, entries in concept_history.items():
             entries.sort()  # Sort by date
-            weight = 0
+            weight = default_weight
             previous_frequency = 0
 
             for date, frequency in entries:
@@ -89,23 +99,13 @@ class ExerciseBuilder:
                 else:
                     weight_change = recency_weight * (frequency - previous_frequency)
 
+
+
                 weight += weight_change
                 previous_frequency = frequency
 
-            weights[concept] = max(weight, 1)  # Ensure weights don't go negative
-
-        ## Why is weights empty ever?
-        if len(weights) == 0:
-            return weights
-        
-        max_weight = max(weights.values())
-        if max_weight == 0:
-            ## WHEN WOULD THIS HAPPEN?
-            return weights
-        
-
-        for concept in weights:
-            weights[concept] /= max_weight
+            # Apply sigmoid function to scale weight between 0 and 1 (adjusted for default weight by 0.5)
+            weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
         return weights
 
@@ -123,7 +123,11 @@ class ExerciseBuilder:
         else:
             return operator
 
-    def set_weights(self):
+    def set_ltl_priorities(self):
+
+        def scale(weight):
+            return 2 * weight if weight > 0.5 else 2 * (1 - weight)
+
         misconception_weights = self.calculate_misconception_weights()
 
         for m, weight in misconception_weights.items():
@@ -133,16 +137,24 @@ class ExerciseBuilder:
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 
+            print(f"Weight for {m}: {weight} and associated operators: {associatedOperators}")
+
             for operator in associatedOperators:
+
                 if operator in self.ltl_priorities.keys():
 
                     ## Geometric scale, perhaps not the right function.
                     ## TODO: Consult about the correct function to change weights here
                     ## This is where ML comes in.
                     
-                    self.ltl_priorities[operator] = round(self.ltl_priorities[operator] * ((2 * weight) ** 2))
+                    oldval = self.ltl_priorities[operator]
+                    newval = round(self.ltl_priorities[operator] * scale(weight))
+                    print(f"Changing weight for {operator} from {oldval} to {newval}")
+                    self.ltl_priorities[operator] = newval
+
             ## TODO: Do we want this normalization?
-            self.normalize_ltl_priorities()
+            #self.normalize_ltl_priorities()
+            print("Priotities now are " + str(self.ltl_priorities))
 
 
     def choose_question_kind(self):
@@ -164,7 +176,7 @@ class ExerciseBuilder:
         TAUTOLOGY = "1"
         UNSAT = "0"
 
-        self.set_weights()
+        self.set_ltl_priorities()
 
         ## TODO: Find a better mapping between complexity and tree size
         tree_size = self.get_tree_size()
@@ -362,11 +374,22 @@ class ExerciseBuilder:
         
 
     def get_model(self):
+        print("Getting model")
         buckets = self.aggregateLogs()
-        misconception_weights = self.calculate_misconception_weights()
+        # I want to add all the values of the buckets to get a count
+        misconception_count = 0
+        for misconception in buckets:
+            buckets_for_misconception = buckets[misconception]
+            # concept_history[misconception].append((bucket, frequency))
+            for bucket, frequency in buckets_for_misconception:
+                print(f"Misconception {misconception} has frequency {frequency} at {bucket}")
+                misconception_count += frequency
 
+        misconception_weights = self.calculate_misconception_weights()
+        #print("Misconception count is " + str(misconception_count))
         return {
             "misconception_weights": misconception_weights,
             "misconceptions_over_time": buckets,
-            "complexity": self.complexity
+            "complexity": self.complexity,
+            'misconception_count': misconception_count
         }
