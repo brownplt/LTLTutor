@@ -156,13 +156,13 @@ class ExerciseBuilder:
 
     def build_exercise(self, literals, num_questions):
 
-        TAUTOLOGY = "1"
-        UNSAT = "0"
-        def contains_unsat(s):
-            return bool(re.search(r'\b0\b', s))
-        def contains_tautology(s):
-            return bool(re.search(r'\b0\b', s))
-     
+        def contains_undersirable_lit(s):
+            TAUTOLOGY = r'\b1\b'
+            UNSAT = r'\b0\b'
+            # remove all the parens
+            y = s.replace('(', '').replace(')', '')
+            return bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+
 
         self.set_ltl_priorities()
 
@@ -181,8 +181,9 @@ class ExerciseBuilder:
 
             ## Lets make this even more conservative.
             ## If the answer contains UNSAT or a tautology, skip it.
-            if contains_tautology(answer) or contains_unsat(answer):
+            if contains_undersirable_lit(answer):
                 continue
+
 
             kind = self.choose_question_kind()
 

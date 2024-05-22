@@ -200,22 +200,23 @@ def expand_single_trace(sr, literals):
 
 def change_traces_to_mermaid(data, literals):
 
+    def remove_parens(s):
+        return s.replace('(', '').replace(')', '')
+
     for k in data:
         if k['type'] == ExerciseBuilder.TRACESATMC:
             for option in k['options']:
                 sr = option['option']
-                sr = expandSpotTrace(sr, literals)
-
-                print(f"When generating options: Expanded: {option['option']} to {sr}")
-
-                option['option'] = sr
-
+                sr = expandSpotTrace(sr, literals)                
                 option['mermaid'] = genMermaidGraphFromSpotTrace(sr)
+
+                option['option'] = remove_parens(sr)
+
         elif k['type'] == ExerciseBuilder.TRACESATYN:
             sr = k['trace']
             sr = expandSpotTrace(sr, literals)
 
-            k['trace'] = sr
+            k['trace'] = remove_parens(sr)
             k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
     return data
 
