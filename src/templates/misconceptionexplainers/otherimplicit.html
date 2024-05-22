@@ -6,11 +6,16 @@
     </script>
 
     <div class="card-body">
-      <h4 class="card-title">UNSURE</h4>
+      <h4 class="card-title">Tip: Be cautious of implicit assumptions</h4>
       <p class="card-text">
 
-        LOREM IPSUM
+        When interpreting LTL formulae, it's essential to be cautious of not allowing implicit assumptions to color your understanding of what the formula explicitly states. 
+        LTL is a precise language used to define specific behaviors and conditions over time, and each operator and syntax has a clear definition and function. 
+        It's important to interpret these formulas based on what is directly presented, not what we might assume or infer beyond the text.
 
+        For instance, if you come across a formula like <code>G (p -> q)</code>, it is easy to implicitly infer properties that aren't supported by the formula.
+        For example, one might assume that <code>q</code> must always follow <code>p</code> or that <code>p</code> triggers <code>q</code>.
+        However, the formula itself doesn't explicitly state these conditions. It only says that if <code>p</code> is true at any point, then <code>q</code> must also be true at that point.
       </p>
 
     </div>
