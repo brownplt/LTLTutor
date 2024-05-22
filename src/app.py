@@ -50,15 +50,19 @@ def index():
     # For all the keys of misconception_weights, remove the prefix MisconceptionCode. if it is present
     misconception_weights = {k.replace("MisconceptionCode.", ""): v for k, v in misconception_weights.items()}
 
-    # Get the misconception with the highest weight
-    max_weight = max(misconception_weights.values())
-    max_misconception = random.choice([k for k, v in misconception_weights.items() if v == max_weight])
+    # Sort the misconception_weights dictionary by value in descending order and get the first 2 items
+    top_two_misconceptions = sorted(misconception_weights.items(), key=lambda item: item[1], reverse=True)[:2]
+    # Convert the top two misconceptions back to a dictionary
+    top_two_misconceptions = dict(top_two_misconceptions)
+    # Convert the keys to lowercase and add '.html' to the end
+    top_two_misconceptions = [k.lower() + '.html' for k, v in top_two_misconceptions.items()]
 
-    # Now make it lowercase
-    max_misconception = max_misconception.lower() + '.html'
-    
+    # Join the keys with the 'misconceptionexplainers' directory
+    top_two_misconceptions = [os.path.join('misconceptionexplainers', k) for k in top_two_misconceptions]
 
-    return render_template('index.html', misconception_weights = misconception_weights, misconception_count = misconception_count)
+    # Now choose one of the top two misconceptions randomly
+    max_misconception = random.choice(top_two_misconceptions)   
+    return render_template('index.html', misconception_weights = misconception_weights, misconception_count = misconception_count, max_misconception = max_misconception)
 
 @app.route('/ltl')
 def ltl():

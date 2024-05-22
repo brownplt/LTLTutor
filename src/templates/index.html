@@ -14,46 +14,11 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
 
+
+    
 </head>
 
 <body>
-
-    {% if misconception_count is defined and misconception_count > 10 %}
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
-
-            // Generate an array of random colors
-            var colors = Array.from({ length: {{ misconception_weights.keys() | length }}}, () => `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.2)`);
-
-        var misconceptionWeightChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {{ misconception_weights.keys() | list | tojson }},
-        datasets: [{
-            label: 'Concepts',
-            data: {{ misconception_weights.values() | list | tojson }},
-            backgroundColor: colors,
-            borderColor: colors,
-            borderWidth: 1
-                    }]
-                },
-        options: {
-            scales: {
-                y: {
-                    ticks: {
-                        display: false
-                    },
-                    beginAtZero: true
-                }
-            }
-        }
-            });
-        });
-    </script>
-    {% endif %}
-
-
     <style>
         .infograph {
             max-width: 50vw;
@@ -66,38 +31,32 @@
 
         <div class="container">
 
-            <h5> <a href="/exercise/generate"> <button>Generate a personalized exercise </button></a></h5>
-            <p> based on your previous responses. Exercises can be generated
+            
+            <p> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
                 indefinitely, and weight recent errors more heavily. More details are available on your
                 <a href="/getmy/model">User Model</a> page.
             </p>
-            <p> If you feel like you are ready to be done with the tutor, test yourself with
-                <button>this exit ticket</button> (not yet available)
-            </p>
+
         </div>
         <hr>
 
         <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
         {% if misconception_count is defined and misconception_count > 10 %}
-        <div class="container">
-            <h6 class="display-4">Concepts your should review</h6>
-            <canvas id="estimatedMisconceptions"></canvas>
-        </div>
+            <!-- TODO: We could make this dismissable, and show another if needed. -->
+                {% include max_misconception %}
         {% else %}
         <div class="alert-secondary alert">
-            <strong> Concepts your should review </strong>
-            <p>A breakdown of the concepts your should review will show up
-                once you have completed a few more exercises.
-            </p>
+            <strong> Still identifying areas for review</strong>
+            <p>An area or concept for review will appear here once you have completed a few more exercises.</p>
         </div>
         {% endif %}
 
-        {% if max_misconception is defined  and misconception_count > 10%}
-            {% include max_misconception %}
-
-        {% endif %}
-
-
+        <hr>
+        <div class="container">
+            <p> If you are done using this tutor, and feel like it cannot teach you any more about LTL, test yourself with
+                <button class="button btn-primary" disabled>this exit ticket</button>.
+            </p>
+        </div>
 
 
     </div>

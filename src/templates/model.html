@@ -17,21 +17,28 @@
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
-            var misconceptionWeightChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: {{ misconception_weights.keys() | list | tojson }},
-            datasets: [{
-                label: 'Estimated Weight',
-                data: {{ misconception_weights.values() | list | tojson }},
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
+
+            // Generate an array of random colors
+            var colors = Array.from({ length: {{ misconception_weights.keys() | length }}}, () => `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 0.2)`);
+
+        var misconceptionWeightChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ misconception_weights.keys() | list | tojson }},
+        datasets: [{
+            label: 'Concepts',
+            data: {{ misconception_weights.values() | list | tojson }},
+            backgroundColor: colors,
+            borderColor: colors,
             borderWidth: 1
                     }]
                 },
-            options: {
+        options: {
             scales: {
                 y: {
+                    ticks: {
+                        display: false
+                    },
                     beginAtZero: true
                 }
             }
@@ -39,7 +46,6 @@
             });
         });
     </script>
-
 
 
 
