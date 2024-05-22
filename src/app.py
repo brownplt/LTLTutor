@@ -197,7 +197,9 @@ def loganswer(questiontype):
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
-            to_return['cewords'] = [exerciseprocessor.expand_single_trace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
+
+
+            to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
             to_return['mermaid'] = [exerciseprocessor.genMermaidGraphFromSpotTrace(sr) for sr in to_return['cewords']]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
