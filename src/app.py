@@ -46,6 +46,18 @@ def index():
     misconception_weights = model['misconception_weights']
     misconception_count = model['misconception_count']
 
+
+    # For all the keys of misconception_weights, remove the prefix MisconceptionCode. if it is present
+    misconception_weights = {k.replace("MisconceptionCode.", ""): v for k, v in misconception_weights.items()}
+
+    # Get the misconception with the highest weight
+    max_weight = max(misconception_weights.values())
+    max_misconception = random.choice([k for k, v in misconception_weights.items() if v == max_weight])
+
+    # Now make it lowercase
+    max_misconception = max_misconception.lower() + '.html'
+    
+
     return render_template('index.html', misconception_weights = misconception_weights, misconception_count = misconception_count)
 
 @app.route('/ltl')
