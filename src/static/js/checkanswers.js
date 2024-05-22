@@ -106,7 +106,7 @@ function show_feedback(parent_node) {
             feedback_div.innerHTML += "<p>" + predetermined_feedback + "</p>";
         }
         if (selectedAnswerFormula && correctAnswerFormula) {
-            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <code>" + selectedAnswerFormula + "</code> but not <code>" +  correctAnswerFormula + "</code></p>";
+            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <pre class='language-ltl'><code>" + selectedAnswerFormula + "</code></pre> but not <pre class='language-ltl'><code>" +  correctAnswerFormula + "</code></pre></p>";
         }
 
         // Increment the incorrect count

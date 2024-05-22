@@ -23,6 +23,8 @@ class ExerciseBuilder:
         ## TODO: We want complexity to be persistent for user, and scale up or down.
         self.complexity = complexity
    
+    
+
 
     def aggregateLogs(self, bucketsizeinhours=1):
 
