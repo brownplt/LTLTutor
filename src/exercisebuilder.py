@@ -137,7 +137,7 @@ class ExerciseBuilder:
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 
-            print(f"Weight for {m}: {weight} and associated operators: {associatedOperators}")
+
 
             for operator in associatedOperators:
 
@@ -149,7 +149,6 @@ class ExerciseBuilder:
                     
                     oldval = self.ltl_priorities[operator]
                     newval = round(self.ltl_priorities[operator] * scale(weight))
-                    print(f"Changing weight for {operator} from {oldval} to {newval}")
                     self.ltl_priorities[operator] = newval
 
             ## TODO: Do we want this normalization?
@@ -175,6 +174,9 @@ class ExerciseBuilder:
 
         TAUTOLOGY = "1"
         UNSAT = "0"
+        def contains_unsat(s):
+            return bool(re.search(r'\b0\b', s))
+     
 
         self.set_ltl_priorities()
 
@@ -191,8 +193,9 @@ class ExerciseBuilder:
         questions = []
         for answer in question_answers:
 
-
-            if answer == TAUTOLOGY or answer == UNSAT:
+            ## Lets make this even more conservative.
+            ## If the answer is is a tautology, OR contains UNSAT, skip it.
+            if answer == TAUTOLOGY or contains_unsat(answer):
                 continue
 
             kind = self.choose_question_kind()
@@ -320,7 +323,7 @@ class ExerciseBuilder:
         
 
 
-        feedbackString = "No further feedback is available."
+        feedbackString = "No further feedback is currently available. An update is planned, providing feedback in terms of an 'Trace Stepper' that will allow you to step through the trace and see where/if it diverges from the formula."
         # So no misconceptions forthcoming...
         ## TODO: Should we even generate a question one here?
         if formulae is None:
@@ -374,7 +377,7 @@ class ExerciseBuilder:
         
 
     def get_model(self):
-        print("Getting model")
+
         buckets = self.aggregateLogs()
         # I want to add all the values of the buckets to get a count
         misconception_count = 0
@@ -382,11 +385,9 @@ class ExerciseBuilder:
             buckets_for_misconception = buckets[misconception]
             # concept_history[misconception].append((bucket, frequency))
             for bucket, frequency in buckets_for_misconception:
-                print(f"Misconception {misconception} has frequency {frequency} at {bucket}")
                 misconception_count += frequency
 
         misconception_weights = self.calculate_misconception_weights()
-        #print("Misconception count is " + str(misconception_count))
         return {
             "misconception_weights": misconception_weights,
             "misconceptions_over_time": buckets,

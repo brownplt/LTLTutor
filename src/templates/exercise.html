@@ -14,16 +14,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
     <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
-
+    <script>
+        hljs.registerLanguage('ltl', ltlSyntaxDefs);
+        hljs.highlightAll();
+    </script>
 </head>
 
 <body>
     <div class="container">
         {% include 'navbar.html' %}
 
-        <h1>{{ exercise_name }}</h1>
+        <h3>{{ exercise_name }}</h3>
 
         <div id="questions">
             {% for q in questions %}
@@ -52,8 +59,8 @@
 
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: <code
-                            class="actualQuestion"> {{ q.question}} </code></h5>
+                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
+                        <pre><code class="actualQuestio language-ltl"> {{ q.question}} </code></pre></h5>
                     <pre class="mermaid" id="q{{qindex}}_yn_trace"
                         aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
 
@@ -62,8 +69,8 @@
                         <pre class="actualQuestionTrace"> {{ q.trace}}</pre>
                     </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: <code
-                            class="actualQuestion">{{ q.question}}</code></h5>
+                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
+                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre></h5>
                     {% else %}
                     <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion"
                         style="white-space: pre-wrap;">{{ q.question}}
@@ -86,7 +93,7 @@
                                     <pre> {{ option.option }}</pre>
                                 </div>
                                 {% else %}
-                                <code>{{ option.option }}</code>
+                                <pre><code class="language-ltl">{{ option.option }}</code></pre>
                                 {% endif %}
                             </label>
                         </li>
@@ -129,6 +136,7 @@
 
     <script>
         $(document).ready(function () {
+            
             mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
             function renderMermaidDiagram(graphElements) {
@@ -136,7 +144,7 @@
                 mermaid.run({
                     nodes: graphElements
                 }).then((data) => {
-                    console.log("Mermaid diagram rendered for " + graphElements + " successfully");
+                    //console.log("Mermaid diagram rendered for " + graphElements + " successfully");
 
                     // TODO: Should this stay?
                     // Loop over each graphElement and set the width of the child SVG
@@ -184,6 +192,8 @@
             });
         });
     </script>
+
+
 </body>
 
 </html>
