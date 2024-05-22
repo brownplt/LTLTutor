@@ -46,7 +46,7 @@ def index():
     misconception_weights = model['misconception_weights']
     misconception_count = model['misconception_count']
 
-    return render_template('index.html', misconception_weights = misconception_weights)
+    return render_template('index.html', misconception_weights = misconception_weights, misconception_count = misconception_count)
 
 @app.route('/ltl')
 def ltl():

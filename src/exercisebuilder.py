@@ -372,6 +372,7 @@ class ExerciseBuilder:
         
 
     def get_model(self):
+        print("Getting model")
         buckets = self.aggregateLogs()
         # I want to add all the values of the buckets to get a count
         misconception_count = 0
@@ -379,10 +380,11 @@ class ExerciseBuilder:
             buckets_for_misconception = buckets[misconception]
             # concept_history[misconception].append((bucket, frequency))
             for bucket, frequency in buckets_for_misconception:
+                print(f"Misconception {misconception} has frequency {frequency} at {bucket}")
                 misconception_count += frequency
 
         misconception_weights = self.calculate_misconception_weights()
-
+        print("Misconception count is " + str(misconception_count))
         return {
             "misconception_weights": misconception_weights,
             "misconceptions_over_time": buckets,
