@@ -99,6 +99,8 @@ class ExerciseBuilder:
                 else:
                     weight_change = recency_weight * (frequency - previous_frequency)
 
+
+
                 weight += weight_change
                 previous_frequency = frequency
 
