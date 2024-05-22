@@ -8,6 +8,9 @@ import random
 import re
 import math
 
+
+
+
 class ExerciseBuilder:
 
     MAX_TRACES = 10

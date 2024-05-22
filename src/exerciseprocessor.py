@@ -31,6 +31,31 @@ def randomize_questions(data):
     return data
 
 
+## Narrow formula
+def choosePathFromWord(word):
+    asNode = ltlnode.parse_ltl_string(word)
+    modifiedNode = removeORs(asNode)
+    return str(modifiedNode)
+
+# Now go down the word, if there is an OR choose one of left or right at random
+def removeORs(node):
+
+    if isinstance(node, ltlnode.OrNode):
+        # Choose one of node.left or node.right
+        if random.choice([True, False]):
+            return removeORs(node.left)
+        else:
+            return removeORs(node.right)
+    elif isinstance(node, ltlnode.BinaryOperatorNode):
+        node.left = removeORs(node.left)
+        node.right = removeORs(node.right)
+    elif isinstance(node, ltlnode.UnaryOperatorNode):
+        node.operand = removeORs(node.operand)
+    
+    return node
+
+
+
 class NodeRepr:
 
     VAR_SEPARATOR = '&'
@@ -39,9 +64,13 @@ class NodeRepr:
         self.vars = vars.strip()
 
         ## TODO: Or logic
-        if (not self.vars.startswith('cycle')) and "|" in self.vars:
-            vs = self.vars.split('|')[0]
-            self.vars = vs
+        if (not self.vars.startswith('cycle')):
+            try:
+                vs = choosePathFromWord(self.vars)
+                self.vars = vs
+            except Exception as e:
+                print(f"Error parsing: {self.vars}")
+                print(e)
 
         self.vars = self.vars.replace('&', self.VAR_SEPARATOR)
         self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
@@ -52,6 +81,7 @@ class NodeRepr:
             print("Warning: Found curly braces in vars")
             print(asStr)
             asStr = asStr.replace('{', '').replace('}', '')
+        # Now remove all the parens
         asStr = asStr.replace('(', '').replace(')', '')
         return f'{self.id}["{asStr}"]'
 
@@ -71,7 +101,7 @@ def expandSpotTrace(sr, literals):
             if s == "":
                 s = x
             else:
-                s = f'{s} {NodeRepr.VAR_SEPARATOR} {x}'
+                s = f'({s}) {NodeRepr.VAR_SEPARATOR} {x}'
         return s
 
     def expandState(s):
