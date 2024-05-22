@@ -384,7 +384,7 @@ class ExerciseBuilder:
                 misconception_count += frequency
 
         misconception_weights = self.calculate_misconception_weights()
-        print("Misconception count is " + str(misconception_count))
+        #print("Misconception count is " + str(misconception_count))
         return {
             "misconception_weights": misconception_weights,
             "misconceptions_over_time": buckets,
