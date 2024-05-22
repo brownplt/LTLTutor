@@ -44,6 +44,7 @@ def index():
     exercise_builder = exercisebuilder.ExerciseBuilder(logs)
     model = exercise_builder.get_model()
     misconception_weights = model['misconception_weights']
+    misconception_count = model['misconception_count']
 
     return render_template('index.html', misconception_weights = misconception_weights)
 

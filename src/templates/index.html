@@ -17,8 +17,7 @@
 
 <body>
 
-    {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
-    {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
+    {% if misconception_weights is defined and misconception_count > 10 %}
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             var ctx = document.getElementById('estimatedMisconceptions').getContext('2d');
@@ -52,7 +51,7 @@
         });
     </script>
     {% endif %}
-    {% endif %}
+
 
     <style>
         .infograph {
@@ -76,7 +75,7 @@
             </p>
         </div>
         <hr>
-        {% if misconception_weights is defined and misconception_weights.keys() | length > 2 %}
+        {% if misconception_weights is defined and misconception_count > 10 %}
         <div class="container">
             <h6 class="display-4">Concepts your should Review</h6>
             <canvas id="estimatedMisconceptions"></canvas>
