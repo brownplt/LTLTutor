@@ -6,10 +6,23 @@
     </script>
 
     <div class="card-body">
-      <h4 class="card-title"></h4>
+      <h4 class="card-title">Review: Operator Precedence</h4>
       <p class="card-text">
 
-    
+        When working with logical formulas, especially in contexts where parentheses are not used to explicitly define 
+        the evaluation order, understanding operator precedence and associativity is crucial.
+        In the absence of parentheses, operators with higher precedence are evaluated first. 
+        
+        <ul>
+            <li> Unary operators (<code>X</code>, <code>F</code>, <code>G</code>, <code>!</code>)
+                 have the highest precedence and will bind tightly to the formula that immediately follows them.
+            </li>
+
+            <li>Following these, binary operators (<code>&</code>,<code>|</code>,<code>-></code>,<code><-></code>,<code>U</code>)
+                come into play, and are left associative. This means that in expressions involving multiple operators, the operations are grouped from left to right.
+                For instance, an expression like <code>a | b & c -> d</code> would be interpreted as <code>((a | b) & c) -> d</code>.
+            </li>
+        </ul>
 
       </p>
 
