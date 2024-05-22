@@ -8,6 +8,9 @@ import random
 import re
 import math
 
+
+
+
 class ExerciseBuilder:
 
     MAX_TRACES = 10
@@ -24,24 +27,7 @@ class ExerciseBuilder:
         self.complexity = complexity
    
     
-    ## TODO: This is not quite it :(
-    def normalize_ltl_priorities(self):
-        temporal_operators = ["X", "F", "G", "U"]
-        #to_consider = [op for op in self.ltl_priorities.keys() if op in temporal_operators]
-        # Normalize the weights of keys in temporal_operators, in the range of 0 to 10
-        xs =[ self.ltl_priorities[op] for op in temporal_operators]
 
-        
-        max_weight = max(xs)
-        max_weight = max(1, max_weight)
-
-        if max_weight < spotutils.DEFAULT_WEIGHT:
-            ## Increase base complexity
-            # TODO: This is not great, since we haven't logged previous complexity.
-            self.complexity += 2
-
-        for op in temporal_operators:
-            self.ltl_priorities[op] = round(self.ltl_priorities[op] * 9 / max_weight) + 1
 
     def aggregateLogs(self, bucketsizeinhours=1):
 
@@ -137,7 +123,7 @@ class ExerciseBuilder:
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 
-            print(f"Weight for {m}: {weight} and associated operators: {associatedOperators}")
+
 
             for operator in associatedOperators:
 
@@ -149,12 +135,9 @@ class ExerciseBuilder:
                     
                     oldval = self.ltl_priorities[operator]
                     newval = round(self.ltl_priorities[operator] * scale(weight))
-                    print(f"Changing weight for {operator} from {oldval} to {newval}")
                     self.ltl_priorities[operator] = newval
 
-            ## TODO: Do we want this normalization?
-            #self.normalize_ltl_priorities()
-            print("Priotities now are " + str(self.ltl_priorities))
+            #print("Priotities now are " + str(self.ltl_priorities))
 
 
     def choose_question_kind(self):
@@ -173,8 +156,13 @@ class ExerciseBuilder:
 
     def build_exercise(self, literals, num_questions):
 
-        TAUTOLOGY = "1"
-        UNSAT = "0"
+        def contains_undersirable_lit(s):
+            TAUTOLOGY = r'\b1\b'
+            UNSAT = r'\b0\b'
+            # remove all the parens
+            y = s.replace('(', '').replace(')', '')
+            return bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+
 
         self.set_ltl_priorities()
 
@@ -191,9 +179,11 @@ class ExerciseBuilder:
         questions = []
         for answer in question_answers:
 
-
-            if answer == TAUTOLOGY or answer == UNSAT:
+            ## Lets make this even more conservative.
+            ## If the answer contains UNSAT or a tautology, skip it.
+            if contains_undersirable_lit(answer):
                 continue
+
 
             kind = self.choose_question_kind()
 
@@ -320,7 +310,7 @@ class ExerciseBuilder:
         
 
 
-        feedbackString = "No further feedback is available."
+        feedbackString = "No further feedback is currently available. An update is planned, providing feedback in terms of an 'Trace Stepper' that will allow you to step through the trace and see where/if it diverges from the formula."
         # So no misconceptions forthcoming...
         ## TODO: Should we even generate a question one here?
         if formulae is None:
@@ -343,6 +333,7 @@ class ExerciseBuilder:
         if len(potential_trace_choices) == 0:
             return None
         
+        # TODO: Should this be expanded?
         trace_option = random.choice(potential_trace_choices)
 
         ## THink about this -- how can we give feedback here!
@@ -374,7 +365,7 @@ class ExerciseBuilder:
         
 
     def get_model(self):
-        print("Getting model")
+
         buckets = self.aggregateLogs()
         # I want to add all the values of the buckets to get a count
         misconception_count = 0
@@ -382,11 +373,9 @@ class ExerciseBuilder:
             buckets_for_misconception = buckets[misconception]
             # concept_history[misconception].append((bucket, frequency))
             for bucket, frequency in buckets_for_misconception:
-                print(f"Misconception {misconception} has frequency {frequency} at {bucket}")
                 misconception_count += frequency
 
         misconception_weights = self.calculate_misconception_weights()
-        #print("Misconception count is " + str(misconception_count))
         return {
             "misconception_weights": misconception_weights,
             "misconceptions_over_time": buckets,

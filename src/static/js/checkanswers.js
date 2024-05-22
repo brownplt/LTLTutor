@@ -41,7 +41,7 @@ function getGeneratedFromFormulaIfExists(radioButton) {
 }
 
 
-function show_feedback(parent_node) {
+function show_feedback(parent_node, question_type) {
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
     Array.from(all_radios).forEach(radio => {
@@ -63,6 +63,8 @@ function show_feedback(parent_node) {
         // Make the background of the selected radio button green
         selected_radio.parentNode.style.outline = "2px solid green";
 
+
+        
 
         // Add a message to the feedback div
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
@@ -87,8 +89,11 @@ function show_feedback(parent_node) {
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         let misconceptions = JSON.parse(misconception_string);
 
+
+        // TODO: How do we determine if we should put this in a mermaid diagram? (CORRECT OPTION)
+
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is: <code>" + correct_option + "</code></p>";
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )</p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
         feedback_div.classList.add('alert-warning');
@@ -106,7 +111,7 @@ function show_feedback(parent_node) {
             feedback_div.innerHTML += "<p>" + predetermined_feedback + "</p>";
         }
         if (selectedAnswerFormula && correctAnswerFormula) {
-            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <code>" + selectedAnswerFormula + "</code> but not <code>" +  correctAnswerFormula + "</code></p>";
+            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <pre class='language-ltl'><code>" + selectedAnswerFormula + "</code></pre> but not <pre class='language-ltl'><code>" +  correctAnswerFormula + "</code></pre></p>";
         }
 
         // Increment the incorrect count
@@ -166,7 +171,7 @@ async function tracesatisfaction_mc_getfeedback(button) {
 
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
-    let correct = show_feedback(parent_node);
+    let correct = show_feedback(parent_node, QUESTION_TYPE);
 
     let data = {
         selected_option: selected_radio.value,
@@ -194,7 +199,7 @@ async function tracesatisfaction_yn_getfeedback(button) {
 
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
-    let correct = show_feedback(parent_node);
+    let correct = show_feedback(parent_node, QUESTION_TYPE);
 
     let data = {
         selected_option: selected_radio.value,
@@ -222,7 +227,7 @@ async function englishtoltl_getfeedback(button) {
     }
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
-    let correct = show_feedback(parent_node);
+    let correct = show_feedback(parent_node, QUESTION_TYPE);
 
     let data = {
         selected_option: selected_radio.value,
@@ -269,7 +274,7 @@ function displayServerResponse(response) {
 
 
     // let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
-    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid'>" + ce_mermaid + "</pre> <br> Alt trace: " + ce_trace;
+    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid'>" + ce_mermaid + "</pre> <br> Alt Trace: " + ce_trace;
 
     var feedback_string = "";
 
