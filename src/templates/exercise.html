@@ -60,7 +60,7 @@
 
                     {% if q.type == "tracesatisfaction_yn" %}
                     <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
-                        <pre><code class="actualQuestio language-ltl"> {{ q.question}} </code></pre></h5>
+                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre></h5>
                     <pre class="mermaid" id="q{{qindex}}_yn_trace"
                         aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
 

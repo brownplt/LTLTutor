@@ -176,6 +176,8 @@ class ExerciseBuilder:
         UNSAT = "0"
         def contains_unsat(s):
             return bool(re.search(r'\b0\b', s))
+        def contains_tautology(s):
+            return bool(re.search(r'\b0\b', s))
      
 
         self.set_ltl_priorities()
@@ -194,8 +196,8 @@ class ExerciseBuilder:
         for answer in question_answers:
 
             ## Lets make this even more conservative.
-            ## If the answer is is a tautology, OR contains UNSAT, skip it.
-            if answer == TAUTOLOGY or contains_unsat(answer):
+            ## If the answer contains UNSAT or a tautology, skip it.
+            if contains_tautology(answer) or contains_unsat(answer):
                 continue
 
             kind = self.choose_question_kind()
