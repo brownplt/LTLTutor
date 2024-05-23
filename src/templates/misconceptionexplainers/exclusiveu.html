@@ -1,0 +1,30 @@
+<div class="card">
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+
+    <div class="card-body">
+      <h4 class="card-title">Review: Until (<code>U</code>) </h4>
+      <p class="card-text">
+
+        In LTL, <code>x U y</code> means that <code>x</code> holds at every step until 
+       <code>y</code> holds. Importantly, <code>x</code> does not need to be false when <code>y</code> is true.
+       Instead, think of it this way: <code>y</code> eventually becomes true (at some future point), and up until that point, 
+       <code>x</code> continuously holds true. 
+       
+         <br>
+         For example, the following trace satisfies the formula <code>x U y</code> even though
+         <code>x</code> is true at the same time as <code>y</code>.
+        <pre class="mermaid"> 
+            flowchart LR;
+            n1["x & !y"]-->n2["x & y"];
+            n2["x & y"]-->n3["!x & !y"];  
+            n3["!x & !y"]-->n3["!x & !y"];  
+        </pre>
+      </p>
+
+    </div>
+  </div>
+  
