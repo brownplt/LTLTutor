@@ -70,7 +70,7 @@ function show_feedback(parent_node, question_type) {
         feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.add('alert-success');
-        feedback_div.classList.remove('alert-warning');
+        feedback_div.classList.remove('alert-secondary');
 
         try {
             // Increment the correct count
@@ -96,7 +96,7 @@ function show_feedback(parent_node, question_type) {
         feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )</p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
-        feedback_div.classList.add('alert-warning');
+        feedback_div.classList.add('alert-secondary');
 
 
         // Check if parent_node has a child of class 'predeterminedfeedback'
@@ -289,7 +289,7 @@ function displayServerResponse(response) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
 
-        feedback_string += "<br> <img src='/static/img/disjoint.png' alt='disjoint' > <br> ";
+        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/disjoint.png' alt='Euler diagram of two disjoint sets: a green set (representing the correct answer) and a red set (representing your answer).' > ";
 
     }
     else if (subsumed) {
@@ -297,7 +297,7 @@ function displayServerResponse(response) {
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace_img;
         }
-        feedback_string += "<br> <img src='/static/img/subsumes.png' alt='subsumption' > <br> ";
+        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/subsumes.png' alt='Euler diagram of a green set (representing the correct answer) subsuming a red set (representing your answer).' >  ";
 
 
     }
@@ -306,7 +306,7 @@ function displayServerResponse(response) {
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
-        feedback_string += "<br> <img src='/static/img/contained.png' alt='containment' > <br> ";
+        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/contained.png' alt='Euler diagram of a green set (representing the correct answer) being subsumed by a red set (representing your answer).' > ";
 
     }
     else {
@@ -314,7 +314,7 @@ function displayServerResponse(response) {
         if (ce_trace) {
             feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
         }
-        feedback_string += "<br> <img src='/static/img/overlap.png' alt='overlapping answers' > <br> ";
+        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/overlap.png' alt='Euler diagram of two overlapping, but not contained sets: a green set (representing the correct answer) and a red set (representing your answer).' >  ";
     }
 
     let responseAsHTMLElement = document.createElement('div');

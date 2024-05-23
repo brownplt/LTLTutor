@@ -29,16 +29,17 @@
     <div class="container">
         {% include 'navbar.html' %}
         <br>
-        <div class="container">
+        
+        <div class="card-body">
 
             
-            <p> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
+            <p class="card-text"> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
                 indefinitely, and weight recent errors more heavily. More details are available on your
                 <a href="/getmy/model">User Model</a> page.
             </p>
 
         </div>
-        <hr>
+
 
         <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
         {% if misconception_count is defined and misconception_count > 10 %}
@@ -51,14 +52,12 @@
         </div>
         {% endif %}
 
-        <hr>
-        <div class="container">
-            <p> If you are done using this tutor, and feel like it cannot teach you any more about LTL, test yourself with
+        
+        <div class="card-body">
+            <p class="card-text"> If you are done using this tutor, and feel like it cannot teach you any more about LTL, test yourself with
                 <button class="button btn-primary" disabled>this exit ticket</button>.
             </p>
         </div>
-
-
     </div>
 </body>
 
