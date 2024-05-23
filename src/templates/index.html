@@ -19,25 +19,16 @@
 </head>
 
 <body>
-    <style>
-        .infograph {
-            max-width: 50vw;
-            max-height: 50vh;
-        }
-    </style>
-
     <div class="container">
         {% include 'navbar.html' %}
         <br>
         
-        <div class="card-body">
-
-            
+        <div class="card-body bg-light"> 
+            <h4 class="card-title">Begin a new exercise!</h4>
             <p class="card-text"> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
                 indefinitely, and weight recent errors more heavily. More details are available on your
                 <a href="/getmy/model">User Model</a> page.
             </p>
-
         </div>
 
 
@@ -53,8 +44,9 @@
         {% endif %}
 
         
-        <div class="card-body">
-            <p class="card-text"> If you are done using this tutor, and feel like it cannot teach you any more about LTL, test yourself with
+        <div class="card-body bg-light">
+            <h4 class="card-title">Done using the tutor?</h4>
+            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic, we ask that you complete 
                 <button class="button btn-primary" disabled>this exit ticket</button>.
             </p>
         </div>

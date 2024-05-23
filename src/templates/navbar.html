@@ -32,18 +32,21 @@
     </div>
 </nav>
 
-<div class="alert alert-warning alert-dismissible fade show d-none" role="alert" id="userIdModal">
+<div class="alert alert-primary alert-dismissible fade show d-none" role="alert" id="userIdModal">
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
       <span aria-hidden="true">×</span>
     </button>
-    <strong>Welcome New User</strong>  In order to generate personalized exercises, we store a randomly generated user ID as a 
-    browser cookie. This ID is anonymous, non-reverse engineerable, and is used to generate personalized exercises.
-    If you do not consent, please close this tab and do not use this site.
-    <p> If you have not used this tool before, we recommend <a href="/ltl"><button>Going through LTL documentation</button></a>. </p>
+    <strong>Welcome New User!</strong> This tool stores utilizes a browser cookie to maintain a user ID a across multiple uses.
+    This ID is anonymous, non-reverse engineerable, and is not based on any personally identifiable information.
+    We use this User ID to track responses to LTL exercises, and adaptively generate new exercises based on a user's responses.
+    These responses may also be used for research purposes, but will not be shared with any third parties.
+    
+    By using this tool, you consent to this use of cookies and response storage. <strong>If you do not consent, please close this page, and do not use the tool.</strong>
+    <p> If you have not used this tool before, we recommend <a href="/ltl">going through LTL documentation</a>. </p>
 
     <form action="/exercise/predefined" method="post">
         <input type="hidden" name="sourceuri" value="preload:1710exercise.json">
-        <p>If you are familiar with LTL, we recommend starting with this <button type="submit">pre-loaded exercise</button> </p>
+        <p>If you are familiar with LTL, we recommend starting with this <button type="submit" class="button btn-primary">introductory exercise</button> </p>
     </form>
 </div>
 
