@@ -282,7 +282,8 @@ def viewstudentlogs(type):
                 "misconception": log.misconception,
                 "question_text": log.question_text,
                 "question_options": log.question_options,
-                "correct_answer": log.correct_answer
+                "correct_answer": log.correct_answer,
+                "mp_class": log.mp_class
             }
         return json.dumps(to_return)
     elif (type == "model"):
