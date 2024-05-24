@@ -1,6 +1,7 @@
 [
     {
         "question": "Whenever the engine is on, it is off in the next state and on again in the state after that.",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "G (e -> (X (!e)) & (X (X e)))",
@@ -46,6 +47,7 @@
     },
     {
         "question": "The engine is on in exactly one state, but not necessarily the first state.",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "!e U (e & (X (G (!e))))",
@@ -91,6 +93,7 @@
     },
     {
         "question": "The engine cannot stay on for three states in a row.",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "G ((e & (X e)) -> (X (X (!e))))",
@@ -128,7 +131,8 @@
         ]
     },
     {
-        "question": "\"Whenever the engine is on, the headlight will be on then or at some point in the future. \"",
+        "question": "Whenever the engine is on, the headlight will be on then or at some point in the future.",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "(G (e -> (F h)))",
@@ -160,7 +164,8 @@
         ]
     },
     {
-        "question": "\"The engine is on for zero or more states, and then turns off and remains off in the future. \"",
+        "question": "The engine is on for zero or more states, and then turns off and remains off in the future.",
+        "type": "englishtoltl",
         "options": [
             {
                 "option": "e U (G (!e))",
@@ -199,6 +204,7 @@
     },
     {
         "question": "G (e -> (X (X (X e))))",
+        "type": "tracesatisfaction_mc",
         "options": [
             {
                 "option": "!e & !h; e & h;e & h; !e & !h; cycle{e & h}",
@@ -230,6 +236,7 @@
     },
     {
         "question": "(X e) U (X h)",
+        "type": "tracesatisfaction_mc",
         "options": [
             {
                 "option": "!e & !h; cycle{!e & h}",
