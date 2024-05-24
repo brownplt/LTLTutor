@@ -22,7 +22,17 @@
     <div class="container">
         {% include 'navbar.html' %}
         <br>
-        
+
+        <div class="card-body bg-light">
+            <h4 class="card-title">Getting Started with this tool?</h4>
+            <p class="card-text">
+            Once you are familiar with <a href="/ltl"> LTL syntax </a> used by this tool, we recommend 
+            <a href="/entryexitticket/entry">
+                starting with this initial exercise.</a>.
+            </p>
+        </div>
+
+
         <div class="card-body bg-light"> 
             <h4 class="card-title">Begin a new exercise!</h4>
             <p class="card-text"> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
@@ -46,8 +56,8 @@
         
         <div class="card-body bg-light">
             <h4 class="card-title">Done using the tutor?</h4>
-            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic, we ask that you complete 
-                <button class="button btn-primary" disabled>this exit ticket</button>.
+            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic,  <a href="/entryexitticket/exit">
+                we ask that you complete this exit ticket</a>.
             </p>
         </div>
     </div>
