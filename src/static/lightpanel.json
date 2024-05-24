@@ -106,7 +106,7 @@
                 ]
             },
             {
-                "option": "! ((r & (F r)) & (X (F r)))",
+                "option": "! ((red & (F red)) & (X (F red)))",
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.BadStateIndex"
