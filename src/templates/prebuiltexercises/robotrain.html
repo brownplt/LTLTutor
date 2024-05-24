@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LTL Tutor: Robotrain</title>
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
+    <script>
+        hljs.registerLanguage('ltl', ltlSyntaxDefs);
+        hljs.highlightAll();
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        {% include 'navbar.html' %}
+
+        <h3>RoboTrain</h3>
+        <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            This exercise asks questions about the state of a robot-driven train over time. 
+            This RoboTrain has 2 components, each of which can be ON or OFF at any point in time: the engine (<code>e</code>), and the headlight (<code>h</code>).
+
+            You will be asked to answer three kinds of questions:
+            <ul>
+                <li>English to LTL: Given an English sentence, choose the LTL formula that best represents it.</li>
+                <li>Trace Satisfaction (Multiple Choice): Given an LTL formula, choose the trace that satisfies it.</li>
+                <li>Trace Satisfaction (Yes/No): Given an LTL formula, determine if a trace satisfies it.</li>
+            </ul>
+          </div>
+
+
+
+        <div id="questions">
+            {% for q in questions %}
+            {%set qindex = loop.index %}
+            <div class="card mt-4 question">
+                <div class="card-body">
+                    <p class="text-muted"> Question {{ qindex }} of {{ questions | length}} </p>
+                    <h5 class="card-title">
+                        {% if q.type == "englishtoltl" %}
+                        Which of the following LTL formulae best represents this English sentence?
+                        {% elif q.type == "tracesatisfaction_mc" %}
+                        Which of the following traces satisfies the following LTL formula?
+                        {% elif q.type == "tracesatisfaction_yn" %}
+                        Does this trace satisfy the following LTL formula?
+                        {% else %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Unrecognized Question type! {{ q.type }}</strong>
+                        </div>
+                        {% endif %}
+                    </h5>
+                    <hr>
+                    {% if q.feedback %}
+                    <div id="{{ qindex }}feedback" class="predeterminedfeedback" style="display: none;"> {{ q.feedback |
+                        safe}} </div>
+                    {% endif %}
+
+
+                    {% if q.type == "tracesatisfaction_yn" %}
+                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
+                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre></h5>
+                    <pre class="mermaid" id="q{{qindex}}_yn_trace"
+                        aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
+
+                    <!-- WHAT CAN WE DOUBLE THESE? -->
+                    <div class="text-muted d-none" id="{{ qindex }}alttrace_sat">Trace Alt:
+                        <pre class="actualQuestionTrace"> {{ q.trace}}</pre>
+                    </div>
+                    {% elif q.type == "tracesatisfaction_mc" %}
+                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
+                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre></h5>
+                    {% else %}
+                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion"
+                        style="white-space: pre-wrap;">{{ q.question}}
+                    </h5>
+                    {% endif %}
+
+                    <ul class="list-group">
+                        {% for option in q.options %}
+                        <li class="list-group-item">
+                            <input type="radio" name="{{ qindex }}option" id="{{ qindex }}option{{ loop.index }}"
+                                class="option" value="{{ option.option }}"
+                                data-misconceptions="{{ option.misconceptions }}" data-correct="{{ option.isCorrect }}"
+                                {% if option.generatedFromFormula %}
+                                data-generatedfromformula=" {{ option.generatedFromFormula }} " {% endif %}>
+                            <label for="{{ qindex }}option{{ loop.index }}">
+                                {% if q.type == 'tracesatisfaction_mc' %}
+                                <pre aria-label="{{option.option}}" class="mermaid"
+                                    id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
+                                <div class="text-muted d-none"> Trace Alt:
+                                    <pre> {{ option.option }}</pre>
+                                </div>
+                                {% else %}
+                                <pre><code class="language-ltl">{{ option.option }}</code></pre>
+                                {% endif %}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+
+
+
+                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this); enableNextButton(this)">Check
+                        Answer</button>
+                    <!-- TODO: Disable this, and then re-enable -->
+                    <button class="btn btn-primary next" disabled>Next Question</button>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <script>
+            function enableNextButton(checkAnswerButton) {
+                var parent = checkAnswerButton.parentNode;
+                var nextButton = parent.getElementsByClassName('next')[0];
+                nextButton.disabled = false;
+            }
+        </script>
+        <div id="feedback">
+
+        </div>
+
+        <div id="done" style="display: none;" class="alert alert-dark" role="alert">
+            <h4 class="alert-heading">Well done! You have completed the exercise</h4>
+
+            <p>You got <span id="correctCount">0</span> questions correct and </p>
+            <span id="incorrectCount">0</span> questions incorrect.</p>
+
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            
+            mermaid.initialize({ startOnLoad: false });
+            const ui_load_timeout_delay = 150;
+            function renderMermaidDiagram(graphElements) {
+
+                mermaid.run({
+                    nodes: graphElements
+                }).then((data) => {
+                    //console.log("Mermaid diagram rendered for " + graphElements + " successfully");
+
+                    // TODO: Should this stay?
+                    // Loop over each graphElement and set the width of the child SVG
+                    graphElements.forEach(function (element) {
+                        let $element = $(element);
+                        $element.width($element.find('svg').css('max-width'));
+                    });
+
+
+                }).catch((err) => {
+                    console.error("Error rendering mermaid diagram");
+                    console.error(err);
+                });
+            };
+
+
+            // Hide all questions at the start
+            $('.question').hide();
+
+            // Show the first question
+            $('.question:first').show();
+            // Initialize mermaid for the first question
+
+            let first_question_to_render = $('.question:first').find('.mermaid').get();
+
+            renderMermaidDiagram(first_question_to_render);
+
+            // When the "Next" button is clicked, hide the current question and show the next one
+            $('.next').click(function () {
+                // Empty the feedback div
+                $('#feedback').empty();
+                $('#feedback').removeClass();
+
+                var nextQuestion = $(this).closest('.question').hide().next('.question');
+                if (nextQuestion.length) {
+                    nextQuestion.show();
+
+                    let to_render = nextQuestion.find('.mermaid').get();
+
+                    renderMermaidDiagram(to_render);
+                } else {
+                    // If there are no more questions, show the "done" section
+                    $('#done').show();
+                }
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>

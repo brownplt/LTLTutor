@@ -80,6 +80,7 @@ def authorquestion():
     question = request.form.get('question')
     exercise_so_far = request.form.get('exercisesofar')
 
+
     try:
         if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
             ltl = parse_ltl_string(question)
@@ -91,9 +92,6 @@ def authorquestion():
             return "Invalid question type"
         
         
-
-        ## TODO: Fix: getAllApplicableMisconceptions actually modifies ltl. 
-        ## Solution is for it to deep copy somewhere.
         d = getAllApplicableMisconceptions(ltl)
         distractors = []
         for misconception in d:
@@ -133,7 +131,7 @@ def authorquestion():
                     added_traces.add(c)
         
 
-        distractors = new_distractors
+            distractors = new_distractors
         if len(distractors) == 0:
             distractors.append({
                 "formula": "-",
@@ -323,6 +321,52 @@ def viewstudentlogs(type):
     
 
 
+@app.route('/robotrain')
+def robotrain():
+
+    sourceuri = "preload:robotrain.json"
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
+    except Exception as e:
+        print(e)
+        return "Error loading exercise"
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
+
+@app.route('/lightpanel')
+def lightpanel():
+
+    ## TODO: UPDATE
+    sourceuri = "preload:robotrain.json"
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["red", "green", "blue"])
+    except Exception as e:
+        print(e)
+        return "Error loading exercise"
+    return render_template('/prebuiltexercises/lightpanel.html', questions=data, exercise_name="lightpanel")
+
+
+@app.route('/entryexitticket/<ticket>')
+def entryexitticket(ticket):
+    userId = request.cookies.get(USERID_COOKIE) 
+    if not userId:
+        return "USER ID IS NOT SET, PLEASE RELOAD THE PAGE."
+    
+    uidlen = len(userId)
+    if uidlen % 2 == 0:
+        choice = [robotrain, lightpanel]
+    else:
+        choice = [lightpanel, robotrain]
+
+    if ticket == "entry":
+        return choice[0]()
+    elif ticket == "exit":
+        return choice[1]()
+    else:
+        return "Invalid ticket type."     
 
 
 @app.route('/getuserid')

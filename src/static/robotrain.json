@@ -1,0 +1,313 @@
+[
+    {
+        "question": "Whenever the engine is on, it is off in the next state and on again in the state after that.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "G (e -> (X (!e)) & (X (X e)))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "(G ((e -> (X (! e))) & (X (X e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.Precedence"
+                ]
+            },
+            {
+                "option": "(G (e -> ((X (! e)) & (X e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateIndex"
+                ]
+            },
+            {
+                "option": "(F (e -> ((X (! e)) & (X (X e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "(e -> ((X (! e)) & (X (X e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG"
+                ]
+            },
+            {
+                "option": "(G (e -> ((X (! e)) & (F (X e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "The engine is on in exactly one state, but not necessarily the first state.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "!e U (e & (X (G (!e))))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "(! ((e U e) & (X (G (! e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.Precedence"
+                ]
+            },
+            {
+                "option": "(! ((G e) U (e & (X (G (! e))))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "(! (e U (e & (X (! e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG"
+                ]
+            },
+            {
+                "option": "(! (e U (e & (F (G (! e))))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            },
+            {
+                "option": "(! ((e U (e & (X (G (! e))))) & (F (e & (X (G (! e)))))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.WeakU"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "The engine cannot stay on for three states in a row.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "G ((e & (X e)) -> (X (X (!e))))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "(G ((e & (X e)) -> (X (! e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateIndex"
+                ]
+            },
+            {
+                "option": "(F ((e & (X e)) -> (X (X (! e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "((e & (X e)) -> (X (X (! e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG"
+                ]
+            },
+            {
+                "option": "(G ((e & (F e)) -> (F (X (! e)))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "Whenever the engine is on, the headlight will be on then or at some point in the future.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "(G (e -> (F h)))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "(F (e -> (F h)))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "(G (e -> h))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitF"
+                ]
+            },
+            {
+                "option": "(e -> (F h))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG",
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "The engine is on for zero or more states, and then turns off and remains off in the future.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "e U (G (!e))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "((F e) U (G (! e)))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "(e U (! e))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG"
+                ]
+            },
+            {
+                "option": "e",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            },
+            {
+                "option": "((e U (G (! e))) & (F (G (! e))))",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.WeakU"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "G (e -> (X (X (X e))))",
+        "type": "tracesatisfaction_mc",
+        "options": [
+            {
+                "option": "!e & !h; e & h;e & h; !e & !h; cycle{e & h}",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "e & !h; !e & !h; e & h; !e & !h; cycle{e & h}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "!e & !h; e & !h; e & !h; e & h; !e; cycle{e & h}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.ImplicitG"
+                ]
+            },
+            {
+                "option": "e & !h; !e & h; !e & h; !e & h; cycle{e & h; !e & h}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "(X e) U (X h)",
+        "type": "tracesatisfaction_mc",
+        "options": [
+            {
+                "option": "!e & !h; cycle{!e & h}",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "e & h; e & !h; cycle{e & !h}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.BadStateQuantification"
+                ]
+            },
+            {
+                "option": "h; !e & !h; cycle{!e & !h}",
+                "isCorrect": false,
+                "misconceptions": [
+                    "MisconceptionCode.OtherImplicit"
+                ]
+            }
+        ]
+    },
+    {
+        "question": "e",
+        "type": "tracesatisfaction_yn",
+        "trace": "!e & h; e & h; e & h;cycle{e & h}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.ImplicitG"]
+            },
+            {
+                "option": "No",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    },
+    {
+        "question": "X X X e",
+        "type": "tracesatisfaction_yn",
+        "trace": "e;!e;!e;e;cycle{!e}",
+        "options": [
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.BadStateIndex"]
+            }
+        ]
+    },
+    {
+        "question": "e U h",
+        "type": "tracesatisfaction_yn",
+        "trace": "e & !h;e & !h;cycle{e & h}",
+        "options": [
+            {
+                "option": "No",
+                "isCorrect": false,
+                "misconceptions": ["MisconceptionCode.ExclusiveU"]
+            },
+            {
+                "option": "Yes",
+                "isCorrect": true,
+                "misconceptions": []
+            }
+        ]
+    }
+]

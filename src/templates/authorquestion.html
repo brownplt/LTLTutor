@@ -102,6 +102,9 @@
 
             exerciseSet.appendChild(newQuestion);
 
+            console.log("Adding question to exercise set")
+            console.log(exerciseSet)
+
 
             // Clear the question and answer fields
             questionField.value = "";
@@ -142,6 +145,23 @@
         }
 
 
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var targetNode = document.getElementById('exercise_set');
+            var config = { attributes: true, childList: true, subtree: true };
+
+            var callback = function (mutationsList, observer) {
+                for (let mutation of mutationsList) {
+                    if (mutation.type === 'childList') {
+                        var exercisesContent = targetNode.innerHTML;
+                        var exercisesField = document.getElementById('exercisesofar');
+                        exercisesField.value = exercisesContent;
+                    }
+                }
+            };
+
+            var observer = new MutationObserver(callback);
+            observer.observe(targetNode, config);
+        });
     </script>
 </head>
 
@@ -170,17 +190,17 @@
                         <option value="tracesatisfaction_mc">Trace Satisfaction (Multiple Choice)</option>
                         <option value="tracesatisfaction_yn">Trace Satisfaction (Yes/No)</option>
                         {% elif kind == "tracesatisfaction_mc" %}
-                        <option value="englishtoltl" >English to LTL</option>
+                        <option value="englishtoltl">English to LTL</option>
                         <option value="tracesatisfaction_mc" selected>Trace Satisfaction (Multiple Choice)</option>
                         <option value="tracesatisfaction_yn">Trace Satisfaction (Yes/No)</option>
                         {% elif kind == "tracesatisfaction_yn" %}
-                        <option value="englishtoltl" >English to LTL</option>
-                        <option value="tracesatisfaction_mc" >Trace Satisfaction (Multiple Choice)</option>
+                        <option value="englishtoltl">English to LTL</option>
+                        <option value="tracesatisfaction_mc">Trace Satisfaction (Multiple Choice)</option>
                         <option value="tracesatisfaction_yn" selected>Trace Satisfaction (Yes/No)</option>
                         {% else %}
-                        <option value="englishtoltl" >English to LTL</option>
-                        <option value="tracesatisfaction_mc" >Trace Satisfaction (Multiple Choice)</option>
-                        <option value="tracesatisfaction_yn" >Trace Satisfaction (Yes/No)</option>
+                        <option value="englishtoltl">English to LTL</option>
+                        <option value="tracesatisfaction_mc">Trace Satisfaction (Multiple Choice)</option>
+                        <option value="tracesatisfaction_yn">Trace Satisfaction (Yes/No)</option>
                         {% endif %}
                     </select>
 
@@ -213,11 +233,17 @@
             </form>
             <script>
 
-                document.querySelector('form').addEventListener('submit', function (e) {
-                    let x = document.getElementById('exercise_set').innerHTML;
-                    // Copy the content of the div into the hidden input field
-                    document.getElementById('exercisesofar').value = document.getElementById('exercise_set').innerHTML;
-                });
+                // document.querySelector('form').addEventListener('submit', function (e) {
+                //     let x = document.getElementById('exercise_set').innerHTML;
+
+                //     console.log("Setting exercisesofar to:")
+                //     console.log(x)
+                //     // Copy the content of the div into the hidden input field
+                //     document.getElementById('exercisesofar').value = x;
+
+                //     console.log("Now confirming")
+                //     console.log(document.getElementById('exercisesofar').value)
+                // });
 
 
             </script>
@@ -256,7 +282,7 @@
 
         <div class="container mb-5 px-sm-5" id="exercise_set">
             {% if exerciseset %}
-            {{ exerciseset |safe }}
+            {{ exerciseset | safe }}
             {% else %}
             <h2>Exercise Set</h2>
             <button type="button" class="btn btn-primary" onclick="downloadExercise()">Download Exercise As
