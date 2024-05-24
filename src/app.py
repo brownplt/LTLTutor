@@ -334,6 +334,39 @@ def robotrain():
         return "Error loading exercise"
     return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="Robotrain")
 
+@app.route('/trafficlight')
+def trafficlight():
+
+    ## TODO: UPDATE
+    sourceuri = "preload:robotrain.json"
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
+    except Exception as e:
+        print(e)
+        return "Error loading exercise"
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="Robotrain")
+
+
+@app.route('/entryexitticket/<ticket>')
+def entryexitticket(ticket):
+    userId = request.cookies.get(USERID_COOKIE) 
+    if not userId:
+        return "USER ID IS NOT SET, PLEASE RELOAD THE PAGE."
+    
+    uidlen = len(userId)
+    if uidlen % 2 == 0:
+        choice = [robotrain, trafficlight]
+    else:
+        choice = [trafficlight, robotrain]
+
+    if ticket == "entry":
+        return choice[0]()
+    elif ticket == "exit":
+        return choice[1]()
+    else:
+        return "Invalid ticket type."     
 
 
 @app.route('/getuserid')
