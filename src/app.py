@@ -332,7 +332,7 @@ def robotrain():
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('exercise.html', questions=data, exercise_name="Robotrain")
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="Robotrain")
 
 
 
