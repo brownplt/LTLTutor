@@ -338,7 +338,7 @@ def robotrain():
 def lightpanel():
 
     ## TODO: UPDATE
-    sourceuri = "preload:robotrain.json"
+    sourceuri = "preload:lightpanel.json"
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
