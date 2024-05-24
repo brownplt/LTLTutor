@@ -31,22 +31,22 @@
         {% include 'navbar.html' %}
 
         <h3>RoboTrain</h3>
-        <p>
-            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#description" aria-expanded="true" aria-controls="description">
-            Show / Hide Description
+        <div class="alert alert-secondary alert-dismissible fade show" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
             </button>
-        </p>
-        <div id="description" class="collapse show">
-            The questions ask about the state of a robot-driven train over time. 
+            This exercise asks questions about the state of a robot-driven train over time. 
             This RoboTrain has 2 components, each of which can be ON or OFF at any point in time: the engine (<code>e</code>), and the headlight (<code>h</code>).
 
-            This exercise consists of three kinds of questions:
+            You will be asked to answer three kinds of questions:
             <ul>
                 <li>English to LTL: Given an English sentence, choose the LTL formula that best represents it.</li>
                 <li>Trace Satisfaction (Multiple Choice): Given an LTL formula, choose the trace that satisfies it.</li>
                 <li>Trace Satisfaction (Yes/No): Given an LTL formula, determine if a trace satisfies it.</li>
             </ul>
-        </div>
+          </div>
+
+
 
         <div id="questions">
             {% for q in questions %}
