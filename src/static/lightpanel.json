@@ -19,8 +19,7 @@
                 "option": "green",
                 "isCorrect": false,
                 "misconceptions": [
-                    "MisconceptionCode.ImplicitG",
-                    "MisconceptionCode.OtherImplicit"
+                    "MisconceptionCode.ImplicitG"
                 ]
             }
         ]
@@ -39,8 +38,7 @@
                 "isCorrect": false,
                 "misconceptions": [
                     "MisconceptionCode.Precedence",
-                    "MisconceptionCode.BadStateIndex",
-                    "MisconceptionCode.OtherImplicit"
+                    "MisconceptionCode.BadStateIndex"
                 ]
             },
             {
