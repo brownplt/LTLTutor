@@ -332,21 +332,21 @@ def robotrain():
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="Robotrain")
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
 
-@app.route('/trafficlight')
-def trafficlight():
+@app.route('/lightpanel')
+def lightpanel():
 
     ## TODO: UPDATE
     sourceuri = "preload:robotrain.json"
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["red", "green", "blue"])
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="Robotrain")
+    return render_template('/prebuiltexercises/lightpanel.html', questions=data, exercise_name="lightpanel")
 
 
 @app.route('/entryexitticket/<ticket>')
@@ -357,9 +357,9 @@ def entryexitticket(ticket):
     
     uidlen = len(userId)
     if uidlen % 2 == 0:
-        choice = [robotrain, trafficlight]
+        choice = [robotrain, lightpanel]
     else:
-        choice = [trafficlight, robotrain]
+        choice = [lightpanel, robotrain]
 
     if ticket == "entry":
         return choice[0]()
