@@ -163,8 +163,14 @@ class ExerciseBuilder:
             TAUTOLOGY = r'\b1\b'
             UNSAT = r'\b0\b'
             # remove all the parens
-            y = s.replace('(', '').replace(')', '')
-            return bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+            y = s.replace('(', ' ').replace(')', ' ').replace("'", ' ')
+            x = bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+
+            if not x:
+                print("Answer " + y + " is not a tautology or unsat")
+
+
+            return x
 
 
         self.set_ltl_priorities()

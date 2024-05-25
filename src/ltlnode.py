@@ -8,6 +8,7 @@ from ltlParser import ltlParser
 from abc import ABC, abstractmethod
 from spotutils import areEquivalent
 import random
+import ltltoeng
 
 ## We use this for Grammatical englsih generation
 import spacy
@@ -38,6 +39,8 @@ class LTLNode(ABC):
 
     @abstractmethod
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         # We should draw inspiration from:
         # https://matthewbdwyer.github.io/psp/patterns/ltl.html
         pass
@@ -137,6 +140,8 @@ class UnaryOperatorNode(LTLNode):
         return f'({self.operator} {str(self.operand)})'
     
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         return self.__str__()
 
 
@@ -151,6 +156,8 @@ class BinaryOperatorNode(LTLNode):
         return f'({str(self.left)} {self.operator} {str(self.right)})'
     
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         return self.__str__()
 
 
@@ -163,6 +170,9 @@ class LiteralNode(LTLNode):
         return self.value
     
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
+
         ### TODO: COuld we override so that this is more meaningful
         # for some cases?
         return f"'{self.value}' holds"
@@ -174,6 +184,8 @@ class UntilNode(BinaryOperatorNode):
         super().__init__(UntilNode.symbol, left, right)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} until {rhs}."
@@ -186,6 +198,8 @@ class NextNode(UnaryOperatorNode):
         super().__init__(NextNode.symbol, operand)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         op = self.operand.__to_english__()
         english = f"in the next state, {op}."
         return self.corrected_sentence(english)
@@ -197,6 +211,8 @@ class GloballyNode(UnaryOperatorNode):
         super().__init__(GloballyNode.symbol, operand)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
 
 
 
@@ -218,6 +234,8 @@ class FinallyNode(UnaryOperatorNode):
         super().__init__(FinallyNode.symbol, operand)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         op = self.operand.__to_english__()
         english = f"eventually, {op}."
         return self.corrected_sentence(english)
@@ -231,6 +249,8 @@ class OrNode(BinaryOperatorNode):
         super().__init__(OrNode.symbol, left, right)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} or {rhs}."
@@ -243,6 +263,8 @@ class AndNode(BinaryOperatorNode):
         super().__init__(AndNode.symbol, left, right)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} and {rhs}."
@@ -255,6 +277,8 @@ class NotNode(UnaryOperatorNode):
         super().__init__(NotNode.symbol, operand)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
 
         op = self.operand.__to_english__()
 
@@ -295,6 +319,8 @@ class EquivalenceNode(BinaryOperatorNode):
         super().__init__(EquivalenceNode.symbol, left, right)
 
     def __to_english__(self):
+        if x := ltltoeng.apply_special_pattern_if_possible(self) is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
 
