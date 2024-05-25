@@ -7,6 +7,7 @@ from ltlLexer import ltlLexer
 from ltlParser import ltlParser
 from abc import ABC, abstractmethod
 from spotutils import areEquivalent
+import random
 
 ## We use this for Grammatical englsih generation
 import spacy
@@ -37,6 +38,8 @@ class LTLNode(ABC):
 
     @abstractmethod
     def __to_english__(self):
+        # We should draw inspiration from:
+        # https://matthewbdwyer.github.io/psp/patterns/ltl.html
         pass
 
     @staticmethod
@@ -264,7 +267,15 @@ class ImpliesNode(BinaryOperatorNode):
     def __to_english__(self,depth=0):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
-        english = f"if {lhs} then {rhs}."
+
+        # Potential patterns:
+        patterns = [
+            f"if {lhs}, then {rhs}",
+            f"{rhs} is necessary for {lhs}"
+        ]
+
+        # Choose a pattern randomly, and then return the corrected sentence
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 
@@ -276,7 +287,17 @@ class EquivalenceNode(BinaryOperatorNode):
     def __to_english__(self):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
-        english = f"{lhs} if and only if {rhs}."
+
+        # Potential patterns:
+        patterns = [
+            f"{lhs} is necessary and sufficient for {rhs}",
+            f"{lhs} exactly when {rhs}",
+            f"{lhs} is equivalent to {rhs}",
+            f"{lhs} if and only if {rhs}"
+        ]
+
+        # Choose a pattern randomly, and then return the corrected sentence
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 
