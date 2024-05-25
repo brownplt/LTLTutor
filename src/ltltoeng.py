@@ -115,10 +115,12 @@ patterns = [
 
 
 def apply_special_pattern_if_possible(node):
-    random.shuffle(patterns)
+    #random.shuffle(patterns)
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
+            print("Pattern matched: " + str(result))
             return result
-        
+    
+    print("No pattern matched for node: " + str(node) + " of type: " + str(type(node)) + " returning None)")
     return None
