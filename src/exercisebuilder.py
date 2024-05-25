@@ -93,6 +93,9 @@ class ExerciseBuilder:
             # Apply sigmoid function to scale weight between 0 and 1 (adjusted for default weight by 0.5)
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
+        if max(weights.values()) < default_weight:
+            print("Increasing complexity for user")
+            self.complexity += 1
         return weights
 
     def operatorToSpot(self, operator):
