@@ -160,6 +160,8 @@ class LiteralNode(LTLNode):
         return self.value
     
     def __to_english__(self):
+        ### TODO: COuld we override so that this is more meaningful
+        # for some cases?
         return f"'{self.value}' holds"
 
 
@@ -240,8 +242,18 @@ class NotNode(UnaryOperatorNode):
         super().__init__(NotNode.symbol, operand)
 
     def __to_english__(self):
+
         op = self.operand.__to_english__()
-        english = f"it is not the case that {op}."
+
+        ## If the operand is a literal, we can just negate it
+        if isinstance(self.operand, LiteralNode):
+            english = f"{op}"
+            # Replace 'holds' with does not hold in english.
+            if "holds" in english:
+                english = english.replace("holds", "does not hold")
+        ## TODO: We can start donig some more. better special cases.
+        else:
+            english = f"it is not the case that {op}."
         return self.corrected_sentence(english)
 
 class ImpliesNode(BinaryOperatorNode):
