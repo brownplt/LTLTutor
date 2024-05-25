@@ -1,41 +1,64 @@
-# from transformers import pipeline
-# import spacy
+import ltlnode
 
-# nlp = spacy.load("en_core_web_sm")
-
-# generator = pipeline('text-generation', model='distilgpt2')
-
-# # Function to generate a grammatically correct sentence using a transformer model
-# def generate_grammatically_correct_sentence(english_sentence):
-#     prompt = f"Translate this logical expression to a grammatically correct English sentence: {english_sentence}."
-#     result = generator(prompt, max_length=50, num_return_sequences=1)
-#     return result[0]['generated_text']
+## We should list the various patterns of LTL formulae that we can handle
 
 
-# def ltl_to_english_sentence(ltl_formula):
-#     print("Translating " + str(ltl_formula) + " to English")
-#     english_phrases = ltl_formula.__to_english__()
-#     prompt = english_phrases
-#     print("Symbolic pass: " + prompt)
+#### Globally special cases ####
 
-#     #english_sentence = generate_text(model, tokenizer, prompt)
+# Pattern: G ( p -> (F q) )
+# English, whenever p (holds), eventually q will (hold)
 
-#     doc = nlp(prompt)
-#     corrected_sentence = ' '.join([token.text for token in doc])
-
-
-#     print("After SpaCy pass (directly on symbolic): " + corrected_sentence)
-
-#     y = generate_grammatically_correct_sentence(prompt)
-#     print("After transformer pass (directly on symbolic): " + y)
-
-
-#     return corrected_sentence
+def response_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImplicationNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.EventuallyNode:
+                return "whenever " + left.__to_english__() + ", eventually " + right.operand.__to_english__()
+            
+    return None
 
 
-# from transformers import pipeline
+# Pattern G (F p)
+# English: p (happens) repeatedly TODO: Think about how to properly phrase this
+def recurrence_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.EventuallyNode:
+            return op.operand.__to_english__() + " repeatedly"
+    return None
 
 
+## Chain precedence
+# Pattern G(p -> (X (q U r)))
+# English: Whenever p (happens), q will (hold) until r (holds)
+
+def chain_precedence_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImplicationNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.UntilNode:
+                lhs = right.left
+                rhs = right.right
+                return "whenever " + left.__to_english__() + ", " + lhs.__to_english__() + " until " + rhs.__to_english__()
+    return None
 
 
-
+## Chain response
+# Pattern: G (p -> ( (F q) & (F r) ) )
+# English: Whenever p (holds), q and r will (hold) eventually
+def chain_response_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImplicationNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.AndNode:
+                lhs = right.left
+                rhs = right.right
+                if type(lhs) is ltlnode.EventuallyNode and type(rhs) is ltlnode.EventuallyNode:
+                    return "whenever " + left.__to_english__() + ", eventually" + lhs.operand.__to_english__() + " and " + rhs.operand.__to_english__() 
+    return None

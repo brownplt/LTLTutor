@@ -197,6 +197,16 @@ class GloballyNode(UnaryOperatorNode):
         super().__init__(GloballyNode.symbol, operand)
 
     def __to_english__(self):
+
+
+
+
+
+
+
+
+
+
         op = self.operand.__to_english__()
         english = f"from this point on, {op}."
         return self.corrected_sentence(english)
