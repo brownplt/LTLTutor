@@ -3,29 +3,15 @@ import random
 
 ## We should list the various patterns of LTL formulae that we can handle
 
+### What do we do about nested Globally and Finally nodes? ###
 
 patterns = []
-
 def pattern(func):
     patterns.append(func)
     return func
 
 
-
 #### Globally special cases ####
-
-# Nested globally
-# Pattern: G (G p)
-# English: Always, p will (hold)
-@pattern
-def nested_globally_pattern_to_english(node):
-
-    n = node
-    if type(n) is ltlnode.GloballyNode:
-        n = node.operand
-        
-    return "in all future states, " +  n.__to_english__()
-
 
 # Pattern: G ( p -> (F q) )
 # English, whenever p (holds), eventually q will (hold)
@@ -166,7 +152,6 @@ def not_finally_pattern_to_english(node):
             return "it will never be the case that " + op.operand.__to_english__()
     return None
 
-
 ### Until special cases ###
 
 # (p U q) U r
@@ -180,16 +165,10 @@ def nested_until_pattern_to_english(node):
             return "it will be the case that " + left.left.__to_english__() + " until " + left.right.__to_english__() + ", and this will continue until " + right.__to_english__()
     return None
 
-
-
-
-
-
-
 #### neXt special cases ####
 
 # X X X X r
-# English: In 4 states, r will (hold)
+# English: In _n_ states, r will (hold)
 @pattern
 def apply_next_special_pattern_if_possible(node):
 
@@ -202,8 +181,6 @@ def apply_next_special_pattern_if_possible(node):
     if number_of_nexts > 1:
         return "In " + str(number_of_nexts) + " states, " + node.__to_english__()
     return None
-
-
 
 
 def apply_special_pattern_if_possible(node):
