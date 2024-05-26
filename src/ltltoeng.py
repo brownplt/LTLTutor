@@ -37,7 +37,11 @@ def recurrence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
         if type(op) is ltlnode.FinallyNode:
-            return "it is repeatedly the case that " + op.operand.__to_english__()
+
+            inner_op = op.operand
+            if type(inner_op) is ltlnode.LiteralNode:
+                return f"'{inner_op.value}' will repeatedly hold"
+            return "there will always be a point in the future where " + op.operand.__to_english__()
     return None
 
 
@@ -115,6 +119,17 @@ def finally_never_globally_pattern_to_english(node):
             negated = op.operand
             if type(negated) is ltlnode.NotNode:
                 return "eventually, it will never be the case that " + negated.operand.__to_english__()
+    return None
+
+
+# F (G p)
+# English: Eventually, p will always (hold)
+@pattern
+def finally_globally_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.GloballyNode:
+            return "eventually, it will always be the case that " + op.operand.__to_english__() 
     return None
 
 
