@@ -141,3 +141,10 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
 def get_mana_pneulli_class(formula):
     f = spot.formula(formula)
     return spot.mp_class(f, 'v')
+
+
+def get_aut_size(formula):
+    f = spot.formula(formula)
+    aut = spot.translate(f)
+    num_states = aut.num_states()
+    return num_states

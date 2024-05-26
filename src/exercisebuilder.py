@@ -202,9 +202,31 @@ class ExerciseBuilder:
             if question is not None:
                 questions.append(question)
 
-        ## Make sure we have enough questions
-        chosen_questions = random.sample(questions, min(num_questions, len(questions)))
-        return chosen_questions
+        def formula_choice_metric(question):
+
+            formula = question['question']
+            if question['type'] == self.ENGLISHTOLTL:
+                formula = question['answer']
+
+            temporal_op_count = formula.count('G') + formula.count('X') + formula.count('U') + formula.count('F')
+            aut_size = spotutils.get_aut_size(formula)
+
+            # # I want to maximize the count of the operators with higher priorities in self.ltlpriorities
+            # # and also the aut_size
+            # operator_counts = {op: formula.count(op) for op in self.ltl_priorities}
+            # operator_counts_sorted = sorted(operator_counts.items(), key=lambda x: x[1], reverse=True)
+            # max_operator = operator_counts_sorted[0][0]
+            # max_operator_count = operator_counts_sorted[0][1]
+            # aut_size = spotutils.get_aut_size(formula)
+
+            # Your code to maximize the count of operators with higher priorities and aut_size goes here
+            return temporal_op_count + aut_size
+
+        chosen_questions = sorted(questions, key=formula_choice_metric, reverse=True)[:num_questions]
+        # Choose the first num_questions questions from chosen_questions
+
+        return chosen_questions[:num_questions]
+
     
     def gen_nl_question(self, formula):
 
