@@ -209,7 +209,8 @@ class ExerciseBuilder:
     def gen_nl_question(self, formula):
 
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
-        #print("Generating NL question for " + formula + " and got " + str(formula_eng))
+        if formula_eng is None or formula_eng == "":
+            return None
 
         ### If there are multiple '.' in a row, replace with a single '.'
         formula_eng = re.sub(r'\.{2,}', '.', formula_eng)
@@ -253,8 +254,14 @@ class ExerciseBuilder:
         if options is None:
             return None
 
+        question = self.gen_nl_question(answer)
+
+        if question is None or question == "":
+            print("Question generation failed unexpectedly.")
+            return None
+
         return {
-            "question": self.gen_nl_question(answer),
+            "question": question,
             "type": self.ENGLISHTOLTL,
             "options": options
         }

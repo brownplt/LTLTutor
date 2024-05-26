@@ -176,7 +176,7 @@ def apply_next_special_pattern_if_possible(node):
 
 
 def apply_special_pattern_if_possible(node):
-    #random.shuffle(patterns)
+
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
