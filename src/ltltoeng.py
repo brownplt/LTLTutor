@@ -4,7 +4,11 @@ import random
 ## We should list the various patterns of LTL formulae that we can handle
 
 
+patterns = []
 
+def pattern(func):
+    patterns.append(func)
+    return func
 
 
 
@@ -13,6 +17,7 @@ import random
 # Pattern: G ( p -> (F q) )
 # English, whenever p (holds), eventually q will (hold)
 
+@pattern
 def response_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
@@ -27,6 +32,7 @@ def response_pattern_to_english(node):
 
 # Pattern G (F p)
 # English: p (happens) repeatedly TODO: Think about how to properly phrase this
+@pattern
 def recurrence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
@@ -39,6 +45,7 @@ def recurrence_pattern_to_english(node):
 # Pattern G(p -> (X (q U r)))
 # English: Whenever p (happens), q will (hold) until r (holds)
 
+@pattern
 def chain_precedence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
@@ -55,6 +62,7 @@ def chain_precedence_pattern_to_english(node):
 ## Chain response
 # Pattern: G (p -> ( (F q) & (F r) ) )
 # English: Whenever p (holds), q and r will (hold) eventually
+@pattern
 def chain_response_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
@@ -73,6 +81,7 @@ def chain_response_pattern_to_english(node):
 
 # F (!p) 
 # English: Eventually, it will never be the case that p (holds)
+@pattern
 def finally_not_pattern_to_english(node):
     if type(node) is ltlnode.FinallyNode:
         op = node.operand
@@ -82,6 +91,7 @@ def finally_not_pattern_to_english(node):
 
 # F (p & q)
 # English: Eventually at the same time, p and q will (hold)
+@pattern
 def finally_and_pattern_to_english(node):
     if type(node) is ltlnode.FinallyNode:
         op = node.operand
@@ -93,6 +103,7 @@ def finally_and_pattern_to_english(node):
 
 # (p U q) U r
 # English: p will (hold) until q (holds), and this will continue until r (holds)
+@pattern
 def nested_until_pattern_to_english(node):
     if type(node) is ltlnode.UntilNode:
         left = node.left
@@ -103,15 +114,24 @@ def nested_until_pattern_to_english(node):
 
 
 
-patterns = [
-    response_pattern_to_english,
-    recurrence_pattern_to_english,
-    chain_precedence_pattern_to_english,
-    chain_response_pattern_to_english,
-    finally_not_pattern_to_english,
-    finally_and_pattern_to_english,
-    nested_until_pattern_to_english
-]
+#### neXt special cases ####
+
+# X X X X r
+# English: In 4 states, r will (hold)
+@pattern
+def apply_next_special_pattern_if_possible(node):
+
+    number_of_nexts = 0
+
+    while type(node) is ltlnode.NextNode:
+        number_of_nexts += 1
+        node = node.operand
+
+    if number_of_nexts > 1:
+        return "In " + str(number_of_nexts) + " states, " + node.__to_english__()
+    return None
+
+
 
 
 def apply_special_pattern_if_possible(node):
@@ -124,3 +144,6 @@ def apply_special_pattern_if_possible(node):
     
     print("No pattern matched for node: " + str(node) + " of type: " + str(type(node)) + " returning None)")
     return None
+
+
+
