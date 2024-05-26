@@ -141,8 +141,6 @@ def apply_special_pattern_if_possible(node):
         if result is not None:
             print("Pattern matched: " + str(result))
             return result
-    
-    print("No pattern matched for node: " + str(node) + " of type: " + str(type(node)) + " returning None)")
     return None
 
 

@@ -166,10 +166,6 @@ class ExerciseBuilder:
             y = s.replace('(', ' ').replace(')', ' ').replace("'", ' ')
             x = bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
 
-            if not x:
-                print("Answer " + y + " is not a tautology or unsat")
-
-
             return x
 
 
