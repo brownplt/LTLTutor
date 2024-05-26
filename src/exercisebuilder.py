@@ -223,9 +223,33 @@ class ExerciseBuilder:
             return temporal_op_count + aut_size
 
         chosen_questions = sorted(questions, key=formula_choice_metric, reverse=True)[:num_questions]
-        # Choose the first num_questions questions from chosen_questions
 
-        return chosen_questions[:num_questions]
+
+        # Now choose the question with the highest metric, that is of each type from the chosen_questions
+
+        highest_ltl_to_eng = next((q for q in chosen_questions if q['type'] == self.ENGLISHTOLTL), None)
+        highest_trace_sat_mc = next((q for q in chosen_questions if q['type'] == self.TRACESATMC), None)
+        highest_trace_sat_yn = next((q for q in chosen_questions if q['type'] == self.TRACESATYN), None)
+
+
+        final_choices = []
+        if highest_ltl_to_eng is not None:
+            final_choices.append(highest_ltl_to_eng)
+        if highest_trace_sat_mc is not None:
+            final_choices.append(highest_trace_sat_mc)
+        if highest_trace_sat_yn is not None:
+            final_choices.append(highest_trace_sat_yn)
+
+        remaining = num_questions - len(final_choices)
+        if remaining > 0:
+            # Add the remaining questions from chosen_questions, but dont add the ones already added
+            for q in chosen_questions:
+                if q not in final_choices:
+                    final_choices.append(q)
+                    remaining -= 1
+                if remaining <= 0:
+                    break
+        return remaining
 
     
     def gen_nl_question(self, formula):
