@@ -37,7 +37,7 @@ def recurrence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
         if type(op) is ltlnode.FinallyNode:
-            return "It is repeatedly the case that " + op.operand.__to_english__()
+            return "it is repeatedly the case that " + op.operand.__to_english__()
     return None
 
 
@@ -77,17 +77,46 @@ def chain_response_pattern_to_english(node):
     return None
 
 
+## G !p
+# English: It will never be the case that p (holds)
+@pattern
+def never_globally_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.NotNode:
+
+            negated = op.operand
+            if type(negated) is ltlnode.LiteralNode:
+                return f"'{negated.value}' will never hold"
+
+            return "it will never be the case that " + op.operand.__to_english__()
+
+
 ##### Finally special cases ####
 
-# F (!p) 
-# English: Eventually, it will never be the case that p (holds)
+# F ( !p )
+# English: Eventually, it will not be the case that p (holds)
 @pattern
 def finally_not_pattern_to_english(node):
     if type(node) is ltlnode.FinallyNode:
         op = node.operand
         if type(op) is ltlnode.NotNode:
-            return "eventually, it will never be the case that " + op.operand.__to_english__()
+            return "eventually, it will not be the case that " + op.operand.__to_english__()
     return None
+
+
+# F (G !p)
+# English: Eventually, it will never be the case that p (holds)
+@pattern
+def finally_never_globally_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.GloballyNode:
+            negated = op.operand
+            if type(negated) is ltlnode.NotNode:
+                return "eventually, it will never be the case that " + negated.operand.__to_english__()
+    return None
+
 
 # F (p & q)
 # English: Eventually at the same time, p and q will (hold)
@@ -98,6 +127,17 @@ def finally_and_pattern_to_english(node):
         if type(op) is ltlnode.AndNode:
             return "eventually at the same time, " + op.left.__to_english__() + " and " + op.right.__to_english__()
     return None
+
+# ! (F p)
+# English: It will never be the case that p (holds)
+@pattern
+def not_finally_pattern_to_english(node):
+    if type(node) is ltlnode.NotNode:
+        op = node.operand
+        if type(op) is ltlnode.FinallyNode:
+            return "it will never be the case that " + op.operand.__to_english__()
+    return None
+
 
 ### Until special cases ###
 
@@ -111,6 +151,7 @@ def nested_until_pattern_to_english(node):
         if type(left) is ltlnode.UntilNode:
             return "it will be the case that " + left.left.__to_english__() + " until " + left.right.__to_english__() + ", and this will continue until " + right.__to_english__()
     return None
+
 
 
 

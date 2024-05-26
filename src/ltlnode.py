@@ -222,16 +222,14 @@ class GloballyNode(UnaryOperatorNode):
             return x
 
 
-
-
-
-
-
-
-
-
         op = self.operand.__to_english__()
-        english = f"from this point on, {op}."
+        patterns = [
+            f"it is always the case that {op}",
+            f"in all future states, {op}",
+            f"globally, {op}"
+        ]
+
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 
@@ -245,7 +243,15 @@ class FinallyNode(UnaryOperatorNode):
         if x is not None:
             return x
         op = self.operand.__to_english__()
-        english = f"eventually, {op}."
+
+        patterns = [
+            f"eventually, {op}",
+            f"now or in the future, {op}",
+            f"at this or some future point, {op}"
+        ]
+
+
+        english = f"eventually, {op}"
         return self.corrected_sentence(english)
 
 
