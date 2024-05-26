@@ -20,6 +20,8 @@ class ExerciseBuilder:
 
     def __init__(self, userLogs, complexity=5):
         self.userLogs = userLogs
+        self.numUserLogs = len(userLogs)
+
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
 
@@ -211,16 +213,9 @@ class ExerciseBuilder:
             temporal_op_count = formula.count('G') + formula.count('X') + formula.count('U') + formula.count('F')
             aut_size = spotutils.get_aut_size(formula)
 
-            # # I want to maximize the count of the operators with higher priorities in self.ltlpriorities
-            # # and also the aut_size
-            # operator_counts = {op: formula.count(op) for op in self.ltl_priorities}
-            # operator_counts_sorted = sorted(operator_counts.items(), key=lambda x: x[1], reverse=True)
-            # max_operator = operator_counts_sorted[0][0]
-            # max_operator_count = operator_counts_sorted[0][1]
-            # aut_size = spotutils.get_aut_size(formula)
 
-            # Your code to maximize the count of operators with higher priorities and aut_size goes here
-            return temporal_op_count + aut_size
+            scaled_aut_size = aut_size * math.log(self.numUserLogs + 1)
+            return temporal_op_count + scaled_aut_size
 
         chosen_questions = sorted(questions, key=formula_choice_metric, reverse=True)[:num_questions]
 
