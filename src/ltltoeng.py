@@ -14,6 +14,19 @@ def pattern(func):
 
 #### Globally special cases ####
 
+# Nested globally
+# Pattern: G (G p)
+# English: Always, p will (hold)
+@pattern
+def nested_globally_pattern_to_english(node):
+
+    n = node
+    if type(n) is ltlnode.GloballyNode:
+        n = node.operand
+        
+    return "in all future states, " +  n.__to_english__()
+
+
 # Pattern: G ( p -> (F q) )
 # English, whenever p (holds), eventually q will (hold)
 
@@ -166,6 +179,9 @@ def nested_until_pattern_to_english(node):
         if type(left) is ltlnode.UntilNode:
             return "it will be the case that " + left.left.__to_english__() + " until " + left.right.__to_english__() + ", and this will continue until " + right.__to_english__()
     return None
+
+
+
 
 
 
