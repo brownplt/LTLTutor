@@ -19,6 +19,8 @@
 </head>
 
 <body>
+    <!-- The number of misconceptions needed before review -->
+    {% set threshold = 5 %}
     <div class="container">
         {% include 'navbar.html' %}
         <br>
@@ -43,7 +45,7 @@
 
 
         <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
-        {% if misconception_count is defined and misconception_count > 10 %}
+        {% if misconception_count is defined and misconception_count > threshold %}
             <!-- TODO: We could make this dismissable, and show another if needed. -->
                 {% include max_misconception %}
         {% else %}
