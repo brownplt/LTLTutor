@@ -182,6 +182,18 @@ class ExerciseBuilder:
                                                   tree_size = tree_size, 
                                                   ltl_priorities = self.ltl_priorities, 
                                                   num_formulae = pool_size)
+        
+
+        def formula_choice_metric(formula):
+
+            temporal_op_count = formula.count('G') + formula.count('X') + formula.count('U') + formula.count('F')
+            aut_size = spotutils.get_aut_size(formula)
+
+
+            scaled_aut_size = aut_size * math.log(self.numUserLogs + 1)
+            return temporal_op_count + scaled_aut_size
+
+
         # Generate the exercises
         questions = []
         for answer in question_answers:
@@ -202,26 +214,15 @@ class ExerciseBuilder:
                 question = self.build_tracesat_yn_question(answer)
 
             if question is not None:
+                question['score'] = formula_choice_metric(answer)
                 questions.append(question)
 
-        def formula_choice_metric(question):
-
-            formula = question['question']
-            if question['type'] == self.ENGLISHTOLTL:
-                formula = question['answer']
-
-            temporal_op_count = formula.count('G') + formula.count('X') + formula.count('U') + formula.count('F')
-            aut_size = spotutils.get_aut_size(formula)
 
 
-            scaled_aut_size = aut_size * math.log(self.numUserLogs + 1)
-            return temporal_op_count + scaled_aut_size
-
-        chosen_questions = sorted(questions, key=formula_choice_metric, reverse=True)[:num_questions]
-
+        # sort questions by score
+        chosen_questions = sorted(questions, key=lambda x: x['score'], reverse=True)
 
         # Now choose the question with the highest metric, that is of each type from the chosen_questions
-
         highest_ltl_to_eng = next((q for q in chosen_questions if q['type'] == self.ENGLISHTOLTL), None)
         highest_trace_sat_mc = next((q for q in chosen_questions if q['type'] == self.TRACESATMC), None)
         highest_trace_sat_yn = next((q for q in chosen_questions if q['type'] == self.TRACESATYN), None)
@@ -244,7 +245,10 @@ class ExerciseBuilder:
                     remaining -= 1
                 if remaining <= 0:
                     break
-        return remaining
+
+                    
+
+        return final_choices
 
     
     def gen_nl_question(self, formula):
