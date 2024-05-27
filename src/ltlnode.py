@@ -7,6 +7,8 @@ from ltlLexer import ltlLexer
 from ltlParser import ltlParser
 from abc import ABC, abstractmethod
 from spotutils import areEquivalent
+import random
+import ltltoeng
 
 ## We use this for Grammatical englsih generation
 import spacy
@@ -37,6 +39,11 @@ class LTLNode(ABC):
 
     @abstractmethod
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
+        # We should draw inspiration from:
+        # https://matthewbdwyer.github.io/psp/patterns/ltl.html
         pass
 
     @staticmethod
@@ -134,6 +141,9 @@ class UnaryOperatorNode(LTLNode):
         return f'({self.operator} {str(self.operand)})'
     
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         return self.__str__()
 
 
@@ -148,6 +158,9 @@ class BinaryOperatorNode(LTLNode):
         return f'({str(self.left)} {self.operator} {str(self.right)})'
     
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         return self.__str__()
 
 
@@ -160,6 +173,12 @@ class LiteralNode(LTLNode):
         return self.value
     
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
+
+        ### TODO: COuld we override so that this is more meaningful
+        # for some cases?
         return f"'{self.value}' holds"
 
 
@@ -169,6 +188,9 @@ class UntilNode(BinaryOperatorNode):
         super().__init__(UntilNode.symbol, left, right)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} until {rhs}."
@@ -181,6 +203,9 @@ class NextNode(UnaryOperatorNode):
         super().__init__(NextNode.symbol, operand)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         op = self.operand.__to_english__()
         english = f"in the next state, {op}."
         return self.corrected_sentence(english)
@@ -192,8 +217,19 @@ class GloballyNode(UnaryOperatorNode):
         super().__init__(GloballyNode.symbol, operand)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
+
+
         op = self.operand.__to_english__()
-        english = f"from this point on, {op}."
+        patterns = [
+            f"it is always the case that {op}",
+            f"in all future states, {op}",
+            f"globally, {op}"
+        ]
+
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 
@@ -203,8 +239,19 @@ class FinallyNode(UnaryOperatorNode):
         super().__init__(FinallyNode.symbol, operand)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         op = self.operand.__to_english__()
-        english = f"eventually, {op}."
+
+        patterns = [
+            f"eventually, {op}",
+            f"now or in the future, {op}",
+            f"at this or some future point, {op}"
+        ]
+
+
+        english = f"eventually, {op}"
         return self.corrected_sentence(english)
 
 
@@ -216,6 +263,9 @@ class OrNode(BinaryOperatorNode):
         super().__init__(OrNode.symbol, left, right)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} or {rhs}."
@@ -228,6 +278,9 @@ class AndNode(BinaryOperatorNode):
         super().__init__(AndNode.symbol, left, right)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} and {rhs}."
@@ -240,8 +293,21 @@ class NotNode(UnaryOperatorNode):
         super().__init__(NotNode.symbol, operand)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
+
         op = self.operand.__to_english__()
-        english = f"it is not the case that {op}."
+
+        ## If the operand is a literal, we can just negate it
+        if isinstance(self.operand, LiteralNode):
+            english = f"{op}"
+            # Replace 'holds' with does not hold in english.
+            if "holds" in english:
+                english = english.replace("holds", "does not hold")
+        ## TODO: We can start donig some more. better special cases.
+        else:
+            english = f"it is not the case that {op}."
         return self.corrected_sentence(english)
 
 class ImpliesNode(BinaryOperatorNode):
@@ -252,7 +318,15 @@ class ImpliesNode(BinaryOperatorNode):
     def __to_english__(self,depth=0):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
-        english = f"if {lhs} then {rhs}."
+
+        # Potential patterns:
+        patterns = [
+            f"if {lhs}, then {rhs}",
+            f"{rhs} is necessary for {lhs}"
+        ]
+
+        # Choose a pattern randomly, and then return the corrected sentence
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 
@@ -262,9 +336,22 @@ class EquivalenceNode(BinaryOperatorNode):
         super().__init__(EquivalenceNode.symbol, left, right)
 
     def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
-        english = f"{lhs} if and only if {rhs}."
+
+        # Potential patterns:
+        patterns = [
+            f"{lhs} is necessary and sufficient for {rhs}",
+            f"{lhs} exactly when {rhs}",
+            f"{lhs} is equivalent to {rhs}",
+            f"{lhs} if and only if {rhs}"
+        ]
+
+        # Choose a pattern randomly, and then return the corrected sentence
+        english = random.choice(patterns)
         return self.corrected_sentence(english)
 
 

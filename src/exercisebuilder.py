@@ -20,6 +20,8 @@ class ExerciseBuilder:
 
     def __init__(self, userLogs, complexity=5):
         self.userLogs = userLogs
+        self.numUserLogs = len(userLogs)
+
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
 
@@ -163,8 +165,10 @@ class ExerciseBuilder:
             TAUTOLOGY = r'\b1\b'
             UNSAT = r'\b0\b'
             # remove all the parens
-            y = s.replace('(', '').replace(')', '')
-            return bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+            y = s.replace('(', ' ').replace(')', ' ').replace("'", ' ')
+            x = bool(re.search(TAUTOLOGY, y)) or bool(re.search(UNSAT, y))
+
+            return x
 
 
         self.set_ltl_priorities()
@@ -200,14 +204,54 @@ class ExerciseBuilder:
             if question is not None:
                 questions.append(question)
 
-        ## Make sure we have enough questions
-        chosen_questions = random.sample(questions, min(num_questions, len(questions)))
-        return chosen_questions
+        def formula_choice_metric(question):
+
+            formula = question['question']
+            if question['type'] == self.ENGLISHTOLTL:
+                formula = question['answer']
+
+            temporal_op_count = formula.count('G') + formula.count('X') + formula.count('U') + formula.count('F')
+            aut_size = spotutils.get_aut_size(formula)
+
+
+            scaled_aut_size = aut_size * math.log(self.numUserLogs + 1)
+            return temporal_op_count + scaled_aut_size
+
+        chosen_questions = sorted(questions, key=formula_choice_metric, reverse=True)[:num_questions]
+
+
+        # Now choose the question with the highest metric, that is of each type from the chosen_questions
+
+        highest_ltl_to_eng = next((q for q in chosen_questions if q['type'] == self.ENGLISHTOLTL), None)
+        highest_trace_sat_mc = next((q for q in chosen_questions if q['type'] == self.TRACESATMC), None)
+        highest_trace_sat_yn = next((q for q in chosen_questions if q['type'] == self.TRACESATYN), None)
+
+
+        final_choices = []
+        if highest_ltl_to_eng is not None:
+            final_choices.append(highest_ltl_to_eng)
+        if highest_trace_sat_mc is not None:
+            final_choices.append(highest_trace_sat_mc)
+        if highest_trace_sat_yn is not None:
+            final_choices.append(highest_trace_sat_yn)
+
+        remaining = num_questions - len(final_choices)
+        if remaining > 0:
+            # Add the remaining questions from chosen_questions, but dont add the ones already added
+            for q in chosen_questions:
+                if q not in final_choices:
+                    final_choices.append(q)
+                    remaining -= 1
+                if remaining <= 0:
+                    break
+        return remaining
+
     
     def gen_nl_question(self, formula):
 
         formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
-        #print("Generating NL question for " + formula + " and got " + str(formula_eng))
+        if formula_eng is None or formula_eng == "":
+            return None
 
         ### If there are multiple '.' in a row, replace with a single '.'
         formula_eng = re.sub(r'\.{2,}', '.', formula_eng)
@@ -251,8 +295,14 @@ class ExerciseBuilder:
         if options is None:
             return None
 
+        question = self.gen_nl_question(answer)
+
+        if question is None or question == "":
+            print("Question generation failed unexpectedly.")
+            return None
+
         return {
-            "question": self.gen_nl_question(answer),
+            "question": question,
             "type": self.ENGLISHTOLTL,
             "options": options
         }
