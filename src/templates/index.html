@@ -21,10 +21,12 @@
 <body>
     <!-- The number of misconceptions needed before review -->
     {% set threshold = 5 %}
+
     <div class="container">
         {% include 'navbar.html' %}
         <br>
 
+        {% if if misconception_count is not defined or misconception_count < threshold %}
         <div class="card-body bg-light">
             <h4 class="card-title">Getting Started with this tool?</h4>
             <p class="card-text">
@@ -32,6 +34,13 @@
             <a href="/entryexitticket/entry"> <button class="button btn-primary"> this exercise </button> </a>.
             </p>
         </div>
+        {% elif misconception_count > threshold %}
+        <!-- TODO: We could make this dismissable, and show another if needed. -->
+        <div class="shadow p-3 mb-2 mt-2 bg-light rounded">
+            {% include max_misconception %}
+        </div>
+
+        {% endif %}
 
 
         <div class="card-body bg-light mt-1 mb-1"> 
@@ -44,16 +53,11 @@
 
 
         <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
-        {% if misconception_count is defined and misconception_count > threshold %}
-            <!-- TODO: We could make this dismissable, and show another if needed. -->
-            <div class="shadow p-3 mb-2 mt-2 bg-light rounded">
-                {% include max_misconception %}
+        {% if misconception_count is defined and misconception_count < threshold %}
+            <div class="alert-secondary alert">
+                <strong> Still identifying areas for review</strong>
+                <p>An area or concept for review will appear once you have completed a few more exercises.</p>
             </div>
-        {% else %}
-        <div class="alert-secondary alert">
-            <strong> Still identifying areas for review</strong>
-            <p>An area or concept for review will appear here once you have completed a few more exercises.</p>
-        </div>
         {% endif %}
 
         
