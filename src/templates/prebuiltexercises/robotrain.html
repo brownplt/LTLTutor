@@ -160,10 +160,6 @@
                 mermaid.run({
                     nodes: graphElements
                 }).then((data) => {
-                    //console.log("Mermaid diagram rendered for " + graphElements + " successfully");
-
-                    // TODO: Should this stay?
-                    // Loop over each graphElement and set the width of the child SVG
                     graphElements.forEach(function (element) {
                         let $element = $(element);
                         $element.width($element.find('svg').css('max-width'));

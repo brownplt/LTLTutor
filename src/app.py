@@ -320,20 +320,6 @@ def viewstudentlogs(type):
         return "Invalid type"
     
 
-
-@app.route('/robotrain')
-def robotrain():
-
-    sourceuri = "preload:robotrain.json"
-    try:
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-        data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
-    except Exception as e:
-        print(e)
-        return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
-
 @app.route('/lightpanel')
 def lightpanel():
 
@@ -356,15 +342,15 @@ def entryexitticket(ticket):
         return "USER ID IS NOT SET, PLEASE RELOAD THE PAGE."
     
     uidlen = len(userId)
-    if uidlen % 2 == 0:
-        choice = [robotrain, lightpanel]
-    else:
-        choice = [lightpanel, robotrain]
+    choices = ["preload:robotrain-odd.json", "preload:robotrain-even.json"]
+
+    entry_index = uidlen % 2
+    exit_index = (uidlen + 1) % 2
 
     if ticket == "entry":
-        return choice[0]()
+        return robotrain(choices[entry_index])
     elif ticket == "exit":
-        return choice[1]()
+        return robotrain(choices[exit_index])
     else:
         return "Invalid ticket type."     
 
@@ -394,6 +380,18 @@ def generate_new_name():
         # Raise an exception if the request was unsuccessful
         response.raise_for_status()
 
+
+def robotrain(sourceuri):
+
+    #sourceuri = "preload:robotrain.json"
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
+    except Exception as e:
+        print(e)
+        return "Error loading exercise"
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(port))
