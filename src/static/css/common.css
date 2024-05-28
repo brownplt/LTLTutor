@@ -1,3 +1,15 @@
 .list-group-item:hover {
     background-color: rgba(0, 0, 0, 0.05); /* Change this color as needed */
 }
+
+.footer {
+    background-color: white;
+}
+
+#about{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around
+}
+

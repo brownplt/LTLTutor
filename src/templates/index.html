@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
 
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     
 </head>
 
@@ -25,8 +25,6 @@
     <div class="container">
         {% include 'navbar.html' %}
 
-        <h1 class="text-center">Dashboard</h1>
-
         {% if misconception_count is not defined or misconception_count < threshold %}
         <div class="card-body bg-light">
             <h4 class="card-title">Getting Started with this tool?</h4>
@@ -36,10 +34,9 @@
             </p>
         </div>
         {% elif misconception_count > threshold %}
-        <div class="shadow p-3 mb-2 mt-2 bg-light rounded">
+        <div class="p-3 mb-2 mt-2">
             {% include max_misconception %}
         </div>
-
         {% endif %}
 
 
@@ -60,15 +57,7 @@
             </div>
         {% endif %}
 
-        {% if misconception_count is not defined or misconception_count > threshold %}
-        <div class="card-body bg-light shadow rounded mb-3">
-            <h4 class="card-title">Done using the tutor?</h4>
-            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic,  
-                we ask that you complete 
-                <a href="/entryexitticket/exit"> <button class="button btn-primary">this exit ticket </button></a>.
-            </p>
-        </div>
-        {% endif %}
+
     </div>
 
 
