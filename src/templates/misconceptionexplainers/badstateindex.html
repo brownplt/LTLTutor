@@ -4,13 +4,15 @@
     mermaid.initialize({ startOnLoad: true });
   </script>
   <div class="card-body">
-    <h4 class="card-title">Review: Next (<code>X</code>) </h4>
+    <h4 class="card-title">Next 
+      <span class="badge badge-pill badge-primary float-right">Review</span>
+    </h4>
     <p class="card-text"> In LTL, the formula <code>X p</code> asserts that <code>p</code> will be true in the next
       state.
       Remember, the next (<code>X</code>) operator is very precise: it only refers to the immediately next state, not
       multiple states ahead or the current state. For instance, the formula <code>X (X p)</code> means <i></i>p holds two states from now</i>, and
       doesn't imply anything about p holding in the current state, the next state, or three states from now.
-
+      <br>
       Another way to think of this is that the next operator does not fan out its effect;
       it's not about a condition holding over a range of states or eventually. It applies strictly to the very next
       state.
