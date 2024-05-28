@@ -57,8 +57,10 @@ $(document).ready(function () {
 
 
 function scrollToFeedback() {
-    var element = document.getElementById("feedback");
 
-    element.scrollIntoView({behavior: "smooth", block: "start", inline: "start"});
+    setTimeout(() => {
+        var element = document.getElementById("feedback");
+        element.scrollIntoView({behavior: "smooth", block: "start", inline: "start"});
+    }, 100);
 
 }
