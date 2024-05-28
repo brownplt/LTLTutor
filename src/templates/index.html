@@ -24,7 +24,8 @@
 
     <div class="container">
         {% include 'navbar.html' %}
-        <br>
+
+        <h1 class="text-center">Dashboard</h1>
 
         {% if misconception_count is not defined or misconception_count < threshold %}
         <div class="card-body bg-light">
@@ -35,7 +36,6 @@
             </p>
         </div>
         {% elif misconception_count > threshold %}
-        <!-- TODO: We could make this dismissable, and show another if needed. -->
         <div class="shadow p-3 mb-2 mt-2 bg-light rounded">
             {% include max_misconception %}
         </div>

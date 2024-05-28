@@ -394,34 +394,6 @@ def robotrain(sourceuri):
     return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
 
 
-# # Create a subscribe endpoint that adds subscribers to a mailchimp list
-# @app.route('/subscribe', methods=['POST'])
-# def subscribe():
-#     # Get the email from the form data
-#     email = request.form.get('email')
-#     # Get the mailchimp API key from the environment variables
-#     mailchimp_api_key = os.getenv('MAILCHIMP_API_KEY')
-#     # Get the mailchimp list ID from the environment variables
-#     mailchimp_list_id = os.getenv('MAILCHIMP_LIST_ID')
-#     # Create the mailchimp URL
-#     mailchimp_url = f'https://us1.api.mailchimp.com/3.0/lists/{mailchimp_list_id}/members'
-#     # Create the mailchimp headers
-#     mailchimp_headers = {
-#         'Authorization': f'Basic {mailchimp_api_key}',
-#         'Content-Type': 'application/json'
-#     }
-#     # Create the mailchimp data
-#     mailchimp_data = {
-#         'email_address': email,
-#         'status': 'subscribed'
-#     }
-#     # Convert the mailchimp data to a JSON string
-#     mailchimp_data = json.dumps(mailchimp_data)
-#     # Make a POST request to the mailchimp URL with the mailchimp data and headers
-#     response = requests.post(mailchimp_url, data=mailchimp_data, headers=mailchimp_headers)
-#     # Return the response text
-#     return response.text
-
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(port))

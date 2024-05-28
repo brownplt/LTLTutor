@@ -24,13 +24,15 @@
         hljs.registerLanguage('ltl', ltlSyntaxDefs);
         hljs.highlightAll();
     </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
 </head>
 
 <body>
     <div class="container">
         {% include 'navbar.html' %}
 
-        <h3>{{ exercise_name }}</h3>
+        <!-- <h3>{{ exercise_name }}</h3> -->
 
         <div id="questions">
             {% for q in questions %}
@@ -51,7 +53,7 @@
                         </div>
                         {% endif %}
                     </h5>
-                    <hr>
+
                     {% if q.feedback %}
                     <div id="{{ qindex }}feedback" class="predeterminedfeedback" style="display: none;"> {{ q.feedback |
                         safe}} </div>
@@ -59,27 +61,28 @@
 
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
-                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre></h5>
+                    <p id="{{ qindex }}question_text" class="card-subtitle mb-2">
+                    <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre>
+                    </p>
                     <pre class="mermaid" id="q{{qindex}}_yn_trace"
                         aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
 
-                    <!-- WHAT CAN WE DOUBLE THESE? -->
                     <div class="text-muted d-none" id="{{ qindex }}alttrace_sat">Trace Alt:
                         <pre class="actualQuestionTrace"> {{ q.trace}}</pre>
                     </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
-                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre></h5>
+                    <p id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula:
+                    <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre>
+                    </p>
                     {% else %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion"
+                    <p id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion"
                         style="white-space: pre-wrap;">{{ q.question}}
-                    </h5>
+                    </p>
                     {% endif %}
 
                     <ul class="list-group">
                         {% for option in q.options %}
-                        <li class="list-group-item">
+                        <li class="list-group-item mb-2 d-flex align-items-center">
                             <input type="radio" name="{{ qindex }}option" id="{{ qindex }}option{{ loop.index }}"
                                 class="option" value="{{ option.option }}"
                                 data-misconceptions="{{ option.misconceptions }}" data-correct="{{ option.isCorrect }}"
@@ -124,19 +127,24 @@
 
         </div>
 
-        <div id="done" style="display: none;" class="alert alert-dark" role="alert">
-            <h4 class="alert-heading">Well done! You have completed the exercise</h4>
+        <div id="done" style="display: none;" class="card">
+            <div class="card-body">
+                <h6 class="card-title">Exercise completed! </h6>
+                <!-- <h6 class="card-subtitle mb-2 text-muted">You have completed the exercise</h6> -->
 
-            <p>You got <span id="correctCount">0</span> questions correct and </p>
-            <span id="incorrectCount">0</span> questions incorrect.</p>
-
+                <p class="card-text">You got <span id="correctCount">0</span> questions correct and
+                    <span id="incorrectCount">0</span> questions incorrect.
+                </p>
+            </div>
+            <!-- I'd like a long button here that says, back to dashboard -->
+            <button class="btn btn-primary btn-lg btn-block" onclick="window.location.href='/';">Dashboard</button>
         </div>
     </div>
 
 
     <script>
         $(document).ready(function () {
-            
+
             mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
             function renderMermaidDiagram(graphElements) {
