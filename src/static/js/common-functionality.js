@@ -54,3 +54,11 @@ $(document).ready(function () {
     });
 });
 
+
+
+function scrollToFeedback() {
+    var element = document.getElementById("feedback");
+
+    element.scrollIntoView({behavior: "smooth", block: "start", inline: "start"});
+
+}
