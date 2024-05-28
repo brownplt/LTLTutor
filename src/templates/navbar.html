@@ -1,8 +1,9 @@
 <pre class="badge badge-light">[Version 0.1.3] <span id="userid_field"> </span> </pre>
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <a class="navbar-brand" href="/">LTL Tutor</a>
-    
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -18,16 +19,18 @@
                 </a>
             </li> -->
             <li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Standard exercises
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="/entryexitticket/entry">First Exercise (Entry Ticket)</a>
-                        <a class="dropdown-item" href="/entryexitticket/exit">Last Exercise (Exit Ticket)</a>
-                        <a class="dropdown-item" href="/loadfromjson">  Exercise Loader  </a>
-                    </div>
-                </li></li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                    Standard exercises
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="/entryexitticket/entry">First Exercise (Entry Ticket)</a>
+                    <a class="dropdown-item" href="/entryexitticket/exit">Last Exercise (Exit Ticket)</a>
+                    <a class="dropdown-item" href="/loadfromjson"> Exercise Loader </a>
+                </div>
+            </li>
+            </li>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="/exercise/generate" aria-expanded="false">
@@ -35,15 +38,17 @@
                 </a>
             </li>
             <li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        View My
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="/getmy/model">User Model</a>
-                        <a class="dropdown-item" href="/getmy/logs">User Logs</a>
-                    </div>
-                </li></li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                    View My
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="/getmy/model">User Model</a>
+                    <a class="dropdown-item" href="/getmy/logs">User Logs</a>
+                </div>
+            </li>
+            </li>
             </li>
         </ul>
     </div>
@@ -51,17 +56,43 @@
 
 <div class="alert alert-primary alert-dismissible fade show d-none" role="alert" id="userIdModal">
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">×</span>
+        <span aria-hidden="true">×</span>
     </button>
-    <strong>Welcome New User!</strong> This tool stores utilizes a browser cookie to maintain a user ID a across multiple uses.
+    <strong>Welcome New User!</strong> This tool stores utilizes a browser cookie to maintain a user ID a across
+    multiple uses.
     This ID is anonymous, non-reverse engineerable, and is not based on any personally identifiable information.
-    We use this User ID to track responses to LTL exercises, and adaptively generate new exercises based on a user's responses.
+    We use this User ID to track responses to LTL exercises, and adaptively generate new exercises based on a user's
+    responses.
     These responses may also be used for research purposes, but will not be shared with any third parties.
-    
-    By using this tool, you consent to this use of cookies and response storage. <strong>If you do not consent, please close this page, and do not use the tool.</strong>
+
+    By using this tool, you consent to this use of cookies and response storage. <strong>If you do not consent, please
+        close this page, and do not use the tool.</strong>
     </p>
 </div>
 
 
+<!-- TODO: We should hide this once dismissed once -->
+
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container" id="subscribe">
+
+    </div>
 
 
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Get Notified of LTL Tutor updates!</strong>
+        <p class="text-muted">
+            We are constantly improving and updating LTL the Tutor, and we'd like to keep you in the loop.
+            We promise not to send more than 2 updates a year, and we will never share your email with anyone else.
+        </p>
+        <form action="/subscribe" method="post">
+            <div class="form-group">
+                <input type="email" class="form-control" id="email" placeholder="Enter email" required>
+                <button type="submit" id="subscribe-btn" class="btn btn-primary">Subscribe for updates</button>
+            </div>
+        </form>
+      </div>
+</footer>
