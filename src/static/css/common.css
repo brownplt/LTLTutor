@@ -13,3 +13,7 @@
     justify-content: space-around
 }
 
+.navbar, .uidbadge {
+    width: 100%;
+}
+
