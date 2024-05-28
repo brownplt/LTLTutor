@@ -40,16 +40,13 @@
         {% endif %}
 
 
-        <div class="card-body bg-light mt-1 mb-1"> 
-            <h4 class="card-title">Begin a new exercise!</h4>
-            <p class="card-text"> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
-                indefinitely, and weight recent errors more heavily. More details are available on your
-                <a href="/getmy/model">User Model</a> page.
+        <div class="card-body mt-1 mb-1"> 
+            <a href="/exercise/generate"> <button class="btn btn-lg btn-primary btn-block"> Begin a new exercise </button> </a>
+            <p class="card-text"> Exercises adapt in complexity and topic based on your previous responses. As your understanding
+            of LTL improves, the exercises will become more challenging, and focus on areas where you need more practice.
             </p>
         </div>
 
-
-        <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
         {% if misconception_count is defined and misconception_count < threshold %}
             <div class="alert-secondary alert">
                 <strong> Still identifying areas for review</strong>
