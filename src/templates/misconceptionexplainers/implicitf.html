@@ -12,12 +12,12 @@
       <p class="card-text">
 
         In LTL, the formula <code>F p</code> asserts that <code>p</code> will eventually be true.
-        This means that <code>p</code> can be true in the current state, but it doesn't have to be. What's required is that 
-        <code>p</code> becomes true at least once in any future state, including potentially the present state.
+        This means that <code>p</code> can be true in the current state, but it doesn't have to be. 
+        
+        What <em>is</em> required is that <code>p</code> becomes true at least once in any future state, including potentially the present state.
+        <br>
         Importantly, <code> F p</code> doesn't specify when <code>p</code> will become true, only that it will 
-        definitely become true.
-
-        Thus this trace satisfies the formula <code>F p</code>:
+        definitely become true. Thus both these traces satisfy <code>F p</code>:
 
 
         <pre class="mermaid"> 
@@ -26,8 +26,6 @@
             n2["p"]-->n2["p"];  
         </pre>
 
-        <br>
-        and so does this trace:
 
         <pre class="mermaid"> 
             flowchart LR;
