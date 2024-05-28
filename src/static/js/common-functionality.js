@@ -54,3 +54,13 @@ $(document).ready(function () {
     });
 });
 
+
+
+function scrollToFeedback() {
+
+    setTimeout(() => {
+        var element = document.getElementById("feedback");
+        element.scrollIntoView({behavior: "smooth", block: "start", inline: "start"});
+    }, 100);
+
+}

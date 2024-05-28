@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
 </head>
 
 <body>
@@ -109,6 +110,7 @@
             </table>
         </div>
     </div>
+    {% include 'footer.html' %}
 </body>
 
 </html>

@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>LTL Tutor: Robotrain</title>
+    <title>LTL Tutor: RoboTrain</title>
 
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -24,17 +24,21 @@
         hljs.registerLanguage('ltl', ltlSyntaxDefs);
         hljs.highlightAll();
     </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
 </head>
 
 <body>
     <div class="container">
         {% include 'navbar.html' %}
 
-        <h3>RoboTrain</h3>
+        
         <div class="alert alert-secondary alert-dismissible fade show" role="alert">
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
+            <h3>RoboTrain</h3>
+
             This exercise asks questions about the state of a robot-driven train over time. 
             This RoboTrain has 2 components, each of which can be ON or OFF at any point in time: the engine (<code>e</code>), and the headlight (<code>h</code>).
 
@@ -47,14 +51,14 @@
           </div>
 
 
-
         <div id="questions">
             {% for q in questions %}
             {%set qindex = loop.index %}
             <div class="card mt-4 question">
-                <div class="card-body">
-                    <p class="text-muted"> Question {{ qindex }} of {{ questions | length}} </p>
-                    <h5 class="card-title">
+
+
+                <div class="card-header mb-2 d-flex align-items-center">
+                    <h6>
                         {% if q.type == "englishtoltl" %}
                         Which of the following LTL formulae best represents this English sentence?
                         {% elif q.type == "tracesatisfaction_mc" %}
@@ -66,8 +70,13 @@
                             <strong>Unrecognized Question type! {{ q.type }}</strong>
                         </div>
                         {% endif %}
-                    </h5>
-                    <hr>
+                    </h6>
+                    <small class="text-muted text-right ml-auto"> Question {{ qindex }} of {{ questions | length}} </small>
+                </div>
+
+                <div class="card-body">
+
+
                     {% if q.feedback %}
                     <div id="{{ qindex }}feedback" class="predeterminedfeedback" style="display: none;"> {{ q.feedback |
                         safe}} </div>
@@ -75,42 +84,49 @@
 
 
                     {% if q.type == "tracesatisfaction_yn" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
-                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre></h5>
+                    <h5 id="{{ qindex }}question_text" class="card-title mb-2">
+                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre>
+                    </h5>
                     <pre class="mermaid" id="q{{qindex}}_yn_trace"
                         aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
 
-                    <!-- WHAT CAN WE DOUBLE THESE? -->
                     <div class="text-muted d-none" id="{{ qindex }}alttrace_sat">Trace Alt:
                         <pre class="actualQuestionTrace"> {{ q.trace}}</pre>
                     </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2">Formula: 
-                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre></h5>
+                    <h5 id="{{ qindex }}question_text" class="card-title mb-2">
+                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre>
+                    </h5>
                     {% else %}
-                    <h5 id="{{ qindex }}question_text" class="card-subtitle mb-2 actualQuestion"
+                    <h5 id="{{ qindex }}question_text" class="card-title mb-2 actualQuestion"
                         style="white-space: pre-wrap;">{{ q.question}}
                     </h5>
                     {% endif %}
 
                     <ul class="list-group">
                         {% for option in q.options %}
-                        <li class="list-group-item">
-                            <input type="radio" name="{{ qindex }}option" id="{{ qindex }}option{{ loop.index }}"
-                                class="option" value="{{ option.option }}"
-                                data-misconceptions="{{ option.misconceptions }}" data-correct="{{ option.isCorrect }}"
-                                {% if option.generatedFromFormula %}
-                                data-generatedfromformula=" {{ option.generatedFromFormula }} " {% endif %}>
-                            <label for="{{ qindex }}option{{ loop.index }}">
-                                {% if q.type == 'tracesatisfaction_mc' %}
-                                <pre aria-label="{{option.option}}" class="mermaid"
-                                    id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
-                                <div class="text-muted d-none"> Trace Alt:
-                                    <pre> {{ option.option }}</pre>
+                        <li class="list-group-item mb-2 d-flex">
+                            <label class="form-check-label" for="{{ qindex }}option{{ loop.index }}">
+                                <div class="form-check flex-grow-1">
+                                    <input class="form-check-input" type="radio" name="{{ qindex }}option"
+                                        id="{{ qindex }}option{{ loop.index }}" class="option"
+                                        value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
+                                        data-correct="{{ option.isCorrect }}" {% if option.generatedFromFormula %}
+                                        data-generatedfromformula=" {{ option.generatedFromFormula }} " {% endif %}>
+
+
+                                    {% if q.type == 'tracesatisfaction_mc' %}
+                                    <pre aria-label="{{option.option}}" class="mermaid"
+                                        id="traceforq{{ qindex }}option{{ loop.index }}"> {{ option.mermaid | safe}} </pre>
+                                    <div class="text-muted d-none"> Trace Alt:
+                                        <pre> {{ option.option }}</pre>
+                                    </div>
+                                    {% elif q.type == 'tracesatisfaction_yn' %}
+                                    <span class="text-justify">{{ option.option }}</span>
+                                    {% else %}
+                                    <pre><code class="language-ltl">{{ option.option }}</code></pre>
+                                    {% endif %}
                                 </div>
-                                {% else %}
-                                <pre><code class="language-ltl">{{ option.option }}</code></pre>
-                                {% endif %}
                             </label>
                         </li>
                         {% endfor %}
@@ -119,7 +135,7 @@
 
 
 
-                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this); enableNextButton(this)">Check
+                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this); enableNextButton(this); scrollToFeedback()">Check
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
@@ -140,19 +156,32 @@
 
         </div>
 
-        <div id="done" style="display: none;" class="alert alert-dark" role="alert">
-            <h4 class="alert-heading">Well done! You have completed the exercise</h4>
+        <div id="done" style="display: none;" class="card">
+            <div class="card-body">
+                <h6 class="card-title">Exercise completed! </h6>
+                <!-- <h6 class="card-subtitle mb-2 text-muted">You have completed the exercise</h6> -->
 
-            <p>You got <span id="correctCount">0</span> questions correct and </p>
-            <span id="incorrectCount">0</span> questions incorrect.</p>
+                <p class="card-text">You got <span id="correctCount">0</span> questions correct and
+                    <span id="incorrectCount">0</span> questions incorrect.
+                </p>
+            </div>
+            <!-- I'd like a long button here that says, back to dashboard -->
+            <button class="btn btn-lg btn-block btn-primary" onclick="window.location.href='/';">Dashboard</button>
 
+            <div class="card-body bg-light shadow rounded mb-3">
+                <h4 class="card-title">Done using the tutor?</h4>
+                <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic,  
+                    we ask that you complete 
+                    <a href="/entryexitticket/exit"> <button class="btn btn-primary">this exit ticket </button></a>.
+                </p>
+            </div>
         </div>
     </div>
 
 
     <script>
         $(document).ready(function () {
-            
+
             mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
             function renderMermaidDiagram(graphElements) {
@@ -160,6 +189,10 @@
                 mermaid.run({
                     nodes: graphElements
                 }).then((data) => {
+                    //console.log("Mermaid diagram rendered for " + graphElements + " successfully");
+
+                    // TODO: Should this stay?
+                    // Loop over each graphElement and set the width of the child SVG
                     graphElements.forEach(function (element) {
                         let $element = $(element);
                         $element.width($element.find('svg').css('max-width'));
@@ -205,7 +238,7 @@
         });
     </script>
 
-
+    {% include 'footer.html' %}
 </body>
 
 </html>

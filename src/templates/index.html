@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
 
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     
 </head>
 
@@ -24,7 +24,6 @@
 
     <div class="container">
         {% include 'navbar.html' %}
-        <br>
 
         {% if misconception_count is not defined or misconception_count < threshold %}
         <div class="card-body bg-light">
@@ -35,24 +34,19 @@
             </p>
         </div>
         {% elif misconception_count > threshold %}
-        <!-- TODO: We could make this dismissable, and show another if needed. -->
-        <div class="shadow p-3 mb-2 mt-2 bg-light rounded">
+        <div class="p-3 mb-2 mt-2">
             {% include max_misconception %}
         </div>
-
         {% endif %}
 
 
-        <div class="card-body bg-light mt-1 mb-1"> 
-            <h4 class="card-title">Begin a new exercise!</h4>
-            <p class="card-text"> <a href="/exercise/generate"> <button class="button btn-primary">Generate a personalized exercise </button></a> based on your previous responses. Exercises can be generated
-                indefinitely, and weight recent errors more heavily. More details are available on your
-                <a href="/getmy/model">User Model</a> page.
+        <div class="card-body mt-1 mb-1"> 
+            <a href="/exercise/generate"> <button class="btn btn-lg btn-primary btn-block"> Begin a new exercise </button> </a>
+            <p class="card-text"> Exercises adapt in complexity and topic based on your previous responses. As your understanding
+            of LTL improves, the exercises will become more challenging, and focus on areas where you need more practice.
             </p>
         </div>
 
-
-        <!-- TODO: This shouldn't show the model, rather, depending on the misconception, it should open the correct page. -->
         {% if misconception_count is defined and misconception_count < threshold %}
             <div class="alert-secondary alert">
                 <strong> Still identifying areas for review</strong>
@@ -60,16 +54,9 @@
             </div>
         {% endif %}
 
-        {% if misconception_count is not defined or misconception_count > threshold %}
-        <div class="card-body bg-light shadow rounded mb-3">
-            <h4 class="card-title">Done using the tutor?</h4>
-            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic,  
-                we ask that you complete 
-                <a href="/entryexitticket/exit"> <button class="button btn-primary">this exit ticket </button></a>.
-            </p>
-        </div>
-        {% endif %}
     </div>
+    {% include 'footer.html' %}
+
 </body>
 
 </html>
