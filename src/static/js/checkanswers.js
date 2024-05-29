@@ -45,7 +45,9 @@ function show_feedback(parent_node, question_type) {
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
     Array.from(all_radios).forEach(radio => {
-        radio.parentNode.style.outline = "none";
+        //radio.parentNode.style.outline = "none";
+        radio.parentNode.parentNode.classList.remove("bg-success");
+        radio.parentNode.parentNode.classList.remove("bg-danger");
     });
     let selected_radio = getSelectedRadio(parent_node);
 
@@ -61,8 +63,11 @@ function show_feedback(parent_node, question_type) {
 
     if (correct) {
         // Make the background of the selected radio button green
-        selected_radio.parentNode.style.outline = "2px solid green";
+        // selected_option.parentNode.style.backgroundColor = "lightgreen";
 
+        // selected_radio.parentNode.style.outline = "2px solid green";
+
+        selected_radio.parentNode.parentNode.classList.add("bg-success");
 
         
 
@@ -83,8 +88,10 @@ function show_feedback(parent_node, question_type) {
         }
     }
     else {
-        selected_radio.parentNode.style.outline = "2px solid red";
-        correct_radio.parentNode.style.outline = "2px solid green";
+        // selected_radio.parentNode.style.outline = "2px solid red";
+        // correct_radio.parentNode.style.outline = "2px solid green";
+        correct_radio.parentNode.parentNode.classList.add("bg-success");
+        selected_radio.parentNode.parentNode.classList.add("bg-danger");
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         let misconceptions = JSON.parse(misconception_string);
