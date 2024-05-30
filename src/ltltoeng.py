@@ -179,7 +179,7 @@ def apply_next_special_pattern_if_possible(node):
         node = node.operand
 
     if number_of_nexts > 1:
-        return "In " + str(number_of_nexts) + " states, " + node.__to_english__()
+        return "in " + str(number_of_nexts) + " states, " + node.__to_english__()
     return None
 
 
