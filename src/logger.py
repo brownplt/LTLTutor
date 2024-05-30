@@ -86,8 +86,6 @@ class Logger:
     
     def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
 
-        print(f"Exercise: {exercise}")
-
         for misconception in misconceptions:
 
             ## Ensure everything is of the correct type

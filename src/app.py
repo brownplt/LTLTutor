@@ -255,6 +255,7 @@ def newexercise():
     try:
         exercise_name = "Exercise " + generate_new_name()
     except Exception as e:
+        print("Error generating exercise name:", e)
         exercise_name = "Exercise"
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
