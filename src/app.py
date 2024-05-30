@@ -329,6 +329,19 @@ def viewstudentlogs(type):
         complexity = model['complexity']
 
         return render_template('model.html', complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
+    
+    elif (type == "exercises"):
+        exercises = answer_logger.getUserExercises(userId=userId, lookback_days=30)
+        to_return = {}
+        for exercise in exercises:
+            to_return[exercise.id] = {
+                "user_id": exercise.user_id,
+                "timestamp": exercise.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                "exercise_data": exercise.exercise_data,
+                "exercise_name": exercise.exerciseName
+            }
+        return json.dumps(to_return)
+    
     else:
         return "Invalid type"
     

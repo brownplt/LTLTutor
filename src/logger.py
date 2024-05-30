@@ -123,9 +123,6 @@ class Logger:
         return logs
 
 
-
-
-
     def recordGeneratedExercise(self, userId, exercise_data, exercise_name):
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
@@ -142,3 +139,14 @@ class Logger:
         session = self.Session()
         complexity = session.query(GeneratedExercise.complexity).filter(GeneratedExercise.user_id == userId).order_by(GeneratedExercise.timestamp.desc()).first()
         return complexity[0] if complexity else None
+    
+
+    def getUserExercises(self, userId, lookback_days=30):
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+
+        session = self.Session()
+
+        lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
+        logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
+        return logs
