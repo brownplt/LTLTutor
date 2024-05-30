@@ -3,6 +3,7 @@ function getExerciseName() {
     if (en && en.innerText != "") {
         return en.innerText;
     }
+    console.error("Could not find exercise name.");
     return "Unknown Exercise";
 }
 
@@ -193,7 +194,8 @@ async function tracesatisfaction_mc_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
-        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
+        exercise: getExerciseName()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
 }
@@ -221,7 +223,8 @@ async function tracesatisfaction_yn_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
-        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
+        exercise: getExerciseName()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
 }
@@ -249,7 +252,8 @@ async function englishtoltl_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
-        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE)
+        formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
+        exercise: getExerciseName()
     }
 
     let response = await postFeedback(data, QUESTION_TYPE);
