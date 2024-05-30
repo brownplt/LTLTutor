@@ -11,15 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 
 STUDENT_RESPONSE_TABLE = 'student_responses'
-
 GENERATED_EXERCISE_TABLE = 'generated_exercise'
-
-# import os
-# from flask_sqlalchemy import SQLAlchemy
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
-# db = SQLAlchemy(app)
-
 
 
 Base = declarative_base()
@@ -46,6 +38,7 @@ class GeneratedExercise(Base):
     timestamp = Column(DateTime)
     exercise_data = Column(String)
     complexity = Column(Integer)
+    exerciseName = Column(String)
 
 class Logger:
     def __init__(self):
@@ -133,13 +126,13 @@ class Logger:
 
 
 
-    def recordGeneratedExercise(self, userId, exercise_data):
+    def recordGeneratedExercise(self, userId, exercise_data, exercise_name):
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
         if not isinstance(exercise_data, str):
             raise ValueError("exercise_data should be a string")
         
-        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data)
+        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data, exerciseName=exercise_name)
         self.record(log)
 
     def getComplexity(self, userId):

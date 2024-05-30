@@ -266,7 +266,7 @@ def newexercise():
     data = exerciseprocessor.randomize_questions(data)
     data = exerciseprocessor.change_traces_to_mermaid(data, literals = LITERALS)
 
-    answer_logger.recordGeneratedExercise(userId, json.dumps(data))
+    answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
 
     return render_template('exercise.html', questions=data, exercise_name=exercise_name)
 
