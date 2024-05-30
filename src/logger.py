@@ -11,15 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 
 STUDENT_RESPONSE_TABLE = 'student_responses'
-
 GENERATED_EXERCISE_TABLE = 'generated_exercise'
-
-# import os
-# from flask_sqlalchemy import SQLAlchemy
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1)
-# db = SQLAlchemy(app)
-
 
 
 Base = declarative_base()
@@ -36,6 +28,7 @@ class StudentResponse(Base):
     correct_answer = Column(Boolean)
     question_type = Column(String)
     mp_class = Column(String)
+    exercise = Column(String)
 
 
 class GeneratedExercise(Base):
@@ -45,6 +38,7 @@ class GeneratedExercise(Base):
     timestamp = Column(DateTime)
     exercise_data = Column(String)
     complexity = Column(Integer)
+    exerciseName = Column(String)
 
 class Logger:
     def __init__(self):
@@ -90,7 +84,7 @@ class Logger:
         session.add(log)
         session.commit()
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
 
         for misconception in misconceptions:
 
@@ -109,12 +103,13 @@ class Logger:
                 raise ValueError("questiontype should be a string")
             if not isinstance(mp_class, str):
                 raise ValueError("mp_class should be a string")
+            if not isinstance(exercise, str):
+                raise ValueError("exercise should be a string")
             
-
 
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise)
             self.record(log)
     
     def getUserLogs(self, userId, lookback_days=30):
@@ -128,16 +123,13 @@ class Logger:
         return logs
 
 
-
-
-
-    def recordGeneratedExercise(self, userId, exercise_data):
+    def recordGeneratedExercise(self, userId, exercise_data, exercise_name):
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
         if not isinstance(exercise_data, str):
             raise ValueError("exercise_data should be a string")
         
-        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data)
+        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data, exerciseName=exercise_name)
         self.record(log)
 
     def getComplexity(self, userId):
@@ -147,3 +139,14 @@ class Logger:
         session = self.Session()
         complexity = session.query(GeneratedExercise.complexity).filter(GeneratedExercise.user_id == userId).order_by(GeneratedExercise.timestamp.desc()).first()
         return complexity[0] if complexity else None
+    
+
+    def getUserExercises(self, userId, lookback_days=30):
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+
+        session = self.Session()
+
+        lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
+        logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
+        return logs
