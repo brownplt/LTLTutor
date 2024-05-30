@@ -183,6 +183,11 @@ def exercise():
 @app.route('/getfeedback/<questiontype>', methods=['POST'])
 def loganswer(questiontype):
 
+
+    MP_FORMULA_KEY = 'formula_for_mp_class'
+    EXERCISE_KEY = 'exercise'
+
+
     data = request.json
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
@@ -196,13 +201,19 @@ def loganswer(questiontype):
     mp_class = ""
     mp_formula_literals = []
     # If response has a mp_class field, log it
-    if 'formula_for_mp_class' in data:
-        to_classify = data['formula_for_mp_class']
+    if MP_FORMULA_KEY in data:
+        to_classify = data[MP_FORMULA_KEY]
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
         mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
 
+    exercise = ""
+    if EXERCISE_KEY in data:
+        exercise = data[EXERCISE_KEY]
 
-    answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text, question_options = question_options, correct_answer = isCorrect, questiontype=questiontype, mp_class = mp_class)
+
+    answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
+                                      question_options = question_options, correct_answer = isCorrect, 
+                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise)
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
@@ -242,9 +253,9 @@ def newexercise():
 
     ## TODO: Try and do better than this
     try:
-        exercise_name = "Generated Exercise: " + generate_new_name()
+        exercise_name = "Exercise " + generate_new_name()
     except Exception as e:
-        exercise_name = "Generated Exercise"
+        exercise_name = "Exercise"
     
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
@@ -348,9 +359,9 @@ def entryexitticket(ticket):
     exit_index = (uidlen + 1) % 2
 
     if ticket == "entry":
-        return robotrain(choices[entry_index])
+        return robotrain(choices[entry_index], exercise_name = "robotrain-entry")
     elif ticket == "exit":
-        return robotrain(choices[exit_index])
+        return robotrain(choices[exit_index], exercise_name = "robotrain-exit")
     else:
         return "Invalid ticket type."     
 
@@ -381,9 +392,8 @@ def generate_new_name():
         response.raise_for_status()
 
 
-def robotrain(sourceuri):
+def robotrain(sourceuri, exercise_name):
 
-    #sourceuri = "preload:robotrain.json"
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
@@ -391,7 +401,7 @@ def robotrain(sourceuri):
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name="robotrain")
+    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name=exercise_name)
 
 
 

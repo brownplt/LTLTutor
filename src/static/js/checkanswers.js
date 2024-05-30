@@ -1,4 +1,10 @@
-
+function getExerciseName() {
+    let en = document.getElementById('exerciseName');
+    if (en && en.innerText != "") {
+        return en.innerText;
+    }
+    return "Unknown Exercise";
+}
 
 function getQuestionText(parentNode) {
     return parentNode.querySelector('.actualQuestion').innerText;
