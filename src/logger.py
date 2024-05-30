@@ -36,6 +36,7 @@ class StudentResponse(Base):
     correct_answer = Column(Boolean)
     question_type = Column(String)
     mp_class = Column(String)
+    exercise = Column(String)
 
 
 class GeneratedExercise(Base):
@@ -90,7 +91,7 @@ class Logger:
         session.add(log)
         session.commit()
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
 
         for misconception in misconceptions:
 
@@ -109,12 +110,13 @@ class Logger:
                 raise ValueError("questiontype should be a string")
             if not isinstance(mp_class, str):
                 raise ValueError("mp_class should be a string")
+            if not isinstance(exercise, str):
+                raise ValueError("exercise should be a string")
             
-
 
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise)
             self.record(log)
     
     def getUserLogs(self, userId, lookback_days=30):
