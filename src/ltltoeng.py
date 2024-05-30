@@ -188,7 +188,6 @@ def apply_special_pattern_if_possible(node):
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
-            print("Pattern matched: " + str(result))
             return result
     return None
 
