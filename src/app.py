@@ -222,7 +222,6 @@ def loganswer(questiontype):
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
-            ## TODO: Ensure the client side looks at this.
             to_return['equivalent'] = fgen.equivalent()
             
 
