@@ -222,6 +222,8 @@ def loganswer(questiontype):
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
+            to_return['equivalent'] = fgen.equivalent()
+            
 
 
             to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
