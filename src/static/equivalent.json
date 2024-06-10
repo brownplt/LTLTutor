@@ -1,0 +1,30 @@
+[
+    {
+        "question": "The engine is on for zero or more states, and then turns off and remains off in the future.",
+        "type": "englishtoltl",
+        "options": [
+            {
+                "option": "e U (G (!e))",
+                "isCorrect": true,
+                "misconceptions": []
+            },
+            {
+                "option": "((e U (G (! e))) & (F (G (! e))))",
+                "isCorrect": false,
+                "misconceptions": []
+            },
+            {
+                "option": "e U (G (G (!e)))",
+                "isCorrect": false,
+                "misconceptions": [
+                ]
+            },
+            {
+                "option": "e U (F (! e))",
+                "isCorrect": false,
+                "misconceptions": [
+                ]
+            }
+        ]
+    }
+]
