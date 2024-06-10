@@ -19,3 +19,6 @@ formula
 atomicFormula: ID;
 
 ID : [a-z0-9]+ ;
+
+// Skip whitespace
+WS : [ \t\r\n]+ -> skip ;
