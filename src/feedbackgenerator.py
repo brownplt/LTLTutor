@@ -7,18 +7,24 @@ class FeedbackGenerator:
         self.correct_answer = correct
         self.student_selection = student
 
-
     def correctAnswerContained(self):
         # correct answer => student selection
+
+
         return spotutils.isSufficientFor(self.correct_answer, self.student_selection)
     
     def correctAnswerSubsumes(self):
+
+
+
         # student selection => correct answer
         return spotutils.isSufficientFor(self.student_selection, self.correct_answer)
     
     def disjoint(self):
         return spotutils.areDisjoint(self.correct_answer, self.student_selection)
 
+    def equivalent(self):
+        return spotutils.areEquivalent(self.correct_answer, self.student_selection)
 
     def getCEWords(self):
         if self.disjoint():
