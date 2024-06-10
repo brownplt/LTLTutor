@@ -282,6 +282,10 @@ function displayServerResponse(response) {
     let disjoint = response.disjoint;
     let subsumed = response.subsumed;
     let contained = response.contained;
+    let equivalent = response.equivalent;
+
+    // TODO: Switch on equivalent
+
     let cewords = response.cewords;
     let wordsasmermaid = response.mermaid;
 
@@ -299,7 +303,10 @@ function displayServerResponse(response) {
         console.log("Could not generate a counterexample trace.")
     }
 
-    if (disjoint) {
+    if (equivalent) {
+        feedback_string += "Your selection is equivalent to the correct answer, meaning that it allows the same set of traces. However, the correct answer may represent a better way of expressing the solution.";
+    }
+    else if (disjoint) {
         feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
 
         if (ce_trace) {
