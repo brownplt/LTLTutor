@@ -70,6 +70,7 @@ def applyMisconception(node_orig, misconception):
     ## First copy everything so we don't mess up the original node.
     node = copy.deepcopy(node_orig)
 
+
     if misconception == MisconceptionCode.Precedence:
         return applyTilFirst(node, applyPrecedence)
     elif misconception == MisconceptionCode.BadStateIndex:
@@ -97,8 +98,16 @@ def applyMisconception(node_orig, misconception):
 
 def getAllApplicableMisconceptions(node):
 
+    formula = str(node)
+    def equivalentToOriginal(n):
+        as_str = str(n)
+        return LTLNode.equiv(formula, as_str)
+
     xs = [        applyMisconception(node, misconception)    for misconception in MisconceptionCode]
     xs = [ x  for x in xs if (x is not None and x.misconception is not None) ]
+    
+    ## TODO: Make sure results are not EQUIVALENT to the original node
+    xs = [ x  for x in xs if not equivalentToOriginal(x.node) ]
     return xs
     
 
