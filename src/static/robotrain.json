@@ -192,13 +192,6 @@
                 "misconceptions": [
                     "MisconceptionCode.OtherImplicit"
                 ]
-            },
-            {
-                "option": "((e U (G (! e))) & (F (G (! e))))",
-                "isCorrect": false,
-                "misconceptions": [
-                    "MisconceptionCode.WeakU"
-                ]
             }
         ]
     },
