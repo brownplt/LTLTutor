@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,12,48,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,
+        4,1,13,48,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,24,8,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,41,8,1,10,1,12,1,
         44,9,1,1,2,1,2,1,2,0,1,2,3,0,2,4,0,0,54,0,6,1,0,0,0,2,23,1,0,0,0,
@@ -44,7 +44,7 @@ class ltlParser ( Parser ):
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "ID" ]
+                      "ID", "WS" ]
 
     RULE_ltl = 0
     RULE_formula = 1
@@ -65,6 +65,7 @@ class ltlParser ( Parser ):
     T__9=10
     T__10=11
     ID=12
+    WS=13
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
