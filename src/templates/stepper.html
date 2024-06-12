@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LTL Stepper</title>
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+
+    <script>
+        hljs.registerLanguage('ltl', ltlSyntaxDefs);
+        hljs.highlightAll();
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+</head>
+
+<body>
+    <div class="container">
+        {% include 'navbar.html' %}
+
+        <div id="Controls">
+            <form>
+                <div class="form-group">
+                    <label for="formula">Formula:</label>
+                    <input type="text" class="form-control" id="formula" name="formula"  {% if formula %} value="{{ formula }}" {% endif %}>
+                    
+                </div>
+                <div class="form-group">
+                    <label for="trace">Trace:</label>
+                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}" {% endif %}>
+                </div>
+                <button type="submit" class="btn btn-primary">Load Stepper</button>
+            </form>
+
+        </div>
+
+
+        <div id="statecontainer">
+            {% for ps in prefixstates %}
+            
+            {% endfor %}
+
+            {% for cs in cyclestates %}
+
+
+            {% endfor %}
+        </div>
+
+
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+
+            mermaid.initialize({ startOnLoad: false });
+            const ui_load_timeout_delay = 150;
+            function renderMermaidDiagram(graphElements) {
+
+                mermaid.run({
+                    nodes: graphElements
+                }).then((data) => {
+                    graphElements.forEach(function (element) {
+                        let $element = $(element);
+                        $element.width($element.find('svg').css('max-width'));
+                    });
+
+
+                }).catch((err) => {
+                    console.error("Error rendering mermaid diagram");
+                    console.error(err);
+                });
+            };
+
+
+            // Hide all questions at the start
+            $('.question').hide();
+
+            // Show the first question
+            $('.question:first').show();
+            // Initialize mermaid for the first question
+
+            let first_question_to_render = $('.question:first').find('.mermaid').get();
+
+            renderMermaidDiagram(first_question_to_render);
+
+            // When the "Next" button is clicked, hide the current question and show the next one
+            $('.next').click(function () {
+                // Empty the feedback div
+                $('#feedback').empty();
+                $('#feedback').removeClass();
+
+                var nextQuestion = $(this).closest('.question').hide().next('.question');
+                if (nextQuestion.length) {
+                    nextQuestion.show();
+
+                    let to_render = nextQuestion.find('.mermaid').get();
+
+                    renderMermaidDiagram(to_render);
+                } else {
+                    // If there are no more questions, show the "done" section
+                    $('#done').show();
+                }
+            });
+        });
+    </script>
+
+    {% include 'footer.html' %}
+</body>
+
+</html>
