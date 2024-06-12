@@ -14,6 +14,7 @@ import spotutils
 from itertools import chain
 import uuid
 import requests
+import stepper
 
 port = os.getenv('PORT', default='5000')
 
@@ -419,6 +420,40 @@ def robotrain(sourceuri, exercise_name):
         print(e)
         return "Error loading exercise"
     return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name=exercise_name)
+
+
+@app.route('/stepper', methods=['GET', 'POST'])
+def stepper():
+
+    if request.method == 'GET':
+        return "NOT IMPLEMENTED YET."
+
+    if request.method == 'POST':
+        ltl = request.form.get('formula')
+        trace = request.form.get('trace')
+        if ltl == "" or trace == "":
+            error="Please enter an LTL formula and a trace."
+        
+    ## TODO: Ensure node is a valid LTL formula
+    node = parse_ltl_string(ltl)
+
+    ## TODO: Ensure trace is a valid trace
+    result = stepper.traceSatisfactionPerStep(node, trace)
+
+    
+    mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
+
+    ## TODO:
+    # Here, we need to build stepper.html, which will show the trace satisfaction per step.
+    # THis is complex. It will need to have trace (render it as a mermaid diagram), and then
+    # for each step, show the trace satisfaction as a tree.
+
+    # So we *will* need to have a built mermaid diagram, here, but ALSO need to have a correspondence between the
+    # Current trace and the mermaid diagram?
+
+
+
+    return result
 
 
 
