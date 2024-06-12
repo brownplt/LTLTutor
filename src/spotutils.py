@@ -148,3 +148,14 @@ def get_aut_size(formula):
     aut = spot.translate(f)
     num_states = aut.num_states()
     return num_states
+
+
+### Given an LTL Trace, return if the formula is satisfied
+def is_trace_satisfied(trace, formula):
+    formula = str(formula)
+    trace = str(trace)
+
+    f = spot.formula(formula)
+    aut = f.translate()
+    word = spot.twa_word(trace)
+    return aut.run(word)
