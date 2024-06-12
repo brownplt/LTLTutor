@@ -2,14 +2,60 @@
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode
 from spotutils import is_trace_satisfied
 import re
+import random
+
+def randid():
+    ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
 
 class StepperNode:
-    def __init__(self, children, satisfied, trace):
+    def __init__(self, formula, children, satisfied, trace):
         self.children = children
         self.satisfied = satisfied
         self.trace = trace
-        ## TODO: This SHOULD ALSO HAVE THE TRACE AS MERMAID, WITH THE CURRENT STATE HIGHLIGHTED
+        id = randid()
+
+        ## TODO: need the current formula ##
+        self.formula = formula
+
+
+
+    def __to__mermaid__(self):
+        edges = []
+        # Set the color based on satisfaction
+            # THis should happen based on mermaid class
+
+        ###
+        if self.satisfied:
+            noderepr = f'{self.id}["{self.formula}"]:::satclass'
+        else:
+            noderepr = f'{self.id}[["{self.formula}"]]:::unsatclass'
+        
+        for child in self.children:
+            child_repr = f'{child.id}["{child.formula}"]'
+            edges += f'{noderepr}-->{child_repr}'
+
+
+            child_edges = child.__to_mermaid__()
+            edges += child_edges
+        return edges
+
+
+    ## TODO: Function to render this as a mermaid tree
+    def __to_mermaid_full__(self):
+        
+        prefix = 'flowchart LR;'
+
+        
+        
+        # Formula, and choose its color based on satisfaction
+        # Formula should have an arrow to each child.
+        # Each child should have a color based on satisfaction.
+
+        postfix = 'classDef unsatclass fill:#f96'
+
+        pass
+
 
 
 class TraceSatisfactionResult:
@@ -27,20 +73,24 @@ class TraceSatisfactionResult:
         return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
 
 
+    def __to_mermaid__(self):
+        ## TODO: return a mermaid string, highligting the current node. (maybe state index?)
+        pass
 
 def satisfiesTrace(node, trace):
 
+    formula = str(node)
     if trace == None or len(trace) == 0:
-        return StepperNode([], True, trace)
+        return StepperNode(formula, [], True, trace)
 
     if node.isInstanceOf(LiteralNode):
-        return StepperNode([], is_trace_satisfied(node, trace), trace)
+        return StepperNode(formula, [], is_trace_satisfied(node, trace), trace)
     elif node.isInstanceOf(UnaryOperatorNode):
-        return StepperNode([satisfiesTrace(node.operand, trace)], is_trace_satisfied(node, trace), trace)
+        return StepperNode(formula, [satisfiesTrace(node.operand, trace)], is_trace_satisfied(node, trace), trace)
     elif node.isInstanceOf(BinaryOperatorNode):
-        return StepperNode([satisfiesTrace(node.left, trace), satisfiesTrace(node.right, trace)], is_trace_satisfied(node, trace), trace)
+        return StepperNode(formula, [satisfiesTrace(node.left, trace), satisfiesTrace(node.right, trace)], is_trace_satisfied(node, trace), trace)
     
-    return StepperNode([], False, trace)
+    return StepperNode(formula, [], False, trace)
 
 
 
