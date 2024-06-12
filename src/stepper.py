@@ -9,6 +9,8 @@ class StepperNode:
         self.children = children
         self.satisfied = satisfied
         self.trace = trace
+        ## TODO: This SHOULD ALSO HAVE THE TRACE AS MERMAID, WITH THE CURRENT STATE HIGHLIGHTED
+
 
 class TraceSatisfactionResult:
     def __init__(self, prefix_states, cycle_states):
