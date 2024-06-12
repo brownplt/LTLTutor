@@ -1,7 +1,7 @@
 
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode
 from spotutils import is_trace_satisfied
-
+import re
 
 
 class StepperNode:
@@ -26,15 +26,70 @@ def satisfiesTrace(node, trace):
     return StepperNode([], False, trace)
 
 
+
+
+
+def splitTraceAtCycle(sr):
+
+    def getCycleContent(string):
+        match = re.match(r'.*\{([^}]*)\}', string)
+        return match.group(1) if match else ""
+    
+    prefix_split = sr.split('cycle', 1)
+    prefix_states = [x.strip() for x in prefix_split[0].strip().split(';') if x.strip() != ""]
+
+    cycle_states = []
+    ## Would be weird to not have a cycle, but we allow for it.
+    if len(prefix_split) > 1:
+        cycle = prefix_split[1]
+        cycled_content = getCycleContent(cycle)
+        cycle_states = [s.strip() for s in cycled_content.split(';') if s.strip() != ""]
+        
+    else:
+        cycle_states = []
+
+    return prefix_states, cycle_states
+
+
 # Trace has to be a list of spot word formulae
 def traceSatisfactionPerStep(node, trace):
     if len[trace] == 0:
         return []
     
     ## TODO: What about cycles ##
-    return [satisfiesTrace(node, trace[i:]) for i in range(len(trace))]
+    ## We should probably unfold, or 'know' we are in a cycle. So perhaps a 
+    ## We SPLIT on the cycle. Do the prefix. THEN do the cycle, where we know we are in a cycle.
 
+    prefix, cycle = splitTraceAtCycle(trace)
 
+    ## Now for each prefix state, we check if the trace is satisfied.
+    ## However, we need the cycle to be part of the entire trace
 
-## TODO: Write a procedure to convert a spot trace to a list of individual states (including cycles)
-## How do we step within cycles. Should be solvable, just need to think about it.
+    def buildTraceForStateInPrefix(prefix_index):
+        prefix_string = prefix[prefix_index:].join(';')
+
+        if len(cycle) == 0:
+            return prefix_string
+        else:
+            cycle_string = "cycle{" +  ';'.join(cycle) + "}"
+            return prefix_string + ";" + cycle_string
+        
+    def buildTraceForStateInCycle(cycle_index):
+
+        if len(cycle) == 0:
+            return []
+        
+        ## Unroll one cycle, from the current state
+        cycle_prefix_string = cycle[cycle_index:].join(';')
+        if len(cycle_prefix_string) == 0:
+            return []
+
+        
+        cycle_string = "cycle{" +  ';'.join(cycle) + "}"
+        return cycle_prefix_string + ";" + cycle_string
+    
+
+    prefix_sat = [satisfiesTrace(node, buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
+    cycle_sat = [satisfiesTrace(node, buildTraceForStateInCycle(i)) for i in range(len(cycle))]
+    ## TODO: Should we flag that we are in a cycle? This would allow for a nice looping semantic ##
+    return prefix_sat + cycle_sat
