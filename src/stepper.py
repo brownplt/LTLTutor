@@ -10,6 +10,21 @@ class StepperNode:
         self.satisfied = satisfied
         self.trace = trace
 
+class TraceSatisfactionResult:
+    def __init__(self, prefix_states, cycle_states):
+        self.prefix_states = prefix_states
+        self.cycle_states = cycle_states
+
+    def to_dict(self):
+        return {
+            "prefix_states": self.prefix_states,
+            "cycle_states": self.cycle_states
+        }
+
+    def __repr__(self):
+        return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
+
+
 
 def satisfiesTrace(node, trace):
 
@@ -88,8 +103,6 @@ def traceSatisfactionPerStep(node, trace):
         cycle_string = "cycle{" +  ';'.join(cycle) + "}"
         return cycle_prefix_string + ";" + cycle_string
     
-
     prefix_sat = [satisfiesTrace(node, buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
     cycle_sat = [satisfiesTrace(node, buildTraceForStateInCycle(i)) for i in range(len(cycle))]
-    ## TODO: Should we flag that we are in a cycle? This would allow for a nice looping semantic ##
-    return prefix_sat + cycle_sat
+    return TraceSatisfactionResult(prefix_sat, cycle_sat)
