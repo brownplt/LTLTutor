@@ -426,7 +426,7 @@ def robotrain(sourceuri, exercise_name):
 def stepper():
 
     if request.method == 'GET':
-        return "NOT IMPLEMENTED YET."
+        return render_template('stepper.html', error="", prefixstates=[], cyclestates=[])
 
     if request.method == 'POST':
         ltl = request.form.get('formula')
