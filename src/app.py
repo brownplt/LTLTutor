@@ -438,7 +438,7 @@ def ltlstepper():
     try:
         node = parse_ltl_string(ltl)
     except:
-        return render_template('stepper.html', error="Invalid LTL formula", prefixstates=[], cyclestates=[])
+        return render_template('stepper.html', error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
     ## TODO: Ensure trace is a valid trace
     result = traceSatisfactionPerStep(node = node, trace = trace)
