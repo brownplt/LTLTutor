@@ -106,9 +106,6 @@ function show_feedback(parent_node, question_type) {
                 var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getCorrectRadio(parent_node).value;
                 
 
-                console.log("Formula for stepper: " + formulaForStepper);
-                console.log("Question trace: " + qtrace);
-
                 // Here, I want to build some html, that, when clicked will submit a POST request to 
                 // '/stepper' with the formula and trace as form parameters. This should open in a new tab.
                 var fv = `
