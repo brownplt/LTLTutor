@@ -28,25 +28,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
 
-    <style>
-        .stepper-container {
-            display: flex;
-            justify-content: space-between;
-        }
 
-        .formula-tree-container,
-        .trace-container {
-            flex: 1;
-        }
-
-        .formula-tree-container {
-            margin-right: 10px;
-        }
-
-        .trace-container {
-            margin-left: 10px;
-        }
-    </style>
 </head>
 
 <body>
@@ -89,8 +71,8 @@
                 </div>
             </div>
 
-            <button id="prev" class="btn btn-primary">Previous State</button>
-            <button id="next" class="btn btn-primary">Next State</button>
+            <button class="prev" class="btn btn-primary">Previous State</button>
+            <button class="next" class="btn btn-primary">Next State</button>
 
         </div>
 
@@ -202,7 +184,8 @@
 
             renderDiagrams();
 
-            document.getElementById('prev').addEventListener('click', function() {
+            document.querySelectorAll('.prev').forEach(function(element) {
+                element.addEventListener('click', function() {
                 if (currentIndex > 0) {
 
                     stepperContainers[currentIndex--].style.display = 'none';
@@ -210,46 +193,16 @@
                     renderDiagrams();
 
                 }
-            });
+            })});
 
-            document.getElementById('next').addEventListener('click', function() {
-                if (currentIndex < stepperContainers.length - 1) {
+            document.querySelectorAll('.next').forEach(function(element) {
+                element.addEventListener('click', function() {
+                    if (currentIndex < stepperContainers.length - 1) {
                     stepperContainers[currentIndex++].style.display = 'none';
                     stepperContainers[currentIndex].style.display = 'block';
                     renderDiagrams();
                 }
-            });
-
-
-            // // Hide all questions at the start
-            // $('.question').hide();
-
-            // // Show the first question
-            // $('.question:first').show();
-            // // Initialize mermaid for the first question
-
-            // let first_question_to_render = $('.question:first').find('.mermaid').get();
-
-            // renderMermaidDiagram(first_question_to_render);
-
-            // // When the "Next" button is clicked, hide the current question and show the next one
-            // $('.next').click(function () {
-            //     // Empty the feedback div
-            //     $('#feedback').empty();
-            //     $('#feedback').removeClass();
-
-            //     var nextQuestion = $(this).closest('.question').hide().next('.question');
-            //     if (nextQuestion.length) {
-            //         nextQuestion.show();
-
-            //         let to_render = nextQuestion.find('.mermaid').get();
-
-            //         renderMermaidDiagram(to_render);
-            //     } else {
-            //         // If there are no more questions, show the "done" section
-            //         $('#done').show();
-            //     }
-            // });
+            })});
         });
     </script>
 
