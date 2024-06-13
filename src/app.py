@@ -435,7 +435,10 @@ def ltlstepper():
             error="Please enter an LTL formula and a trace."
         
     ## TODO: Ensure node is a valid LTL formula
-    node = parse_ltl_string(ltl)
+    try:
+        node = parse_ltl_string(ltl)
+    except:
+        return render_template('stepper.html', error="Invalid LTL formula", prefixstates=[], cyclestates=[])
 
     ## TODO: Ensure trace is a valid trace
     result = traceSatisfactionPerStep(node = node, trace = trace)
@@ -443,16 +446,7 @@ def ltlstepper():
     
     #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
 
-    ## TODO:
-    # Here, we need to build stepper.html, which will show the trace satisfaction per step.
-    # THis is complex. It will need to have trace (render it as a mermaid diagram), and then
-    # for each step, show the trace satisfaction as a tree.
-
-    # So we *will* need to have a built mermaid diagram, here, but ALSO need to have a correspondence between the
-    # Current trace and the mermaid diagram?
-
-
-    return render_template('stepper.html', error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states)
+    return render_template('stepper.html', error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
 

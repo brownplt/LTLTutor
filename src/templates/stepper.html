@@ -27,7 +27,7 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 </head>
 
@@ -36,6 +36,11 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
 
             <!-- Button trigger modal -->
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
@@ -84,7 +89,7 @@
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-                    <h3> Formula Tree</h3>
+                    <h5> Formula: <pre> {{formula}} </pre></h5>
                     <!-- TODO: Replace with Formula -->
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
@@ -96,9 +101,9 @@
                     <h3> Trace Position</h3>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
-                    <div class="btn-group" role="group">
-                        <button class="prev" class="btn btn-primary">Previous State</button>
-                        <button class="next" class="btn btn-primary">Next State</button>
+                    <div class="btn-group d-flex justify-content-center" role="group">
+                        <button class="prev btn btn-primary" title="Previous State"><i class="fas fa-arrow-left"></i></button>
+                        <button class="next btn btn-primary" title="Next State"><i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
             </div>
@@ -109,7 +114,7 @@
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-                    <h3> Formula Tree</h3>
+                    <h5> Formula: <pre> {{formula}} </pre></h5>
                     <!-- TODO: Replace with Formula -->
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
@@ -118,12 +123,12 @@
 
 
                 <div class="trace-container">
-                    <h3> Trace Position (Unrolling Cycle)</h3>
+                    <h5> Trace Position (Unrolling Cycle)</h5>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
-                    <div class="btn-group" role="group">
-                        <button class="prev" class="btn btn-primary">Previous State</button>
-                        <button class="next" class="btn btn-primary">Next State</button>
+                    <div class="btn-group d-flex justify-content-center" role="group">
+                        <button class="prev btn btn-primary btn-outline-light" title="Previous State"><i class="fas fa-arrow-left"></i></button>
+                        <button class="next btn btn-primary btn-outline-light" title="Next State"><i class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
             </div>
