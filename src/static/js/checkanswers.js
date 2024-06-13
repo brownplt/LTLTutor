@@ -111,10 +111,11 @@ function show_feedback(parent_node, question_type) {
 
                 // Here, I want to build some html, that, when clicked will submit a POST request to 
                 // '/stepper' with the formula and trace as form parameters. This should open in a new tab.
-                var fv = `<form action="/stepper" method="post" target="_blank">
+                var fv = `
+                        <form action="/stepper" method="post" target="_blank">
                             <input type="hidden" name="formula" value='${formulaForStepper}'>
                             <input type="hidden" name="trace" value='${qtrace}'>
-                            <button type="submit" class="btn btn-secondary">Step through trace and your answer</button>
+                            <button type="submit" class="btn btn-secondary">Step through the trace and your answer.</button>
                         </form>
                         `
                 return fv;
@@ -129,8 +130,7 @@ function show_feedback(parent_node, question_type) {
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )</p>";
-        feedback_div.innerHTML += getTraceStepperButtonHtml();
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )" +  getTraceStepperButtonHtml() +  "</p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
         feedback_div.classList.add('alert-secondary');
