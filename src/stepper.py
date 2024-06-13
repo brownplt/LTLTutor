@@ -83,12 +83,12 @@ def satisfiesTrace(node, trace):
     if trace == None or len(trace) == 0:
         return StepperNode(formula, [], True, trace)
 
-    if node.isInstanceOf(LiteralNode):
-        return StepperNode(formula, [], is_trace_satisfied(node, trace), trace)
-    elif node.isInstanceOf(UnaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.operand, trace)], is_trace_satisfied(node, trace), trace)
-    elif node.isInstanceOf(BinaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.left, trace), satisfiesTrace(node.right, trace)], is_trace_satisfied(node, trace), trace)
+    if isinstance(node, LiteralNode):
+        return StepperNode(formula, [], is_trace_satisfied(formula=node, trace=trace), trace)
+    elif isinstance(node, UnaryOperatorNode):
+        return StepperNode(formula, [satisfiesTrace(node.operand, trace)], is_trace_satisfied(formula=node, trace=trace), trace)
+    elif isinstance(node, BinaryOperatorNode):
+        return StepperNode(formula, [satisfiesTrace(node.left, trace), satisfiesTrace(node.right, trace)], is_trace_satisfied(formula=node, trace=trace), trace)
     
     return StepperNode(formula, [], False, trace)
 
@@ -120,20 +120,13 @@ def splitTraceAtCycle(sr):
 
 # Trace has to be a list of spot word formulae
 def traceSatisfactionPerStep(node, trace):
-    if len[trace] == 0:
+    if len(trace) == 0:
         return []
     
-    ## TODO: What about cycles ##
-    ## We should probably unfold, or 'know' we are in a cycle. So perhaps a 
-    ## We SPLIT on the cycle. Do the prefix. THEN do the cycle, where we know we are in a cycle.
-
     prefix, cycle = splitTraceAtCycle(trace)
 
-    ## Now for each prefix state, we check if the trace is satisfied.
-    ## However, we need the cycle to be part of the entire trace
-
     def buildTraceForStateInPrefix(prefix_index):
-        prefix_string = prefix[prefix_index:].join(';')
+        prefix_string = ';'.join(prefix[prefix_index:])
 
         if len(cycle) == 0:
             return prefix_string
@@ -141,13 +134,14 @@ def traceSatisfactionPerStep(node, trace):
             cycle_string = "cycle{" +  ';'.join(cycle) + "}"
             return prefix_string + ";" + cycle_string
         
+        
     def buildTraceForStateInCycle(cycle_index):
 
         if len(cycle) == 0:
             return []
         
         ## Unroll one cycle, from the current state
-        cycle_prefix_string = cycle[cycle_index:].join(';')
+        cycle_prefix_string = ';'.join(cycle[cycle_index:])
         if len(cycle_prefix_string) == 0:
             return []
 
@@ -155,6 +149,6 @@ def traceSatisfactionPerStep(node, trace):
         cycle_string = "cycle{" +  ';'.join(cycle) + "}"
         return cycle_prefix_string + ";" + cycle_string
     
-    prefix_sat = [satisfiesTrace(node, buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
-    cycle_sat = [satisfiesTrace(node, buildTraceForStateInCycle(i)) for i in range(len(cycle))]
-    return TraceSatisfactionResult(prefix_sat, cycle_sat)
+    prefix_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
+    cycle_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInCycle(i)) for i in range(len(cycle))]
+    return TraceSatisfactionResult(prefix_sat, cycle_sat).to_dict()

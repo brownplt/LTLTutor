@@ -151,11 +151,24 @@ def get_aut_size(formula):
 
 
 ### Given an LTL Trace, return if the formula is satisfied
+
+### This works on the spot kernel but not here. Why?
 def is_trace_satisfied(trace, formula):
     formula = str(formula)
     trace = str(trace)
 
+    print(f"Checking if trace {trace} satisfies formula {formula}")
+
+    # Parse the trace into a word
+    word = spot.parse_word(trace)
+
+    # Words can be translated to automata
+    # w.as_automaton()
+
+    # Translate the formula into an automaton
     f = spot.formula(formula)
     aut = f.translate()
-    word = spot.twa_word(trace)
-    return aut.run(word)
+    wordaut = word.as_automaton()
+
+    # Check if the automaton intersects with the word automaton
+    return aut.intersects(wordaut)

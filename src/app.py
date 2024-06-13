@@ -14,7 +14,7 @@ import spotutils
 from itertools import chain
 import uuid
 import requests
-import stepper
+from stepper import traceSatisfactionPerStep
 
 port = os.getenv('PORT', default='5000')
 
@@ -438,7 +438,7 @@ def stepper():
     node = parse_ltl_string(ltl)
 
     ## TODO: Ensure trace is a valid trace
-    result = stepper.traceSatisfactionPerStep(node, trace)
+    result = traceSatisfactionPerStep(node = node, trace = trace)
 
     
     mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)

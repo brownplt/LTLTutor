@@ -34,7 +34,7 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
-            <form>
+            <form action="{{ request.path }}" method="POST">
                 <div class="form-group">
                     <label for="formula">Formula:</label>
                     <input type="text" class="form-control" id="formula" name="formula"  {% if formula %} value="{{ formula }}" {% endif %}>
