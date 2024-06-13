@@ -36,6 +36,19 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
+
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+                The LTL Stepper allows you to step through an LTL formula and a sequence of states (a trace), breaking down how the formula is evaluated at each step. 
+                You can step forward and backward through the trace to see how the formula evaluation changes as the trace progresses.
+
+                <strong>While the information shown in this state is corrct, the feature is in development! As a result, you may encounter some UI inconsistencies and issues.</strong> 
+            </div>
+              
+
+
             {% if error %}
             <div class="alert alert-danger" role="alert">
                 {{ error }}
@@ -43,8 +56,8 @@
             {% endif %}
 
             <!-- Button trigger modal -->
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-                Load New Formula
+            <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
+                Step Through Another Trace and Formula
             </button>
 
             <!-- Modal -->
@@ -123,7 +136,7 @@
 
 
                 <div class="trace-container">
-                    <h5> Trace Position (Unrolling Cycle)</h5>
+                    <h5> Trace Position (in cycle)</h5>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
                     <div class="btn-group d-flex justify-content-center" role="group">
