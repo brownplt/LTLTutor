@@ -151,4 +151,4 @@ def traceSatisfactionPerStep(node, trace):
     
     prefix_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
     cycle_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInCycle(i)) for i in range(len(cycle))]
-    return TraceSatisfactionResult(prefix_sat, cycle_sat).to_dict()
+    return TraceSatisfactionResult(prefix_sat, cycle_sat)
