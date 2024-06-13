@@ -367,7 +367,7 @@ class ExerciseBuilder:
         
 
 
-        feedbackString = "No further feedback is currently available. An update is planned, providing feedback in terms of an 'Trace Stepper' that will allow you to step through the trace and see where/if it diverges from the formula."
+        feedbackString = "No further feedback is currently available. We recommend stepping through the trace to see where/if it diverges from the formula."
         # So no misconceptions forthcoming...
         ## TODO: Should we even generate a question one here?
         if formulae is None:

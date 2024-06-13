@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LTL Stepper</title>
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+
+    <script>
+        hljs.registerLanguage('ltl', ltlSyntaxDefs);
+        hljs.highlightAll();
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+</head>
+
+<body>
+    <div class="container">
+        {% include 'navbar.html' %}
+
+        <div id="Controls">
+
+            <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+                The LTL Stepper allows you to step through an LTL formula and a sequence of states (a trace), breaking down how the formula is evaluated at each step. 
+                You can step forward and backward through the trace to see how the formula evaluation changes as the trace progresses.
+                <br>
+                <strong>While the information shown in this state is corrct, the feature is in development! As a result, you may encounter some UI inconsistencies and issues.</strong> 
+            </div>
+              
+
+
+            {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
+                Step Through Another Trace and Formula
+            </button>
+
+            <!-- Modal -->
+            <div class="modal" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Load Stepper with a new LTL Formula and Trace
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ request.path }}" method="POST">
+                                <div class="form-group">
+                                    <label for="formula">LTL Formula:</label>
+                                    <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
+                                        value="{{ formula }}" {% endif %}>
+                                </div>
+                                <div class="form-group">
+                                    <label for="trace">Trace:</label>
+                                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %}
+                                        value="{{ trace }}" {% endif %}>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Load Stepper</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+        <div id="statecontainer">
+            {% for ps in prefixstates %}
+
+
+            <div class="container stepper-container">
+
+                <div class="formula-tree-container">
+                    <h5> Formula: <pre> {{formula}} </pre></h5>
+                    <!-- TODO: Replace with Formula -->
+                    <div>
+                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                    </div>
+                </div>
+
+
+                <div class="trace-container">
+                    <h3> Trace Position</h3>
+                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                    <br>
+                    <div class="btn-group d-flex justify-content-center" role="group">
+                        <button class="prev btn btn-primary" title="Previous State"><i class="fas fa-arrow-left"></i></button>
+                        <button class="next btn btn-primary" title="Next State"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+
+            {% for ps in cyclestates %}
+            <div class="container stepper-container">
+
+                <div class="formula-tree-container">
+                    <h5> Formula: <pre> {{formula}} </pre></h5>
+                    <!-- TODO: Replace with Formula -->
+                    <div>
+                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                    </div>
+                </div>
+
+
+                <div class="trace-container">
+                    <h5> Trace Position (in cycle)</h5>
+                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                    <br>
+                    <div class="btn-group d-flex justify-content-center" role="group">
+                        <button class="prev btn btn-primary btn-outline-light" title="Previous State"><i class="fas fa-arrow-left"></i></button>
+                        <button class="next btn btn-primary btn-outline-light" title="Next State"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+
+            //mermaid.initialize({ startOnLoad: true });
+            mermaid.initialize({ startOnLoad: false });
+            const ui_load_timeout_delay = 150;
+            function renderMermaidDiagram(graphElements) {
+
+                mermaid.run({
+                    nodes: graphElements
+                }).then((data) => {
+                    graphElements.forEach(function (element) {
+                        let $element = $(element);
+                        $element.width($element.find('svg').css('max-width'));
+                    });
+
+
+                }).catch((err) => {
+                    console.error("Error rendering mermaid diagram");
+                    console.error(err);
+                });
+            };
+
+
+            var stepperContainers = document.querySelectorAll('.stepper-container');
+            var currentIndex = 0;
+
+            // Initially hide all stepper containers except the first one
+            for (var i = 0; i < stepperContainers.length; i++) {
+                stepperContainers[i].style.display = i === 0 ? 'block' : 'none';
+
+
+                if (i == 0) {
+                    // Disable the previous button for the first container
+                    stepperContainers[i].querySelector('.prev').disabled = true;
+                }
+                if (i == stepperContainers.length - 1) {
+                    // Disable the next button for the last container
+                    stepperContainers[i].querySelector('.next').disabled = true;
+                }
+            }
+
+            function renderDiagrams() {
+                let to_render = stepperContainers[currentIndex].querySelectorAll('.mermaid');
+                renderMermaidDiagram(to_render);
+            }
+
+            renderDiagrams();
+
+            document.querySelectorAll('.prev').forEach(function (element) {
+                element.addEventListener('click', function () {
+                    if (currentIndex > 0) {
+
+                        stepperContainers[currentIndex--].style.display = 'none';
+                        stepperContainers[currentIndex].style.display = 'block';
+                        renderDiagrams();
+
+                    }
+                })
+            });
+
+            document.querySelectorAll('.next').forEach(function (element) {
+                element.addEventListener('click', function () {
+                    if (currentIndex < stepperContainers.length - 1) {
+                        stepperContainers[currentIndex++].style.display = 'none';
+                        stepperContainers[currentIndex].style.display = 'block';
+                        renderDiagrams();
+                    }
+                })
+            });
+        });
+    </script>
+
+
+
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

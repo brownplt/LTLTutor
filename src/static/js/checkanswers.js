@@ -62,6 +62,10 @@ function show_feedback(parent_node, question_type) {
         return false;
     }
 
+
+
+
+
     let selected_option = selected_radio.value;
     let correct_radio = getCorrectRadio(parent_node);
     let correct_option = correct_radio.value;
@@ -95,19 +99,34 @@ function show_feedback(parent_node, question_type) {
         }
     }
     else {
-        // selected_radio.parentNode.style.outline = "2px solid red";
-        // correct_radio.parentNode.style.outline = "2px solid green";
+
+        function getTraceStepperButtonHtml() {
+            if (question_type == "trace_satisfaction_yn" || question_type == "trace_satisfaction_mc") {
+                var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
+                var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getSelectedRadio(parent_node).value;
+                
+                
+                // TODO: There is a sort of bug here! The trace being passed is not alwayts the correct one!
+                var fv = `
+                        <form action="/stepper" method="post" target="_blank">
+                            <input type="hidden" name="formula" value='${formulaForStepper}'>
+                            <input type="hidden" name="trace" value='${qtrace}'>
+                            <button type="submit" class="btn btn-secondary">Step through the trace and your answer.</button>
+                        </form>
+                        `
+                return fv;
+            }
+            return "";
+        }
+
+
+
         correct_radio.parentNode.parentNode.classList.add("bg-success");
         selected_radio.parentNode.parentNode.classList.add("bg-danger");
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
-        let misconceptions = JSON.parse(misconception_string);
-
-
-        // TODO: How do we determine if we should put this in a mermaid diagram? (CORRECT OPTION)
-
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )</p>";
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )" +  getTraceStepperButtonHtml() +  "</p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
         feedback_div.classList.add('alert-secondary');

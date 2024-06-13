@@ -14,6 +14,7 @@ import spotutils
 from itertools import chain
 import uuid
 import requests
+from stepper import traceSatisfactionPerStep
 
 port = os.getenv('PORT', default='5000')
 
@@ -419,6 +420,35 @@ def robotrain(sourceuri, exercise_name):
         print(e)
         return "Error loading exercise"
     return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name=exercise_name)
+
+
+@app.route('/stepper', methods=['GET', 'POST'])
+def ltlstepper():
+
+    if request.method == 'GET':
+        return render_template('stepper.html', error="", prefixstates=[], cyclestates=[])
+
+    if request.method == 'POST':
+        ltl = request.form.get('formula')
+        trace = request.form.get('trace')
+        if ltl == "" or trace == "":
+            error="Please enter an LTL formula and a trace."
+        
+    ## TODO: Ensure node is a valid LTL formula
+    try:
+        node = parse_ltl_string(ltl)
+    except:
+        return render_template('stepper.html', error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
+
+    ## TODO: Ensure trace is a valid trace
+    result = traceSatisfactionPerStep(node = node, trace = trace)
+
+    print(f"Trace passed was {trace}")
+
+    
+    #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
+
+    return render_template('stepper.html', error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
 

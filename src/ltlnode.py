@@ -46,6 +46,7 @@ class LTLNode(ABC):
         # https://matthewbdwyer.github.io/psp/patterns/ltl.html
         pass
 
+
     @staticmethod
     def equiv(formula1, formula2):
         areEquivalent(formula1, formula2)

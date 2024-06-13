@@ -35,7 +35,10 @@ def randomize_questions(data):
 def choosePathFromWord(word):
     asNode = ltlnode.parse_ltl_string(word)
     modifiedNode = removeORs(asNode)
-    return str(modifiedNode)
+    x = str(modifiedNode)
+    if '|' in x:
+        print(f"Removing ORs from {word} ---- Modified to {x}")
+    return x
 
 # Now go down the word, if there is an OR choose one of left or right at random
 def removeORs(node):
@@ -63,7 +66,6 @@ class NodeRepr:
     def __init__(self, vars):
         self.vars = vars.strip()
 
-        ## TODO: Or logic
         if (not self.vars.startswith('cycle')):
             try:
                 vs = choosePathFromWord(self.vars)
@@ -75,6 +77,11 @@ class NodeRepr:
         self.vars = self.vars.replace('&', self.VAR_SEPARATOR)
         self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
+
+    def __mermaid_str__(self):
+        asStr = self.__str__()
+        return f'{self.id}["{asStr}"]'
+    
     def __str__(self):
         asStr = self.vars
         if '{' in asStr or '}' in asStr:
@@ -83,62 +90,64 @@ class NodeRepr:
             asStr = asStr.replace('{', '').replace('}', '')
         # Now remove all the parens
         asStr = asStr.replace('(', '').replace(')', '')
-        return f'{self.id}["{asStr}"]'
+        return asStr
 
-def expandSpotTrace(sr, literals):
-
-    if literals == []:
-        return sr
-
-    sr = sr.strip()
-    if sr == "":
-        return ""
-    
-
-    def randomlyConjoinMissingLiterals(s, missing_literals):
+    def __add_missing_literals__(self, missing_literals):
+        s = self.vars
         for literal in missing_literals:
             x = literal if random.random() < 0.5 else f'!{literal}'
             if s == "":
                 s = x
             else:
                 s = f'({s}) {NodeRepr.VAR_SEPARATOR} {x}'
-        return s
+        self.vars = s
 
-    def expandState(s):
+
+    def expand(self, literals):
 
         TAUTOLOGY = r'\b1\b'
         UNSAT = r'\b0\b'
 
-        # I want to replace every instance
-
-        random_literal_assignment = randomlyConjoinMissingLiterals("", literals)
-        unsat_text = "UNSAT"
-        s = re.sub(TAUTOLOGY, random_literal_assignment, s)
-        s = re.sub(UNSAT, unsat_text, s)
+        if self.vars == "0":
+            self.vars = "unsat"
+            return
         
+        if self.vars == "1":
+            self.vars = ""
+        
+        s = self.vars
         vars_words = re.findall(r'\b[a-z0-9]+\b', s)
         missing_literals = [literal for literal in literals if literal not in vars_words]
+        self.__add_missing_literals__(missing_literals)
 
-        s = randomlyConjoinMissingLiterals(s, missing_literals)
-        return s
-    
+## Internal ##
+def spotTraceToNodeReprs(sr):
+    sr = sr.strip()
+    if sr == "":
+        return []
+
     prefix_split = sr.split('cycle', 1)
     prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
+    states = [NodeRepr(part) for part in prefix_parts]
 
-    prefix_expanded = [ expandState(s) for s in prefix_parts]
-    prefix_string = ';'.join(prefix_expanded)
-
+    cycle_states = []
     ## Would be weird to not have a cycle, but we allow for it.
     if len(prefix_split) > 1:
         cycle = prefix_split[1]
+        # Cycle candidate has no string 'cycle' in it here.
         cycled_content = getCycleContent(cycle)
-        cycle_parts = [expandState(s) for s in cycled_content.split(';') if s.strip() != ""]
-        
-    else:
-        cycle_parts = []
+        cycle_states = [NodeRepr(part) for part in cycled_content.split(';') if part.strip() != ""]
+        cycle_states.append(cycle_states[0])
 
-    cycle_string = "cycle{" +  ';'.join(cycle_parts) + "}"
 
+    return {
+        "prefix_states": states,
+        "cycle_states": cycle_states
+    }
+
+def nodeReprListsToSpotTrace(prefix_states, cycle_states) -> str:
+    prefix_string = ';'.join([str(state) for state in prefix_states])
+    cycle_string = "cycle{" +  ';'.join([str(state) for state in cycle_states]) + "}"
 
     if prefix_string == "":
         return cycle_string
@@ -147,29 +156,33 @@ def expandSpotTrace(sr, literals):
 
     return prefix_string + ";" + cycle_string
 
+
+
+def expandSpotTrace(sr, literals) -> str:
+
+    nodeRepr = spotTraceToNodeReprs(sr)
+    prefix_states = nodeRepr["prefix_states"]
+    cycle_states = nodeRepr["cycle_states"]
+
+    if len(literals) > 0:
+
+        for state in prefix_states:
+            state.expand(literals)
+        for state in cycle_states:
+            state.expand(literals)    
+    
+    sr = nodeReprListsToSpotTrace(prefix_states, cycle_states)
+    return sr
+
 def getCycleContent(string):
     match = re.match(r'.*\{([^}]*)\}', string)
     return match.group(1) if match else ""
 
 def mermaidFromSpotTrace(sr):   
-    sr = sr.strip()
-    if sr == "":
-        return []
-
-
-    ## Assuming only one cycle.
-    prefix_split = sr.split('cycle', 1)
-    prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
-    states = [NodeRepr(part) for part in prefix_parts]
-
-    ## Would be weird to not have a cycle, but we allow for it.
-    if len(prefix_split) > 1:
-        cycle = prefix_split[1]
-        # Cycle candidate has no string 'cycle' in it here.
-        cycled_content = getCycleContent(cycle)
-        cycle_states = [NodeRepr(part) for part in cycled_content.split(';') if part.strip() != ""]
-        cycle_states.append(cycle_states[0])
-        states.extend(cycle_states)
+    nodeRepr = spotTraceToNodeReprs(sr)
+    prefix_states = nodeRepr["prefix_states"]
+    cycle_states = nodeRepr["cycle_states"]
+    states = prefix_states + cycle_states
 
     edges = []
     for i in range(1, len(states)):
@@ -183,14 +196,14 @@ def mermaidGraphFromEdgesList(edges):
     diagramText = 'flowchart LR;'
 
     for edge in edges:
-        diagramText += f'{str(edge[0])}-->{str(edge[1])};'
+        diagramText += f'{edge[0].__mermaid_str__()}-->{edge[1].__mermaid_str__()};'
 
     return diagramText
+
 
 def genMermaidGraphFromSpotTrace(sr):
     edges = mermaidFromSpotTrace(sr)
     return mermaidGraphFromEdgesList(edges)
-
 
 
 def expand_single_trace(sr, literals):
@@ -217,19 +230,21 @@ def change_traces_to_mermaid(data, literals):
             sr = expandSpotTrace(sr, literals)
 
             k['trace'] = remove_parens(sr)
+
+            if ("|" in sr):
+                print(f"Found OR in trace {sr}")
+
+
             k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
     return data
 
 
 
 def getFormulaLiterals(ltlFormula):
-
     n = ltlnode.parse_ltl_string(ltlFormula)
 
     literals = set()
-    # Now traverse this node getting all literals' values
 
-    
     def getLiterals(n):
         if type(n) is ltlnode.LiteralNode:
             literals.add(n.value)
