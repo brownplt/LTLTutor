@@ -72,7 +72,7 @@ class StepperNode:
         fnid = fn.id
 
         # Highlights the current state in the trace
-        postfix = f"style {fnid} fill:#f9f,stroke:#333,stroke-width:4px"
+        postfix = f"style {fnid} stroke:#333,stroke-width:4px"
 
         return g + postfix
         
