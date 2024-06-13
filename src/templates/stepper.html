@@ -109,7 +109,8 @@
     <script>
         $(document).ready(function () {
 
-            mermaid.initialize({ startOnLoad: false });
+            mermaid.initialize({ startOnLoad: true });
+            //mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
             function renderMermaidDiagram(graphElements) {
 
@@ -129,35 +130,35 @@
             };
 
 
-            // Hide all questions at the start
-            $('.question').hide();
+            // // Hide all questions at the start
+            // $('.question').hide();
 
-            // Show the first question
-            $('.question:first').show();
-            // Initialize mermaid for the first question
+            // // Show the first question
+            // $('.question:first').show();
+            // // Initialize mermaid for the first question
 
-            let first_question_to_render = $('.question:first').find('.mermaid').get();
+            // let first_question_to_render = $('.question:first').find('.mermaid').get();
 
-            renderMermaidDiagram(first_question_to_render);
+            // renderMermaidDiagram(first_question_to_render);
 
-            // When the "Next" button is clicked, hide the current question and show the next one
-            $('.next').click(function () {
-                // Empty the feedback div
-                $('#feedback').empty();
-                $('#feedback').removeClass();
+            // // When the "Next" button is clicked, hide the current question and show the next one
+            // $('.next').click(function () {
+            //     // Empty the feedback div
+            //     $('#feedback').empty();
+            //     $('#feedback').removeClass();
 
-                var nextQuestion = $(this).closest('.question').hide().next('.question');
-                if (nextQuestion.length) {
-                    nextQuestion.show();
+            //     var nextQuestion = $(this).closest('.question').hide().next('.question');
+            //     if (nextQuestion.length) {
+            //         nextQuestion.show();
 
-                    let to_render = nextQuestion.find('.mermaid').get();
+            //         let to_render = nextQuestion.find('.mermaid').get();
 
-                    renderMermaidDiagram(to_render);
-                } else {
-                    // If there are no more questions, show the "done" section
-                    $('#done').show();
-                }
-            });
+            //         renderMermaidDiagram(to_render);
+            //     } else {
+            //         // If there are no more questions, show the "done" section
+            //         $('#done').show();
+            //     }
+            // });
         });
     </script>
 

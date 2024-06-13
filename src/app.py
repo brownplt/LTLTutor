@@ -441,7 +441,7 @@ def ltlstepper():
     result = traceSatisfactionPerStep(node = node, trace = trace)
 
     
-    mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
+    #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
 
     ## TODO:
     # Here, we need to build stepper.html, which will show the trace satisfaction per step.

@@ -3,24 +3,32 @@ from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode
 from spotutils import is_trace_satisfied
 import re
 import random
-from exerciseprocessor import genMermaidGraphFromSpotTrace
+from exerciseprocessor import mermaidFromSpotTrace, mermaidGraphFromEdgesList, NodeRepr
 
 def randid():
-    ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
+    return ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
 
 class StepperNode:
     def __init__(self, formula, children, satisfied, trace):
         self.children = children
         self.satisfied = satisfied
+        
         self.trace = trace
         self.id = randid()
-        self.treeAsMermaid = self.__formula_to_mermaid__()
-
-        self.traceAsMermaid = self.__trace_to_mermaid__()
-
-        self.traceStateId = randid() ## TODO: This needs to be set correctly!
         self.formula = formula
+
+
+
+    @property
+    def treeAsMermaid(self):
+        return self.__formula_to_mermaid__()
+
+    @property
+    def traceAsMermaid(self):
+        return self.__trace_to_mermaid__()
+
+
 
 
 
@@ -33,11 +41,12 @@ class StepperNode:
         
         for child in self.children:
             child_repr = f'{child.id}["{child.formula}"]'
-            edges += f'{noderepr}-->{child_repr}'
-
+            edges.append(f'{noderepr}-->{child_repr}')
 
             child_edges = child.__formula_to__mermaid_inner__()
             edges += child_edges
+        if len(edges) == 0:
+            edges.append(noderepr)
         return edges
 
     def __formula_to_mermaid__(self):
@@ -47,10 +56,23 @@ class StepperNode:
         return prefix + ';'.join(edges) + postfix
 
     def __trace_to_mermaid__(self):
-        g = genMermaidGraphFromSpotTrace(self.trace)
+
+
+        def get_first_node_in_graph(edges):
+            source_nodes = set(edge[0] for edge in graph_edges)
+            destination_nodes = set(edge[1] for edge in graph_edges)
+            root_nodes = source_nodes - destination_nodes
+            ## if there are no root nodes, there is a problem!!
+            return root_nodes.pop()
+
+        graph_edges = mermaidFromSpotTrace(self.trace)
+        g = mermaidGraphFromEdgesList(graph_edges)
+
+        fn = get_first_node_in_graph(graph_edges)
+        fnid = fn.id
 
         # Highlights the current state in the trace
-        postfix = f"style {self.traceStateId} fill:#f9f,stroke:#333,stroke-width:4px"
+        postfix = f"style {fnid} fill:#f9f,stroke:#333,stroke-width:4px"
 
         return g + postfix
         
@@ -87,6 +109,20 @@ def satisfiesTrace(node, trace) -> StepperNode:
     return StepperNode(formula, [], False, trace)
 
 
+def buildNodeStep(node, subtrace, trace) -> StepperNode:
+    stepperNode = satisfiesTrace(node = node, trace = subtrace)
+
+    ### TODO: Over here:
+
+    # Determine the first trace in the subtrace, and identify it as the current state
+    # Then we build the trace in the overall trace, and identify the current state in the overall trace
+
+    ### TODO: This needs to change to a more general approach
+    # stepperNode.trace = trace
+    # stepperNode.traceAsMermaid = stepperNode.__trace_to_mermaid__()
+
+    return stepperNode
+
 
 
 
@@ -119,6 +155,7 @@ def traceSatisfactionPerStep(node, trace):
     
     prefix, cycle = splitTraceAtCycle(trace)
 
+
     def buildTraceForStateInPrefix(prefix_index):
         prefix_string = ';'.join(prefix[prefix_index:])
 
@@ -143,6 +180,7 @@ def traceSatisfactionPerStep(node, trace):
         cycle_string = "cycle{" +  ';'.join(cycle) + "}"
         return cycle_prefix_string + ";" + cycle_string
     
-    prefix_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInPrefix(i)) for i in range(len(prefix))]
-    cycle_sat = [satisfiesTrace(node=node, trace=buildTraceForStateInCycle(i)) for i in range(len(cycle))]
+    ## TODO: Is trace=trace correct here?
+    prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace) for i in range(len(prefix))]
+    cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace) for i in range(len(cycle))]
     return TraceSatisfactionResult(prefix_sat, cycle_sat)
