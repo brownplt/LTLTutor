@@ -105,9 +105,8 @@ function show_feedback(parent_node, question_type) {
                 var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
                 var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getSelectedRadio(parent_node).value;
                 
-
-                // Here, I want to build some html, that, when clicked will submit a POST request to 
-                // '/stepper' with the formula and trace as form parameters. This should open in a new tab.
+                
+                // TODO: There is a sort of bug here! The trace being passed is not alwayts the correct one!
                 var fv = `
                         <form action="/stepper" method="post" target="_blank">
                             <input type="hidden" name="formula" value='${formulaForStepper}'>

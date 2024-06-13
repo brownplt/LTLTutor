@@ -170,6 +170,16 @@
             // Initially hide all stepper containers except the first one
             for (var i = 0; i < stepperContainers.length; i++) {
                 stepperContainers[i].style.display = i === 0 ? 'block' : 'none';
+
+
+                if (i == 0) {
+                    // Disable the previous button for the first container
+                    stepperContainers[i].querySelector('.prev').disabled = true;
+                }
+                if (i == stepperContainers.length - 1) {
+                    // Disable the next button for the last container
+                    stepperContainers[i].querySelector('.next').disabled = true;
+                }
             }
 
             function renderDiagrams() {

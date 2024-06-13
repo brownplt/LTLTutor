@@ -443,6 +443,8 @@ def ltlstepper():
     ## TODO: Ensure trace is a valid trace
     result = traceSatisfactionPerStep(node = node, trace = trace)
 
+    print(f"Trace passed was {trace}")
+
     
     #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
 
