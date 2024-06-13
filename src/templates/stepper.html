@@ -27,6 +27,26 @@
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+
+    <style>
+        .stepper-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .formula-tree-container,
+        .trace-container {
+            flex: 1;
+        }
+
+        .formula-tree-container {
+            margin-right: 10px;
+        }
+
+        .trace-container {
+            margin-left: 10px;
+        }
+    </style>
 </head>
 
 <body>
@@ -37,12 +57,14 @@
             <form action="{{ request.path }}" method="POST">
                 <div class="form-group">
                     <label for="formula">Formula:</label>
-                    <input type="text" class="form-control" id="formula" name="formula"  {% if formula %} value="{{ formula }}" {% endif %}>
-                    
+                    <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
+                        value="{{ formula }}" {% endif %}>
+
                 </div>
                 <div class="form-group">
                     <label for="trace">Trace:</label>
-                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}" {% endif %}>
+                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}"
+                        {% endif %}>
                 </div>
                 <button type="submit" class="btn btn-primary">Load Stepper</button>
             </form>
@@ -50,13 +72,32 @@
         </div>
 
 
-        <div id="statecontainer">
+        <div id="statecontainer" >
             {% for ps in prefixstates %}
-            
+
+            <div class="container stepper-container">
+
+                <div class="formula-tree-container">
+                    <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                </div>
+
+                <div class="trace-container">
+                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                </div>
+            </div>
             {% endfor %}
 
-            {% for cs in cyclestates %}
+            {% for ps in cyclestates %}
+                <div class="container stepper-container">
 
+                    <div class="formula-tree-container">
+                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                    </div>
+
+                    <div class="trace-container">
+                        <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                    </div>
+                </div>
 
             {% endfor %}
         </div>

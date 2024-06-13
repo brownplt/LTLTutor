@@ -3,6 +3,7 @@ from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode
 from spotutils import is_trace_satisfied
 import re
 import random
+from exerciseprocessor import genMermaidGraphFromSpotTrace
 
 def randid():
     ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
@@ -13,19 +14,18 @@ class StepperNode:
         self.children = children
         self.satisfied = satisfied
         self.trace = trace
-        id = randid()
+        self.id = randid()
+        self.treeAsMermaid = self.__formula_to_mermaid__()
 
-        ## TODO: need the current formula ##
+        self.traceAsMermaid = self.__trace_to_mermaid__()
+
+        self.traceStateId = randid() ## TODO: This needs to be set correctly!
         self.formula = formula
 
 
 
-    def __to__mermaid__(self):
+    def __formula_to__mermaid_inner__(self):
         edges = []
-        # Set the color based on satisfaction
-            # THis should happen based on mermaid class
-
-        ###
         if self.satisfied:
             noderepr = f'{self.id}["{self.formula}"]:::satclass'
         else:
@@ -36,30 +36,28 @@ class StepperNode:
             edges += f'{noderepr}-->{child_repr}'
 
 
-            child_edges = child.__to_mermaid__()
+            child_edges = child.__formula_to__mermaid_inner__()
             edges += child_edges
         return edges
 
+    def __formula_to_mermaid__(self):
+        prefix = 'flowchart TD;\n'
+        edges = self.__formula_to__mermaid_inner__()
+        postfix = '\nclassDef unsatclass fill:#f96\nclassDef satclass fill:#008000'
+        return prefix + ';'.join(edges) + postfix
 
-    ## TODO: Function to render this as a mermaid tree
-    def __to_mermaid_full__(self):
+    def __trace_to_mermaid__(self):
+        g = genMermaidGraphFromSpotTrace(self.trace)
+
+        # Highlights the current state in the trace
+        postfix = f"style {self.traceStateId} fill:#f9f,stroke:#333,stroke-width:4px"
+
+        return g + postfix
         
-        prefix = 'flowchart LR;'
-
-        
-        
-        # Formula, and choose its color based on satisfaction
-        # Formula should have an arrow to each child.
-        # Each child should have a color based on satisfaction.
-
-        postfix = 'classDef unsatclass fill:#f96'
-
-        pass
-
 
 
 class TraceSatisfactionResult:
-    def __init__(self, prefix_states, cycle_states):
+    def __init__(self, prefix_states : list[StepperNode], cycle_states : list[StepperNode]):
         self.prefix_states = prefix_states
         self.cycle_states = cycle_states
 
@@ -73,11 +71,7 @@ class TraceSatisfactionResult:
         return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
 
 
-    def __to_mermaid__(self):
-        ## TODO: return a mermaid string, highligting the current node. (maybe state index?)
-        pass
-
-def satisfiesTrace(node, trace):
+def satisfiesTrace(node, trace) -> StepperNode:
 
     formula = str(node)
     if trace == None or len(trace) == 0:

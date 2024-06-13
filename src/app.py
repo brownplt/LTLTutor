@@ -423,7 +423,7 @@ def robotrain(sourceuri, exercise_name):
 
 
 @app.route('/stepper', methods=['GET', 'POST'])
-def stepper():
+def ltlstepper():
 
     if request.method == 'GET':
         return render_template('stepper.html', error="", prefixstates=[], cyclestates=[])
@@ -452,8 +452,7 @@ def stepper():
     # Current trace and the mermaid diagram?
 
 
-
-    return result
+    return render_template('stepper.html', error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states)
 
 
 
