@@ -50,7 +50,7 @@ class StepperNode:
         return edges
 
     def __formula_to_mermaid__(self):
-        prefix = 'flowchart TD;\n'
+        prefix = 'flowchart LR;\n'
         edges = self.__formula_to__mermaid_inner__()
         postfix = '\nclassDef unsatclass fill:#f96\nclassDef satclass fill:#008000'
         return prefix + ';'.join(edges) + postfix

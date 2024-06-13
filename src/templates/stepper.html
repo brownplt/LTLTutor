@@ -41,104 +41,94 @@
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
                 Load New Formula
             </button>
-            
+
             <!-- Modal -->
-            <div class="modal" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true">
                 <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Load Stepper with a new LTL Formula and Trace</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Load Stepper with a new LTL Formula and Trace
+                            </h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ request.path }}" method="POST">
+                                <div class="form-group">
+                                    <label for="formula">LTL Formula:</label>
+                                    <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
+                                        value="{{ formula }}" {% endif %}>
+                                </div>
+                                <div class="form-group">
+                                    <label for="trace">Trace:</label>
+                                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %}
+                                        value="{{ trace }}" {% endif %}>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Load Stepper</button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <form action="{{ request.path }}" method="POST">
-                            <div class="form-group">
-                                <label for="formula">LTL Formula:</label>
-                                <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
-                                    value="{{ formula }}" {% endif %}>
-                            </div>
-                            <div class="form-group">
-                                <label for="trace">Trace:</label>
-                                <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}"
-                                    {% endif %}>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Load Stepper</button>
-                        </form>
-                    </div>
-                </div>
                 </div>
             </div>
 
-            <button class="prev" class="btn btn-primary">Previous State</button>
-            <button class="next" class="btn btn-primary">Next State</button>
 
         </div>
 
 
-        <div id="statecontainer" >
+        <div id="statecontainer">
             {% for ps in prefixstates %}
+
 
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-
-                    <div class="card">
-                        <div class="card-header">
-                            Formula Tree
-                        </div>
-                        <div class="card-body">
-                            <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
-                        </div>
-                      </div>
+                    <h3> Formula Tree</h3>
+                    <!-- TODO: Replace with Formula -->
+                    <div>
+                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                    </div>
                 </div>
 
+
                 <div class="trace-container">
-                    <div class="card">
-                        <div class="card-header">
-                            Remaining Trace
-                        </div>
-                        <div class="card-body">
-                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
-                        </div>
-                      </div>
+                    <h3> Trace Position</h3>
+                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                    <br>
+                    <div class="btn-group" role="group">
+                        <button class="prev" class="btn btn-primary">Previous State</button>
+                        <button class="next" class="btn btn-primary">Next State</button>
+                    </div>
                 </div>
             </div>
             {% endfor %}
+
 
             {% for ps in cyclestates %}
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-
-                    <div class="card">
-                        <div class="card-header">
-                            Formula Tree
-                        </div>
-                        <div class="card-body">
-                            <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
-                        </div>
-                      </div>
+                    <h3> Formula Tree</h3>
+                    <!-- TODO: Replace with Formula -->
+                    <div>
+                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                    </div>
                 </div>
+
 
                 <div class="trace-container">
-                    <div class="card">
-                        <div class="card-header">
-                            Remaining Trace
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-secondary" role="alert">
-                                Unrolling trace cycle
-                            </div>
-                            <br>
-                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
-                        </div>
-                      </div>
+                    <h3> Trace Position (Unrolling Cycle)</h3>
+                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                    <br>
+                    <div class="btn-group" role="group">
+                        <button class="prev" class="btn btn-primary">Previous State</button>
+                        <button class="next" class="btn btn-primary">Next State</button>
+                    </div>
                 </div>
             </div>
-
             {% endfor %}
+
         </div>
 
 
@@ -184,25 +174,27 @@
 
             renderDiagrams();
 
-            document.querySelectorAll('.prev').forEach(function(element) {
-                element.addEventListener('click', function() {
-                if (currentIndex > 0) {
+            document.querySelectorAll('.prev').forEach(function (element) {
+                element.addEventListener('click', function () {
+                    if (currentIndex > 0) {
 
-                    stepperContainers[currentIndex--].style.display = 'none';
-                    stepperContainers[currentIndex].style.display = 'block';
-                    renderDiagrams();
+                        stepperContainers[currentIndex--].style.display = 'none';
+                        stepperContainers[currentIndex].style.display = 'block';
+                        renderDiagrams();
 
-                }
-            })});
+                    }
+                })
+            });
 
-            document.querySelectorAll('.next').forEach(function(element) {
-                element.addEventListener('click', function() {
+            document.querySelectorAll('.next').forEach(function (element) {
+                element.addEventListener('click', function () {
                     if (currentIndex < stepperContainers.length - 1) {
-                    stepperContainers[currentIndex++].style.display = 'none';
-                    stepperContainers[currentIndex].style.display = 'block';
-                    renderDiagrams();
-                }
-            })});
+                        stepperContainers[currentIndex++].style.display = 'none';
+                        stepperContainers[currentIndex].style.display = 'block';
+                        renderDiagrams();
+                    }
+                })
+            });
         });
     </script>
 
