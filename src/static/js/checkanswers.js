@@ -103,7 +103,7 @@ function show_feedback(parent_node, question_type) {
         function getTraceStepperButtonHtml() {
             if (question_type == "trace_satisfaction_yn" || question_type == "trace_satisfaction_mc") {
                 var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
-                var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getCorrectRadio(parent_node).value;
+                var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getSelectedRadio(parent_node).value;
                 
 
                 // Here, I want to build some html, that, when clicked will submit a POST request to 
