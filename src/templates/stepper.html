@@ -54,23 +54,43 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
-            <form action="{{ request.path }}" method="POST">
-                <div class="form-group">
-                    <label for="formula">Formula:</label>
-                    <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
-                        value="{{ formula }}" {% endif %}>
 
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+                Load New Formula
+            </button>
+            
+            <!-- Modal -->
+            <div class="modal" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Load Stepper with a new LTL Formula and Trace</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ request.path }}" method="POST">
+                            <div class="form-group">
+                                <label for="formula">LTL Formula:</label>
+                                <input type="text" class="form-control" id="formula" name="formula" {% if formula %}
+                                    value="{{ formula }}" {% endif %}>
+                            </div>
+                            <div class="form-group">
+                                <label for="trace">Trace:</label>
+                                <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}"
+                                    {% endif %}>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Load Stepper</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="trace">Trace:</label>
-                    <input type="text" class="form-control" id="trace" name="trace" {% if trace %} value="{{ trace }}"
-                        {% endif %}>
                 </div>
-                <button type="submit" class="btn btn-primary">Load Stepper</button>
-            </form>
+            </div>
 
-            <button id="prev" class="btn btn-primary">Previous</button>
-            <button id="next" class="btn btn-primary">Next</button>
+            <button id="prev" class="btn btn-primary">Previous State</button>
+            <button id="next" class="btn btn-primary">Next State</button>
 
         </div>
 
@@ -80,30 +100,61 @@
 
             <div class="container stepper-container">
 
-                <div class="formula-tree-container container">
-                    <h3>Formula Tree</h3>
-                    <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                <div class="formula-tree-container">
+
+                    <div class="card">
+                        <div class="card-header">
+                            Formula Tree
+                        </div>
+                        <div class="card-body">
+                            <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                        </div>
+                      </div>
                 </div>
 
-                <div class="trace-container container">
-                    <h3>Trace</h3>
-
-                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                <div class="trace-container">
+                    <div class="card">
+                        <div class="card-header">
+                            Remaining Trace
+                        </div>
+                        <div class="card-body">
+                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                        </div>
+                      </div>
                 </div>
             </div>
             {% endfor %}
 
             {% for ps in cyclestates %}
-                <div class="container stepper-container">
+            <div class="container stepper-container">
 
-                    <div class="formula-tree-container">
-                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
-                    </div>
+                <div class="formula-tree-container">
 
-                    <div class="trace-container">
-                        <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
-                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            Formula Tree
+                        </div>
+                        <div class="card-body">
+                            <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                        </div>
+                      </div>
                 </div>
+
+                <div class="trace-container">
+                    <div class="card">
+                        <div class="card-header">
+                            Remaining Trace
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-secondary" role="alert">
+                                Unrolling trace cycle
+                            </div>
+                            <br>
+                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                        </div>
+                      </div>
+                </div>
+            </div>
 
             {% endfor %}
         </div>
