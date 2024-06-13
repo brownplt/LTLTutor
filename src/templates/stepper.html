@@ -69,6 +69,9 @@
                 <button type="submit" class="btn btn-primary">Load Stepper</button>
             </form>
 
+            <button id="prev" class="btn btn-primary">Previous</button>
+            <button id="next" class="btn btn-primary">Next</button>
+
         </div>
 
 
@@ -77,11 +80,14 @@
 
             <div class="container stepper-container">
 
-                <div class="formula-tree-container">
+                <div class="formula-tree-container container">
+                    <h3>Formula Tree</h3>
                     <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
                 </div>
 
-                <div class="trace-container">
+                <div class="trace-container container">
+                    <h3>Trace</h3>
+
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                 </div>
             </div>
@@ -109,8 +115,8 @@
     <script>
         $(document).ready(function () {
 
-            mermaid.initialize({ startOnLoad: true });
-            //mermaid.initialize({ startOnLoad: false });
+            //mermaid.initialize({ startOnLoad: true });
+            mermaid.initialize({ startOnLoad: false });
             const ui_load_timeout_delay = 150;
             function renderMermaidDiagram(graphElements) {
 
@@ -128,6 +134,40 @@
                     console.error(err);
                 });
             };
+
+
+            var stepperContainers = document.querySelectorAll('.stepper-container');
+            var currentIndex = 0;
+
+            // Initially hide all stepper containers except the first one
+            for (var i = 0; i < stepperContainers.length; i++) {
+                stepperContainers[i].style.display = i === 0 ? 'block' : 'none';
+            }
+
+            function renderDiagrams() {
+                let to_render = stepperContainers[currentIndex].querySelectorAll('.mermaid');
+                renderMermaidDiagram(to_render);
+            }
+
+            renderDiagrams();
+
+            document.getElementById('prev').addEventListener('click', function() {
+                if (currentIndex > 0) {
+
+                    stepperContainers[currentIndex--].style.display = 'none';
+                    stepperContainers[currentIndex].style.display = 'block';
+                    renderDiagrams();
+
+                }
+            });
+
+            document.getElementById('next').addEventListener('click', function() {
+                if (currentIndex < stepperContainers.length - 1) {
+                    stepperContainers[currentIndex++].style.display = 'none';
+                    stepperContainers[currentIndex].style.display = 'block';
+                    renderDiagrams();
+                }
+            });
 
 
             // // Hide all questions at the start
@@ -161,6 +201,9 @@
             // });
         });
     </script>
+
+
+
 
     {% include 'footer.html' %}
 </body>
