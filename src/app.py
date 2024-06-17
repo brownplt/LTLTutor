@@ -355,8 +355,15 @@ def exercise_summary():
     exercise_name = data['exercise_name']
 
     e = answer_logger.getExercise(exercise_name)
+
+    student_responses = e["student_responses"]
+
+
+    ## Send file
+    
+
     ## A start, but we need to do more here.
-    return json.dumps(e)
+    return render_template('exerciseresults.html', exercise=e)
 
 
 

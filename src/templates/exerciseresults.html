@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
+</head>
+<body>
+    <table id="myTable">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Age</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+    $(document).ready(function() {
+        var jsonData = {{ exercise.student_responses }};
+
+        $('#myTable').DataTable({
+            data: jsonData,
+            columns: [
+                { data: 'user_id' },
+                { data: 'timestamp' },
+                { data: 'question_text'},
+                { data: 'misconception' },
+                { data : 'correct_answer' }
+            ]
+        });
+    });
+    </script>
+</body>
+</html>
