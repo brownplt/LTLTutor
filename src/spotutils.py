@@ -157,8 +157,6 @@ def is_trace_satisfied(trace, formula):
     formula = str(formula)
     trace = str(trace)
 
-    print(f"Checking if trace {trace} satisfies formula {formula}")
-
     # Parse the trace into a word
     word = spot.parse_word(trace)
 

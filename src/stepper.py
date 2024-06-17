@@ -10,13 +10,15 @@ def randid():
 
 
 class StepperNode:
-    def __init__(self, formula, children, satisfied, trace):
+    def __init__(self, formula, children, satisfied, trace, traceindex, originaltrace):
         self.children = children
         self.satisfied = satisfied
         
         self.trace = trace
         self.id = randid()
         self.formula = formula
+        self.traceindex = traceindex
+        self.originaltrace = originaltrace
 
 
 
@@ -27,9 +29,6 @@ class StepperNode:
     @property
     def traceAsMermaid(self):
         return self.__trace_to_mermaid__()
-
-
-
 
 
     def __formula_to__mermaid_inner__(self):
@@ -57,18 +56,28 @@ class StepperNode:
 
     def __trace_to_mermaid__(self):
 
-
-        def get_first_node_in_graph(edges):
-            source_nodes = set(edge[0] for edge in graph_edges)
-            destination_nodes = set(edge[1] for edge in graph_edges)
+        def get_nth_node_in_graph(edges, n):
+            # Find the root node
+            source_nodes = set(edge[0] for edge in edges)
+            destination_nodes = set(edge[1] for edge in edges)
             root_nodes = source_nodes - destination_nodes
-            ## if there are no root nodes, there is a problem!!
-            return root_nodes.pop()
+            current_node = root_nodes.pop()
 
-        graph_edges = mermaidFromSpotTrace(self.trace)
+            # Follow the edges from the root node
+            for _ in range(n):
+                for edge in edges:
+                    if edge[0] == current_node:
+                        current_node = edge[1]
+                        break
+                else:
+                    raise IndexError('Node index out of range')
+            
+            return current_node
+
+        graph_edges = mermaidFromSpotTrace(self.originaltrace)
         g = mermaidGraphFromEdgesList(graph_edges)
 
-        fn = get_first_node_in_graph(graph_edges)
+        fn = get_nth_node_in_graph(graph_edges, self.traceindex)
         fnid = fn.id
 
         # Highlights the current state in the trace
@@ -93,24 +102,24 @@ class TraceSatisfactionResult:
         return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
 
 
-def satisfiesTrace(node, trace) -> StepperNode:
+def satisfiesTrace(node, trace, traceindex, originaltrace) -> StepperNode:
 
     formula = str(node)
     if trace == None or len(trace) == 0:
-        return StepperNode(formula, [], True, trace)
+        return StepperNode(formula, [], True, trace, traceindex=traceindex, originaltrace=originaltrace)
 
     if isinstance(node, LiteralNode):
-        return StepperNode(formula, [], is_trace_satisfied(formula=node, trace=trace), trace)
+        return StepperNode(formula, [], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
     elif isinstance(node, UnaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.operand, trace)], is_trace_satisfied(formula=node, trace=trace), trace)
+        return StepperNode(formula, [satisfiesTrace(node.operand, trace,  traceindex=traceindex, originaltrace=originaltrace)], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
     elif isinstance(node, BinaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.left, trace), satisfiesTrace(node.right, trace)], is_trace_satisfied(formula=node, trace=trace), trace)
+        return StepperNode(formula, [satisfiesTrace(node.left, trace,  traceindex=traceindex, originaltrace=originaltrace), satisfiesTrace(node.right, trace,  traceindex=traceindex, originaltrace=originaltrace)], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
     
-    return StepperNode(formula, [], False, trace)
+    return StepperNode(formula, [], False, trace, traceindex=traceindex, originaltrace=originaltrace)
 
 
-def buildNodeStep(node, subtrace, trace) -> StepperNode:
-    stepperNode = satisfiesTrace(node = node, trace = subtrace)
+def buildNodeStep(node, subtrace, trace_index_of_subtrace, trace) -> StepperNode:
+    stepperNode = satisfiesTrace(node = node, trace = subtrace, traceindex=trace_index_of_subtrace, originaltrace=trace)
 
     ### TODO: Over here:
 
@@ -180,7 +189,12 @@ def traceSatisfactionPerStep(node, trace):
         cycle_string = "cycle{" +  ';'.join(cycle) + "}"
         return cycle_prefix_string + ";" + cycle_string
     
+    num_prefix_states = len(prefix)
     ## TODO: Is trace=trace correct here?
-    prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace) for i in range(len(prefix))]
-    cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace) for i in range(len(cycle))]
+
+    ### I think we want trace=trace, but unify them somehow?
+    prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace, trace_index_of_subtrace=i) for i in range(len(prefix))]
+
+
+    cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace, trace_index_of_subtrace= num_prefix_states + i) for i in range(len(cycle))]
     return TraceSatisfactionResult(prefix_sat, cycle_sat)

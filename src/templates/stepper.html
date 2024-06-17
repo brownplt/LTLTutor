@@ -96,7 +96,7 @@
 
 
         <div id="statecontainer">
-            {% for ps in prefixstates %}
+            {% for ps in prefixstates + cyclestates %}
 
 
             <div class="container stepper-container">
@@ -122,30 +122,6 @@
             </div>
             {% endfor %}
 
-
-            {% for ps in cyclestates %}
-            <div class="container stepper-container">
-
-                <div class="formula-tree-container">
-                    <h5> Formula: <pre> {{formula}} </pre></h5>
-                    <!-- TODO: Replace with Formula -->
-                    <div>
-                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
-                    </div>
-                </div>
-
-
-                <div class="trace-container">
-                    <h5> Trace Position (in cycle)</h5>
-                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
-                    <br>
-                    <div class="btn-group d-flex justify-content-center" role="group">
-                        <button class="prev btn btn-primary btn-outline-light" title="Previous State"><i class="fas fa-arrow-left"></i></button>
-                        <button class="next btn btn-primary btn-outline-light" title="Next State"><i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
 
         </div>
 
