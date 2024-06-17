@@ -349,20 +349,21 @@ def viewstudentlogs(type):
         return "Invalid type"
     
 
-@app.route('/lightpanel')
-def lightpanel():
+@app.route('/summary/exercise', methods=['POST'])
+def exercise_summary():
+    data = request.json
+    exercise_name = data['exercise_name']
 
-    ## TODO: UPDATE
-    sourceuri = "preload:lightpanel.json"
-    try:
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-        data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["red", "green", "blue"])
-    except Exception as e:
-        print(e)
-        return "Error loading exercise"
-    return render_template('/prebuiltexercises/lightpanel.html', questions=data, exercise_name="lightpanel")
+    e = answer_logger.getExercise(exercise_name)
+    ## A start, but we need to do more here.
+    return json.dumps(e)
 
+
+
+
+
+
+    
 
 @app.route('/entryexitticket/<ticket>')
 def entryexitticket(ticket):
