@@ -15,6 +15,7 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
+from user import User
 
 port = os.getenv('PORT', default='5000')
 
