@@ -1,29 +1,21 @@
-from app import app, login_manager
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, current_app
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from logger import get_db_uri
 
+from flask import Blueprint
+authroutes = Blueprint('authroutes', __name__)
 
-## TODO: Is this too fragile? Should we create the table even if the bind is not None?
+
 Base = declarative_base()
+engine = create_engine(get_db_uri())
+Session = sessionmaker(bind=engine)
 
 USER_TABLE = 'users'
-if Base.metadata.bind is None:
-    engine  = create_engine(get_db_uri())
-    Base.metadata.bind = engine
-    Base.metadata.create_all(engine)
-else:
-    engine = Base.metadata.bind
-inspector = inspect(engine)
-if USER_TABLE not in inspector.get_table_names():
-        Base.metadata.tables[USER_TABLE].create(engine)
-
-
 class User(UserMixin, Base):
     __tablename__ = USER_TABLE
 
@@ -41,16 +33,35 @@ class User(UserMixin, Base):
 
 
 
+Base.metadata.create_all(engine)
+
+inspector = inspect(engine)
+if USER_TABLE not in inspector.get_table_names():
+        Base.metadata.tables[USER_TABLE].create(engine)
+
 # Define the load_user callback function
-@login_manager.user_loader
-def load_user(user_id):
-    session = Session(bind=engine)
-    user = session.query(User).get(user_id)
-    session.close()
-    return user
+# @current_app.login_manager.user_loader
+# def load_user(user_id):
+#     session = Session(bind=engine)
+#     user = session.query(User).get(user_id)
+#     session.close()
+#     return user
 
 
-@app.route('/login', methods=['GET', 'POST'])
+
+def init_app(app):
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        session = Session()
+        user = session.query(User).get(int(user_id))
+        session.close()
+        return user
+
+
+@authroutes.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -58,30 +69,34 @@ def login():
         session = Session(bind=engine)
         user = session.query(User).filter_by(username=username).first()
         session.close()
-        if user and check_password_hash(user.password, password):
+        if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            return redirect(url_for('index'))
+            print('Logged in successfully.')
+            return render_template('index.html')
         else:
+            print('Invalid username or password.')
             flash('Invalid username or password.')
     return render_template('auth/login.html')
 
-@app.route('/logout')
+@authroutes.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/signup', methods=['GET', 'POST'])
+@authroutes.route('/signup', methods=['GET', 'POST'])
 def signup():
+    ## Currently does not gracefully allow for multiple users with the same username
+    ## Crashes application if username already exists
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         password_hash = generate_password_hash(password)
-        user = User(username=username, password=password_hash)
+        user = User(username=username, password_hash=password_hash)
         session = Session(bind=engine)
         session.add(user)
         session.commit()
         session.close()
         flash('Account created successfully.')
-        return redirect(url_for('login'))
+        return render_template('auth/login.html')
     return render_template('auth/signup.html')

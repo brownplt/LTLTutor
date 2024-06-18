@@ -33,4 +33,5 @@ EXPOSE 5000
 
 # Make RUN commands use the new environment
 SHELL ["/bin/bash", "-c"]
-CMD /bin/bash -c "source /venv/bin/activate && python -m spacy download en_core_web_sm && python app.py"
+#CMD /bin/bash -c "source /venv/bin/activate && python -m spacy download en_core_web_sm && python app.py"
+CMD /bin/bash -c "source /venv/bin/activate && python app.py"

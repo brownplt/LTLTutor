@@ -15,16 +15,13 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from flask_login import login_required, LoginManager
-
-
+from flask_login import login_required, current_user
+from flask import Blueprint
+from authroutes import authroutes, init_app
 
 port = os.getenv('PORT', default='5000')
 
 app = Flask(__name__)
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
 
 answer_logger = Logger()
 
@@ -37,7 +34,15 @@ def flatten(lst):
 
 app.jinja_env.filters['flatten'] = flatten
 
-authroutes.login_manager.login_view = 'login'
+
+sk = os.environ.get('SECRET_KEY')
+print(f"Secret key is {sk}", flush=True)
+app.secret_key = sk
+
+
+init_app(app)
+app.register_blueprint(authroutes)
+
 
 
 @app.route('/')
@@ -45,7 +50,7 @@ authroutes.login_manager.login_view = 'login'
 def index():
 
 
-    userId = request.cookies.get(USERID_COOKIE)
+    userId = current_user.id  #request.cookies.get(USERID_COOKIE)
 
     if not userId:
         return render_template('index.html')
