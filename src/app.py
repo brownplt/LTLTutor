@@ -15,7 +15,10 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from user import User
+from flask_login import login_required
+
+
+import authroutes
 
 port = os.getenv('PORT', default='5000')
 
@@ -32,8 +35,11 @@ def flatten(lst):
 
 app.jinja_env.filters['flatten'] = flatten
 
+authroutes.login_manager.login_view = 'login'
+
 
 @app.route('/')
+@login_required
 def index():
 
 

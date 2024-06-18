@@ -65,7 +65,7 @@ def login():
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password.')
-    return render_template('login.html')
+    return render_template('auth/login.html')
 
 @app.route('/logout')
 @login_required
@@ -86,4 +86,4 @@ def signup():
         session.close()
         flash('Account created successfully.')
         return redirect(url_for('login'))
-    return render_template('signup.html')
+    return render_template('auth/signup.html')
