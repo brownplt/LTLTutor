@@ -1,4 +1,4 @@
-from app import app
+from app import app, login_manager
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
@@ -39,9 +39,7 @@ class User(UserMixin, Base):
 
 
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
+
 
 # Define the load_user callback function
 @login_manager.user_loader

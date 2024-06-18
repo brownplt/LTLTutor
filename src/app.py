@@ -15,14 +15,16 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from flask_login import login_required
+from flask_login import login_required, LoginManager
 
 
-import authroutes
 
 port = os.getenv('PORT', default='5000')
 
 app = Flask(__name__)
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 answer_logger = Logger()
 
