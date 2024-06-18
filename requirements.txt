@@ -33,3 +33,4 @@ zipp
 psycopg2-binary
 spacy
 sentencepiece
+flask-login
