@@ -9,10 +9,14 @@ from abc import ABC, abstractmethod
 from spotutils import areEquivalent
 import random
 import ltltoeng
+import re
 
 ## We use this for Grammatical englsih generation
-import spacy
-nlp = spacy.load("en_core_web_sm")
+# import spacy
+# nlp = spacy.load("en_core_web_sm")
+import language_tool_python
+# Create a LanguageTool object for English
+languageTool = language_tool_python.LanguageTool('en-US')
 
 
 ## Should these come from the lexer instead of being placed here
@@ -52,17 +56,13 @@ class LTLNode(ABC):
         areEquivalent(formula1, formula2)
 
     def corrected_sentence(self, text):
-         # Use SpaCy to parse the text
-        doc = nlp(text)
 
-        # Iterate over the sentences in the text, capitalize each one, and store them in a list
-        sentences = [sent.text.capitalize() for sent in doc.sents]
+        corrected_text = languageTool.correct(text)
 
-        # Join the capitalized sentences back together into a single string
-        capitalized_text = ' '.join(sentences)
+        ## Now, if any text is in single quotes, make it lowecase
+        corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
 
-        return capitalized_text
-
+        return corrected_text
 
 
 class ltlListenerImpl(ltlListener) :

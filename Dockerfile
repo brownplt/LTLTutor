@@ -25,6 +25,13 @@ RUN /venv/bin/conda-unpack
 
 # Stage 2: Setup the runtime
 FROM debian:buster-slim
+
+# Install Java
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    apt-get clean;
+
+
 COPY . .
 COPY --from=build /venv /venv
 
@@ -33,4 +40,5 @@ EXPOSE 5000
 
 # Make RUN commands use the new environment
 SHELL ["/bin/bash", "-c"]
-CMD /bin/bash -c "source /venv/bin/activate && python -m spacy download en_core_web_sm && python app.py"
+#CMD /bin/bash -c "source /venv/bin/activate && python -m spacy download en_core_web_sm && python app.py"
+CMD /bin/bash -c "source /venv/bin/activate && python app.py"

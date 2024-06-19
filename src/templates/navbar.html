@@ -1,4 +1,5 @@
-<pre class="badge badge-light uidbadge"><span class="float-left">[Version 0.3.2]</span> <span id="userid_field" class="float-right"> </span> </pre>
+<pre
+    class="badge badge-light uidbadge"><span class="float-left">[Version 1.0.0]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <a class="navbar-brand" href="/">Tutor Dashboard</a>
 
@@ -13,7 +14,7 @@
             <li class="nav-item">
                 <a class="nav-link" href="/ltl" target="_blank">LTL Syntax</a>
             </li>
-            <li>
+
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
@@ -25,8 +26,7 @@
                     <a class="dropdown-item" href="/loadfromjson"> Exercise Loader </a>
                 </div>
             </li>
-            </li>
-            </li>
+
             <li class="nav-item">
                 <a class="nav-link" href="/exercise/generate" aria-expanded="false">
                     Generate Personalized Exercise
@@ -37,7 +37,7 @@
                     LTL Trace Stepper
                 </a>
             </li>
-            <li>
+
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
                     aria-haspopup="true" aria-expanded="false">
@@ -49,23 +49,15 @@
                     <a class="dropdown-item" href="/getmy/exercises">Previously generated exercises</a>
                 </div>
             </li>
+            {% if uid  %}
+            <li class="nav-item">
+                <a class="nav-link" href="/logout" >Log Out</a>
             </li>
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="/login" >Log In</a>
             </li>
+            {% endif %}
         </ul>
     </div>
 </nav>
-
-<div class="alert alert-primary alert-dismissible fade show d-none" role="alert" id="userIdModal">
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">×</span>
-    </button>
-    <strong>Welcome New User!</strong> This tool utilizes a browser cookie to maintain a User ID across
-    multiple uses.
-    This ID is anonymous, not reverse-engineerable, and is not based on any personally identifiable information.
-    We use this User ID to track responses to LTL exercises and adaptively generate new exercises.
-    We may use responses for research purposes, but we will not share responses with any third parties.
-
-    By using this tool, you consent to this use of cookies and response storage. <strong>If you do not consent, please
-        close this page, and do not use the tool.</strong>
-    </p>
-</div>
