@@ -63,6 +63,7 @@ def init_app(app):
 
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
+    print('Login route with method: ' + request.method)
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -75,14 +76,15 @@ def login():
             return render_template('index.html')
         else:
             print('Invalid username or password.')
-            flash('Invalid username or password.')
-    return render_template('auth/login.html')
+            return render_template('auth/login.html', error = 'Invalid username or password.')
+    elif request.method == 'GET':
+        return render_template('auth/login.html')
 
 @authroutes.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @authroutes.route('/signup', methods=['GET', 'POST'])
 def signup():

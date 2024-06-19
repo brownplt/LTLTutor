@@ -5,8 +5,14 @@
 </head>
 <body>
     <h1>Login</h1>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
     
-    <form action="login" method="POST"></form></form>
+    <form action="/login" method="POST">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
         
