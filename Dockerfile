@@ -25,6 +25,13 @@ RUN /venv/bin/conda-unpack
 
 # Stage 2: Setup the runtime
 FROM debian:buster-slim
+
+# Install Java
+RUN apt-get update && \
+    apt-get install -y openjdk-11-jdk && \
+    apt-get clean;
+
+
 COPY . .
 COPY --from=build /venv /venv
 

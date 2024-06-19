@@ -9,11 +9,14 @@ from abc import ABC, abstractmethod
 from spotutils import areEquivalent
 import random
 import ltltoeng
+import re
 
 ## We use this for Grammatical englsih generation
 # import spacy
 # nlp = spacy.load("en_core_web_sm")
 import language_tool_python
+# Create a LanguageTool object for English
+languageTool = language_tool_python.LanguageTool('en-US')
 
 
 ## Should these come from the lexer instead of being placed here
@@ -53,17 +56,25 @@ class LTLNode(ABC):
         areEquivalent(formula1, formula2)
 
     def corrected_sentence(self, text):
-        # Create a LanguageTool object for English
-        tool = language_tool_python.LanguageTool('en-US')
 
-        # Get a list of matches (grammatical errors) in the text
-        matches = tool.check(text)
+        # Split the text into single quoted and non-quoted parts
+        parts = re.split(r"('.*?')", text)
 
-        # Correct the text using the matches
-        corrected_text = language_tool_python.correct(text, matches)
+        corrected_parts = []
+        for part in parts:
+            if part.startswith("'") and part.endswith("'"):
+                # This is a single quoted part, don't correct it
+                corrected_parts.append(part)
+            else:
+                # This is a non-quoted part, correct it
+                matches = languageTool.check(part)
+                corrected_part = language_tool_python.correct(part, matches)
+                corrected_parts.append(corrected_part)
+
+        # Reassemble the text
+        corrected_text = ''.join(corrected_parts)
 
         return corrected_text
-
 
 
 class ltlListenerImpl(ltlListener) :
