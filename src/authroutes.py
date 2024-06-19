@@ -75,8 +75,9 @@ def login():
             print('Logged in successfully.')
             return redirect(url_for('index'))
         else:
-            print('Invalid username or password.')
-            return render_template('auth/login.html', error = 'Invalid username or password.')
+            flash('Invalid username or password.')
+            #return render_template('auth/login.html', error = 'Invalid username or password.')
+            return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
         return render_template('auth/login.html')
 
@@ -98,7 +99,9 @@ def signup():
         session = Session(bind=engine)
         session.add(user)
         session.commit()
+
+        # Now that the user is created, log them in
+        login_user(user)
         session.close()
-        flash('Account created successfully.')
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
     return render_template('auth/signup.html')
