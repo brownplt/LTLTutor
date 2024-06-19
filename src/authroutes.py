@@ -73,7 +73,7 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             print('Logged in successfully.')
-            return render_template('index.html')
+            return redirect(url_for('index'))
         else:
             print('Invalid username or password.')
             return render_template('auth/login.html', error = 'Invalid username or password.')
@@ -100,5 +100,5 @@ def signup():
         session.commit()
         session.close()
         flash('Account created successfully.')
-        return render_template('auth/login.html')
+        return redirect(url_for('login'))
     return render_template('auth/signup.html')

@@ -25,8 +25,8 @@ app = Flask(__name__)
 
 answer_logger = Logger()
 
-DEFAULT_USERID = "defaultuser"
-USERID_COOKIE = "ltluserid"
+
+    
 
 @app.template_filter('flatten')
 def flatten(lst):
@@ -50,10 +50,12 @@ app.register_blueprint(authroutes)
 def index():
 
 
-    userId = current_user.id  #request.cookies.get(USERID_COOKIE)
+    userId = current_user.username
+    print(f"User ID is {userId}", flush=True)
+
 
     if not userId:
-        return render_template('index.html')
+        return render_template('index.html', uid = "Could not identify user. Are you logged in?")
     
     logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
     exercise_builder = exercisebuilder.ExerciseBuilder(logs)
@@ -77,15 +79,15 @@ def index():
 
     # Now choose one of the top two misconceptions randomly
     max_misconception = random.choice(top_two_misconceptions)   
-    return render_template('index.html', misconception_weights = misconception_weights, misconception_count = misconception_count, max_misconception = max_misconception)
+    return render_template('index.html',uid = current_user.id, misconception_weights = misconception_weights, misconception_count = misconception_count, max_misconception = max_misconception)
 
 @app.route('/ltl')
 def ltl():
-    return render_template('ltl.html')
+    return render_template('ltl.html', uid = current_user.id)
 
 @app.route('/loadfromjson')
 def loadfromjson():
-    return render_template('loadfromjson.html')
+    return render_template('loadfromjson.html', uid = current_user.id)
 
 @app.route('/authorquestion/', methods=['POST'])
 def authorquestion():
@@ -155,7 +157,7 @@ def authorquestion():
 
 
 
-        return render_template('authorquestion.html', distractors=distractors, error="", answer=answer, question=question, exerciseset = exercise_so_far, kind = kind)
+        return render_template('authorquestion.html', uid = current_user.id, distractors=distractors, error="", answer=answer, question=question, exerciseset = exercise_so_far, kind = kind)
     
     
     except Exception as e:
@@ -163,7 +165,7 @@ def authorquestion():
             "formula": "-",
             "code": "Invalid LTL formula"
         }]
-        return render_template('authorquestion.html', error='Invalid LTL formula', distractors=distractors, answer=answer, question=question, exerciseset = exercise_so_far, kind = kind)
+        return render_template('authorquestion.html', uid = current_user.id, error='Invalid LTL formula', distractors=distractors, answer=answer, question=question, exerciseset = exercise_so_far, kind = kind)
 
 
 
@@ -171,7 +173,7 @@ def authorquestion():
 def authorquestion_get():
     # Handle GET request
     distractors = []
-    return render_template('authorquestion.html', distractors=distractors)
+    return render_template('authorquestion.html', uid = current_user.id, distractors=distractors)
 
 
 @app.route('/exercise/predefined', methods=['POST'])
@@ -191,7 +193,7 @@ def exercise():
         data = exerciseprocessor.change_traces_to_mermaid(data, literals = [])
     except:
         return "Error loading exercise"
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
+    return render_template('exercise.html', uid = current_user.id, questions=data, exercise_name=exercise_name)
 
 
 
@@ -212,7 +214,7 @@ def loganswer(questiontype):
     question_text = data['question_text']
     question_options = json.dumps(data['question_options'])
 
-    userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
+    userId = current_user.username
     mp_class = ""
     mp_formula_literals = []
     # If response has a mp_class field, log it
@@ -258,7 +260,7 @@ def loganswer(questiontype):
 @app.route('/exercise/generate', methods=['GET'])
 def newexercise():
     # Get a cookie from the request
-    userId = request.cookies.get(USERID_COOKIE) or DEFAULT_USERID
+    userId = current_user.username
 
 
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
@@ -286,14 +288,14 @@ def newexercise():
 
     answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
 
-    return render_template('exercise.html', questions=data, exercise_name=exercise_name)
+    return render_template('exercise.html', uid = current_user.id, questions=data, exercise_name=exercise_name)
 
 
 
 @app.route('/getmy/<type>', methods=['GET'])
 def viewstudentlogs(type):
 
-    userId = request.cookies.get(USERID_COOKIE)
+    userId = current_user.username
     if not userId:
         return "Could not identify user, no model available."
     
@@ -345,7 +347,7 @@ def viewstudentlogs(type):
 
         complexity = model['complexity']
 
-        return render_template('model.html', complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
+        return render_template('model.html', uid = current_user.id, complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
     
     elif (type == "exercises"):
         exercises = answer_logger.getUserExercises(userId=userId, lookback_days=30)
@@ -375,12 +377,12 @@ def lightpanel():
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('/prebuiltexercises/lightpanel.html', questions=data, exercise_name="lightpanel")
+    return render_template('/prebuiltexercises/lightpanel.html', uid = current_user.id, questions=data, exercise_name="lightpanel")
 
 
 @app.route('/entryexitticket/<ticket>')
 def entryexitticket(ticket):
-    userId = request.cookies.get(USERID_COOKIE) 
+    userId = current_user.username
     if not userId:
         return "USER ID IS NOT SET, PLEASE RELOAD THE PAGE."
     
@@ -433,14 +435,14 @@ def robotrain(sourceuri, exercise_name):
     except Exception as e:
         print(e)
         return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', questions=data, exercise_name=exercise_name)
+    return render_template('/prebuiltexercises/robotrain.html', uid = current_user.id, questions=data, exercise_name=exercise_name)
 
 
 @app.route('/stepper', methods=['GET', 'POST'])
 def ltlstepper():
 
     if request.method == 'GET':
-        return render_template('stepper.html', error="", prefixstates=[], cyclestates=[])
+        return render_template('stepper.html', uid = current_user.id, error="", prefixstates=[], cyclestates=[])
 
     if request.method == 'POST':
         ltl = request.form.get('formula')
@@ -452,7 +454,7 @@ def ltlstepper():
     try:
         node = parse_ltl_string(ltl)
     except:
-        return render_template('stepper.html', error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
+        return render_template('stepper.html', uid = current_user.id, error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
     ## TODO: Ensure trace is a valid trace
     result = traceSatisfactionPerStep(node = node, trace = trace)
@@ -462,7 +464,7 @@ def ltlstepper():
     
     #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
 
-    return render_template('stepper.html', error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
+    return render_template('stepper.html', uid = current_user.id, error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
 
