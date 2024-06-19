@@ -147,3 +147,20 @@ class Logger:
         lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
         logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
         return logs
+    
+    def getExerciseStats(self, exercise_name):
+        if not isinstance(exercise_name, str):
+            raise ValueError("exercise_name should be a string")
+
+        session = self.Session()
+        exercise = session.query(GeneratedExercise).filter(GeneratedExercise.exerciseName == exercise_name).first()
+
+        # I also want to get student responses for this exercise
+        student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
+
+
+        return {
+            "questions": exercise,
+            "student_responses": student_responses
+        }
+    
