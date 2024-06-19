@@ -99,7 +99,8 @@ def signup():
         # Check if a user with the given username already exists
         existing_user = session.query(User).filter_by(username=username).first()
         if existing_user:
-            flash('A user with that username already exists.')
+            flash(f'Username {username} is already taken. Please choose another one.')
+            
             return render_template('auth/signup.html')
 
         password_hash = generate_password_hash(password)
