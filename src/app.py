@@ -53,6 +53,9 @@ app.register_blueprint(authroutes)
 
 @app.route('/')
 @login_required
+
+
+
 def index():
 
 
