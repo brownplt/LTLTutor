@@ -53,9 +53,6 @@ app.register_blueprint(authroutes)
 
 @app.route('/')
 @login_required
-
-
-
 def index():
 
 
@@ -99,6 +96,7 @@ def loadfromjson():
     return render_template('loadfromjson.html', uid = getUserName())
 
 @app.route('/authorquestion/', methods=['POST'])
+@login_required
 def authorquestion():
 
     kind = request.form.get('kind')
@@ -179,6 +177,7 @@ def authorquestion():
 
 
 @app.route('/authorquestion', methods=['GET'])
+@login_required
 def authorquestion_get():
     # Handle GET request
     distractors = []
@@ -186,6 +185,7 @@ def authorquestion_get():
 
 
 @app.route('/exercise/predefined', methods=['POST'])
+@login_required
 def exercise():
     sourceuri = request.form.get('sourceuri')
     if not sourceuri.endswith('.json'):
@@ -207,9 +207,8 @@ def exercise():
 
 
 @app.route('/getfeedback/<questiontype>', methods=['POST'])
+@login_required
 def loganswer(questiontype):
-
-
     MP_FORMULA_KEY = 'formula_for_mp_class'
     EXERCISE_KEY = 'exercise'
 
@@ -267,6 +266,7 @@ def loganswer(questiontype):
 
 
 @app.route('/exercise/generate', methods=['GET'])
+@login_required
 def newexercise():
     # Get a cookie from the request
     userId = getUserName()
@@ -302,6 +302,7 @@ def newexercise():
 
 
 @app.route('/getmy/<type>', methods=['GET'])
+@login_required
 def viewstudentlogs(type):
 
     userId = getUserName()
@@ -375,6 +376,7 @@ def viewstudentlogs(type):
     
 
 @app.route('/lightpanel')
+@login_required
 def lightpanel():
 
     ## TODO: UPDATE
@@ -390,6 +392,7 @@ def lightpanel():
 
 
 @app.route('/entryexitticket/<ticket>')
+@login_required
 def entryexitticket(ticket):
     userId = getUserName()
     if not userId:
@@ -408,15 +411,6 @@ def entryexitticket(ticket):
     else:
         return "Invalid ticket type."     
 
-
-@app.route('/getuserid')
-def getuserid():
-    username = str(uuid.uuid4())
-    try:
-        return generate_new_name()
-    except Exception as e:
-        print("Error generating username:", e)
-        return username
 
 def generate_new_name():
 
@@ -467,12 +461,6 @@ def ltlstepper():
 
     ## TODO: Ensure trace is a valid trace
     result = traceSatisfactionPerStep(node = node, trace = trace)
-
-    print(f"Trace passed was {trace}")
-
-    
-    #mermaidTrace = exerciseprocessor.genMermaidGraphFromSpotTrace(trace)
-
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
