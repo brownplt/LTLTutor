@@ -90,14 +90,20 @@ def logout():
 
 @authroutes.route('/signup', methods=['GET', 'POST'])
 def signup():
-    ## Currently does not gracefully allow for multiple users with the same username
-    ## Crashes application if username already exists
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
+        session = Session(bind=engine)
+
+        # Check if a user with the given username already exists
+        existing_user = session.query(User).filter_by(username=username).first()
+        if existing_user:
+            flash('A user with that username already exists.')
+            return render_template('auth/signup.html')
+
         password_hash = generate_password_hash(password)
         user = User(username=username, password_hash=password_hash)
-        session = Session(bind=engine)
         session.add(user)
         session.commit()
 
