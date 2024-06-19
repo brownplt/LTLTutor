@@ -57,22 +57,10 @@ class LTLNode(ABC):
 
     def corrected_sentence(self, text):
 
-        # Split the text into single quoted and non-quoted parts
-        parts = re.split(r"('.*?')", text)
+        corrected_text = languageTool.correct(text)
 
-        corrected_parts = []
-        for part in parts:
-            if part.startswith("'") and part.endswith("'"):
-                # This is a single quoted part, don't correct it
-                corrected_parts.append(part)
-            else:
-                # This is a non-quoted part, correct it
-                matches = languageTool.check(part)
-                corrected_part = language_tool_python.correct(part, matches)
-                corrected_parts.append(corrected_part)
-
-        # Reassemble the text
-        corrected_text = ''.join(corrected_parts)
+        ## Now, if any text is in single quotes, make it lowecase
+        corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
 
         return corrected_text
 
