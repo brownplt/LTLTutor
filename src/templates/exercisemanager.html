@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor: Exercises</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+</head>
+
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+        <div class="container">
+            <h5> Load Exercise </h5>
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="exerciseIdInput" placeholder="Exercise Name">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="button" onclick="loadExercise()">Load</button>
+                </div>
+                <script>
+                    function loadExercise() {
+                        var exerciseId = document.getElementById('exerciseIdInput').value;
+                        window.location.href = '/exercise/load/' + exerciseId;
+                    }
+                </script>
+            </div>
+            <a href="/exercise/generate"> <button class="btn btn-lg btn-primary btn-block"> Generate a personalized exercise </button> </a>
+        </div>
+
+        <div class="container">
+            <h5> Exercises you have registered </h5>
+            <ul id="owned_exercises">
+                {% for exercise in authored_exercises}
+                <li> {{exercise}} : <a href="/view/responses/{{exercise_name}}"> View responses</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="container">
+            <h5> Register a new exercise </h5>
+
+            <form id="exerciseForm" action="/register-exercise" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <p> Placeholder text about acceptable exercise formats</p>
+                    <label for="exerciseFile">Exercise File</label>
+                    <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-success alert-dismissible fade show"></div>
+            <ul class="mb-0">
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+    </div>
+
+</body>
+
+</html>

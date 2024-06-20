@@ -23,7 +23,6 @@
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <a class="dropdown-item" href="/entryexitticket/entry">First Exercise (Entry Ticket)</a>
                     <a class="dropdown-item" href="/entryexitticket/exit">Last Exercise (Exit Ticket)</a>
-                    <a class="dropdown-item" href="/loadfromjson"> Exercise Loader </a>
                 </div>
             </li>
 
@@ -32,6 +31,13 @@
                     Generate Personalized Exercise
                 </a>
             </li>
+
+
+            <li class="nav-item">
+                <a class="nav-link" href="/exercise/home" aria-expanded="false">
+                    Manage or Load Exercises
+                </a>
+
             <li class="nav-item">
                 <a class="nav-link" href="/stepper" aria-expanded="false">
                     LTL Trace Stepper
@@ -44,9 +50,9 @@
                     View My
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="/getmy/model">Model</a>
-                    <a class="dropdown-item" href="/getmy/logs">Logs</a>
-                    <a class="dropdown-item" href="/getmy/exercises">Previously generated exercises</a>
+                    <a class="dropdown-item" href="/view/model">Model</a>
+                    <a class="dropdown-item" href="/view/logs">Logs</a>
+                    <a class="dropdown-item" href="/view/generatedexercises">Exercises generated for you</a>
                 </div>
             </li>
             {% if uid  %}
