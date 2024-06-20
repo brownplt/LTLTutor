@@ -92,11 +92,11 @@ def viewexercise():
 @login_required
 def viewexerciseresponses(exercise_name):
     userId = current_user.username
-    exercise = retrieve_exercise(userId, exercise_name)
+    exercise = retrieve_exercise(exercise_name)
 
 
     ### Now make sure that the exercise is owned by the user.
-    if exercise.user_id != userId:
+    if exercise.owner != userId:
         return "Unauthorized, you are not the owner of this exercise.", 401
 
     responses = logger.getExerciseResponses(exercise_name)

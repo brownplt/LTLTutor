@@ -154,7 +154,6 @@ class Logger:
 
         session = self.Session()
         student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
-
         # I think I want to filter student_responses to remove some fields perhaps.
         return student_responses
     

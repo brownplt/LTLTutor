@@ -193,7 +193,7 @@ def authorquestion_get():
 def exercisehome():
     userId = getUserName()
     authored = get_authored_exercises(userId)
-    authored_exercise_names = [exercise.exercise_name for exercise in authored]
+    authored_exercise_names = [exercise.name for exercise in authored]
     return render_template('exercisemanager.html', uid = getUserName(), authored_exercises = authored_exercise_names)
 
 
