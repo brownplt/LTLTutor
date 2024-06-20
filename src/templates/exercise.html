@@ -41,26 +41,36 @@
             <div class="card mt-4 question">
 
 
-                <div class="card-header mb-2 d-flex align-items-center">
-                    <h6>
-
-                        {% if q.description %}
-                            {{ q.description }}
-                        {% endif %}
-                        <br>
-                        {% if q.type == "englishtoltl" %}
-                        Which of the following LTL formulae best represents this English sentence?
-                        {% elif q.type == "tracesatisfaction_mc" %}
-                        Which of the following traces satisfies the following LTL formula?
-                        {% elif q.type == "tracesatisfaction_yn" %}
-                        Does this trace satisfy the following LTL formula?
-                        {% else %}
-                        <div class="alert alert-danger" role="alert">
-                            <strong>Unrecognized Question type! {{ q.type }}</strong>
+                <div class="card-header mb-2">
+                    <div class="row">
+                        <div class="col-12">
+                            <p class="font-italic">
+                                {% if q.description %}
+                                    {{ q.description }}
+                                {% endif %}
+                            </p>
                         </div>
-                        {% endif %}
-                    </h6>
-                    <small class="text-muted text-right ml-auto"> Question {{ qindex }} of {{ questions | length}} </small>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <p class="lead">
+                                {% if q.type == "englishtoltl" %}
+                                    Which of the following LTL formulae best represents this English sentence?
+                                {% elif q.type == "tracesatisfaction_mc" %}
+                                    Which of the following traces satisfies the following LTL formula?
+                                {% elif q.type == "tracesatisfaction_yn" %}
+                                    Does this trace satisfy the following LTL formula?
+                                {% else %}
+                                    <div class="alert alert-danger" role="alert">
+                                        <strong>Unrecognized Question type! {{ q.type }}</strong>
+                                    </div>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col text-right">
+                            <small class="text-muted"> Question {{ qindex }} of {{ questions | length}} </small>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card-body">
