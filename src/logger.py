@@ -83,31 +83,44 @@ class Logger:
     
     def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
 
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+        if not isinstance(question_text, str):
+            raise ValueError("question_text should be a string")
+        if not isinstance(question_options, str):
+            raise ValueError("question_options should be a string")
+        if not isinstance(correct_answer, bool):
+            raise ValueError("correct_answer should be a boolean")
+        if not isinstance(questiontype, str):
+            raise ValueError("questiontype should be a string")
+        if not isinstance(mp_class, str):
+            raise ValueError("mp_class should be a string")
+        if not isinstance(exercise, str):
+            raise ValueError("exercise should be a string")
+
+        ## We still want to log the response if there are no misconceptions
+        if misconceptions == None or len(misconceptions) == 0:
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
+                                  misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise)
+            self.record(log)
+
+
+
         for misconception in misconceptions:
 
             ## Ensure everything is of the correct type
-            if not isinstance(userId, str):
-                raise ValueError("userId should be a string")
+
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
-            if not isinstance(question_text, str):
-                raise ValueError("question_text should be a string")
-            if not isinstance(question_options, str):
-                raise ValueError("question_options should be a string")
-            if not isinstance(correct_answer, bool):
-                raise ValueError("correct_answer should be a boolean")
-            if not isinstance(questiontype, str):
-                raise ValueError("questiontype should be a string")
-            if not isinstance(mp_class, str):
-                raise ValueError("mp_class should be a string")
-            if not isinstance(exercise, str):
-                raise ValueError("exercise should be a string")
+
             
 
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
                                   question_type=questiontype, mp_class=mp_class, exercise=exercise)
             self.record(log)
+
     
     def getUserLogs(self, userId, lookback_days=30):
         if not isinstance(userId, str):
@@ -147,3 +160,13 @@ class Logger:
         lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
         logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
         return logs
+    
+    def getExerciseResponses(self, exercise_name):
+        if not isinstance(exercise_name, str):
+            raise ValueError("exercise_name should be a string")
+
+        session = self.Session()
+        student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
+        # I think I want to filter student_responses to remove some fields perhaps.
+        return student_responses
+    

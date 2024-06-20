@@ -1,6 +1,7 @@
 [
     {
         "question": "The green light is never off",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -26,6 +27,7 @@
     },
     {
         "question": "Whenever the Red light is on, it is off in the next state and on again in the state after that. ",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -59,6 +61,7 @@
     },
     {
         "question": "The Red light is on in exactly one state (not necessarily the first state).",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -91,6 +94,7 @@
     },
     {
         "question": "Red light cannot stay on for three states in a row. ",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -116,6 +120,7 @@
     },
     {
         "question": "Whenever the Red light is on, the Blue light will be on then or at some point in the future. ",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -150,6 +155,7 @@
     },
     {
         "question": "The Red light is on for zero or more states, and then turns off and remains off in the future.",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "type": "englishtoltl",
         "options": [
             {
@@ -184,6 +190,7 @@
         "question": "G(red | blue)",
         "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue; !red & !green & blue; red & green & blue; cycle{!red & green & !blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -201,6 +208,7 @@
         "question": "F(red & green)",
         "type": "tracesatisfaction_yn",
         "trace": "!red & !green & !blue; !red & !green & blue; red & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -218,6 +226,7 @@
         "question": "(G (X red))",
         "type": "tracesatisfaction_yn",
         "trace": "!red & green & blue; red & !green & blue; !red & !green & !blue; cycle{!red & green & blue; red & green & blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -235,6 +244,7 @@
         "question": "red",
         "type": "tracesatisfaction_yn",
         "trace": "!red & green & blue; red & green & blue; red & green & blue; cycle{red & green & blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -252,6 +262,7 @@
         "question": "F red",
         "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue; !red & !green & !blue; !red & green & !blue; cycle{!red & !green & !blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -269,6 +280,7 @@
         "question": "G (red -> X (X ( X (red))))",
         "type": "tracesatisfaction_yn",
         "trace": "!red & !green & !blue; red & green & blue; red & green & blue; !red & !green & !blue;cycle{red & green & blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",
@@ -285,6 +297,7 @@
     {
         "question": "X X X red",
         "type": "tracesatisfaction_mc",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "red & !green & !blue; !red & !green & !blue; !red & !green & !blue; red & !green & !blue; cycle{!red & !green & !blue}",
@@ -328,6 +341,7 @@
         "question": "red U blue",
         "type": "tracesatisfaction_yn",
         "trace": "red & !green & !blue;red & !green & !blue;red & !green & !blue;cycle{red & !green & !blue}",
+        "description": "The questions ask about the state of an instrument panel over time. The panel has three colors: Red (red), Green (green), and Blue (blue).",
         "options": [
             {
                 "option": "Yes",

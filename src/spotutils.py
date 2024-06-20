@@ -130,10 +130,6 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
 
     f = spot.randltl(atoms, tree_size=tree_size, ltl_priorities = ltl_priorities_string)
     
-    ### TODO: Need to change from SPOT output to our output
-    #Ex. spot      p1 U (p2 R (p3 & !p4))
-    # I think spot uses | for or
-
     return [str(next(f)) for _ in range(num_formulae)]
 
 

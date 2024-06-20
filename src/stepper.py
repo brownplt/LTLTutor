@@ -190,9 +190,6 @@ def traceSatisfactionPerStep(node, trace):
         return cycle_prefix_string + ";" + cycle_string
     
     num_prefix_states = len(prefix)
-    ## TODO: Is trace=trace correct here?
-
-    ### I think we want trace=trace, but unify them somehow?
     prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace, trace_index_of_subtrace=i) for i in range(len(prefix))]
 
 

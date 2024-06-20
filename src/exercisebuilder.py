@@ -63,7 +63,11 @@ class ExerciseBuilder:
         for misconception in all_misconceptions:
             if misconception not in concept_history:
                 concept_history[misconception] = []
-        return concept_history
+
+        # Make sure we are not adding any misconceptions that are not in the codebook
+        to_return = { k : v for k, v in concept_history.items() if k in all_misconceptions}
+
+        return to_return
 
 
    
@@ -124,7 +128,6 @@ class ExerciseBuilder:
         for m, weight in misconception_weights.items():
 
             misconception = MisconceptionCode.from_string(m)
-
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 

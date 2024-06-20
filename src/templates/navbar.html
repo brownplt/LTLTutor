@@ -1,5 +1,5 @@
 <pre
-    class="badge badge-light uidbadge"><span class="float-left">[Version 1.0.0]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
+    class="badge badge-light uidbadge"><span class="float-left">[Version 1.0.1]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <a class="navbar-brand" href="/">Tutor Dashboard</a>
 
@@ -14,27 +14,15 @@
             <li class="nav-item">
                 <a class="nav-link" href="/ltl" target="_blank">LTL Syntax</a>
             </li>
-
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown"
-                    aria-haspopup="true" aria-expanded="false">
-                    Tickets
+            <li class="nav-item">
+                <a class="nav-link" href="/exercise/home" aria-expanded="false">
+                    Exercise Home
                 </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="/entryexitticket/entry">First Exercise (Entry Ticket)</a>
-                    <a class="dropdown-item" href="/entryexitticket/exit">Last Exercise (Exit Ticket)</a>
-                    <a class="dropdown-item" href="/loadfromjson"> Exercise Loader </a>
-                </div>
             </li>
 
             <li class="nav-item">
                 <a class="nav-link" href="/exercise/generate" aria-expanded="false">
-                    Generate Personalized Exercise
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/stepper" aria-expanded="false">
-                    LTL Trace Stepper
+                    Generate Exercise
                 </a>
             </li>
 
@@ -44,9 +32,9 @@
                     View My
                 </a>
                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <a class="dropdown-item" href="/getmy/model">Model</a>
-                    <a class="dropdown-item" href="/getmy/logs">Logs</a>
-                    <a class="dropdown-item" href="/getmy/exercises">Previously generated exercises</a>
+                    <a class="dropdown-item" href="/view/model">Model</a>
+                    <a class="dropdown-item" href="/view/logs">Logs</a>
+                    <a class="dropdown-item" href="/view/generatedexercises">Exercises generated for you</a>
                 </div>
             </li>
             {% if uid  %}

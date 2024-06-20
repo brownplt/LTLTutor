@@ -17,7 +17,8 @@ import requests
 from stepper import traceSatisfactionPerStep
 from flask_login import login_required, current_user
 from flask import Blueprint
-from authroutes import authroutes, init_app
+from authroutes import authroutes, init_app, retrieve_exercise, get_authored_exercises
+from modelroutes import modelroutes
 
 port = os.getenv('PORT', default='5000')
 
@@ -48,7 +49,7 @@ app.secret_key = sk
 
 init_app(app)
 app.register_blueprint(authroutes)
-
+app.register_blueprint(modelroutes)
 
 
 @app.route('/')
@@ -184,24 +185,36 @@ def authorquestion_get():
     return render_template('authorquestion.html', uid = getUserName(), distractors=distractors)
 
 
-@app.route('/exercise/predefined', methods=['POST'])
+########## Routes for exercises ##########
+
+
+@app.route('/exercise/home', methods=['GET'])
 @login_required
-def exercise():
-    sourceuri = request.form.get('sourceuri')
-    if not sourceuri.endswith('.json'):
-        return "Invalid sourceuri. Must end with .json"
-    
-    # Get the name of the JSON file from the URI
-    exercise_name = os.path.basename(sourceuri) or "Exercise"
-    exercise_name = exercise_name.replace('.json', '')
-    exercise_name = exercise_name.replace('preload:', '')
+def exercisehome():
+    userId = getUserName()
+    authored = get_authored_exercises(userId)
+    authored_exercise_names = [exercise.name for exercise in authored]
+    return render_template('exercisemanager.html', uid = getUserName(), authored_exercises = authored_exercise_names)
+
+
+
+
+@app.route('/exercise/load/<exercise_name>', methods=['GET'])
+@login_required
+def exercise(exercise_name):   
+    exercise = retrieve_exercise(exercise_name)
+    ## Ensure that the exercise exists, else return an error
+    if not exercise:
+        return f"Exercise {exercise_name} not found."
+
+    exercise_content = exercise.exercise_data
 
     try:
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = json.loads(exercise_content)
         data = exerciseprocessor.randomize_questions(data)
         data = exerciseprocessor.change_traces_to_mermaid(data, literals = [])
     except:
-        return "Error loading exercise"
+        return f"Error loading exercise {exercise_name}"
     return render_template('exercise.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
 
 
@@ -256,8 +269,6 @@ def loganswer(questiontype):
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
-
-            ## TODO: TraceSat: Ensure that we say we have some sort of stepper or something.
             return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
     else:
         return { "message": "INVALID QUESTION TYPE!!." }
@@ -268,18 +279,32 @@ def loganswer(questiontype):
 @app.route('/exercise/generate', methods=['GET'])
 @login_required
 def newexercise():
-    # Get a cookie from the request
     userId = getUserName()
 
+    ## TODO: Try and do better than this
+    def generate_new_name():
+
+        # Make a request to the Random Word API to get 2 random words
+        response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            # Parse the JSON response
+            words = response.json()
+            # Concatenate the two words with a hyphen
+            username = '-'.join(words)
+            return username
+        else:
+            # Raise an exception if the request was unsuccessful
+            response.raise_for_status()
 
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
     literals_pool = list("abcdehijknpqstvz")
     num_literals = random.randint(2, 4)
     LITERALS = random.sample(literals_pool, num_literals)
-
     num_questions = random.randint(3, 8)
 
-    ## TODO: Try and do better than this
+    
     try:
         exercise_name = "Exercise " + generate_new_name()
     except Exception as e:
@@ -300,95 +325,6 @@ def newexercise():
     return render_template('exercise.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
 
 
-
-@app.route('/getmy/<type>', methods=['GET'])
-@login_required
-def viewstudentlogs(type):
-
-    userId = getUserName()
-    if not userId:
-        return "Could not identify user, no model available."
-    
-    logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
-
-    if (type == "logs"):
-
-        to_return = {}
-        for log in logs:
-            to_return[log.id] = {
-                "user_id": log.user_id,
-                "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                "misconception": log.misconception,
-                "question_text": log.question_text,
-                "question_options": log.question_options,
-                "correct_answer": log.correct_answer,
-                "mp_class": log.mp_class,
-                "exercise": log.exercise
-            }
-        return json.dumps(to_return)
-    elif (type == "model"):
-        exercise_builder = exercisebuilder.ExerciseBuilder(logs)
-        model = exercise_builder.get_model()
-
-        misconception_weights = model['misconception_weights']
-        
-        misconceptions_over_time = model['misconceptions_over_time']
-
-
-
-        # I want to make sure that if a misconception is not present for a given timestamp,
-        # it's value for that timestamp is 0.
-        # So I need to fill in the gaps in the dictionary.
-        # I will do this by iterating over all timestamps and adding the missing ones.
-        all_timestamps = set()
-        for key, value in misconceptions_over_time.items():
-            for dt, freq in value:
-                all_timestamps.add(dt)
-
-        # Then, for each misconception, I will add the missing timestamps with a frequency of 0.
-        for key, value in misconceptions_over_time.items():
-            for dt in all_timestamps:
-                if dt not in [dt for dt, freq in value]:
-                    value.append((dt, 0))
-
-        for key, value in misconceptions_over_time.items():
-            misconceptions_over_time[key] = [(dt.timestamp(), freq) for dt, freq in value]
-
-
-        complexity = model['complexity']
-
-        return render_template('model.html', uid = getUserName(), complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
-    
-    elif (type == "exercises"):
-        exercises = answer_logger.getUserExercises(userId=userId, lookback_days=30)
-        to_return = {}
-        for exercise in exercises:
-            to_return[exercise.id] = {
-                "user_id": exercise.user_id,
-                "timestamp": exercise.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                "exercise_data": exercise.exercise_data,
-                "exercise_name": exercise.exerciseName
-            }
-        return json.dumps(to_return)
-    
-    else:
-        return "Invalid type"
-    
-
-@app.route('/lightpanel')
-@login_required
-def lightpanel():
-
-    ## TODO: UPDATE
-    sourceuri = "preload:lightpanel.json"
-    try:
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-        data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["red", "green", "blue"])
-    except Exception as e:
-        print(e)
-        return "Error loading exercise"
-    return render_template('/prebuiltexercises/lightpanel.html', uid = getUserName(), questions=data, exercise_name="lightpanel")
 
 
 @app.route('/entryexitticket/<ticket>')
@@ -411,26 +347,7 @@ def entryexitticket(ticket):
     else:
         return "Invalid ticket type."     
 
-
-def generate_new_name():
-
-    # Make a request to the Random Word API to get 2 random words
-    response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        # Parse the JSON response
-        words = response.json()
-        # Concatenate the two words with a hyphen
-        username = '-'.join(words)
-        return username
-    else:
-        # Raise an exception if the request was unsuccessful
-        response.raise_for_status()
-
-
 def robotrain(sourceuri, exercise_name):
-
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
@@ -440,6 +357,8 @@ def robotrain(sourceuri, exercise_name):
         return "Error loading exercise"
     return render_template('/prebuiltexercises/robotrain.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
 
+
+###### Stepper routes ######
 
 @app.route('/stepper', methods=['GET', 'POST'])
 def ltlstepper():
@@ -453,14 +372,15 @@ def ltlstepper():
         if ltl == "" or trace == "":
             error="Please enter an LTL formula and a trace."
         
-    ## TODO: Ensure node is a valid LTL formula
     try:
         node = parse_ltl_string(ltl)
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
-    ## TODO: Ensure trace is a valid trace
-    result = traceSatisfactionPerStep(node = node, trace = trace)
+    try:
+        result = traceSatisfactionPerStep(node = node, trace = trace)
+    except:
+        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 

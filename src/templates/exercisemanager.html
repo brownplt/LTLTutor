@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor: Exercise Home</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+</head>
+
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+        <div class="container mt-4">
+            <div class="jumbotron text-center">
+                <h5 class="lead">Load an exercise or generate a personalized one</h5>
+                <div class="d-flex justify-content-center">
+                    <div class="input-group mb-3 w-50">
+                        <input type="text" class="form-control" id="exerciseIdInput" placeholder="Exercise Name">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button" onclick="loadExercise()">Load</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center">
+                    <a href="/exercise/generate" class="btn btn-lg btn-primary">Generate a personalized exercise</a>
+                </div>
+            </div>
+
+            <h5> Tickets </h5>
+            <ul>
+                <li> <a href="/entryexitticket/entry">First Exercise (Entry Ticket)</a> </li>
+                <li> <a href="/entryexitticket/exit">Final Exercise (Exit Ticket)</a> </li>
+            </ul>
+
+
+
+            <script>
+                function loadExercise() {
+                    var exerciseId = document.getElementById('exerciseIdInput').value;
+                    window.location.href = '/exercise/load/' + exerciseId;
+                }
+            </script>
+        </div>
+
+
+
+        <div class="container mt-4 mb-2 justify-content-center">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Register a new exercise</h5>
+                </div>
+                <div class="card-body">
+                    <form id="exerciseForm" action="/register-exercise" method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <p>Exercises must be uploaded as JSON files. Please refer to <a href="https://github.com/brownplt/LTLTutor/wiki/Writing-an-Exercise"> our wiki</a> for up to date documentation on exercise formats.</p>
+                            <label for="exerciseFile">Exercise File</label>
+                            <!-- <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required> -->
+                            <div id="drop_zone" style="border:2px dashed #bbb; -moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px; padding:25px; text-align:center; margin:10px;">
+                                Drag & Drop Your File Here
+                                <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Register</button>
+                        <script>
+                            var dropZone = document.getElementById('drop_zone');
+                        
+                            // Optional: Show the file name that was dropped
+                            dropZone.ondrop = function(e) {
+                                e.preventDefault();
+                                this.className = 'upload-drop-zone';
+                        
+                                document.getElementById('exerciseFile').files = e.dataTransfer.files;
+                            }
+                        
+                            dropZone.ondragover = function() {
+                                this.className = 'upload-drop-zone drop';
+                                return false;
+                            }
+                        
+                            dropZone.ondragleave = function() {
+                                this.className = 'upload-drop-zone';
+                                return false;
+                            }
+                        </script>
+                    </form>
+                </div>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="card-footer">
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <ul class="mb-0">
+                            {% for message in messages %}
+                            <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+
+        {% if authored_exercises and authored_exercises|length > 0 %}
+        <div class="container mt-4 mb-2 justify-content-center">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Exercises You Have Registered</h5>
+                </div>
+                <ul class="list-group list-group-flush" id="owned_exercises">
+                    {% for exercise in authored_exercises %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{exercise}}
+                        <a href="/view/responses/{{exercise}}" class="btn btn-primary btn-sm">View responses</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% include 'footer.html' %}
+</body>
+
+</html>
