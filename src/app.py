@@ -209,9 +209,6 @@ def exercise(exercise_name):
 
     exercise_content = exercise.exercise_data
 
-    ## TODO: Add an optional description parameter to each field of the exercise
-    ## question.description 
-
     try:
         data = json.loads(exercise_content)
         data = exerciseprocessor.randomize_questions(data)
@@ -272,8 +269,6 @@ def loganswer(questiontype):
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
-
-            ## TODO: TraceSat: Ensure that we say we have some sort of stepper or something.
             return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
     else:
         return { "message": "INVALID QUESTION TYPE!!." }
@@ -377,14 +372,15 @@ def ltlstepper():
         if ltl == "" or trace == "":
             error="Please enter an LTL formula and a trace."
         
-    ## TODO: Ensure node is a valid LTL formula
     try:
         node = parse_ltl_string(ltl)
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
-    ## TODO: Ensure trace is a valid trace
-    result = traceSatisfactionPerStep(node = node, trace = trace)
+    try:
+        result = traceSatisfactionPerStep(node = node, trace = trace)
+    except:
+        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
