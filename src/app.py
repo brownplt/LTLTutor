@@ -209,6 +209,9 @@ def exercise(exercise_name):
 
     exercise_content = exercise.exercise_data
 
+    ## TODO: Add an optional description parameter to each field of the exercise
+    ## question.description 
+
     try:
         data = json.loads(exercise_content)
         data = exerciseprocessor.randomize_questions(data)

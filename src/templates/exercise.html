@@ -42,6 +42,11 @@
 
 
                 <div class="card-header mb-2 d-flex align-items-center">
+
+                    {% if q.description %}
+                        <p> {{ description }} </p>
+                    {% endif %}
+
                     <h6>
                         {% if q.type == "englishtoltl" %}
                         Which of the following LTL formulae best represents this English sentence?

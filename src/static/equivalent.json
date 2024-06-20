@@ -1,5 +1,6 @@
 [
     {
+        "description" : "This question involves a robot-driven that has 2 components, each of which can be ON or OFF at any point in time: the engine (e), and the headlight (h).",
         "question": "The engine is on for zero or more states, and then turns off and remains off in the future.",
         "type": "englishtoltl",
         "options": [
