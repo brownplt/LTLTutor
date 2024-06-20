@@ -104,7 +104,7 @@ class Logger:
                                   misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
                                   question_type=questiontype, mp_class=mp_class, exercise=exercise)
             self.record(log)
-            print(f"Logged response for user {userId} to exercise {exercise} with no misconceptions")
+
 
 
         for misconception in misconceptions:
@@ -120,7 +120,7 @@ class Logger:
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
                                   question_type=questiontype, mp_class=mp_class, exercise=exercise)
             self.record(log)
-            print(f"Logged response for user {userId} to exercise {exercise} with misconception {misconception}")
+
     
     def getUserLogs(self, userId, lookback_days=30):
         if not isinstance(userId, str):
