@@ -134,7 +134,7 @@ def register_exercise():
         json_files = [file for file in request.files.values() if file.filename.endswith('.json')]
         if not json_files or len(json_files) == 0:
             flash('Exercises must be uploaded as JSON files.')
-            return render_template('auth/register-exercise.html')
+            return render_template('exercisemanager.html')
         
         owner = current_user.username
         session = Session(bind=engine)
@@ -149,8 +149,8 @@ def register_exercise():
             session.commit()
             flash(f'Exercise {exercisename} registered successfully.')
         session.close()
-        return redirect(url_for('authroutes.register-exercise'))
-    return render_template('auth/register-exercise.html')
+        return redirect(url_for('authroutes.register_exercise'))
+    return render_template('exercisemanager.html')
 
 
 def retrieve_exercise(exercise_name) -> AuthoredExercise:

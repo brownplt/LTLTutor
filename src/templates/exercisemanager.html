@@ -61,9 +61,34 @@
                         <div class="form-group">
                             <p>Placeholder text about acceptable exercise formats</p>
                             <label for="exerciseFile">Exercise File</label>
-                            <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required>
+                            <!-- <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required> -->
+                            <div id="drop_zone" style="border:2px dashed #bbb; -moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px; padding:25px; text-align:center; margin:10px;">
+                                Drag & Drop Your File Here
+                                <input type="file" class="form-control-file" id="exerciseFile" name="exerciseFile" required>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary">Register</button>
+                        <script>
+                            var dropZone = document.getElementById('drop_zone');
+                        
+                            // Optional: Show the file name that was dropped
+                            dropZone.ondrop = function(e) {
+                                e.preventDefault();
+                                this.className = 'upload-drop-zone';
+                        
+                                document.getElementById('exerciseFile').files = e.dataTransfer.files;
+                            }
+                        
+                            dropZone.ondragover = function() {
+                                this.className = 'upload-drop-zone drop';
+                                return false;
+                            }
+                        
+                            dropZone.ondragleave = function() {
+                                this.className = 'upload-drop-zone';
+                                return false;
+                            }
+                        </script>
                     </form>
                 </div>
                 {% with messages = get_flashed_messages() %}
