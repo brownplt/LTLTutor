@@ -72,7 +72,7 @@ def viewmodel():
 
     return render_template('model.html', uid = uid, complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
     
-@modelroutes.route('/view/generatedexercise', methods=['GET'])
+@modelroutes.route('/view/generatedexercises', methods=['GET'])
 @login_required
 def viewexercise():
     userId = current_user.username

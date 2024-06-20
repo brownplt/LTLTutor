@@ -128,11 +128,6 @@ class ExerciseBuilder:
         for m, weight in misconception_weights.items():
 
             misconception = MisconceptionCode.from_string(m)
-
-            if misconception is None:
-                print(f"Unknown misconception {m}")
-                continue
-
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 
