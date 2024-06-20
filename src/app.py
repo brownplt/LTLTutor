@@ -17,8 +17,8 @@ import requests
 from stepper import traceSatisfactionPerStep
 from flask_login import login_required, current_user
 from flask import Blueprint
-from authroutes import authroutes_bp, init_app, retrieve_exercise, get_authored_exercises
-from modelroutes import modelroutes_bp
+from authroutes import authroutes, init_app, retrieve_exercise, get_authored_exercises
+from modelroutes import modelroutes
 
 port = os.getenv('PORT', default='5000')
 
@@ -48,8 +48,8 @@ app.secret_key = sk
 
 
 init_app(app)
-app.register_blueprint(authroutes_bp)
-app.register_blueprint(modelroutes_bp)
+app.register_blueprint(authroutes)
+app.register_blueprint(modelroutes)
 
 
 @app.route('/')
