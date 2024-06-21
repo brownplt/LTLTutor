@@ -7,8 +7,7 @@ import ltlnode
 import random
 import re
 import math
-
-
+import ltltoeng
 
 
 class ExerciseBuilder:
@@ -256,14 +255,15 @@ class ExerciseBuilder:
     
     def gen_nl_question(self, formula):
 
-        formula_eng = ltlnode.parse_ltl_string(formula).__to_english__()
+        as_node = ltlnode.parse_ltl_string(formula)
+        formula_eng = as_node.__to_english__()
         if formula_eng is None or formula_eng == "":
             return None
-
-        ### If there are multiple '.' in a row, replace with a single '.'
-        formula_eng = re.sub(r'\.{2,}', '.', formula_eng)
         
-        return formula_eng
+        formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
+        ### If there are multiple '.' in a row, replace with a single '.'
+        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng)
+        return formula_eng_corrected
 
 
     def get_options_with_misconceptions_as_formula(self, answer):

@@ -11,13 +11,6 @@ import random
 import ltltoeng
 import re
 
-## We use this for Grammatical englsih generation
-# import spacy
-# nlp = spacy.load("en_core_web_sm")
-import language_tool_python
-# Create a LanguageTool object for English
-languageTool = language_tool_python.LanguageTool('en-US')
-
 
 ## Should these come from the lexer instead of being placed here
 IMPLIES_SYMBOL = '->'
@@ -55,14 +48,8 @@ class LTLNode(ABC):
     def equiv(formula1, formula2):
         areEquivalent(formula1, formula2)
 
-    def corrected_sentence(self, text):
 
-        corrected_text = languageTool.correct(text)
 
-        ## Now, if any text is in single quotes, make it lowecase
-        corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
-
-        return corrected_text
 
 
 class ltlListenerImpl(ltlListener) :
@@ -195,7 +182,7 @@ class UntilNode(BinaryOperatorNode):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} until {rhs}."
-        return self.corrected_sentence(english)
+        return english
 
 
 class NextNode(UnaryOperatorNode):
@@ -209,7 +196,7 @@ class NextNode(UnaryOperatorNode):
             return x
         op = self.operand.__to_english__()
         english = f"in the next state, {op}."
-        return self.corrected_sentence(english)
+        return english
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -231,7 +218,7 @@ class GloballyNode(UnaryOperatorNode):
         ]
 
         english = random.choice(patterns)
-        return self.corrected_sentence(english)
+        return english
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -253,7 +240,7 @@ class FinallyNode(UnaryOperatorNode):
 
 
         english = f"eventually, {op}"
-        return self.corrected_sentence(english)
+        return english
 
 
 class OrNode(BinaryOperatorNode):
@@ -270,7 +257,7 @@ class OrNode(BinaryOperatorNode):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} or {rhs}."
-        return self.corrected_sentence(english)
+        return english
 
 
 class AndNode(BinaryOperatorNode):
@@ -285,7 +272,7 @@ class AndNode(BinaryOperatorNode):
         lhs = self.left.__to_english__()
         rhs = self.right.__to_english__()
         english = f"{lhs} and {rhs}."
-        return self.corrected_sentence(english)
+        return english
 
 
 class NotNode(UnaryOperatorNode):
@@ -309,7 +296,7 @@ class NotNode(UnaryOperatorNode):
         ## TODO: We can start donig some more. better special cases.
         else:
             english = f"it is not the case that {op}."
-        return self.corrected_sentence(english)
+        return english
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -328,7 +315,7 @@ class ImpliesNode(BinaryOperatorNode):
 
         # Choose a pattern randomly, and then return the corrected sentence
         english = random.choice(patterns)
-        return self.corrected_sentence(english)
+        return english
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -353,7 +340,7 @@ class EquivalenceNode(BinaryOperatorNode):
 
         # Choose a pattern randomly, and then return the corrected sentence
         english = random.choice(patterns)
-        return self.corrected_sentence(english)
+        return english
 
 
 
