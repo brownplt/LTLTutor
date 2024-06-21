@@ -55,7 +55,6 @@ class MisconceptionCode(Enum):
             ## But ensure that Next and Until are present ##
             return list(set([UntilNode.symbol, NextNode.symbol] + TEMPORAL_SUBSET))
         else:
-            print("No associated operators for misconception code: ", self)
             return []
 
 
