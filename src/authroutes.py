@@ -21,7 +21,7 @@ def generate_random_string():
 
 Base = declarative_base()
 engine = create_engine(get_db_uri())
-Session = sessionmaker(bind=engine)
+Session = sessionmaker(bind=engine, expire_on_commit=True)
 
 USER_TABLE = 'users'
 EXERCISE_TABLE = 'registered_exercises'
@@ -68,10 +68,9 @@ def init_app(app):
 
     @login_manager.user_loader
     def load_user(user_id):
-        session = Session()
-        user = session.query(User).get(int(user_id))
-        session.close()
-        return user
+        with Session() as session:
+            user = session.query(User).get(int(user_id))
+            return user
 
 
 @authroutes.route('/login', methods=['GET', 'POST'])
@@ -80,9 +79,9 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        session = Session(bind=engine)
-        user = session.query(User).filter_by(username=username).first()
-        session.close()
+        with Session() as session:
+            user = session.query(User).filter_by(username=username).first()
+
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
             print('Logged in successfully.')
@@ -105,24 +104,18 @@ def signup():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        session = Session(bind=engine)
+        with Session() as session:
+            existing_user = session.query(User).filter_by(username=username).first()
+            if existing_user:
+                flash(f'Username {username} is already taken. Please choose another one.')
+                return render_template('auth/signup.html')
 
-        # Check if a user with the given username already exists
-        existing_user = session.query(User).filter_by(username=username).first()
-        if existing_user:
-            flash(f'Username {username} is already taken. Please choose another one.')
-            
-            return render_template('auth/signup.html')
-
-        password_hash = generate_password_hash(password)
-        user = User(username=username, password_hash=password_hash)
-        session.add(user)
-        session.commit()
-
-        # Now that the user is created, log them in
-        login_user(user)
-        session.close()
-        return redirect(url_for('index'))
+            password_hash = generate_password_hash(password)
+            user = User(username=username, password_hash=password_hash)
+            session.add(user)
+            session.commit()
+            login_user(user)
+            return redirect(url_for('index'))
     return render_template('auth/signup.html')
 
 
@@ -137,31 +130,27 @@ def register_exercise():
             return render_template('exercisemanager.html')
         
         owner = current_user.username
-        session = Session(bind=engine)
-        for file in json_files:
-            
-            rand_postfix = "-" + generate_random_string()
-            exercisename = file.filename.replace('.json', rand_postfix)
-            contents = file.read().decode('utf-8')
+        with Session() as session:
+            for file in json_files:
+                
+                rand_postfix = "-" + generate_random_string()
+                exercisename = file.filename.replace('.json', rand_postfix)
+                contents = file.read().decode('utf-8')
 
-            exercise = AuthoredExercise(exercise_data=contents, name=exercisename, owner=owner)
-            session.add(exercise)
-            session.commit()
-            flash(f'Exercise {exercisename} registered successfully.')
-        session.close()
-        return redirect(url_for('authroutes.register_exercise'))
+                exercise = AuthoredExercise(exercise_data=contents, name=exercisename, owner=owner)
+                session.add(exercise)
+                session.commit()
+                flash(f'Exercise {exercisename} registered successfully.')
+            return redirect(url_for('authroutes.register_exercise'))
     return render_template('exercisemanager.html')
 
 
 def retrieve_exercise(exercise_name) -> AuthoredExercise:
-    session = Session(bind=engine)
-    exercise = session.query(AuthoredExercise).filter_by(name=exercise_name).first()
-    session.close()
-    return exercise
+    with Session() as session:
+        exercise = session.query(AuthoredExercise).filter_by(name=exercise_name).first()
+        return exercise
 
 def get_authored_exercises(username):
-
-    session = Session(bind=engine)
-    exercises = session.query(AuthoredExercise).filter_by(owner=username).all()
-    session.close()
-    return exercises
+    with Session() as session:
+        exercises = session.query(AuthoredExercise).filter_by(owner=username).all()
+        return exercises

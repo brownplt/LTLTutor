@@ -36,8 +36,6 @@ def choosePathFromWord(word):
     asNode = ltlnode.parse_ltl_string(word)
     modifiedNode = removeORs(asNode)
     x = str(modifiedNode)
-    if '|' in x:
-        print(f"Removing ORs from {word} ---- Modified to {x}")
     return x
 
 # Now go down the word, if there is an OR choose one of left or right at random
@@ -85,8 +83,6 @@ class NodeRepr:
     def __str__(self):
         asStr = self.vars
         if '{' in asStr or '}' in asStr:
-            print("Warning: Found curly braces in vars")
-            print(asStr)
             asStr = asStr.replace('{', '').replace('}', '')
         # Now remove all the parens
         asStr = asStr.replace('(', '').replace(')', '')
@@ -230,11 +226,6 @@ def change_traces_to_mermaid(data, literals):
             sr = expandSpotTrace(sr, literals)
 
             k['trace'] = remove_parens(sr)
-
-            if ("|" in sr):
-                print(f"Found OR in trace {sr}")
-
-
             k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
     return data
 

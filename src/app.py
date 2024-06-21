@@ -43,7 +43,6 @@ app.jinja_env.filters['flatten'] = flatten
 
 
 sk = os.environ.get('SECRET_KEY')
-print(f"Secret key is {sk}", flush=True)
 app.secret_key = sk
 
 
@@ -55,12 +54,7 @@ app.register_blueprint(modelroutes)
 @app.route('/')
 @login_required
 def index():
-
-
     userId = getUserName()
-    print(f"User ID is {userId}", flush=True)
-
-
     if not userId:
         return render_template('index.html', uid = "Could not identify user. Are you logged in?")
     

@@ -196,13 +196,12 @@ def apply_special_pattern_if_possible(node):
 
 
 import language_tool_python
-languageTool = language_tool_python.LanguageTool('en-US')
+
 
 def correct_grammar(text):
-
+    languageTool = language_tool_python.LanguageTool('en-US')
     corrected_text = languageTool.correct(text)
 
     ## Now, if any text is in single quotes, make it lowecase
     corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
-
     return corrected_text

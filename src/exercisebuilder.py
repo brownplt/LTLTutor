@@ -141,10 +141,8 @@ class ExerciseBuilder:
                     ## This is where ML comes in.
                     
                     oldval = self.ltl_priorities[operator]
-                    newval = round(self.ltl_priorities[operator] * scale(weight))
+                    newval = round(oldval * scale(weight))
                     self.ltl_priorities[operator] = newval
-
-            #print("Priotities now are " + str(self.ltl_priorities))
 
 
     def choose_question_kind(self):

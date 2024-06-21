@@ -67,7 +67,7 @@ class Logger:
         db_uri = get_db_uri()
         self.engine = create_engine(db_uri)
         Base.metadata.create_all(self.engine)
-        self.session_factory = sessionmaker(bind=self.engine)
+        self.session_factory = sessionmaker(bind=self.engine, expire_on_commit=True)
         self.Session = scoped_session(self.session_factory)
 
         self.inspector = inspect(self.engine)
@@ -78,9 +78,10 @@ class Logger:
             Base.metadata.tables[GENERATED_EXERCISE_TABLE].create(self.engine)
 
     def record(self, log):
-        session = self.Session()
-        session.add(log)
-        session.commit()
+        with self.Session() as session:
+            session.add(log)
+            session.commit()
+
     
     def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
 
@@ -127,11 +128,10 @@ class Logger:
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
 
-        session = self.Session()
-
-        lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
-        logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
-        return logs
+        with self.Session() as session:
+            lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
+            logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
+            return logs
 
 
     def recordGeneratedExercise(self, userId, exercise_data, exercise_name):
@@ -147,27 +147,26 @@ class Logger:
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
 
-        session = self.Session()
-        complexity = session.query(GeneratedExercise.complexity).filter(GeneratedExercise.user_id == userId).order_by(GeneratedExercise.timestamp.desc()).first()
-        return complexity[0] if complexity else None
+        with self.Session() as session:
+            complexity = session.query(GeneratedExercise.complexity).filter(GeneratedExercise.user_id == userId).order_by(GeneratedExercise.timestamp.desc()).first()
+            return complexity[0] if complexity else None
     
 
     def getUserExercises(self, userId, lookback_days=30):
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
 
-        session = self.Session()
-
-        lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
-        logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
-        return logs
+        with self.Session() as session:
+            lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
+            logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
+            return logs
     
     def getExerciseResponses(self, exercise_name):
         if not isinstance(exercise_name, str):
             raise ValueError("exercise_name should be a string")
 
-        session = self.Session()
-        student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
-        # I think I want to filter student_responses to remove some fields perhaps.
-        return student_responses
+        with self.Session() as session:
+            student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
+            # I think I want to filter student_responses to remove some fields perhaps.
+            return student_responses
     
