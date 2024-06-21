@@ -200,12 +200,10 @@ def apply_special_pattern_if_possible(node):
 
 def correct_grammar(text):
     return text
-    ## TODO: Correcting an issue here
-    # blob = TextBlob(text)
-    # corrected_text = str(blob.correct())
-    # languageTool = language_tool_python.LanguageTool('en-US')
-    # corrected_text = languageTool.correct(text)
 
-    ## Now, if any text is in single quotes, make it lowecase
-    corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
-    return corrected_text
+    # with language_tool_python.LanguageTool('en-US') as languageTool:
+    #     corrected_text = languageTool.correct(text)
+
+    # ## Now, if any text is in single quotes, make it lowecase
+    # corrected_text = re.sub(r"'(.*?)'", lambda x: f"'{x.group(1).lower()}'", corrected_text)
+    # return corrected_text

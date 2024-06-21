@@ -27,9 +27,9 @@ RUN /venv/bin/conda-unpack
 FROM debian:buster-slim
 
 # Install Java
-RUN apt-get update && \
-    apt-get install -y openjdk-11-jdk && \
-    apt-get clean;
+# RUN apt-get update && \
+#     apt-get install -y openjdk-11-jdk && \
+#     apt-get clean;
 
 
 COPY . .
