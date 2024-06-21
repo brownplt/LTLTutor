@@ -31,8 +31,8 @@ class User(UserMixin, Base):
     __tablename__ = USER_TABLE
 
     id = Column(Integer, primary_key=True)
-    username = Column(String(30), unique=True)
-    password_hash = Column(String(128))
+    username = Column(String, unique=True)
+    password_hash = Column(String)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
