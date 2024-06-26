@@ -55,21 +55,21 @@ class AnonymousStudent(User):
     __mapper_args__ = {
         'polymorphic_identity': 'anonymous-student',
     }
-    # Additional attributes or methods for AnonymousStudent
+
 
 class CourseStudent(User):
     __mapper_args__ = {
         'polymorphic_identity': 'course-student',
     }
 
-    course_id: Mapped[str] = mapped_column(String) 
+    course_id: Mapped[str] = mapped_column(String, nullable=True) 
 
 
 class CourseInstructor(User):
     __mapper_args__ = {
         'polymorphic_identity': 'course-instructor',
     }
-    password_hash: Mapped[str] = mapped_column(String)
+    password_hash: Mapped[str] = mapped_column(String, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -112,7 +112,8 @@ def login():
             if user_type == 'course-instructor':
                 username = request.form.get('username')
                 password = request.form.get('password')
-                user = session.query(User).filter_by(username=username).first()
+                user = session.query(CourseInstructor).filter_by(username=username).first()
+
                 canLogin = (user is not None) and check_password_hash(user.password_hash, password)
 
                 if not canLogin:
@@ -122,7 +123,7 @@ def login():
             elif user_type == 'course-student':
                 username = request.form.get('username')
                 course_id = request.form.get('course_id')
-                user = session.query(User).filter_by(username=username, course_id=course_id).first()
+                user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
 
                 ## If user did not already exist, create a new user
                 if user is None:
@@ -136,6 +137,9 @@ def login():
                 username = gen_anon_user_name()
                 user = AnonymousStudent(username=username)
                 
+
+                ## TODO: Check if user already exists, if so -- generate a new username
+
                 session.add(user)
                 session.commit()
                 canLogin = user is not None
@@ -143,6 +147,7 @@ def login():
                 return "Invalid user type.", 400
 
             if canLogin:
+                print('Logging in user')
                 login_user(user)
                 return redirect(url_for('index'))
     elif request.method == 'GET':
@@ -168,7 +173,7 @@ def signup():
                 return render_template('auth/signup.html')
 
             password_hash = generate_password_hash(password)
-            user = User(username=username, password_hash=password_hash)
+            user = CourseInstructor(username=username, password_hash=password_hash)
             session.add(user)
             session.commit()
             login_user(user)
