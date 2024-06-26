@@ -195,9 +195,6 @@ def instructorhome():
     userId = getUserName()
     authored = get_owned_courses(userId)
     owned_course_names = [course.name for course in authored]
-    print("Owned courses:")
-    print(owned_course_names)
-
     return render_template('instructorhome.html', uid = userId, owned_course_names=owned_course_names)
 
 

@@ -80,9 +80,6 @@ class CourseInstructor(User):
         return check_password_hash(self.password_hash, password)
 
 
-
-
-
 def login_required_as_courseinstructor(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -100,7 +97,6 @@ Base.metadata.create_all(engine)
 inspector = inspect(engine)
 if USER_TABLE not in inspector.get_table_names():
     Base.metadata.tables[USER_TABLE].create(engine)
-
 
 if COURSE_TABLE not in inspector.get_table_names():
     Base.metadata.tables[COURSE_TABLE].create(engine)

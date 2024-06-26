@@ -16,9 +16,7 @@
                 <h1 class="text-center mb-4">Signup</h1>
 
                 <div class="alert alert-secondary" role="alert">
-                    The LTL Tutor requires users to make accounts so that it can build personalized user-models. Your model is built by tracking your responses to tutor questions, and is used to adaptively generate new exercises.
-
-                    We may use your responses for research purposes, but will not share responses with any third parties. By using this tool and creating an account, you consent to this use of response storage. If you do not consent, please close this page, and do not use the tool.
+                    By signing up as an instructor, you can register courses and view answers given by students in your course.
                 </div>
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
@@ -53,5 +51,6 @@
             </div>
         </div>
     </div>
+    {% include 'footer.html' %}
 </body>
 </html>
