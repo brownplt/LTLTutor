@@ -29,24 +29,48 @@
                 {% endwith %}
 
 
+
+                <form action="/login" method="POST">
+                    <input type="hidden" name="user_type" value="anonymous-student">
+                    <input type="submit" value="Login Anonymously" class="btn btn-primary">
+                </form>
+
+
+                <form action="/login" method="POST">
+                    <input type="hidden" name="user_type" value="course-student">
+
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username-student" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="username">Course:</label>
+                        <input type="text" id="course_id" name="course_id" class="form-control" required>
+                    </div>
+
+                    <input type="submit" value="Login to a course as a student" class="btn btn-primary">
+                </form>
+
+
+
                 <form action="/login" method="POST">
                     <div class="form-group">
                         <label for="username">Username:</label>
-                        <input type="text" id="username" name="username" class="form-control" required>
+                        <input type="text" id="instr-username" name="username" class="form-control" required>
                     </div>
 
                     <div class="form-group">
                         <label for="password">Password:</label>
-                        <input type="password" id="password" name="password" class="form-control" required>
+                        <input type="password" id="instr-password" name="password" class="form-control" required>
                     </div>
 
-                    <input type="submit" value="Login" class="btn btn-primary">
+                    <input type="submit" value="Login as an Instructor" class="btn btn-primary">
                     
                 </form>
 
                 <div class="mt-3">
                     <p class="text-center">
-                        Don't have an account? <a href="/signup" class="btn btn-outline-primary">Sign up here</a>
+                        Don't have an instructor account? <a href="/signup" class="btn btn-outline-primary">Sign up here</a>
                     </p>
                 </div>
             </div>

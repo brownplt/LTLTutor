@@ -10,3 +10,9 @@ An intelligent tutoring system for Linear Temporal Logic. This tutor is grounded
 You can host this tutor following [steps in the wiki](https://github.com/brownplt/LTLTutor/wiki/Hosting-the-LTL-Tutor).
 
 
+## TODO
+
+- [] Change exercise home --> instructor home. Change how we authenticate and course codes
+- [] Stop storing existing exercises created
+- [] Log user ID AND user course code IF possible
+- [] Model update for users to show their courses and codes
