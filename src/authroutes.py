@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from logger import get_db_uri
 
-from flask import Blueprint
+from flask import Blueprint, abort
 import os
 import random
 import string
@@ -88,7 +88,7 @@ def login_required_as_courseinstructor(f):
     def decorated_function(*args, **kwargs):
         # Check if the user is not authenticated
         if not current_user.is_authenticated:
-            return redirect(url_for('login'))  # Assuming 'login' is the endpoint for your login page
+            return redirect(url_for('authroutes.login'))  
         # Check if the user is not a CourseInstructor
         if not isinstance(current_user, CourseInstructor):
             abort(403)  # Forbidden access
@@ -119,7 +119,7 @@ def init_app(app):
 
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
-    
+
     if request.method == 'POST':
         user = None
         canLogin = False
@@ -143,6 +143,8 @@ def login():
                 user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
 
 
+
+
                 ## TODO: User cannot be in more than one course. May have to change this later.
 
 
@@ -152,24 +154,36 @@ def login():
                     flash('Could not find a course with ID ' + course_id)
                     return redirect(url_for('authroutes.login'))
 
+                canLogin = user is not None
                 ## If user did not already exist, create a new user
                 if user is None:
                     # Create a new user
                     user = CourseStudent(username=username, course_id=course_id)
-                    session.add(user)
-                    session.commit()
-
-                    canLogin = user is not None
-            elif user_type == 'anonymous-student':
-                username = gen_anon_user_name()
-                user = AnonymousStudent(username=username)
+                    try:
+                        session.add(user)
+                        session.commit()
+                        canLogin = user is not None
+                    except Exception as e:
+                        flash('User {username} already exists.')
+                        session.rollback()
+                        canLogin = False
+                        
                 
+            elif user_type == 'anonymous-student':
+                ## This should really never happen, but just in case
+                tries_remaining = 10
+                username = ""
+                while tries_remaining > 0:
+                    username = gen_anon_user_name()
+                    existing_user = session.query(User).filter_by(username=username).first()
+                    if existing_user is None:
+                        break
+                    tries_remaining -= 1               
 
-                ## TODO: Check if user already exists, if so -- generate a new username
-
+                user = AnonymousStudent(username=username)
                 session.add(user)
                 session.commit()
-                canLogin = user is not None
+                canLogin = tries_remaining > 0
             else:
                 return "Invalid user type.", 400
 
@@ -177,6 +191,9 @@ def login():
                 print('Logging in user')
                 login_user(user)
                 return redirect(url_for('index'))
+            else:
+                flash('Login failed. Please try again.')
+                return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
         return render_template('auth/login.html')
     else:
@@ -245,3 +262,15 @@ def get_owned_courses(username):
     with Session() as session:
         exercises = session.query(Course).filter_by(owner=username).all()
         return exercises
+    
+
+## TODO: Only works if exactly one course per user.
+# May have to change.
+def getUserCourse(username):
+    with Session() as session:
+        course = session.query(CourseStudent).filter_by(username=username).first()
+
+        if course is None:
+            return ""
+
+        return course.course_id

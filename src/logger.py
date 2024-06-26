@@ -80,6 +80,7 @@ class Logger:
 
     def record(self, log):
         with self.Session() as session:
+            print("Recording log")
             session.add(log)
             session.commit()
 

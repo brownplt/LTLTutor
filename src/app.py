@@ -17,7 +17,7 @@ import requests
 from stepper import traceSatisfactionPerStep
 from flask_login import login_required, current_user
 from flask import Blueprint
-from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor
+from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
 port = os.getenv('PORT', default='5000')
@@ -32,12 +32,6 @@ def getUserName():
 
 def getUserId():
     return current_user.id
-
-def getUserCourse():
-    # This should return only if the user is a course student
-    if current_user.type == "course-student":
-        return current_user.course
-    return ""
 
     
 
@@ -200,8 +194,11 @@ def exercisehome():
 def instructorhome():
     userId = getUserName()
     authored = get_owned_courses(userId)
-    owned_course_names = [exercise.name for exercise in authored]
-    return render_template('instructorhome.html', uid = getUserName(), owned_course_names=owned_course_names)
+    owned_course_names = [course.name for course in authored]
+    print("Owned courses:")
+    print(owned_course_names)
+
+    return render_template('instructorhome.html', uid = userId, owned_course_names=owned_course_names)
 
 
 
@@ -244,7 +241,7 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = getUserName()
-    courseId = getUserCourse()
+    courseId = getUserCourse(userId)
     mp_class = ""
     mp_formula_literals = []
     # If response has a mp_class field, log it

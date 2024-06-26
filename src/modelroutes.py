@@ -16,11 +16,17 @@ def getLogsForUser(userId):
     logs = logger.getUserLogs(userId=userId, lookback_days=30)
     return logs
 
+
+### TODO: This is broken, something is wrong.
 @modelroutes.route('/view/logs', methods=['GET'])
 @login_required
 def viewstudentlogs():
     userId = current_user.username
     logs = getLogsForUser(userId)
+
+    ## TODO: Remove this print statement.
+    print("Got {n} logs for user {u}".format(n=len(logs), u=userId))
+
     to_return = {}
     for log in logs:
         to_return[log.id] = {
