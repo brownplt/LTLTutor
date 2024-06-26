@@ -142,6 +142,16 @@ def login():
                 course_id = request.form.get('course_id')
                 user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
 
+
+                ## TODO: User cannot be in more than one course. May have to change this later.
+
+
+                ## Ensure that course_id exists
+                course = session.query(Course).filter_by(name=course_id).first()
+                if course is None:
+                    flash('Could not find a course with ID ' + course_id)
+                    return redirect(url_for('authroutes.login'))
+
                 ## If user did not already exist, create a new user
                 if user is None:
                     # Create a new user
@@ -198,11 +208,6 @@ def signup():
     return render_template('auth/signup.html')
 
 
-### New route to register exercises
-
-
-
-## TODO: Change this to register course, and add it to instructor
 @authroutes.route('/register-course', methods=['GET', 'POST'])
 @login_required_as_courseinstructor
 def register_exercise():
