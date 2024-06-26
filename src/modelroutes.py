@@ -1,7 +1,7 @@
 
 from flask import Flask, render_template, request, redirect, url_for, flash, current_app, Blueprint
 from flask_login import login_required, current_user
-from authroutes import Course, retrieve_course_data, get_owned_courses
+from authroutes import Course, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor
 from logger import Logger
 import json
 import exercisebuilder
@@ -31,7 +31,8 @@ def viewstudentlogs():
             "question_options": log.question_options,
             "correct_answer": log.correct_answer,
             "mp_class": log.mp_class,
-            "exercise": log.exercise
+            "exercise": log.exercise,
+            "course": log.course
         }
     return json.dumps(to_return)
 
@@ -88,17 +89,18 @@ def viewexercise():
     return json.dumps(to_return)
 
 
-@modelroutes.route('/view/responses/<exercise_name>', methods=['GET'])
-@login_required
-def viewexerciseresponses(exercise_name):
+
+@modelroutes.route('/view/responses/<course_name>', methods=['GET'])
+@login_required_as_courseinstructor
+def viewexerciseresponses(course_name):
     userId = current_user.username
-    exercise = retrieve_course_data(exercise_name)
+    course = retrieve_course_data(course_name)
 
     ### Now make sure that the exercise is owned by the user.
-    if exercise.owner != userId:
+    if course.owner != userId:
         return "You do not have access to this resource.", 401
 
-    responses = logger.getExerciseResponses(exercise_name)
+    responses = logger.getCourseResponses(course_name=course_name)
     to_return = {}
     for response in responses:
         to_return[response.id] = {
@@ -110,9 +112,7 @@ def viewexerciseresponses(exercise_name):
             "correct_answer": response.correct_answer,
             "question_type": response.question_type,
             "mp_class": response.mp_class,
-            "exercise": response.exercise
+            "exercise": response.exercise,
+            "course": response.course
         }
     return json.dumps(to_return)
-
-
-

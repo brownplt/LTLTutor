@@ -12,7 +12,8 @@ You can host this tutor following [steps in the wiki](https://github.com/brownpl
 
 ## TODO
 
-- [] Change exercise home --> instructor home. Change how we authenticate and course codes
-- [] Stop storing existing exercises created
-- [] Log user ID AND user course code IF possible
-- [] Model update for users to show their courses and codes
+- [x] Change exercise home --> instructor home. Change how we authenticate and course codes
+- [x] Stop storing existing exercises created
+- [] Log user ID AND user course code IF exists
+    - [] Allow instructors to get logs within owned courses.
+- [] Model / View update for users to see their courses and codes

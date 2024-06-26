@@ -50,6 +50,7 @@ class StudentResponse(Base):
     question_type = Column(String)
     mp_class = Column(String)
     exercise = Column(String)
+    course = Column(String, default="")
 
 
 class GeneratedExercise(Base):
@@ -83,7 +84,7 @@ class Logger:
             session.commit()
 
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course):
 
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
@@ -99,28 +100,26 @@ class Logger:
             raise ValueError("mp_class should be a string")
         if not isinstance(exercise, str):
             raise ValueError("exercise should be a string")
+        
+        if not isinstance(course, str):
+            raise ValueError("course should be a string")
 
         ## We still want to log the response if there are no misconceptions
         if misconceptions == None or len(misconceptions) == 0:
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
             self.record(log)
 
 
 
         for misconception in misconceptions:
-
-            ## Ensure everything is of the correct type
-
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
 
-            
-
             log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
             self.record(log)
 
     
@@ -160,13 +159,12 @@ class Logger:
             lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
             logs = session.query(GeneratedExercise).filter(GeneratedExercise.user_id == userId, GeneratedExercise.timestamp >= lookback_date).all()
             return logs
-    
-    def getExerciseResponses(self, exercise_name):
-        if not isinstance(exercise_name, str):
+        
+    def getCourseResponses(self, course_name):
+        if not isinstance(course_name, str):
             raise ValueError("exercise_name should be a string")
 
         with self.Session() as session:
-            student_responses = session.query(StudentResponse).filter(StudentResponse.exercise == exercise_name).all()
-            # I think I want to filter student_responses to remove some fields perhaps.
+            student_responses = session.query(StudentResponse).filter(StudentResponse.course == course_name).all()
             return student_responses
     

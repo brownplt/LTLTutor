@@ -231,9 +231,9 @@ def register_exercise():
     return render_template('instructorhome.html')
 
 
-def retrieve_course_data(exercise_name) -> Course:
+def retrieve_course_data(course_name) -> Course:
     with Session() as session:
-        exercise = session.query(Course).filter_by(name=exercise_name).first()
+        exercise = session.query(Course).filter_by(name=course_name).first()
         return exercise
 
 def get_owned_courses(username):

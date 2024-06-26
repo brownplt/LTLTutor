@@ -33,6 +33,12 @@ def getUserName():
 def getUserId():
     return current_user.id
 
+def getUserCourse():
+    # This should return only if the user is a course student
+    if current_user.type == "course-student":
+        return current_user.course
+    return ""
+
     
 
 @app.template_filter('flatten')
@@ -238,6 +244,7 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = getUserName()
+    courseId = getUserCourse()
     mp_class = ""
     mp_formula_literals = []
     # If response has a mp_class field, log it
@@ -253,7 +260,7 @@ def loganswer(questiontype):
 
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect, 
-                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise)
+                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
