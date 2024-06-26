@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, current_app
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker, Mapped, mapped_column
 from sqlalchemy import Column, Integer, String, create_engine, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from logger import get_db_uri
@@ -19,36 +19,63 @@ def generate_random_string():
     random_string = ''.join(random.choice(characters) for _ in range(6))
     return random_string
 
+def gen_anon_user_name():
+    return 'anon-user-' + generate_random_string()
+
 Base = declarative_base()
 engine = create_engine(get_db_uri())
 Session = sessionmaker(bind=engine, expire_on_commit=True)
 
 USER_TABLE = 'users'
-EXERCISE_TABLE = 'registered_exercises'
+COURSE_TABLE = 'registered_courses'
+
+
+class AuthoredExercise(Base):
+    __tablename__ = COURSE_TABLE
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    owner = Column(String)
+
 
 
 class User(UserMixin, Base):
-    __tablename__ = USER_TABLE
+    __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True)
-    password_hash = Column(String)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String, unique=True)
+    type: Mapped[str] = mapped_column(String)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'user',
+        'polymorphic_on': type
+    }
+
+
+class AnonymousStudent(User):
+    __mapper_args__ = {
+        'polymorphic_identity': 'anonymous-student',
+    }
+    # Additional attributes or methods for AnonymousStudent
+
+class CourseStudent(User):
+    __mapper_args__ = {
+        'polymorphic_identity': 'course-student',
+    }
+
+    course_id: Mapped[str] = mapped_column(String) 
+
+
+class CourseInstructor(User):
+    __mapper_args__ = {
+        'polymorphic_identity': 'course-instructor',
+    }
+    password_hash: Mapped[str] = mapped_column(String)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-
-class AuthoredExercise(Base):
-    __tablename__ = EXERCISE_TABLE
-
-    id = Column(Integer, primary_key=True)
-    exercise_data = Column(String)
-    name = Column(String)
-    owner = Column(String)
-
 
 
 Base.metadata.create_all(engine)
@@ -58,8 +85,8 @@ if USER_TABLE not in inspector.get_table_names():
     Base.metadata.tables[USER_TABLE].create(engine)
 
 
-if EXERCISE_TABLE not in inspector.get_table_names():
-    Base.metadata.tables[EXERCISE_TABLE].create(engine)
+if COURSE_TABLE not in inspector.get_table_names():
+    Base.metadata.tables[COURSE_TABLE].create(engine)
 
 def init_app(app):
     login_manager = LoginManager()
@@ -75,23 +102,53 @@ def init_app(app):
 
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
-    print('Login route with method: ' + request.method)
+    
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        with Session() as session:
-            user = session.query(User).filter_by(username=username).first()
+        user = None
+        canLogin = False
 
-        if user and check_password_hash(user.password_hash, password):
-            login_user(user)
-            print('Logged in successfully.')
-            return redirect(url_for('index'))
-        else:
-            flash('Invalid username or password.')
-            #return render_template('auth/login.html', error = 'Invalid username or password.')
-            return redirect(url_for('authroutes.login'))
+        user_type = request.form.get('user_type')
+        with Session() as session:
+            if user_type == 'course-instructor':
+                username = request.form.get('username')
+                password = request.form.get('password')
+                user = session.query(User).filter_by(username=username).first()
+                canLogin = (user is not None) and check_password_hash(user.password_hash, password)
+
+                if not canLogin:
+                    flash('Invalid username or password.')
+                    return redirect(url_for('authroutes.login'))
+
+            elif user_type == 'course-student':
+                username = request.form.get('username')
+                course_id = request.form.get('course_id')
+                user = session.query(User).filter_by(username=username, course_id=course_id).first()
+
+                ## If user did not already exist, create a new user
+                if user is None:
+                    # Create a new user
+                    user = CourseStudent(username=username, course_id=course_id)
+                    session.add(user)
+                    session.commit()
+
+                    canLogin = user is not None
+            elif user_type == 'anonymous-student':
+                username = gen_anon_user_name()
+                user = AnonymousStudent(username=username)
+                
+                session.add(user)
+                session.commit()
+                canLogin = user is not None
+            else:
+                return "Invalid user type.", 400
+
+            if canLogin:
+                login_user(user)
+                return redirect(url_for('index'))
     elif request.method == 'GET':
         return render_template('auth/login.html')
+    else:
+        return "Invalid request method.", 400
 
 @authroutes.route('/logout')
 @login_required
@@ -102,9 +159,9 @@ def logout():
 @authroutes.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
         with Session() as session:
+            username = request.form.get('username')
+            password = request.form.get('password')
             existing_user = session.query(User).filter_by(username=username).first()
             if existing_user:
                 flash(f'Username {username} is already taken. Please choose another one.')
