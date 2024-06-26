@@ -1,7 +1,7 @@
 
 from flask import Flask, render_template, request, redirect, url_for, flash, current_app, Blueprint
 from flask_login import login_required, current_user
-from authroutes import AuthoredExercise, retrieve_exercise, get_authored_exercises
+from authroutes import Course, retrieve_course_data, get_owned_courses
 from logger import Logger
 import json
 import exercisebuilder
@@ -92,7 +92,7 @@ def viewexercise():
 @login_required
 def viewexerciseresponses(exercise_name):
     userId = current_user.username
-    exercise = retrieve_exercise(exercise_name)
+    exercise = retrieve_course_data(exercise_name)
 
     ### Now make sure that the exercise is owned by the user.
     if exercise.owner != userId:

@@ -17,7 +17,7 @@ import requests
 from stepper import traceSatisfactionPerStep
 from flask_login import login_required, current_user
 from flask import Blueprint
-from authroutes import authroutes, init_app, retrieve_exercise, get_authored_exercises
+from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor
 from modelroutes import modelroutes
 
 port = os.getenv('PORT', default='5000')
@@ -186,9 +186,17 @@ def authorquestion_get():
 @login_required
 def exercisehome():
     userId = getUserName()
-    authored = get_authored_exercises(userId)
-    authored_exercise_names = [exercise.name for exercise in authored]
-    return render_template('exercisemanager.html', uid = getUserName(), authored_exercises = authored_exercise_names)
+
+    return render_template('exercisehome.html', uid = getUserName())
+
+@app.route('/instructor/home', methods=['GET'])
+@login_required_as_courseinstructor
+def instructorhome():
+    userId = getUserName()
+    authored = get_owned_courses(userId)
+    owned_course_names = [exercise.name for exercise in authored]
+    return render_template('instructorhome.html', uid = getUserName(), owned_course_names=owned_course_names)
+
 
 
 
@@ -196,7 +204,7 @@ def exercisehome():
 @app.route('/exercise/load/<exercise_name>', methods=['GET'])
 @login_required
 def exercise(exercise_name):   
-    exercise = retrieve_exercise(exercise_name)
+    exercise = retrieve_course_data(exercise_name)
     ## Ensure that the exercise exists, else return an error
     if not exercise:
         return f"Exercise {exercise_name} not found."

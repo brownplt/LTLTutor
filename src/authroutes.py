@@ -11,6 +11,8 @@ from flask import Blueprint
 import os
 import random
 import string
+from functools import wraps
+
 authroutes = Blueprint('authroutes', __name__)
 
 
@@ -30,10 +32,10 @@ USER_TABLE = 'users'
 COURSE_TABLE = 'registered_courses'
 
 
-class AuthoredExercise(Base):
+class Course(Base):
     __tablename__ = COURSE_TABLE
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     owner = Column(String)
 
 
@@ -77,6 +79,21 @@ class CourseInstructor(User):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+
+
+
+def login_required_as_courseinstructor(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if the user is not authenticated
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))  # Assuming 'login' is the endpoint for your login page
+        # Check if the user is not a CourseInstructor
+        if not isinstance(current_user, CourseInstructor):
+            abort(403)  # Forbidden access
+        return f(*args, **kwargs)
+    return decorated_function
 
 Base.metadata.create_all(engine)
 
@@ -182,37 +199,44 @@ def signup():
 
 
 ### New route to register exercises
-@authroutes.route('/register-exercise', methods=['GET', 'POST'])
-@login_required
+
+
+
+## TODO: Change this to register course, and add it to instructor
+@authroutes.route('/register-course', methods=['GET', 'POST'])
+@login_required_as_courseinstructor
 def register_exercise():
     if request.method == 'POST':    
-        json_files = [file for file in request.files.values() if file.filename.endswith('.json')]
-        if not json_files or len(json_files) == 0:
-            flash('Exercises must be uploaded as JSON files.')
-            return render_template('exercisemanager.html')
+        coursename = request.form.get('coursename')
+        
+        if not coursename or len(coursename) == 0:
+            flash('Invalid course name.')
+            return render_template('instructorhome.html')
+        
         
         owner = current_user.username
         with Session() as session:
-            for file in json_files:
-                
-                rand_postfix = "-" + generate_random_string()
-                exercisename = file.filename.replace('.json', rand_postfix)
-                contents = file.read().decode('utf-8')
 
-                exercise = AuthoredExercise(exercise_data=contents, name=exercisename, owner=owner)
-                session.add(exercise)
-                session.commit()
-                flash(f'Exercise {exercisename} registered successfully.')
+            # Check if a course with the same name already exists
+            existing_course = session.query(Course).filter_by(name=coursename).first()
+            if existing_course:
+                flash(f'Course {coursename} already exists. Please choose another name.')
+                return render_template('instructorhome.html')
+
+            course = Course(name=coursename, owner=owner)
+            session.add(course)
+            session.commit()
+            flash(f'Course {coursename} registered successfully.')
             return redirect(url_for('authroutes.register_exercise'))
-    return render_template('exercisemanager.html')
+    return render_template('instructorhome.html')
 
 
-def retrieve_exercise(exercise_name) -> AuthoredExercise:
+def retrieve_course_data(exercise_name) -> Course:
     with Session() as session:
-        exercise = session.query(AuthoredExercise).filter_by(name=exercise_name).first()
+        exercise = session.query(Course).filter_by(name=exercise_name).first()
         return exercise
 
-def get_authored_exercises(username):
+def get_owned_courses(username):
     with Session() as session:
-        exercises = session.query(AuthoredExercise).filter_by(owner=username).all()
+        exercises = session.query(Course).filter_by(owner=username).all()
         return exercises
