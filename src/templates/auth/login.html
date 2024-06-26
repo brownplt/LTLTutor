@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>LTL Tutor: Login</title>
 
@@ -9,83 +10,96 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
 </head>
+
 <body>
 
     <!-- TODO: UI here is abysmal -->
-    <div class="container">
+    <div class="container mt-5">
+        <div class="jumbotron">
 
-        <p class="text-center"> LTLTutor is built and maintained by the <a href="https://cs.brown.edu/research/plt/">PLT Group at
-            Brown University</a>. We may use your responses for research purposes, but will not share responses with any third parties. 
-            By using this tool and creating an account, you consent to this use of response storage. 
-            If you do not consent, please close this page, and do not use the tool.</p>
+            <h1 class="display-3">Get Started!</h1>
 
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h1 class="text-center mb-4">Login</h1>
+            <p class="text-muted">LTLTutor is built and maintained by the <a
+                    href="https://cs.brown.edu/research/plt/">PLT Group at
+                    Brown University</a>. We may use your responses for research purposes, but will not share responses
+                with any third parties.
+                By using this tool and creating an account, you consent to this use of response storage.
+                If you do not consent, please close this page, and do not use the tool.</p>
+            <hr class="my-2">
+            <form action="/login" method="POST">
+                <input type="hidden" name="user_type" value="anonymous-student">
+                <input type="submit" value="Quick Start" class="btn btn-primary btn-lg btn-block">
+                <p>
+                    Quick Start allows you to use the tool without creating an account.
+                    However, you may not have persistent access to your work over time.
+                </p>
+            </form>
 
-                {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="alert alert-primary alert-dismissible fade show" role="alert">
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                        {% for message in messages %}
-                            {{ message }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-                {% endwith %}
+            <hr class="my-2">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+                {% for message in messages %}
+                {{ message }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <form action="/login" method="POST">
+                <p class="lead">Have a course code?</p>
+                <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using
+                    your instructor-provided username and course code. </p>
+                <input type="hidden" name="user_type" value="course-student">
 
-
-
-                <form action="/login" method="POST">
-                    <input type="hidden" name="user_type" value="anonymous-student">
-                    <input type="submit" value="Login Anonymously" class="btn btn-primary">
-                </form>
-
-
-                <form action="/login" method="POST">
-                    <input type="hidden" name="user_type" value="course-student">
-
-                    <div class="form-group">
-                        <label for="username">Username:</label>
+                <div class="form-group row">
+                    <label for="username-student" class="col-sm-2 col-form-label">Username:</label>
+                    <div class="col-sm-10">
                         <input type="text" id="username-student" name="username" class="form-control" required>
                     </div>
-                    <div class="form-group">
-                        <label for="username">Course:</label>
+                </div>
+                <div class="form-group row">
+                    <label for="course_id" class="col-sm-2 col-form-label">Course:</label>
+                    <div class="col-sm-10">
                         <input type="text" id="course_id" name="course_id" class="form-control" required>
                     </div>
+                </div>
 
-                    <input type="submit" value="Login to a course as a student" class="btn btn-primary">
-                </form>
+                <input type="submit" value="Login as a Student" class="btn btn-primary">
+
+            </form>
 
 
+            <hr class="my-2">
 
-                <form action="/login" method="POST">
-                    <input type="hidden" name="user_type" value="course-instructor">
-                    <div class="form-group">
-                        <label for="username">Username:</label>
+            <form action="/login" method="POST">
+                <p class="lead">Instructor Login</p>
+                <p class="text-muted">
+                    Don't have an instructor account? <a href="/signup" class="btn btn-outline-primary">Sign up here</a>
+                </p>
+                <input type="hidden" name="user_type" value="course-instructor">
+
+                <div class="form-group row">
+                    <label for="instr-username" class="col-sm-2 col-form-label">Username:</label>
+                    <div class="col-sm-10">
                         <input type="text" id="instr-username" name="username" class="form-control" required>
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="password">Password:</label>
+                <div class="form-group row">
+                    <label for="instr-password" class="col-sm-2 col-form-label">Password:</label>
+                    <div class="col-sm-10">
                         <input type="password" id="instr-password" name="password" class="form-control" required>
                     </div>
-
-                    <input type="submit" value="Login as an Instructor" class="btn btn-primary">
-                    
-                </form>
-
-                <div class="mt-3">
-                    <p class="text-center">
-                        Don't have an instructor account? <a href="/signup" class="btn btn-outline-primary">Sign up here</a>
-                    </p>
                 </div>
-            </div>
+
+                <input type="submit" value="Login" class="btn btn-primary">
+            </form>
         </div>
     </div>
     {% include 'footer.html' %}
 </body>
-</html>
 
+</html>
