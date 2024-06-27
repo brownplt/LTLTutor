@@ -105,6 +105,7 @@ def init_app(app):
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = 'authroutes.login'
+    login_manager.login_message = ''
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -160,7 +161,7 @@ def login():
                         session.commit()
                         canLogin = user is not None
                     except Exception as e:
-                        flash('User {username} already exists.')
+                        flash('User {username} already exists.'.format(username=username))
                         session.rollback()
                         canLogin = False
                         
