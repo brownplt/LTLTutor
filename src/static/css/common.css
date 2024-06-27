@@ -17,3 +17,20 @@
     width: 100%;
 }
 
+
+.toggle-arrow {
+    cursor: pointer;
+    user-select: none;
+}
+.toggle-arrow::after {
+    content: '\25B6'; /* Right-pointing triangle */
+    display: inline-block;
+    margin-left: 5px;
+    transition: transform 0.2s ease-in-out;
+}
+.toggle-arrow.collapsed::after {
+    transform: rotate(0deg);
+}
+.toggle-arrow:not(.collapsed)::after {
+    transform: rotate(90deg); /* Rotate arrow when expanded */
+}
