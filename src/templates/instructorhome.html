@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor: Exercise Home</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+</head>
+
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+
+        <div class="container mt-4 mb-2 justify-content-center">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Register a new course</h5>
+                </div>
+                <div class="card-body">
+                    <form id="exerciseForm" action="/register-course" method="POST">
+                        <div class="form-group">
+                            <label for="coursename">Course Name:</label>
+                            <input type="text" id="coursename" name="coursename" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </form>
+                </div>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="card-footer">
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <ul class="mb-0">
+                            {% for message in messages %}
+                            <li>{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+
+        {% if owned_course_names and owned_course_names|length > 0 %}
+        <div class="container mt-4 mb-2 justify-content-center">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Courses You Have Registered</h5>
+                </div>
+                <ul class="list-group list-group-flush" id="owned_courses">
+                    {% for course in owned_course_names %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{course}}
+                        <a href="/view/responses/{{course}}" class="btn btn-primary btn-sm">View Logs</a> 
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% include 'footer.html' %}
+</body>
+
+</html>

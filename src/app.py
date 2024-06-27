@@ -17,7 +17,7 @@ import requests
 from stepper import traceSatisfactionPerStep
 from flask_login import login_required, current_user
 from flask import Blueprint
-from authroutes import authroutes, init_app, retrieve_exercise, get_authored_exercises
+from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
 port = os.getenv('PORT', default='5000')
@@ -186,9 +186,17 @@ def authorquestion_get():
 @login_required
 def exercisehome():
     userId = getUserName()
-    authored = get_authored_exercises(userId)
-    authored_exercise_names = [exercise.name for exercise in authored]
-    return render_template('exercisemanager.html', uid = getUserName(), authored_exercises = authored_exercise_names)
+
+    return render_template('exercisehome.html', uid = getUserName())
+
+@app.route('/instructor/home', methods=['GET'])
+@login_required_as_courseinstructor
+def instructorhome():
+    userId = getUserName()
+    authored = get_owned_courses(userId)
+    owned_course_names = [course.name for course in authored]
+    return render_template('instructorhome.html', uid = userId, owned_course_names=owned_course_names)
+
 
 
 
@@ -196,7 +204,7 @@ def exercisehome():
 @app.route('/exercise/load/<exercise_name>', methods=['GET'])
 @login_required
 def exercise(exercise_name):   
-    exercise = retrieve_exercise(exercise_name)
+    exercise = retrieve_course_data(exercise_name)
     ## Ensure that the exercise exists, else return an error
     if not exercise:
         return f"Exercise {exercise_name} not found."
@@ -230,6 +238,7 @@ def loganswer(questiontype):
     question_options = json.dumps(data['question_options'])
 
     userId = getUserName()
+    courseId = getUserCourse(userId)
     mp_class = ""
     mp_formula_literals = []
     # If response has a mp_class field, log it
@@ -245,7 +254,7 @@ def loganswer(questiontype):
 
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect, 
-                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise)
+                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
