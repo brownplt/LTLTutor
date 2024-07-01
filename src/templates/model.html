@@ -110,9 +110,9 @@
                     var chart = new Chart(ctx, {
                         type: 'line',
                         data: {
-                            labels: {{ misconceptions_over_time.values() | map(attribute = '0') | flatten | list | tojson }},
+                            labels: {{ misconception_weights_over_time.values() | map(attribute = '0') | flatten | list | tojson }},
                     datasets: [
-                        {% for key, value in misconceptions_over_time.items() %}
+                        {% for key, value in misconception_weights_over_time.items() %}
                     {
                         label: '{{ key }}',
                             data: {{ value | map(attribute = '1') | list | tojson }},

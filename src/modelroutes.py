@@ -17,15 +17,30 @@ def getLogsForUser(userId):
     return logs
 
 
-### TODO: This is broken, something is wrong.
+
+@modelroutes.route('/profile', methods=['GET'])
+@login_required
+def profile():
+    uid = current_user.username
+    logs = getLogsForUser(uid)
+    exercise_builder = exercisebuilder.ExerciseBuilder(logs)
+    model = exercise_builder.get_model()
+
+    complexity = model['complexity']
+    misconception_weights_over_time = model['misconception_weights_over_time']
+
+    print("Misconception weights over time: ", misconception_weights_over_time)
+
+    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time)
+
+
+
+
 @modelroutes.route('/view/logs', methods=['GET'])
 @login_required
 def viewstudentlogs():
     userId = current_user.username
     logs = getLogsForUser(userId)
-
-    ## TODO: Remove this print statement.
-    print("Got {n} logs for user {u}".format(n=len(logs), u=userId))
 
     to_return = {}
     for log in logs:
@@ -52,32 +67,26 @@ def viewmodel():
     exercise_builder = exercisebuilder.ExerciseBuilder(logs)
     model = exercise_builder.get_model()
     misconception_weights = model['misconception_weights']
-    misconceptions_over_time = model['misconceptions_over_time']
+    misconception_weights_over_time = model['misconception_weights_over_time']
 
-    ### TODO: Make this misconception weights over time or something?
-
-    # I want to make sure that if a misconception is not present for a given timestamp,
-    # it's value for that timestamp is 0.
-    # So I need to fill in the gaps in the dictionary.
-    # I will do this by iterating over all timestamps and adding the missing ones.
     all_timestamps = set()
-    for key, value in misconceptions_over_time.items():
+    for key, value in misconception_weights_over_time.items():
         for dt, freq in value:
             all_timestamps.add(dt)
 
     # Then, for each misconception, I will add the missing timestamps with a frequency of 0.
-    for key, value in misconceptions_over_time.items():
+    for key, value in misconception_weights_over_time.items():
         for dt in all_timestamps:
             if dt not in [dt for dt, freq in value]:
                 value.append((dt, 0))
 
-    for key, value in misconceptions_over_time.items():
-        misconceptions_over_time[key] = [(dt.timestamp(), freq) for dt, freq in value]
+    for key, value in misconception_weights_over_time.items():
+        misconception_weights_over_time[key] = [(dt.timestamp(), freq) for dt, freq in value]
 
 
     complexity = model['complexity']
 
-    return render_template('model.html', uid = uid, complexity = complexity, misconception_weights = misconception_weights, misconceptions_over_time = misconceptions_over_time)
+    return render_template('model.html', uid = uid, complexity = complexity, misconception_weights = misconception_weights, misconception_weights_over_time = misconception_weights_over_time)
     
 @modelroutes.route('/view/generatedexercises', methods=['GET'])
 @login_required
