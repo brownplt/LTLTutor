@@ -29,8 +29,6 @@ def profile():
     complexity = model['complexity']
     misconception_weights_over_time = model['misconception_weights_over_time']
 
-    print("Misconception weights over time: ", misconception_weights_over_time)
-
     return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time)
 
 

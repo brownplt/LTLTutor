@@ -433,9 +433,14 @@ class ExerciseBuilder:
         misconception_weights = self.calculate_misconception_weights(concept_history)
         misconception_count = 0
 
+        
 
         for misconception in concept_history:
+
+
             buckets_for_misconception = concept_history[misconception]
+
+
 
             ## Sort the buckets by date
             buckets_for_misconception.sort(key=lambda x: x[0])
@@ -445,14 +450,19 @@ class ExerciseBuilder:
                 time_bucket, frequency = buckets_for_misconception[i]
                 misconception_count += frequency
 
-                sub_history = buckets_for_misconception[:i]
-                misconception_weights_over_time[misconception].append( (time_bucket, sub_history))
+                sub_history = { misconception : buckets_for_misconception[:i+1]}
 
 
 
+                weight = self.calculate_misconception_weights(sub_history)
+                to_append = {
+                    "time" :time_bucket, 
+                    "weight": weight[misconception]
+                }
 
-
-
+                
+                #to_append = (time_bucket, weight[misconception])
+                misconception_weights_over_time[misconception].append(to_append)
 
         return {
             "misconception_weights": misconception_weights,

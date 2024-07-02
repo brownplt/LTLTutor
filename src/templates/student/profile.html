@@ -5,9 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
-    <script
-        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@1.1.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+
+    <!-- Include Moment.js -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
+    <!-- Include Chart.js Moment Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/min/chartjs-adapter-moment.min.js"></script>
+    <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -25,57 +31,60 @@
         {% include 'navbar.html' %}
 
 
+
+
         <a href="/view/logs" class="btn btn-primary">View Logs</a>
         <a href="/view/generatedexercises" class="btn btn-primary">View Generated Exercises</a>
 
 
         {% for misconception, weights in misconception_weights_over_time.items() %}
 
-            {% if weights|length > 0 %}
+        {% if weights|length > 0 %}
 
-            <div>
-                <h4> Estimated occurance of {{misconception}} over time </h4>
-                <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
+        <div>
+            <h4> Estimated occurance of {{misconception}} over time </h4>
+            <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
 
-
-                <script>
-                    var ctx = document.getElementById('estimatedMisconceptions{{ misconception }}').getContext('2d');
-                    var weightsData = {{ weights|tojson }};
-                    var labels = weightsData.map(function(weight) { return weight[0]; });
-                    var dataPoints = weightsData.map(function(weight) { return weight[1]; });
-
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: '{{ misconception }}',
-                                data: dataPoints,
-                                fill: false,
-                                borderColor: 'rgb(75, 192, 192)',
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
+            <script>
+                var ctx = document.getElementById('estimatedMisconceptions{{misconception}}').getContext('2d');
+                var weightsData = {{ weights | tojson }};
+            
+                var dataWithTimestamps = weightsData.map(function (weight) {
+                    return { x: new Date(weight["time"]).getTime(), y: weight["weight"] };
+                });
+            
+                // Calculate minimum timestamp and subtract one hour
+                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 3600000; // 3600000 milliseconds = 1 hour
+            
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: '{{ misconception }}',
+                            data: dataWithTimestamps,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
                         scales: {
                             x: {
-                                type: 'linear',
-                                    beginAtZero: false,
-                                        title: {
+                                type: 'linear', // Use a linear scale for the x-axis
+                                position: 'bottom', // Position the x-axis at the bottom
+                                title: {
                                     display: true,
-                                        text: 'Timestamp'
-                                }
-                            },
-                            y: {
-                                beginAtZero: true
+                                    text: 'Time'
+                                },
+                                min: minTimestamp, // Set the calculated minimum timestamp as the start of the x-axis
                             }
                         }
                     }
-                    });
-                </script>
-            </div>
+                });
+            </script>
+        </div>
 
-            {% endif %}
+        {% endif %}
         {% endfor %}
 
 
