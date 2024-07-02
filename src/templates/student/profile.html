@@ -7,10 +7,7 @@
     <title>LTL Tutor</title>
 
 
-    <!-- Include Moment.js -->
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
-    <!-- Include Chart.js Moment Adapter -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/min/chartjs-adapter-moment.min.js"></script>
+
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -31,31 +28,35 @@
         {% include 'navbar.html' %}
 
 
+        <div class="btn-group btn-group-lg" role="group">
+            <a href="/view/logs" class="btn btn-primary">View Logs</a>
+            <a href="/view/generatedexercises" class="btn btn-primary">View Generated Exercises</a>
+        </div>
 
 
-        <a href="/view/logs" class="btn btn-primary">View Logs</a>
-        <a href="/view/generatedexercises" class="btn btn-primary">View Generated Exercises</a>
 
 
         {% for misconception, weights in misconception_weights_over_time.items() %}
 
         {% if weights|length > 0 %}
-
-        <div>
-            <h4> Estimated occurance of {{misconception}} over time </h4>
+        <p class="lead toggle-arrow collapsed" data-toggle="collapse"
+            href="#estimatedMisconceptionsDiv{{misconception}}" role="button" aria-expanded="false"
+            aria-controls="estimatedMisconceptionsDiv{{misconception}}"> Estimation of <code>{{misconception}}</code>
+            over time </p>
+        <div class="collapse" id="estimatedMisconceptionsDiv{{misconception}}">
             <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
 
             <script>
                 var ctx = document.getElementById('estimatedMisconceptions{{misconception}}').getContext('2d');
                 var weightsData = {{ weights | tojson }};
-            
+
                 var dataWithTimestamps = weightsData.map(function (weight) {
                     return { x: new Date(weight["time"]).getTime(), y: weight["weight"] };
                 });
-            
+
                 // Calculate minimum timestamp and subtract one hour
-                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 3600000; // 3600000 milliseconds = 1 hour
-            
+                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 360000; // 360000 milliseconds = 6 mins
+
                 new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -63,7 +64,8 @@
                             label: '{{ misconception }}',
                             data: dataWithTimestamps,
                             fill: false,
-                            borderColor: 'rgb(75, 192, 192)',
+                            borderColor: 'rgb(75, 192, 192)', // Line color
+                            pointBackgroundColor: 'rgb(25, 100, 100)', // Darker color for points
                             tension: 0.1
                         }]
                     },
