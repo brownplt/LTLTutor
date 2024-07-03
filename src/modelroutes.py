@@ -60,35 +60,6 @@ def viewstudentlogs():
     return json.dumps(to_return)
 
 
-## TODO: This is definitely a work in progress, and not what we want.
-@modelroutes.route('/view/model', methods=['GET'])
-@login_required
-def viewmodel():
-    uid = current_user.username
-    logs = getLogsForUser(uid)
-    exercise_builder = exercisebuilder.ExerciseBuilder(logs)
-    model = exercise_builder.get_model()
-    misconception_weights = model['misconception_weights']
-    misconception_weights_over_time = model['misconception_weights_over_time']
-
-    all_timestamps = set()
-    for key, value in misconception_weights_over_time.items():
-        for dt, freq in value:
-            all_timestamps.add(dt)
-
-    # Then, for each misconception, I will add the missing timestamps with a frequency of 0.
-    for key, value in misconception_weights_over_time.items():
-        for dt in all_timestamps:
-            if dt not in [dt for dt, freq in value]:
-                value.append((dt, 0))
-
-    for key, value in misconception_weights_over_time.items():
-        misconception_weights_over_time[key] = [(dt.timestamp(), freq) for dt, freq in value]
-
-
-    complexity = model['complexity']
-
-    return render_template('model.html', uid = uid, complexity = complexity, misconception_weights = misconception_weights, misconception_weights_over_time = misconception_weights_over_time)
     
 @modelroutes.route('/view/generatedexercises', methods=['GET'])
 @login_required
