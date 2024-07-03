@@ -27,13 +27,12 @@
     <div class="container">
         {% include 'navbar.html' %}
 
-
-        <div class="btn-group btn-group-lg" role="group">
-            <a href="/view/logs" class="btn btn-primary">View Logs</a>
-            <a href="/view/generatedexercises" class="btn btn-primary">View Generated Exercises</a>
+        <div class="btn-group btn-group-lg d-flex justify-content-center" role="group">
+            <a href="/view/logs" class="btn btn-secondary">View Logs</a>
+            <a href="/view/generatedexercises" class="btn btn-secondary">View Generated Exercises</a>
         </div>
 
-
+        <hr>
 
 
         {% for misconception, weights in misconception_weights_over_time.items() %}
@@ -88,6 +87,7 @@
 
         {% endif %}
         {% endfor %}
+        <hr>
 
 
     </div>
