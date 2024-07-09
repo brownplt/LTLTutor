@@ -34,3 +34,37 @@
 .toggle-arrow:not(.collapsed)::after {
     transform: rotate(90deg); /* Rotate arrow when expanded */
 }
+
+.help::after {
+    content: '?';
+    cursor: pointer;
+    color: blue; /* Set the question mark color to blue */
+    border: 2px solid blue; /* Blue circle around the question mark */
+    border-radius: 50%; /* Make the border a circle */
+    padding: 2px; /* Add some space between the question mark and the circle */
+    font-size: 0.75em; /* Adjust the size as needed */
+    vertical-align: super; /* Position it as superscript */
+    background-color: white; /* Optional: Set background color */
+    box-sizing: border-box; /* Ensures padding doesn't increase the size */
+    display: inline-flex; /* Use flex to center content */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+    width: 1.2em; /* Fixed width */
+    height: 1.2em; /* Fixed height */
+    position: absolute; /* Positioning relative to the parent */
+    top: -0.5em; /* Adjust as needed */
+    left: 0.5em; /* Adjust as needed */
+}
+
+/* Hide the actual text visually but keep it accessible for screen readers */
+.help {
+    visibility: hidden;
+    position: relative;
+}
+
+.help::after {
+    visibility: visible;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

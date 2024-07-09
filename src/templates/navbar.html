@@ -1,5 +1,5 @@
 <pre
-    class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.0]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
+    class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.1]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <a class="navbar-brand" href="/">Tutor Dashboard</a>
 
@@ -21,27 +21,46 @@
                     Generate Exercise
                 </a>
             </li>
-            <li>
-                <a class="nav-link" href="/profile" aria-expanded="false">
-                    Profile
-                </a>
-            </li>
+
             <li class="nav-item">
                 <a class="nav-link" href="/instructor/home" aria-expanded="false">
                     Instructor Dashboard
                 </a>
             </li>
 
+            <li>
+                <a class="nav-link" href="/profile" aria-expanded="false">
+                    Profile
+                </a>
+            </li>
 
-            {% if uid  %}
+
+            {% if uid %}
             <li class="nav-item">
-                <a class="nav-link" href="/logout" >Log Out</a>
+                <a class="nav-link" href="/logout">Log Out</a>
             </li>
             {% else %}
             <li class="nav-item">
-                <a class="nav-link" href="/login" >Log In</a>
+                <a class="nav-link" href="/login">Log In</a>
             </li>
             {% endif %}
         </ul>
     </div>
 </nav>
+
+<!-- Generic Modal -->
+<div class="modal fade" id="genericHelpModal" tabindex="-1" role="dialog" aria-labelledby="genericHelpModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>

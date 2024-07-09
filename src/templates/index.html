@@ -48,8 +48,6 @@
 
         <div class="container mt-4">
             <div class="jumbotron text-center">
-                <!-- <h5 class="lead">Load an exercise or generate a personalized one</h5> -->
-
                 <div class="d-flex justify-content-center">
                     <a href="/exercise/generate" class="btn btn-lg btn-primary">Begin a personalized exercise</a>
                 </div>
@@ -61,8 +59,8 @@
                 <h4 class="text-center test-muted">OR</h4>
 
                 <div class="d-flex justify-content-center">
-                    <p class="text-muted"> If you know the name of a specific pre-defined exercise, load it here.   </p>
-                    <div class="input-group mb-3 w-50">
+                    <p class="text-muted"> If you know the name of a specific pre-defined exercise, load it here.   </p> <br>
+                    <div class="input-group mt-2 mb-3 w-50">
                         <input type="text" class="form-control" id="exerciseIdInput" placeholder="Exercise Name">
                         <div class="input-group-append">
                             <button class="btn btn-primary" type="button" onclick="loadExercise()">Load</button>
@@ -74,7 +72,12 @@
             </div>
 
 
-
+            {% if misconception_count is defined and misconception_count < threshold %}
+            <div class="alert-secondary alert">
+                <strong> Still identifying areas for review</strong>
+                <p>An area or concept for review will appear once you have completed a few more exercises.</p>
+            </div>
+        {% endif %}
 
             <script>
                 function loadExercise() {
@@ -90,12 +93,7 @@
 
 
 
-        {% if misconception_count is defined and misconception_count < threshold %}
-            <div class="alert-secondary alert">
-                <strong> Still identifying areas for review</strong>
-                <p>An area or concept for review will appear once you have completed a few more exercises.</p>
-            </div>
-        {% endif %}
+
 
     </div>
     {% include 'footer.html' %}
