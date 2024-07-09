@@ -29,7 +29,7 @@
         <div class="card-body bg-light">
             <h4 class="card-title">Getting Started with this tool?</h4>
             <p class="card-text">
-            Once you are familiar with <a href="/ltl"> LTL syntax </a> used by this tool, we recommend starting with
+            Once you are familiar with the <a href="/ltl"> LTL syntax </a> used by this tool, we recommend starting with
             <a href="/entryexitticket/entry"> <button class="btn btn-primary"> this exercise </button> </a>.
             </p>
         </div>
@@ -37,15 +37,58 @@
         <div class="p-3 mb-2 mt-2">
             {% include max_misconception %}
         </div>
+
+        <div>
+            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic, or you 
+                are done using this tool,  we ask that you complete this <a href="/entryexitticket/exit"> <button class="btn btn-primary"> final exercise</button></a>.
+            </p>
+        </div>
         {% endif %}
 
 
-        <div class="card-body mt-1 mb-1"> 
-            <a href="/exercise/generate"> <button class="btn btn-lg btn-primary btn-block"> Begin a new exercise </button> </a>
-            <p class="card-text"> Exercises adapt in complexity and topic based on your previous responses. As your understanding
-            of LTL improves, the exercises will become more challenging, and focus on areas where you need more practice.
-            </p>
+        <div class="container mt-4">
+            <div class="jumbotron text-center">
+                <!-- <h5 class="lead">Load an exercise or generate a personalized one</h5> -->
+
+                <div class="d-flex justify-content-center">
+                    <a href="/exercise/generate" class="btn btn-lg btn-primary">Begin a personalized exercise</a>
+                </div>
+                <p class="text-muted"> Exercises adapt in complexity and topic based on your previous responses. As your understanding
+                    of LTL improves, the exercises will become more challenging, and focus on areas where you need more practice.
+                </p>
+
+
+                <h4 class="text-center test-muted">OR</h4>
+
+                <div class="d-flex justify-content-center">
+                    <p class="text-muted"> If you know the name of a specific pre-defined exercise, load it here.   </p>
+                    <div class="input-group mb-3 w-50">
+                        <input type="text" class="form-control" id="exerciseIdInput" placeholder="Exercise Name">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button" onclick="loadExercise()">Load</button>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+
+
+            <script>
+                function loadExercise() {
+                    var exerciseId = document.getElementById('exerciseIdInput').value;
+                    window.location.href = '/exercise/load/' + exerciseId;
+                }
+            </script>
         </div>
+
+
+        
+
+
+
 
         {% if misconception_count is defined and misconception_count < threshold %}
             <div class="alert-secondary alert">
