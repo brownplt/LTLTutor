@@ -102,8 +102,8 @@
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-                    <h5> Formula: <pre> {{formula}} </pre></h5>
-                    <!-- TODO: Replace with Formula -->
+                    <h5> Formula <span class="help"> This tree represents the formula <pre> {{formula}} </pre>, structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented by a green box if it is satisfied, and an orange box with two lines if it is not satisfied.</span> </h5>
+                    
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
                     </div>

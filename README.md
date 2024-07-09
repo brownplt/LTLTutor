@@ -12,8 +12,5 @@ You can host this tutor following [steps in the wiki](https://github.com/brownpl
 
 ## TODO
 
-- [x] Change exercise home --> instructor home. Change how we authenticate and course codes
-- [x] Stop storing existing exercises created
-- [] Log user ID AND user course code IF exists
-    - [] Allow instructors to get logs within owned courses.
-- [] Model / View update for users to see their courses and codes
+- [] Stepper: Vertical Tree for AST
+- [] Stepper: Explain instructions
