@@ -35,15 +35,18 @@
             justify-content: center;
             flex-wrap: wrap;
         }
-    
-        .formula-tree-container, .trace-container {
+
+        .formula-tree-container,
+        .trace-container {
             justify-content: center;
         }
-    
+
         /* Center align .mermaid divs */
         #statecontainer .mermaid {
-            margin: 0 auto; /* Centers the div within its flex container */
-            display: block; /* Ensures the div is treated as a block-level element */
+            margin: 0 auto;
+            /* Centers the div within its flex container */
+            display: block;
+            /* Ensures the div is treated as a block-level element */
         }
     </style>
 
@@ -110,7 +113,7 @@
                             structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented
                             by a green box if it is satisfied, and an orange box with two lines if it is not
                             satisfied.</span> </h4>
-                    
+
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
                     </div>
@@ -120,8 +123,8 @@
 
                 <div class="trace-container mt-2">
                     <h4><span class="help"> By clicking the <code>Previous State</code> and <code>Next State</code>
-                        buttons, you can examine the formula's satisfaction at different points in this trace.
-                    </span></h4>
+                            buttons, you can examine the formula's satisfaction at different points in this trace.
+                        </span></h4>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
                     <div class="btn-group d-flex justify-content-center" role="group">
@@ -210,12 +213,11 @@
         });
     </script>
 
-
-    <!-- Button trigger modal -->
-    <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
-        Step Through Another Trace and Formula
-    </button>
-
+    <div class="container mt-2 mb-2">
+        <button type="button" class="btn btn-outline-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
+            <p class="text-muted"> Step through a different trace &bsol; formula pair </p>
+        </button>
+    </div>
 
     {% include 'footer.html' %}
 </body>
