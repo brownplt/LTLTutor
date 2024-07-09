@@ -36,16 +36,6 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
-
-            <div class="alert alert-primary alert-dismissible fade show" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-                The LTL Stepper allows you to step through an LTL formula and a sequence of states (a trace), breaking down how the formula is evaluated at each step. 
-                You can step forward and backward through the trace to see how the formula evaluation changes as the trace progresses.
-                <br>
-                <strong>While the information shown in this state is correct, the feature is in development! As a result, you may encounter some UI inconsistencies and issues.</strong> 
-            </div>
               
 
 
@@ -102,7 +92,7 @@
             <div class="container stepper-container">
 
                 <div class="formula-tree-container">
-                    <h5> Formula <span class="help"> This tree represents the formula <pre> {{formula}} </pre>, structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented by a green box if it is satisfied, and an orange box with two lines if it is not satisfied.</span> </h5>
+                    <h5> Formula <span class="help"> This tree represents the formula <code> {{formula}} </code>, structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented by a green box if it is satisfied, and an orange box with two lines if it is not satisfied.</span> </h5>
                     
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
@@ -111,7 +101,8 @@
 
 
                 <div class="trace-container">
-                    <h3> Trace Position</h3>
+                    <h3> Trace Position
+                        <span class="help"> By clicking the <code>Previous State</code> and <code>Next State</code> buttons, you can examine the formula's satisfaction at different points in this trace. </span>   </h3>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
                     <div class="btn-group d-flex justify-content-center" role="group">
