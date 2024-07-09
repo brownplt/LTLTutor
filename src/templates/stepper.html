@@ -122,7 +122,7 @@
                 <hr>
 
                 <div class="trace-container mt-2">
-                    <h4><span class="help"> By clicking the <code>Previous State</code> and <code>Next State</code>
+                    <h4><span class="help float-right"> By clicking the <code>Previous State</code> and <code>Next State</code>
                             buttons, you can examine the formula's satisfaction at different points in this trace.
                         </span></h4>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
@@ -139,6 +139,7 @@
         </div>
     </div>
 
+    <hr>
 
     <script>
         $(document).ready(function () {
@@ -197,6 +198,12 @@
                         stepperContainers[currentIndex].style.display = 'block';
                         renderDiagrams();
 
+                        stepperContainers[currentIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                        
+
                     }
                 })
             });
@@ -213,7 +220,7 @@
         });
     </script>
 
-    <div class="container mt-2 mb-2">
+    <div class="container mt-4 mb-4">
         <button type="button" class="btn btn-outline-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
             <p class="text-muted"> Step through a different trace &bsol; formula pair </p>
         </button>
