@@ -70,8 +70,8 @@ class ExerciseBuilder:
 
 
    
-    def calculate_misconception_weights(self):
-        concept_history = self.aggregateLogs()
+    def calculate_misconception_weights(self, concept_history):
+
         weights = {}
         default_weight = 0.5  # This is a parameter you can adjust
 
@@ -122,7 +122,8 @@ class ExerciseBuilder:
         def scale(weight):
             return 2 * weight if weight > 0.5 else 2 * (1 - weight)
 
-        misconception_weights = self.calculate_misconception_weights()
+        concept_history = self.aggregateLogs()
+        misconception_weights = self.calculate_misconception_weights(concept_history)
 
         for m, weight in misconception_weights.items():
 
@@ -424,19 +425,48 @@ class ExerciseBuilder:
 
     def get_model(self):
 
-        buckets = self.aggregateLogs()
-        # I want to add all the values of the buckets to get a count
+        concept_history = self.aggregateLogs()
+        misconception_weights_over_time = { k : [] for k in concept_history.keys()}
+        misconception_weights = {}
+
+        ## Buckets is a dictionary where keys are misconceptions and values are lists of tuples (timestamp, frequency) 
+        misconception_weights = self.calculate_misconception_weights(concept_history)
         misconception_count = 0
-        for misconception in buckets:
-            buckets_for_misconception = buckets[misconception]
-            # concept_history[misconception].append((bucket, frequency))
-            for bucket, frequency in buckets_for_misconception:
+
+        
+
+        for misconception in concept_history:
+
+
+            buckets_for_misconception = concept_history[misconception]
+
+
+
+            ## Sort the buckets by date
+            buckets_for_misconception.sort(key=lambda x: x[0])
+            n = len(buckets_for_misconception)
+
+            for i in range(n):
+                time_bucket, frequency = buckets_for_misconception[i]
                 misconception_count += frequency
 
-        misconception_weights = self.calculate_misconception_weights()
+                sub_history = { misconception : buckets_for_misconception[:i+1]}
+
+
+
+                weight = self.calculate_misconception_weights(sub_history)
+                to_append = {
+                    "time" :time_bucket, 
+                    "weight": weight[misconception]
+                }
+
+                
+                #to_append = (time_bucket, weight[misconception])
+                misconception_weights_over_time[misconception].append(to_append)
+
         return {
             "misconception_weights": misconception_weights,
-            "misconceptions_over_time": buckets,
+            "misconception_weights_over_time": misconception_weights_over_time,
             "complexity": self.complexity,
             'misconception_count': misconception_count
         }

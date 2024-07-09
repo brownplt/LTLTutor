@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor</title>
+
+
+
+    <!-- Include Chart.js (already present) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+
+</head>
+
+<body>
+
+    <div class="container">
+        {% include 'navbar.html' %}
+
+        <div class="btn-group btn-group-lg d-flex justify-content-center" role="group">
+            <a href="/view/logs" class="btn btn-secondary">View Logs</a>
+            <a href="/view/generatedexercises" class="btn btn-secondary">View Generated Exercises</a>
+        </div>
+
+        <hr>
+
+
+        {% for misconception, weights in misconception_weights_over_time.items() %}
+
+        {% if weights|length > 0 %}
+        <p class="lead toggle-arrow collapsed" data-toggle="collapse"
+            href="#estimatedMisconceptionsDiv{{misconception}}" role="button" aria-expanded="false"
+            aria-controls="estimatedMisconceptionsDiv{{misconception}}"> Estimation of <code>{{misconception}}</code>
+            over time <span class="help">  <a href="https://arxiv.org/abs/2211.01677">You can learn more about what this misconception means here.</a>  </span></p>
+        <div class="collapse" id="estimatedMisconceptionsDiv{{misconception}}">
+            <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
+
+            <script>
+                var ctx = document.getElementById('estimatedMisconceptions{{misconception}}').getContext('2d');
+                var weightsData = {{ weights | tojson }};
+
+                var dataWithTimestamps = weightsData.map(function (weight) {
+                    return { x: new Date(weight["time"]).getTime(), y: weight["weight"] };
+                });
+
+                // Calculate minimum timestamp and subtract one hour
+                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 360000; // 360000 milliseconds = 6 mins
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: '{{ misconception }}',
+                            data: dataWithTimestamps,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)', // Line color
+                            pointBackgroundColor: 'rgb(25, 100, 100)', // Darker color for points
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                type: 'linear', // Use a linear scale for the x-axis
+                                position: 'bottom', // Position the x-axis at the bottom
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                min: minTimestamp, // Set the calculated minimum timestamp as the start of the x-axis
+                            }
+                        }
+                    }
+                });
+            </script>
+        </div>
+
+        {% endif %}
+        {% endfor %}
+        <hr>
+
+
+    </div>
+    {% include 'footer.html' %}
+
+</body>
+
+</html>
