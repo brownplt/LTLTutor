@@ -29,6 +29,24 @@
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
+    <style>
+        #statecontainer {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    
+        .formula-tree-container, .trace-container {
+            justify-content: center;
+        }
+    
+        /* Center align .mermaid divs */
+        #statecontainer .mermaid {
+            margin: 0 auto; /* Centers the div within its flex container */
+            display: block; /* Ensures the div is treated as a block-level element */
+        }
+    </style>
+
 </head>
 
 <body>
@@ -36,7 +54,7 @@
         {% include 'navbar.html' %}
 
         <div id="Controls">
-              
+
 
 
             {% if error %}
@@ -45,10 +63,6 @@
             </div>
             {% endif %}
 
-            <!-- Button trigger modal -->
-            <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
-                Step Through Another Trace and Formula
-            </button>
 
             <!-- Modal -->
             <div class="modal" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
@@ -91,32 +105,35 @@
 
             <div class="container stepper-container">
 
-                <div class="formula-tree-container">
-                    <h5> Formula <span class="help"> This tree represents the formula <code> {{formula}} </code>, structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented by a green box if it is satisfied, and an orange box with two lines if it is not satisfied.</span> </h5>
+                <div class="formula-tree-container mt-2">
+                    <h4><span class="help float-right"> This tree represents the formula <code> {{formula}} </code>,
+                            structuring it's sub-formulae in a hierarchical manner. Each node in the tree is represented
+                            by a green box if it is satisfied, and an orange box with two lines if it is not
+                            satisfied.</span> </h4>
                     
                     <div>
                         <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
                     </div>
                 </div>
 
+                <hr>
 
-                <div class="trace-container">
-                    <h3> Trace Position
-                        <span class="help"> By clicking the <code>Previous State</code> and <code>Next State</code> buttons, you can examine the formula's satisfaction at different points in this trace. </span>   </h3>
+                <div class="trace-container mt-2">
+                    <h4><span class="help"> By clicking the <code>Previous State</code> and <code>Next State</code>
+                        buttons, you can examine the formula's satisfaction at different points in this trace.
+                    </span></h4>
                     <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
                     <br>
                     <div class="btn-group d-flex justify-content-center" role="group">
-                        <button class="prev btn btn-primary" title="Previous State"><i class="fas fa-arrow-left"></i></button>
-                        <button class="next btn btn-primary" title="Next State"><i class="fas fa-arrow-right"></i></button>
+                        <button class="prev btn btn-primary" title="Previous State"><i
+                                class="fas fa-arrow-left"></i></button>
+                        <button class="next btn btn-primary" title="Next State"><i
+                                class="fas fa-arrow-right"></i></button>
                     </div>
                 </div>
             </div>
             {% endfor %}
-
-
         </div>
-
-
     </div>
 
 
@@ -194,6 +211,10 @@
     </script>
 
 
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
+        Step Through Another Trace and Formula
+    </button>
 
 
     {% include 'footer.html' %}

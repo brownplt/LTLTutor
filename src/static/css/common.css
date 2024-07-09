@@ -53,7 +53,7 @@
     height: 1.2em; /* Fixed height */
     position: absolute; /* Positioning relative to the parent */
     top: -0.5em; /* Adjust as needed */
-    left: 0.5em; /* Adjust as needed */
+    right: 0.5em; /* Adjust to float right within its container */
 }
 
 /* Hide the actual text visually but keep it accessible for screen readers */
@@ -66,5 +66,5 @@
     visibility: visible;
     position: absolute;
     top: 0;
-    left: 0;
+    right: 0; /* Align to the right side of the container */
 }
