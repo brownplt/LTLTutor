@@ -88,9 +88,6 @@ class StepperNode:
 
 
 
-        print("Graph edges")
-        print(graph_edges)
-
         g = mermaidGraphFromEdgesList(graph_edges)
 
    
