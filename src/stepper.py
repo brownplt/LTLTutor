@@ -56,12 +56,22 @@ class StepperNode:
 
     def __trace_to_mermaid__(self):
 
+
+
+
         def get_nth_node_in_graph(edges, n):
             # Find the root node
             source_nodes = set(edge[0] for edge in edges)
             destination_nodes = set(edge[1] for edge in edges)
             root_nodes = source_nodes - destination_nodes
-            current_node = root_nodes.pop()
+
+
+            # If there is no root node, the graph is cyclic
+            # then, the root node is the first node in the graph
+            if len(root_nodes) == 0:
+                current_node = edges[0][0]
+            else:
+                current_node = root_nodes.pop()
 
             # Follow the edges from the root node
             for _ in range(n):
@@ -75,8 +85,12 @@ class StepperNode:
             return current_node
 
         graph_edges = mermaidFromSpotTrace(self.originaltrace)
+
+
+
         g = mermaidGraphFromEdgesList(graph_edges)
 
+   
         fn = get_nth_node_in_graph(graph_edges, self.traceindex)
         fnid = fn.id
 

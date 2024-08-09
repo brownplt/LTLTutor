@@ -366,17 +366,19 @@ class ExerciseBuilder:
     def build_tracesat_yn_question(self, answer):
         formulae = self.get_options_with_misconceptions_as_formula(answer)
         parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
-        
-
+    
 
         feedbackString = "No further feedback is currently available. We recommend stepping through the trace to see where/if it diverges from the formula."
         # So no misconceptions forthcoming...
         ## TODO: Should we even generate a question one here?
         if formulae is None:
             ## Generate a trace to accept the formula
-            potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
-            misconceptions = []
-            yesIsCorrect = True
+            # potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
+            # misconceptions = []
+            # yesIsCorrect = True
+            print("Skipping generation of traceSAT Y/N Question for formula: ", parenthesized_answer, " as no candidate misconceptions were found.")
+            ### We can't get a potential misconception here, so we skip generation here.
+            return None
         else:
             ## Choose a random option
             formula = random.choice(formulae)

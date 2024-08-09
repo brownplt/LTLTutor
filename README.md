@@ -10,7 +10,4 @@ An intelligent tutoring system for Linear Temporal Logic. This tutor is grounded
 You can host this tutor following [steps in the wiki](https://github.com/brownplt/LTLTutor/wiki/Hosting-the-LTL-Tutor).
 
 
-## TODO
 
-- [] Stepper: Vertical Tree for AST
-- [] Stepper: Explain instructions
