@@ -376,7 +376,7 @@ class ExerciseBuilder:
             # potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             # misconceptions = []
             # yesIsCorrect = True
-
+            print("Skipping generation of traceSAT Y/N Question for formula: ", parenthesized_answer, " as no candidate misconceptions were found.")
             ### We can't get a potential misconception here, so we skip generation here.
             return None
         else:
