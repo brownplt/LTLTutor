@@ -1,7 +1,7 @@
 <pre
-    class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.2]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
+    class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.3]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
 
-    <div id="blogPostAlert" class="alert alert-primary alert-dismissible fade show" role="alert">
+    <div id="blogPostAlert" class="alert alert-success alert-dismissible fade show" role="alert">
         <p class="lead">Want to know more about the LTL tutor? <a href="https://blog.brownplt.org/2024/08/08/ltltutor.html">Read this blog post!</a></p>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -12,13 +12,13 @@
             const alertDiv = document.getElementById('blogPostAlert');
     
             // Check if the alert has been dismissed before
-            if (localStorage.getItem('alertDismissed') === 'true') {
+            if (localStorage.getItem('blogPostAlertDismissed') === 'true') {
                 alertDiv.style.display = 'none';
             }
     
             // Add event listener to the close button
             alertDiv.querySelector('.close').addEventListener('click', function () {
-                localStorage.setItem('alertDismissed', 'true');
+                localStorage.setItem('blogPostAlertDismissed', 'true');
             });
         });
     </script>
