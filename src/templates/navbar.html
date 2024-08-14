@@ -1,5 +1,29 @@
 <pre
     class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.2]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
+
+    <div id="blogPostAlert" class="alert alert-primary alert-dismissible fade show" role="alert">
+        <p class="lead">Want to know more about the LTL tutor? <a href="https://blog.brownplt.org/2024/08/08/ltltutor.html">Read this blog post!</a></p>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const alertDiv = document.getElementById('blogPostAlert');
+    
+            // Check if the alert has been dismissed before
+            if (localStorage.getItem('alertDismissed') === 'true') {
+                alertDiv.style.display = 'none';
+            }
+    
+            // Add event listener to the close button
+            alertDiv.querySelector('.close').addEventListener('click', function () {
+                localStorage.setItem('alertDismissed', 'true');
+            });
+        });
+    </script>
+
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <a class="navbar-brand" href="/">Tutor Dashboard</a>
 
@@ -33,11 +57,7 @@
                     Profile
                 </a>
             </li>
-            <li>
-                <a class="nav-link" href="https://blog.brownplt.org/2024/08/08/ltltutor.html" aria-expanded="false">
-                    About
-                </a>
-            </li>
+
 
             {% if uid %}
             <li class="nav-item">
@@ -69,3 +89,5 @@
         </div>
     </div>
 </div>
+
+
