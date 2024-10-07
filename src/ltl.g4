@@ -3,8 +3,8 @@ grammar ltl;
 ltl: formula EOF;
 
 formula
-    : formula '|' formula       # disjunction
-    | formula '&' formula       # conjunction
+    : formula '|' formula                     # disjunction
+    | formula '&' formula                     # conjunction
     | formula ( 'U' | 'UNTIL' ) formula       # until
     | formula '->' formula      # implication
     | formula '<->' formula     # equivalence

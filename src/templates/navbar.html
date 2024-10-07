@@ -61,7 +61,7 @@
             <!-- Dropdown for LTL Syntax -->
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="ltlSyntaxDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Select LTL Syntax
+                    Syntax: <span id="currentLtlSyntax">Classic</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
                     <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
@@ -69,7 +69,6 @@
                     <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
                 </div>
             </li>
-
 
             {% if uid %}
             <li class="nav-item">
@@ -86,10 +85,31 @@
 
 <!-- JavaScript to set the ltlsyntax cookie -->
 <script>
+    // Function to get the value of a cookie by name
+    function getCookie(name) {
+        let cookieArr = document.cookie.split(";");
+        for (let i = 0; i < cookieArr.length; i++) {
+            let cookiePair = cookieArr[i].split("=");
+            if (name == cookiePair[0].trim()) {
+                return decodeURIComponent(cookiePair[1]);
+            }
+        }
+        return null;
+    }
+
+
     function setLtlSyntax(syntax) {
         document.cookie = "ltlsyntax=" + syntax + "; path=/";
-        alert("LTL Syntax set to " + syntax);
+        document.getElementById('currentLtlSyntax').innerText = currentSyntax;
     }
+
+    // Set the initial value of the dropdown based on the cookie
+    document.addEventListener('DOMContentLoaded', (event) => {
+        let currentSyntax = getCookie('ltlsyntax');
+        if (currentSyntax) {
+            document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+        }
+    });
     </script>
 
 <!-- Generic Modal -->

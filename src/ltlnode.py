@@ -13,7 +13,7 @@ import re
 
 
 
-SUPPORTED_SYNTAXES = ['classic', 'forge', 'electrum']
+SUPPORTED_SYNTAXES = ['Classic', 'Forge', 'Electrum']
 
 ## Should these come from the lexer instead of being placed here
 IMPLIES_SYMBOL = '->'

@@ -17,7 +17,7 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
-    def __init__(self, userLogs, complexity=5, syntax="classic"):
+    def __init__(self, userLogs, complexity=5, syntax="Classic"):
         self.userLogs = userLogs
         self.numUserLogs = len(userLogs)
 
@@ -33,13 +33,13 @@ class ExerciseBuilder:
 
     def getLTLFormulaAsString(self, node):
 
-        if self.syntax == "classic":
+        if self.syntax == "Classic":
             return str(node)
-        elif self.syntax == "forge":
+        elif self.syntax == "Forge":
             return node.__forge__()
-        elif self.syntax == "electrum":
+        elif self.syntax == "Electrum":
             return node.__electrum__()
-        elif self.syntax == "english":
+        elif self.syntax == "English":
             ## We should hopefully never get here. However, 
             ## I'm adding it here to suggest a way forward.
             return node.__to_english__()
