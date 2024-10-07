@@ -1,6 +1,6 @@
-# Generated from ltl.g4 by ANTLR 4.13.1
+# Generated from ltl.g4 by ANTLR 4.9.2
 from antlr4 import *
-if "." in __name__:
+if __name__ is not None and "." in __name__:
     from .ltlParser import ltlParser
 else:
     from ltlParser import ltlParser
@@ -14,6 +14,24 @@ class ltlListener(ParseTreeListener):
 
     # Exit a parse tree produced by ltlParser#ltl.
     def exitLtl(self, ctx:ltlParser.LtlContext):
+        pass
+
+
+    # Enter a parse tree produced by ltlParser#next.
+    def enterNext(self, ctx:ltlParser.NextContext):
+        pass
+
+    # Exit a parse tree produced by ltlParser#next.
+    def exitNext(self, ctx:ltlParser.NextContext):
+        pass
+
+
+    # Enter a parse tree produced by ltlParser#always.
+    def enterAlways(self, ctx:ltlParser.AlwaysContext):
+        pass
+
+    # Exit a parse tree produced by ltlParser#always.
+    def exitAlways(self, ctx:ltlParser.AlwaysContext):
         pass
 
 
@@ -62,15 +80,6 @@ class ltlListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ltlParser#F.
-    def enterF(self, ctx:ltlParser.FContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#F.
-    def exitF(self, ctx:ltlParser.FContext):
-        pass
-
-
     # Enter a parse tree produced by ltlParser#implication.
     def enterImplication(self, ctx:ltlParser.ImplicationContext):
         pass
@@ -80,21 +89,12 @@ class ltlListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ltlParser#G.
-    def enterG(self, ctx:ltlParser.GContext):
+    # Enter a parse tree produced by ltlParser#eventually.
+    def enterEventually(self, ctx:ltlParser.EventuallyContext):
         pass
 
-    # Exit a parse tree produced by ltlParser#G.
-    def exitG(self, ctx:ltlParser.GContext):
-        pass
-
-
-    # Enter a parse tree produced by ltlParser#X.
-    def enterX(self, ctx:ltlParser.XContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#X.
-    def exitX(self, ctx:ltlParser.XContext):
+    # Exit a parse tree produced by ltlParser#eventually.
+    def exitEventually(self, ctx:ltlParser.EventuallyContext):
         pass
 
 

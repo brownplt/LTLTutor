@@ -1,4 +1,4 @@
-# Generated from ltl.g4 by ANTLR 4.13.1
+# Generated from ltl.g4 by ANTLR 4.9.2
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -9,24 +9,28 @@ else:
 	from typing.io import TextIO
 
 def serializedATN():
-    return [
-        4,1,13,48,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,24,8,1,1,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,41,8,1,10,1,12,1,
-        44,9,1,1,2,1,2,1,2,0,1,2,3,0,2,4,0,0,54,0,6,1,0,0,0,2,23,1,0,0,0,
-        4,45,1,0,0,0,6,7,3,2,1,0,7,8,5,0,0,1,8,1,1,0,0,0,9,10,6,1,-1,0,10,
-        11,5,6,0,0,11,24,3,2,1,6,12,13,5,7,0,0,13,24,3,2,1,5,14,15,5,8,0,
-        0,15,24,3,2,1,4,16,17,5,9,0,0,17,24,3,2,1,3,18,19,5,10,0,0,19,20,
-        3,2,1,0,20,21,5,11,0,0,21,24,1,0,0,0,22,24,3,4,2,0,23,9,1,0,0,0,
-        23,12,1,0,0,0,23,14,1,0,0,0,23,16,1,0,0,0,23,18,1,0,0,0,23,22,1,
-        0,0,0,24,42,1,0,0,0,25,26,10,11,0,0,26,27,5,1,0,0,27,41,3,2,1,12,
-        28,29,10,10,0,0,29,30,5,2,0,0,30,41,3,2,1,11,31,32,10,9,0,0,32,33,
-        5,3,0,0,33,41,3,2,1,10,34,35,10,8,0,0,35,36,5,4,0,0,36,41,3,2,1,
-        9,37,38,10,7,0,0,38,39,5,5,0,0,39,41,3,2,1,8,40,25,1,0,0,0,40,28,
-        1,0,0,0,40,31,1,0,0,0,40,34,1,0,0,0,40,37,1,0,0,0,41,44,1,0,0,0,
-        42,40,1,0,0,0,42,43,1,0,0,0,43,3,1,0,0,0,44,42,1,0,0,0,45,46,5,12,
-        0,0,46,5,1,0,0,0,3,23,40,42
-    ]
+    with StringIO() as buf:
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\24")
+        buf.write("\62\4\2\t\2\4\3\t\3\4\4\t\4\3\2\3\2\3\2\3\3\3\3\3\3\3")
+        buf.write("\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\5\3\32\n\3")
+        buf.write("\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3\3")
+        buf.write("\3\3\3\7\3+\n\3\f\3\16\3.\13\3\3\4\3\4\3\4\2\3\4\5\2\4")
+        buf.write("\6\2\6\3\2\t\13\3\2\f\r\3\2\16\17\3\2\5\6\28\2\b\3\2\2")
+        buf.write("\2\4\31\3\2\2\2\6/\3\2\2\2\b\t\5\4\3\2\t\n\7\2\2\3\n\3")
+        buf.write("\3\2\2\2\13\f\b\3\1\2\f\r\t\2\2\2\r\32\5\4\3\b\16\17\t")
+        buf.write("\3\2\2\17\32\5\4\3\7\20\21\t\4\2\2\21\32\5\4\3\6\22\23")
+        buf.write("\7\20\2\2\23\32\5\4\3\5\24\25\7\21\2\2\25\26\5\4\3\2\26")
+        buf.write("\27\7\22\2\2\27\32\3\2\2\2\30\32\5\6\4\2\31\13\3\2\2\2")
+        buf.write("\31\16\3\2\2\2\31\20\3\2\2\2\31\22\3\2\2\2\31\24\3\2\2")
+        buf.write("\2\31\30\3\2\2\2\32,\3\2\2\2\33\34\f\r\2\2\34\35\7\3\2")
+        buf.write("\2\35+\5\4\3\16\36\37\f\f\2\2\37 \7\4\2\2 +\5\4\3\r!\"")
+        buf.write("\f\13\2\2\"#\t\5\2\2#+\5\4\3\f$%\f\n\2\2%&\7\7\2\2&+\5")
+        buf.write("\4\3\13\'(\f\t\2\2()\7\b\2\2)+\5\4\3\n*\33\3\2\2\2*\36")
+        buf.write("\3\2\2\2*!\3\2\2\2*$\3\2\2\2*\'\3\2\2\2+.\3\2\2\2,*\3")
+        buf.write("\2\2\2,-\3\2\2\2-\5\3\2\2\2.,\3\2\2\2/\60\7\23\2\2\60")
+        buf.write("\7\3\2\2\2\5\31*,")
+        return buf.getvalue()
+
 
 class ltlParser ( Parser ):
 
@@ -38,13 +42,15 @@ class ltlParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'|'", "'&'", "'U'", "'->'", "'<->'", 
-                     "'X'", "'F'", "'G'", "'!'", "'('", "')'" ]
+    literalNames = [ "<INVALID>", "'|'", "'&'", "'U'", "'UNTIL'", "'->'", 
+                     "'<->'", "'X'", "'NEXT'", "'NEXT_STATE'", "'F'", "'EVENTUALLY'", 
+                     "'G'", "'ALWAYS'", "'!'", "'('", "')'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "ID", "WS" ]
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                      "<INVALID>", "ID", "WS" ]
 
     RULE_ltl = 0
     RULE_formula = 1
@@ -64,15 +70,19 @@ class ltlParser ( Parser ):
     T__8=9
     T__9=10
     T__10=11
-    ID=12
-    WS=13
+    T__11=12
+    T__12=13
+    T__13=14
+    T__14=15
+    T__15=16
+    ID=17
+    WS=18
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
-        self.checkVersion("4.13.1")
+        self.checkVersion("4.9.2")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
-
 
 
 
@@ -122,7 +132,6 @@ class ltlParser ( Parser ):
             self.exitRule()
         return localctx
 
-
     class FormulaContext(ParserRuleContext):
         __slots__ = 'parser'
 
@@ -137,6 +146,44 @@ class ltlParser ( Parser ):
      
         def copyFrom(self, ctx:ParserRuleContext):
             super().copyFrom(ctx)
+
+
+    class NextContext(FormulaContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def formula(self):
+            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterNext" ):
+                listener.enterNext(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitNext" ):
+                listener.exitNext(self)
+
+
+    class AlwaysContext(FormulaContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def formula(self):
+            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterAlways" ):
+                listener.enterAlways(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitAlways" ):
+                listener.exitAlways(self)
 
 
     class ParenthesesContext(FormulaContext):
@@ -243,25 +290,6 @@ class ltlParser ( Parser ):
                 listener.exitDisjunction(self)
 
 
-    class FContext(FormulaContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def formula(self):
-            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterF" ):
-                listener.enterF(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitF" ):
-                listener.exitF(self)
-
-
     class ImplicationContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
@@ -284,7 +312,7 @@ class ltlParser ( Parser ):
                 listener.exitImplication(self)
 
 
-    class GContext(FormulaContext):
+    class EventuallyContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
             super().__init__(parser)
@@ -295,31 +323,12 @@ class ltlParser ( Parser ):
 
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterG" ):
-                listener.enterG(self)
+            if hasattr( listener, "enterEventually" ):
+                listener.enterEventually(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitG" ):
-                listener.exitG(self)
-
-
-    class XContext(FormulaContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def formula(self):
-            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterX" ):
-                listener.enterX(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitX" ):
-                listener.exitX(self)
+            if hasattr( listener, "exitEventually" ):
+                listener.exitEventually(self)
 
 
     class UntilContext(FormulaContext):
@@ -371,60 +380,76 @@ class ltlParser ( Parser ):
         _prevctx = localctx
         _startState = 2
         self.enterRecursionRule(localctx, 2, self.RULE_formula, _p)
+        self._la = 0 # Token type
         try:
             self.enterOuterAlt(localctx, 1)
             self.state = 23
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [6]:
-                localctx = ltlParser.XContext(self, localctx)
+            if token in [ltlParser.T__6, ltlParser.T__7, ltlParser.T__8]:
+                localctx = ltlParser.NextContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
 
                 self.state = 10
-                self.match(ltlParser.T__5)
+                _la = self._input.LA(1)
+                if not((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << ltlParser.T__6) | (1 << ltlParser.T__7) | (1 << ltlParser.T__8))) != 0)):
+                    self._errHandler.recoverInline(self)
+                else:
+                    self._errHandler.reportMatch(self)
+                    self.consume()
                 self.state = 11
                 self.formula(6)
                 pass
-            elif token in [7]:
-                localctx = ltlParser.FContext(self, localctx)
+            elif token in [ltlParser.T__9, ltlParser.T__10]:
+                localctx = ltlParser.EventuallyContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 12
-                self.match(ltlParser.T__6)
+                _la = self._input.LA(1)
+                if not(_la==ltlParser.T__9 or _la==ltlParser.T__10):
+                    self._errHandler.recoverInline(self)
+                else:
+                    self._errHandler.reportMatch(self)
+                    self.consume()
                 self.state = 13
                 self.formula(5)
                 pass
-            elif token in [8]:
-                localctx = ltlParser.GContext(self, localctx)
+            elif token in [ltlParser.T__11, ltlParser.T__12]:
+                localctx = ltlParser.AlwaysContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 14
-                self.match(ltlParser.T__7)
+                _la = self._input.LA(1)
+                if not(_la==ltlParser.T__11 or _la==ltlParser.T__12):
+                    self._errHandler.recoverInline(self)
+                else:
+                    self._errHandler.reportMatch(self)
+                    self.consume()
                 self.state = 15
                 self.formula(4)
                 pass
-            elif token in [9]:
+            elif token in [ltlParser.T__13]:
                 localctx = ltlParser.NotContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 16
-                self.match(ltlParser.T__8)
+                self.match(ltlParser.T__13)
                 self.state = 17
                 self.formula(3)
                 pass
-            elif token in [10]:
+            elif token in [ltlParser.T__14]:
                 localctx = ltlParser.ParenthesesContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 18
-                self.match(ltlParser.T__9)
+                self.match(ltlParser.T__14)
                 self.state = 19
                 self.formula(0)
                 self.state = 20
-                self.match(ltlParser.T__10)
+                self.match(ltlParser.T__15)
                 pass
-            elif token in [12]:
+            elif token in [ltlParser.ID]:
                 localctx = ltlParser.LiteralContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
@@ -480,7 +505,12 @@ class ltlParser ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
                         self.state = 32
-                        self.match(ltlParser.T__2)
+                        _la = self._input.LA(1)
+                        if not(_la==ltlParser.T__2 or _la==ltlParser.T__3):
+                            self._errHandler.recoverInline(self)
+                        else:
+                            self._errHandler.reportMatch(self)
+                            self.consume()
                         self.state = 33
                         self.formula(10)
                         pass
@@ -493,7 +523,7 @@ class ltlParser ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
                         self.state = 35
-                        self.match(ltlParser.T__3)
+                        self.match(ltlParser.T__4)
                         self.state = 36
                         self.formula(9)
                         pass
@@ -506,7 +536,7 @@ class ltlParser ( Parser ):
                             from antlr4.error.Errors import FailedPredicateException
                             raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
                         self.state = 38
-                        self.match(ltlParser.T__4)
+                        self.match(ltlParser.T__5)
                         self.state = 39
                         self.formula(8)
                         pass
@@ -523,7 +553,6 @@ class ltlParser ( Parser ):
         finally:
             self.unrollRecursionContexts(_parentctx)
         return localctx
-
 
     class AtomicFormulaContext(ParserRuleContext):
         __slots__ = 'parser'

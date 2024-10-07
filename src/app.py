@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Blueprint
+from flask_login import login_required, current_user
+
+
 from ltlnode import parse_ltl_string
 from codebook import getAllApplicableMisconceptions
 import os
@@ -15,8 +18,6 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from flask_login import login_required, current_user
-from flask import Blueprint
 from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
