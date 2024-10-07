@@ -12,6 +12,9 @@ import ltltoeng
 import re
 
 
+
+SUPPORTED_SYNTAXES = ['classic', 'forge', 'electrum']
+
 ## Should these come from the lexer instead of being placed here
 IMPLIES_SYMBOL = '->'
 EQUIVALENCE_SYMBOL = '<->'
@@ -28,8 +31,6 @@ UNTIL_SYMBOL = 'U'
 ## switch syntaxes. Should this be server side or client side?
 ## If server side, we should have a way to switch syntaxes (__str__ vs __str__(syntax))
 
-
-SUPPORTED_SYNTAXES = ['classic', 'forge', 'electrum']
 
 
 class LTLNode(ABC):
