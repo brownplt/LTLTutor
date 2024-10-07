@@ -46,6 +46,19 @@
                 </a>
             </li>
 
+            <!-- Dropdown for LTL Syntax -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="ltlSyntaxDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Syntax: <span id="currentLtlSyntax">Classic</span>
+                </a>
+                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
+                </div>
+            </li>
+            
+
             <li class="nav-item">
                 <a class="nav-link" href="/instructor/home" aria-expanded="false">
                     Instructor Dashboard
@@ -58,17 +71,6 @@
                 </a>
             </li>
 
-            <!-- Dropdown for LTL Syntax -->
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="ltlSyntaxDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Syntax: <span id="currentLtlSyntax">Classic</span>
-                </a>
-                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
-                </div>
-            </li>
 
             {% if uid %}
             <li class="nav-item">
