@@ -17,7 +17,7 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
-    def __init__(self, userLogs, complexity=5):
+    def __init__(self, userLogs, complexity=5, syntax="spot"):
         self.userLogs = userLogs
         self.numUserLogs = len(userLogs)
 
@@ -27,7 +27,25 @@ class ExerciseBuilder:
         ## TODO: We want complexity to be persistent for user, and scale up or down.
         self.complexity = complexity
    
-    
+        self.syntax = syntax
+
+
+
+    def getLTLFormulaAsString(self, node):
+
+        if self.syntax == "spot":
+            return str(node)
+        elif self.syntax == "forge":
+            return node.__forge__()
+        elif self.syntax == "electrum":
+            return node.__electrum__()
+        elif self.syntax == "english":
+            ## We should hopefully never get here. However, 
+            ## I'm adding it here to suggest a way forward.
+            return node.__to_english__()
+
+        ## Default to spot syntax
+        return str(node)
 
 
     def aggregateLogs(self, bucketsizeinhours=1):
@@ -272,7 +290,7 @@ class ExerciseBuilder:
         options = []
         for misconception in d:
             options.append({
-                "option": str(misconception.node),
+                "option": self.getLTLFormulaAsString(misconception.node),
                 "isCorrect": False,
                 "misconceptions": [str(misconception.misconception)]
             })
@@ -289,7 +307,7 @@ class ExerciseBuilder:
             return None
         
         merged_options.append({
-                "option": str(ltl),
+                "option": self.getLTLFormulaAsString(ltl),
                 "isCorrect": True,
                 "misconceptions": []
             })
@@ -357,8 +375,10 @@ class ExerciseBuilder:
         if len(trace_options) < 2:
             return None
 
+        answer_in_correct_syntax = self.getLTLFormulaAsString(ltlnode.parse_ltl_string(answer))
+
         return {
-            "question": parenthesized_answer,
+            "question": answer_in_correct_syntax,
             "type": self.TRACESATMC,
             "options": trace_options,
         }
@@ -415,9 +435,9 @@ class ExerciseBuilder:
             }
 
         ]
-
+        answer_in_correct_syntax = self.getLTLFormulaAsString(ltlnode.parse_ltl_string(answer))
         return {
-            "question": parenthesized_answer,
+            "question": answer_in_correct_syntax,
             "trace": trace_option,
             "type": self.TRACESATYN,
             "options": options,

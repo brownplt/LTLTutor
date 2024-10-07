@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, Blueprint
 from flask_login import login_required, current_user
 
 
-from ltlnode import parse_ltl_string
+from ltlnode import parse_ltl_string, SUPPORTED_SYNTAXES
 from codebook import getAllApplicableMisconceptions
 import os
 import json
@@ -259,14 +259,14 @@ def loganswer(questiontype):
                                       questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
     
 
-
-    ##TODO: We should parse and then __str__ the LTL formulae so that they are in the SPOT / Classic syntax.
-
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
 
-            fgen = FeedbackGenerator(correct_answer, student_selection)
+            correct_answer_spot_syntax = str(parse_ltl_string(correct_answer))
+            student_selection_spot_syntax = str(parse_ltl_string(student_selection))
+
+            fgen = FeedbackGenerator(correct_answer_spot_syntax, student_selection_spot_syntax)
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
@@ -289,6 +289,13 @@ def loganswer(questiontype):
 @app.route('/exercise/generate', methods=['GET'])
 @login_required
 def newexercise():
+
+
+    syntax_choice = request.cookies.get('ltlsyntax')
+    if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
+        syntax_choice = 'spot'
+
+
     userId = getUserName()
 
     ## TODO: Try and do better than this
@@ -324,7 +331,7 @@ def newexercise():
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
     complexity = answer_logger.getComplexity(userId=userId)       
-    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity)
+    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity, syntax = syntax_choice)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
