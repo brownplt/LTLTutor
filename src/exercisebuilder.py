@@ -30,6 +30,10 @@ class ExerciseBuilder:
         self.syntax = syntax
 
 
+    def toSpotSyntax(self, s):
+        return str(ltlnode.parse_ltl_string(s))
+    
+
 
     def getLTLFormulaAsString(self, node):
 
@@ -336,12 +340,11 @@ class ExerciseBuilder:
         if options is None:
             return None
         
-
-        parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
+        parenthesized_answer = self.toSpotSyntax(answer)
         
         trace_options = []
         for o in options:
-            formula = o['option']
+            formula = self.toSpotSyntax(o['option'])
             isCorrect = o['isCorrect']
             misconceptions = o['misconceptions']
 
@@ -368,7 +371,7 @@ class ExerciseBuilder:
                 'option': random.choice(trace_choices),
                 'isCorrect': isCorrect,
                 'misconceptions': misconceptions,
-                'generatedFromFormula': formula
+                'generatedFromFormula': formula ## Should this be the formula we want?
             })
     
 
@@ -385,7 +388,7 @@ class ExerciseBuilder:
 
     def build_tracesat_yn_question(self, answer):
         formulae = self.get_options_with_misconceptions_as_formula(answer)
-        parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
+        parenthesized_answer = self.toSpotSyntax(answer)
     
 
         feedbackString = "No further feedback is currently available. We recommend stepping through the trace to see where/if it diverges from the formula."
@@ -403,11 +406,18 @@ class ExerciseBuilder:
             ## Choose a random option
             formula = random.choice(formulae)
             yesIsCorrect = formula['isCorrect']
-            formula_asString = formula['option']
+            formula_asString = self.toSpotSyntax(formula['option'])
             if yesIsCorrect: 
                 potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             else:
                 potential_trace_choices = spotutils.generate_traces(f_accepted=formula_asString, f_rejected=parenthesized_answer)
+
+
+                ## LTL Formula to Show
+                ## option_in_correct_syntax = 
+                ## correct_option_in_correct_syntax 
+
+
                 feedbackString = f"The trace is accepted by the formula <code>{formula_asString}</code>, but not by the formula <code>{parenthesized_answer}</code>."
             misconceptions = formula['misconceptions']
         

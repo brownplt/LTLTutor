@@ -93,7 +93,7 @@ class ltlListenerImpl(ltlListener) :
         andNode = AndNode(left, right)
         self.stack.append(andNode)
 
-    def exitUntil(self, ctx):
+    def exitU(self, ctx):
         right = self.stack.pop()
         left = self.stack.pop()
         untilNode = UntilNode(left, right)

@@ -252,6 +252,28 @@ class ltlParser ( Parser ):
                 listener.exitDisjunction(self)
 
 
+    class UContext(FormulaContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def formula(self, i:int=None):
+            if i is None:
+                return self.getTypedRuleContexts(ltlParser.FormulaContext)
+            else:
+                return self.getTypedRuleContext(ltlParser.FormulaContext,i)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterU" ):
+                listener.enterU(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitU" ):
+                listener.exitU(self)
+
+
     class FContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
@@ -329,28 +351,6 @@ class ltlParser ( Parser ):
         def exitRule(self, listener:ParseTreeListener):
             if hasattr( listener, "exitX" ):
                 listener.exitX(self)
-
-
-    class UntilContext(FormulaContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def formula(self, i:int=None):
-            if i is None:
-                return self.getTypedRuleContexts(ltlParser.FormulaContext)
-            else:
-                return self.getTypedRuleContext(ltlParser.FormulaContext,i)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterUntil" ):
-                listener.enterUntil(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitUntil" ):
-                listener.exitUntil(self)
 
 
     class LiteralContext(FormulaContext):
@@ -498,7 +498,7 @@ class ltlParser ( Parser ):
                         pass
 
                     elif la_ == 3:
-                        localctx = ltlParser.UntilContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
+                        localctx = ltlParser.UContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 31
                         if not self.precpred(self._ctx, 9):

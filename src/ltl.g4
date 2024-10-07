@@ -5,7 +5,7 @@ ltl: formula EOF;
 formula
     : formula '|' formula                     # disjunction
     | formula '&' formula                     # conjunction
-    | formula ( 'U' | 'UNTIL' ) formula       # until
+    | formula ( 'U' | 'UNTIL' ) formula       # U
     | formula '->' formula                    # implication
     | formula '<->' formula                   # equivalence
     | ('X' | 'NEXT' | 'NEXT_STATE') formula   # X
