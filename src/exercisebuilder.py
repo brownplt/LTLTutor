@@ -37,6 +37,12 @@ class ExerciseBuilder:
 
     def getLTLFormulaAsString(self, node):
 
+
+        ## Check if node is a string ##
+        if isinstance(node, str):
+            node = ltlnode.parse_ltl_string(node)
+
+
         if self.syntax == "Classic":
             return str(node)
         elif self.syntax == "Forge":
@@ -414,11 +420,11 @@ class ExerciseBuilder:
 
 
                 ## LTL Formula to Show
-                ## option_in_correct_syntax = 
-                ## correct_option_in_correct_syntax 
+                option_in_correct_syntax = self.getLTLFormulaAsString(formula_asString)
+                correct_option_in_correct_syntax  = self.getLTLFormulaAsString(parenthesized_answer)
 
 
-                feedbackString = f"The trace is accepted by the formula <code>{formula_asString}</code>, but not by the formula <code>{parenthesized_answer}</code>."
+                feedbackString = f"The trace is accepted by the formula <code>{option_in_correct_syntax}</code>, but not by the formula <code>{correct_option_in_correct_syntax}</code>."
             misconceptions = formula['misconceptions']
         
         if len(potential_trace_choices) == 0:
