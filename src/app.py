@@ -231,6 +231,7 @@ def loganswer(questiontype):
     data = request.json
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
+
     isCorrect = data['correct']
 
     misconceptions = ast.literal_eval(data['misconceptions'])
@@ -255,6 +256,11 @@ def loganswer(questiontype):
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect, 
                                       questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
+    
+
+
+    ##TODO: We should parse and then __str__ the LTL formulae so that they are in the SPOT / Classic syntax.
+
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:

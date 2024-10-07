@@ -24,6 +24,10 @@ FINALLY_SYMBOL = 'F'
 UNTIL_SYMBOL = 'U'
 
   
+## TODO: Too much is based on the Exact syntax. We should be able to
+## switch syntaxes. Should this be server side or client side?
+## If server side, we should have a way to switch syntaxes (__str__ vs __str__(syntax))
+
 
 class LTLNode(ABC):
     def __init__(self, type):
@@ -47,8 +51,6 @@ class LTLNode(ABC):
     @staticmethod
     def equiv(formula1, formula2):
         areEquivalent(formula1, formula2)
-
-
 
 
 
