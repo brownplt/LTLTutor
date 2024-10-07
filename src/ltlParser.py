@@ -148,44 +148,6 @@ class ltlParser ( Parser ):
             super().copyFrom(ctx)
 
 
-    class NextContext(FormulaContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def formula(self):
-            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterNext" ):
-                listener.enterNext(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitNext" ):
-                listener.exitNext(self)
-
-
-    class AlwaysContext(FormulaContext):
-
-        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
-            super().__init__(parser)
-            self.copyFrom(ctx)
-
-        def formula(self):
-            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
-
-
-        def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterAlways" ):
-                listener.enterAlways(self)
-
-        def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitAlways" ):
-                listener.exitAlways(self)
-
-
     class ParenthesesContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
@@ -290,6 +252,25 @@ class ltlParser ( Parser ):
                 listener.exitDisjunction(self)
 
 
+    class FContext(FormulaContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def formula(self):
+            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterF" ):
+                listener.enterF(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitF" ):
+                listener.exitF(self)
+
+
     class ImplicationContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
@@ -312,7 +293,7 @@ class ltlParser ( Parser ):
                 listener.exitImplication(self)
 
 
-    class EventuallyContext(FormulaContext):
+    class GContext(FormulaContext):
 
         def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
             super().__init__(parser)
@@ -323,12 +304,31 @@ class ltlParser ( Parser ):
 
 
         def enterRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "enterEventually" ):
-                listener.enterEventually(self)
+            if hasattr( listener, "enterG" ):
+                listener.enterG(self)
 
         def exitRule(self, listener:ParseTreeListener):
-            if hasattr( listener, "exitEventually" ):
-                listener.exitEventually(self)
+            if hasattr( listener, "exitG" ):
+                listener.exitG(self)
+
+
+    class XContext(FormulaContext):
+
+        def __init__(self, parser, ctx:ParserRuleContext): # actually a ltlParser.FormulaContext
+            super().__init__(parser)
+            self.copyFrom(ctx)
+
+        def formula(self):
+            return self.getTypedRuleContext(ltlParser.FormulaContext,0)
+
+
+        def enterRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "enterX" ):
+                listener.enterX(self)
+
+        def exitRule(self, listener:ParseTreeListener):
+            if hasattr( listener, "exitX" ):
+                listener.exitX(self)
 
 
     class UntilContext(FormulaContext):
@@ -387,7 +387,7 @@ class ltlParser ( Parser ):
             self._errHandler.sync(self)
             token = self._input.LA(1)
             if token in [ltlParser.T__6, ltlParser.T__7, ltlParser.T__8]:
-                localctx = ltlParser.NextContext(self, localctx)
+                localctx = ltlParser.XContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
 
@@ -402,7 +402,7 @@ class ltlParser ( Parser ):
                 self.formula(6)
                 pass
             elif token in [ltlParser.T__9, ltlParser.T__10]:
-                localctx = ltlParser.EventuallyContext(self, localctx)
+                localctx = ltlParser.FContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 12
@@ -416,7 +416,7 @@ class ltlParser ( Parser ):
                 self.formula(5)
                 pass
             elif token in [ltlParser.T__11, ltlParser.T__12]:
-                localctx = ltlParser.AlwaysContext(self, localctx)
+                localctx = ltlParser.GContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 14

@@ -6,14 +6,14 @@ formula
     : formula '|' formula                     # disjunction
     | formula '&' formula                     # conjunction
     | formula ( 'U' | 'UNTIL' ) formula       # until
-    | formula '->' formula      # implication
-    | formula '<->' formula     # equivalence
-    | ('X' | 'NEXT' | 'NEXT_STATE') formula    # next
-    | ('F' | 'EVENTUALLY') formula  # eventually
-    | ('G' | 'ALWAYS') formula  # always
-    | '!' formula              # not
-    | '(' formula ')'          # parentheses
-    | atomicFormula            # literal
+    | formula '->' formula                    # implication
+    | formula '<->' formula                   # equivalence
+    | ('X' | 'NEXT' | 'NEXT_STATE') formula   # X
+    | ('F' | 'EVENTUALLY') formula            # F
+    | ('G' | 'ALWAYS') formula                # G
+    | '!' formula                             # not
+    | '(' formula ')'                         # parentheses
+    | atomicFormula                           # literal
     ;
 
 atomicFormula: ID;

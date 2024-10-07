@@ -17,24 +17,6 @@ class ltlListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ltlParser#next.
-    def enterNext(self, ctx:ltlParser.NextContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#next.
-    def exitNext(self, ctx:ltlParser.NextContext):
-        pass
-
-
-    # Enter a parse tree produced by ltlParser#always.
-    def enterAlways(self, ctx:ltlParser.AlwaysContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#always.
-    def exitAlways(self, ctx:ltlParser.AlwaysContext):
-        pass
-
-
     # Enter a parse tree produced by ltlParser#parentheses.
     def enterParentheses(self, ctx:ltlParser.ParenthesesContext):
         pass
@@ -80,6 +62,15 @@ class ltlListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ltlParser#F.
+    def enterF(self, ctx:ltlParser.FContext):
+        pass
+
+    # Exit a parse tree produced by ltlParser#F.
+    def exitF(self, ctx:ltlParser.FContext):
+        pass
+
+
     # Enter a parse tree produced by ltlParser#implication.
     def enterImplication(self, ctx:ltlParser.ImplicationContext):
         pass
@@ -89,12 +80,21 @@ class ltlListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by ltlParser#eventually.
-    def enterEventually(self, ctx:ltlParser.EventuallyContext):
+    # Enter a parse tree produced by ltlParser#G.
+    def enterG(self, ctx:ltlParser.GContext):
         pass
 
-    # Exit a parse tree produced by ltlParser#eventually.
-    def exitEventually(self, ctx:ltlParser.EventuallyContext):
+    # Exit a parse tree produced by ltlParser#G.
+    def exitG(self, ctx:ltlParser.GContext):
+        pass
+
+
+    # Enter a parse tree produced by ltlParser#X.
+    def enterX(self, ctx:ltlParser.XContext):
+        pass
+
+    # Exit a parse tree produced by ltlParser#X.
+    def exitX(self, ctx:ltlParser.XContext):
         pass
 
 
