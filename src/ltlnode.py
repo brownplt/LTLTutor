@@ -29,7 +29,7 @@ UNTIL_SYMBOL = 'U'
 ## If server side, we should have a way to switch syntaxes (__str__ vs __str__(syntax))
 
 
-SUPPORTED_SYNTAXES = ['spot', 'forge', 'electrum']
+SUPPORTED_SYNTAXES = ['classic', 'forge', 'electrum']
 
 
 class LTLNode(ABC):

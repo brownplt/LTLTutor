@@ -58,6 +58,18 @@
                 </a>
             </li>
 
+            <!-- Dropdown for LTL Syntax -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="ltlSyntaxDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Select LTL Syntax
+                </a>
+                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
+                </div>
+            </li>
+
 
             {% if uid %}
             <li class="nav-item">
@@ -71,6 +83,14 @@
         </ul>
     </div>
 </nav>
+
+<!-- JavaScript to set the ltlsyntax cookie -->
+<script>
+    function setLtlSyntax(syntax) {
+        document.cookie = "ltlsyntax=" + syntax + "; path=/";
+        alert("LTL Syntax set to " + syntax);
+    }
+    </script>
 
 <!-- Generic Modal -->
 <div class="modal fade" id="genericHelpModal" tabindex="-1" role="dialog" aria-labelledby="genericHelpModalLabel"

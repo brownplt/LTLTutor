@@ -17,7 +17,7 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
-    def __init__(self, userLogs, complexity=5, syntax="spot"):
+    def __init__(self, userLogs, complexity=5, syntax="classic"):
         self.userLogs = userLogs
         self.numUserLogs = len(userLogs)
 
@@ -33,7 +33,7 @@ class ExerciseBuilder:
 
     def getLTLFormulaAsString(self, node):
 
-        if self.syntax == "spot":
+        if self.syntax == "classic":
             return str(node)
         elif self.syntax == "forge":
             return node.__forge__()
@@ -44,7 +44,7 @@ class ExerciseBuilder:
             ## I'm adding it here to suggest a way forward.
             return node.__to_english__()
 
-        ## Default to spot syntax
+        ## Default to classic syntax
         return str(node)
 
 

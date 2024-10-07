@@ -245,6 +245,8 @@ def loganswer(questiontype):
     mp_formula_literals = []
     # If response has a mp_class field, log it
     if MP_FORMULA_KEY in data:
+
+        ## TODO: For this classification, we need to ensure we are in classic syntax.
         to_classify = data[MP_FORMULA_KEY]
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
         mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
@@ -293,7 +295,7 @@ def newexercise():
 
     syntax_choice = request.cookies.get('ltlsyntax')
     if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
-        syntax_choice = 'spot'
+        syntax_choice = 'classic'
 
 
     userId = getUserName()
