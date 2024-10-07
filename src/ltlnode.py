@@ -160,10 +160,10 @@ class UnaryOperatorNode(LTLNode):
         return self.__str__()
     
     def __forge__(self):
-        return f"{self.operator} {self.operand.__forge__()}"
+        return f"({self.operator} {self.operand.__forge__()})"
     
     def __electrum__(self):
-        return f"{self.operator} {self.operand.__electrum__()}"
+        return f"({self.operator} {self.operand.__electrum__()})"
 
 
 class BinaryOperatorNode(LTLNode):
@@ -183,10 +183,10 @@ class BinaryOperatorNode(LTLNode):
         return self.__str__()
     
     def __forge__(self):
-        return f"{self.left.__forge__()} {self.operator} {self.right.__forge__()}"
+        return f"({self.left.__forge__()} {self.operator} {self.right.__forge__()})"
     
     def __electrum__(self):
-        return f"{self.left.__electrum__()} {self.operator} {self.right.__electrum__()}"
+        return f"({self.left.__electrum__()} {self.operator} {self.right.__electrum__()})"
 
 
 class LiteralNode(LTLNode):
@@ -228,10 +228,10 @@ class UntilNode(BinaryOperatorNode):
         return english
     
     def __forge__(self):
-        return f"{self.left.__forge__()} UNTIL {self.right.__forge__()}"
+        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
     
     def __electrum__(self):
-        return f"{self.left.__electrum__()} UNTIL {self.right.__electrum__()}"
+        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
 
 
 class NextNode(UnaryOperatorNode):
@@ -248,10 +248,10 @@ class NextNode(UnaryOperatorNode):
         return english
     
     def __forge__(self):
-        return f"NEXT_STATE {self.operand.__forge__()}"
+        return f"(NEXT_STATE {self.operand.__forge__()})"
     
     def __electrum__(self):
-        return f"NEXT {self.operand.__electrum__()}"
+        return f"(NEXT {self.operand.__electrum__()})"
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -276,10 +276,10 @@ class GloballyNode(UnaryOperatorNode):
         return english
     
     def __forge__(self):
-        return f"ALWAYS {self.operand.__forge__()}"
+        return f"(ALWAYS {self.operand.__forge__()})"
     
     def __electrum__(self):
-        return f"ALWAYS {self.operand.__electrum__()}"
+        return f"(ALWAYS {self.operand.__electrum__()})"
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -304,10 +304,10 @@ class FinallyNode(UnaryOperatorNode):
         return english
     
     def __forge__(self):
-        return f"EVENTUALLY {self.operand.__forge__()}"
+        return f"(EVENTUALLY {self.operand.__forge__()})"
     
     def __electrum__(self):
-        return f"EVENTUALLY {self.operand.__electrum__()}"
+        return f"(EVENTUALLY {self.operand.__electrum__()})"
 
 
 class OrNode(BinaryOperatorNode):
