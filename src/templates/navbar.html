@@ -40,24 +40,23 @@
             </li>
 
 
+            <!-- Combined Dropdown for Generate Exercise and Syntax Choice -->
             <li class="nav-item">
-                <a class="nav-link" href="/exercise/generate" aria-expanded="false">
-                    Generate Exercise
-                </a>
+                <a class="nav-link" href="/exercise/generate" >Generate Exercise</a>
             </li>
 
-            <!-- Dropdown for LTL Syntax -->
+
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="ltlSyntaxDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Syntax: <span id="currentLtlSyntax">Classic</span>
+                <a class="nav-link dropdown-toggle"  id="generateExerciseDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                   (<span id="currentLtlSyntax">Classic</span> syntax)
                 </a>
-                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
+                <div class="dropdown-menu" aria-labelledby="generateExerciseDropdown">
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Classic')">Generate Exercise (Classic syntax)</a>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Forge')">Generate Exercise (Forge syntax)</a>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Electrum')">Generate Exercise (Electrum syntax)</a>
                 </div>
             </li>
-            
 
             <li class="nav-item">
                 <a class="nav-link" href="/instructor/home" aria-expanded="false">
@@ -88,6 +87,12 @@
 <!-- JavaScript to set the ltlsyntax cookie -->
 <script>
     // Function to get the value of a cookie by name
+    function setLtlSyntax(syntax) {
+        document.cookie = "ltlsyntax=" + syntax + "; path=/";
+        document.getElementById('currentLtlSyntax').innerText = syntax;
+    }
+
+    // Function to get the value of a cookie by name
     function getCookie(name) {
         let cookieArr = document.cookie.split(";");
         for (let i = 0; i < cookieArr.length; i++) {
@@ -99,17 +104,14 @@
         return null;
     }
 
-
-    function setLtlSyntax(syntax) {
-        document.cookie = "ltlsyntax=" + syntax + "; path=/";
-        document.getElementById('currentLtlSyntax').innerText = currentSyntax;
-    }
-
     // Set the initial value of the dropdown based on the cookie
     document.addEventListener('DOMContentLoaded', (event) => {
         let currentSyntax = getCookie('ltlsyntax');
         if (currentSyntax) {
             document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+        }
+        else {
+            setLtlSyntax('Classic');
         }
     });
     </script>
