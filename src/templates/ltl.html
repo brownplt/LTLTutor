@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
@@ -26,16 +26,14 @@
 
             <p>Let's break down LTL syntax, as used by this tutor:</p>
 
-            <!-- Dropdown for LTL Syntax -->
-            <div class="dropdown my-3">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="ltlSyntaxDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Syntax Style: <span id="currentLtlSyntax">Classic</span>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
-                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
-                </div>
+            <!-- Select for LTL Syntax -->
+            <div class="form-group my-3">
+                <label for="ltlSyntaxSelect">Syntax Style:</label>
+                <select class="form-control" id="ltlSyntaxSelect" onchange="setLtlSyntax(this.value)">
+                    <option value="Classic">Classic</option>
+                    <option value="Forge">Forge</option>
+                    <option value="Electrum">Electrum</option>
+                </select>
             </div>
 
 
@@ -132,7 +130,7 @@
     <script>
         function setLtlSyntax(syntax) {
             document.cookie = "ltlsyntax=" + syntax + "; path=/";
-            document.getElementById('currentLtlSyntax').innerText = syntax;
+            
             updateSyntaxExamples(syntax);
         }
     
@@ -201,11 +199,11 @@
             }
         }
     
-        // Set the initial value of the dropdown and Until text based on the cookie
         document.addEventListener('DOMContentLoaded', (event) => {
             let currentSyntax = getCookie('ltlsyntax');
             if (currentSyntax) {
-                document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+
+                document.getElementById('ltlSyntaxSelect').value = currentSyntax;
                 updateSyntaxExamples(currentSyntax);
             }
         });
