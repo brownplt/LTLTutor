@@ -135,6 +135,9 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
 
 ## Returns the Mana Pneulli classification of the formula
 def get_mana_pneulli_class(formula):
+
+
+
     f = spot.formula(formula)
     return spot.mp_class(f, 'v')
 
