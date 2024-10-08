@@ -18,9 +18,27 @@
     <div class="container">
         {% include 'navbar.html' %}
 
+
+
+
+
         <div id="explanation" class="container">
 
             <p>Let's break down LTL syntax, as used by this tutor:</p>
+
+            <!-- Dropdown for LTL Syntax -->
+            <div class="dropdown my-3">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="ltlSyntaxDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Syntax Style: <span id="currentLtlSyntax">Classic</span>
+                </button>
+                <div class="dropdown-menu" aria-labelledby="ltlSyntaxDropdown">
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Classic')">Classic</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Forge')">Forge</a>
+                    <a class="dropdown-item" href="#" onclick="setLtlSyntax('Electrum')">Electrum</a>
+                </div>
+            </div>
+
+
             <table class="table">
                 <thead>
                     <tr>
@@ -58,11 +76,11 @@
                         <td><code>a & b</code> (means "a and b")</td>
                     </tr>
                     <tr>
-                        <td><strong>Until (<code>U</code>)</strong></td>
+                        <td><strong>Until (<code id="untilCode">U</code>)</strong></td>
                         <td>This operator represents a temporal relationship between two formulas. It evaluates to true
                             if the first formula remains true until some point in the future when the second formula
                             becomes true.</td>
-                        <td><code>a U b</code> (means "a until b")</td>
+                        <td><code id="untilExample">a U b</code> (means "a until b")</td>
                     </tr>
                     <tr>
                         <td><strong>Implication (<code>-></code>)</strong></td>
@@ -79,21 +97,21 @@
                         <td><code>a <-> b</code> (means "a if and only if b")</td>
                     </tr>
                     <tr>
-                        <td><strong>Next (<code>X</code>)</strong></td>
+                        <td><strong>Next (<code id="nextCode">X</code>)</strong></td>
                         <td>This operator represents the next state in the system. It evaluates to true if the formula
                             is
                             true in the next state.</td>
-                        <td><code>X a</code> (means "in the next state, a")</td>
+                        <td><code id="nextExample">X a</code> (means "in the next state, a")</td>
                     </tr>
                     <tr>
-                        <td><strong>Eventually or Finally (<code>F</code>)</strong></td>
+                        <td><strong>Eventually or Finally (<code id="eventuallyCode">F</code>)</strong></td>
                         <td>This operator asserts that a formula will become true at some point in the future.</td>
-                        <td><code>F a</code> (means "eventually a")</td>
+                        <td><code id="eventuallyExample">F a</code> (means "eventually a")</td>
                     </tr>
                     <tr>
-                        <td><strong>Globally (<code>G</code>)</strong></td>
+                        <td><strong>Globally (<code id="globallyCode">G</code>)</strong></td>
                         <td>This operator asserts that a formula is always true from the current state onwards.</td>
-                        <td><code>G a</code> (means "a holds from this point on")</td>
+                        <td><code id="globallyExample">G a</code> (means "a holds from this point on")</td>
                     </tr>
                     <tr>
                         <td><strong>Negation (<code>!</code>)</strong></td>
@@ -111,6 +129,87 @@
             </table>
         </div>
     </div>
+    <script>
+        function setLtlSyntax(syntax) {
+            document.cookie = "ltlsyntax=" + syntax + "; path=/";
+            document.getElementById('currentLtlSyntax').innerText = syntax;
+            updateSyntaxExamples(syntax);
+        }
+    
+        // Function to get the value of a cookie by name
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (name == cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+    
+        // Function to update the Until text based on the syntax
+        function updateSyntaxExamples(syntax) {
+
+
+            // Update Until
+
+            let untilCode = document.getElementById('untilCode');
+            let untilExample = document.getElementById('untilExample');
+
+            let globallyCode = document.getElementById('globallyCode');
+            let globallyExample = document.getElementById('globallyExample');
+
+            let eventuallyCode = document.getElementById('eventuallyCode');
+            let eventuallyExample = document.getElementById('eventuallyExample');
+
+            let nextCode = document.getElementById('nextCode');
+            let nextExample = document.getElementById('nextExample');
+
+
+
+
+            if (syntax === 'Classic') {
+                untilCode.innerText = 'U';
+                untilExample.innerText = 'a U b';
+                globallyCode.innerText = 'G';
+                globallyExample.innerText = 'G a';
+                eventuallyCode.innerText = 'F';
+                eventuallyExample.innerText = 'F a';
+                nextCode.innerText = 'X';
+                nextExample.innerText = 'X a';
+
+            } else if (syntax === 'Forge') {
+                untilCode.innerText = 'UNTIL';
+                untilExample.innerText = 'a UNTIL b';
+                globallyCode.innerText = 'ALWAYS';
+                globallyExample.innerText = 'ALWAYS a';
+                eventuallyCode.innerText = 'EVENTUALLY';
+                eventuallyExample.innerText = 'EVENTUALLY a';
+                nextCode.innerText = 'NEXT_STATE';
+                nextExample.innerText = 'NEXT_STATE a';
+                
+            } else if (syntax === 'Electrum') {
+                untilCode.innerText = 'UNTIL';
+                untilExample.innerText = 'a UNTIL b';
+                globallyCode.innerText = 'ALWAYS';
+                globallyExample.innerText = 'ALWAYS a';
+                eventuallyCode.innerText = 'EVENTUALLY';
+                eventuallyExample.innerText = 'EVENTUALLY a';
+                nextCode.innerText = 'NEXT';
+                nextExample.innerText = 'NEXT a';
+            }
+        }
+    
+        // Set the initial value of the dropdown and Until text based on the cookie
+        document.addEventListener('DOMContentLoaded', (event) => {
+            let currentSyntax = getCookie('ltlsyntax');
+            if (currentSyntax) {
+                document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+                updateSyntaxExamples(currentSyntax);
+            }
+        });
+    </script>
     {% include 'footer.html' %}
 </body>
 
