@@ -377,7 +377,7 @@ class ExerciseBuilder:
                 'option': random.choice(trace_choices),
                 'isCorrect': isCorrect,
                 'misconceptions': misconceptions,
-                'generatedFromFormula': formula ## Should this be the formula we want?
+                'generatedFromFormula': self.getLTLFormulaAsString(formula) ## Should this be the formula we want?
             })
     
 
