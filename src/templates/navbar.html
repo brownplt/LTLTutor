@@ -1,5 +1,5 @@
 <pre
-    class="badge badge-light uidbadge"><span class="float-left">[Version 1.1.4]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
+    class="badge badge-light uidbadge"><span class="float-left">[Version 1.2.0]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
 
     <div id="blogPostAlert" class="alert alert-success alert-dismissible fade show" role="alert">
         <p class="lead">Want to know more about the LTL tutor? <a href="https://blog.brownplt.org/2024/08/08/ltltutor.html">Read this blog post!</a></p>
@@ -40,10 +40,22 @@
             </li>
 
 
+            <!-- Combined Dropdown for Generate Exercise and Syntax Choice -->
             <li class="nav-item">
-                <a class="nav-link" href="/exercise/generate" aria-expanded="false">
-                    Generate Exercise
+                <a class="nav-link" href="/exercise/generate" >Generate Exercise</a>
+            </li>
+
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle"  id="generateExerciseDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                   (<span id="currentLtlSyntax">Classic</span> syntax)
                 </a>
+                <div class="dropdown-menu" aria-labelledby="generateExerciseDropdown">
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Classic')">Generate Exercise (Classic syntax)</a>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Forge')">Generate Exercise (Forge syntax)</a>
+                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Electrum')">Generate Exercise (Electrum syntax)</a>
+                </div>
             </li>
 
             <li class="nav-item">
@@ -71,6 +83,38 @@
         </ul>
     </div>
 </nav>
+
+<!-- JavaScript to set the ltlsyntax cookie -->
+<script>
+    // Function to get the value of a cookie by name
+    function setLtlSyntax(syntax) {
+        document.cookie = "ltlsyntax=" + syntax + "; path=/";
+        document.getElementById('currentLtlSyntax').innerText = syntax;
+    }
+
+    // Function to get the value of a cookie by name
+    function getCookie(name) {
+        let cookieArr = document.cookie.split(";");
+        for (let i = 0; i < cookieArr.length; i++) {
+            let cookiePair = cookieArr[i].split("=");
+            if (name == cookiePair[0].trim()) {
+                return decodeURIComponent(cookiePair[1]);
+            }
+        }
+        return null;
+    }
+
+    // Set the initial value of the dropdown based on the cookie
+    document.addEventListener('DOMContentLoaded', (event) => {
+        let currentSyntax = getCookie('ltlsyntax');
+        if (currentSyntax) {
+            document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+        }
+        else {
+            setLtlSyntax('Classic');
+        }
+    });
+    </script>
 
 <!-- Generic Modal -->
 <div class="modal fade" id="genericHelpModal" tabindex="-1" role="dialog" aria-labelledby="genericHelpModalLabel"

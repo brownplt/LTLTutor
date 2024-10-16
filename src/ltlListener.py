@@ -1,4 +1,4 @@
-# Generated from ltl.g4 by ANTLR 4.13.1
+# Generated from ltl.g4 by ANTLR 4.13.2
 from antlr4 import *
 if "." in __name__:
     from .ltlParser import ltlParser
@@ -62,6 +62,15 @@ class ltlListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by ltlParser#U.
+    def enterU(self, ctx:ltlParser.UContext):
+        pass
+
+    # Exit a parse tree produced by ltlParser#U.
+    def exitU(self, ctx:ltlParser.UContext):
+        pass
+
+
     # Enter a parse tree produced by ltlParser#F.
     def enterF(self, ctx:ltlParser.FContext):
         pass
@@ -95,15 +104,6 @@ class ltlListener(ParseTreeListener):
 
     # Exit a parse tree produced by ltlParser#X.
     def exitX(self, ctx:ltlParser.XContext):
-        pass
-
-
-    # Enter a parse tree produced by ltlParser#until.
-    def enterUntil(self, ctx:ltlParser.UntilContext):
-        pass
-
-    # Exit a parse tree produced by ltlParser#until.
-    def exitUntil(self, ctx:ltlParser.UntilContext):
         pass
 
 

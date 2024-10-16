@@ -1,5 +1,6 @@
 
-from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode
+
+from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
 from spotutils import is_trace_satisfied
 import re
 import random
@@ -8,6 +9,29 @@ from exerciseprocessor import mermaidFromSpotTrace, mermaidGraphFromEdgesList, N
 def randid():
     return ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
+
+
+def getLTLFormulaAsString(node, syntax):
+
+
+    ## Check if node is a string ##
+    if isinstance(node, str):
+        node = parse_ltl_string(node)
+
+
+    if syntax == "Classic":
+        return str(node)
+    elif syntax == "Forge":
+        return node.__forge__()
+    elif syntax == "Electrum":
+        return node.__electrum__()
+    elif syntax == "English":
+        ## We should hopefully never get here. However, 
+        ## I'm adding it here to suggest a way forward.
+        return node.__to_english__()
+
+    ## Default to classic syntax
+    return str(node)
 
 class StepperNode:
     def __init__(self, formula, children, satisfied, trace, traceindex, originaltrace):
@@ -116,24 +140,41 @@ class TraceSatisfactionResult:
         return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
 
 
-def satisfiesTrace(node, trace, traceindex, originaltrace) -> StepperNode:
+
+
+def satisfiesTrace(node, trace, traceindex, originaltrace, syntax) -> StepperNode:
 
     formula = str(node)
+    formula_as_string = getLTLFormulaAsString(node, syntax)
+
+
+    ### StepperNode(self, formula, children, satisfied, trace, traceindex, originaltrace):
     if trace == None or len(trace) == 0:
-        return StepperNode(formula, [], True, trace, traceindex=traceindex, originaltrace=originaltrace)
+        return StepperNode(formula_as_string, [], True, trace, traceindex=traceindex, originaltrace=originaltrace)
 
     if isinstance(node, LiteralNode):
-        return StepperNode(formula, [], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
+        return StepperNode(formula_as_string, [], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
     elif isinstance(node, UnaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.operand, trace,  traceindex=traceindex, originaltrace=originaltrace)], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
+        return StepperNode(formula_as_string, 
+                           [satisfiesTrace(node.operand, trace,  traceindex=traceindex, originaltrace=originaltrace,syntax=syntax)],
+                            is_trace_satisfied(formula=node, trace=trace),
+                            trace,
+                            traceindex=traceindex,
+                            originaltrace=originaltrace)
     elif isinstance(node, BinaryOperatorNode):
-        return StepperNode(formula, [satisfiesTrace(node.left, trace,  traceindex=traceindex, originaltrace=originaltrace), satisfiesTrace(node.right, trace,  traceindex=traceindex, originaltrace=originaltrace)], is_trace_satisfied(formula=node, trace=trace), trace, traceindex=traceindex, originaltrace=originaltrace)
+        return StepperNode(formula_as_string, 
+                           [ satisfiesTrace(node.left, trace,  traceindex=traceindex, originaltrace=originaltrace, syntax=syntax),
+                             satisfiesTrace(node.right, trace,  traceindex=traceindex, originaltrace=originaltrace, syntax=syntax)],
+                            is_trace_satisfied(formula=node, trace=trace),
+                            trace, 
+                            traceindex=traceindex, 
+                            originaltrace=originaltrace)
     
     return StepperNode(formula, [], False, trace, traceindex=traceindex, originaltrace=originaltrace)
 
 
-def buildNodeStep(node, subtrace, trace_index_of_subtrace, trace) -> StepperNode:
-    stepperNode = satisfiesTrace(node = node, trace = subtrace, traceindex=trace_index_of_subtrace, originaltrace=trace)
+def buildNodeStep(node, subtrace, trace_index_of_subtrace, trace, syntax) -> StepperNode:
+    stepperNode = satisfiesTrace(node = node, trace = subtrace, traceindex=trace_index_of_subtrace, originaltrace=trace, syntax = syntax)
 
     ### TODO: Over here:
 
@@ -172,7 +213,7 @@ def splitTraceAtCycle(sr):
 
 
 # Trace has to be a list of spot word formulae
-def traceSatisfactionPerStep(node, trace):
+def traceSatisfactionPerStep(node, trace, syntax):
     if len(trace) == 0:
         return []
     
@@ -204,8 +245,8 @@ def traceSatisfactionPerStep(node, trace):
         return cycle_prefix_string + ";" + cycle_string
     
     num_prefix_states = len(prefix)
-    prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace, trace_index_of_subtrace=i) for i in range(len(prefix))]
+    prefix_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInPrefix(i), trace=trace, trace_index_of_subtrace=i, syntax=syntax) for i in range(len(prefix))]
 
 
-    cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace, trace_index_of_subtrace= num_prefix_states + i) for i in range(len(cycle))]
+    cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace, trace_index_of_subtrace= num_prefix_states + i, syntax=syntax) for i in range(len(cycle))]
     return TraceSatisfactionResult(prefix_sat, cycle_sat)

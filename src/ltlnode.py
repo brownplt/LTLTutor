@@ -12,6 +12,9 @@ import ltltoeng
 import re
 
 
+
+SUPPORTED_SYNTAXES = ['Classic', 'Forge', 'Electrum']
+
 ## Should these come from the lexer instead of being placed here
 IMPLIES_SYMBOL = '->'
 EQUIVALENCE_SYMBOL = '<->'
@@ -24,16 +27,26 @@ FINALLY_SYMBOL = 'F'
 UNTIL_SYMBOL = 'U'
 
   
+## TODO: Too much is based on the Exact syntax. We should be able to
+## switch syntaxes. Should this be server side or client side?
+## If server side, we should have a way to switch syntaxes (__str__ vs __str__(syntax))
+
+
 
 class LTLNode(ABC):
     def __init__(self, type):
         self.type = type
 
+    """
+        LTL Node in Classic/ Spot Syntax
+    """
     @abstractmethod
     def __str__(self):
         pass
 
-
+    """
+        LTL Node in English
+    """
     @abstractmethod
     def __to_english__(self):
         x = ltltoeng.apply_special_pattern_if_possible(self)
@@ -43,12 +56,24 @@ class LTLNode(ABC):
         # https://matthewbdwyer.github.io/psp/patterns/ltl.html
         pass
 
+    """
+        LTLNode in Forge Syntax
+    """
+    @abstractmethod
+    def __forge__(self):
+        pass
+    
+    """
+        LTLNode in Electrum Syntax
+    """
+    @abstractmethod
+    def __electrum__(self):
+        pass
+
 
     @staticmethod
     def equiv(formula1, formula2):
         areEquivalent(formula1, formula2)
-
-
 
 
 
@@ -68,7 +93,7 @@ class ltlListenerImpl(ltlListener) :
         andNode = AndNode(left, right)
         self.stack.append(andNode)
 
-    def exitUntil(self, ctx):
+    def exitU(self, ctx):
         right = self.stack.pop()
         left = self.stack.pop()
         untilNode = UntilNode(left, right)
@@ -133,6 +158,12 @@ class UnaryOperatorNode(LTLNode):
         if x is not None:
             return x
         return self.__str__()
+    
+    def __forge__(self):
+        return f"({self.operator} {self.operand.__forge__()})"
+    
+    def __electrum__(self):
+        return f"({self.operator} {self.operand.__electrum__()})"
 
 
 class BinaryOperatorNode(LTLNode):
@@ -150,6 +181,12 @@ class BinaryOperatorNode(LTLNode):
         if x is not None:
             return x
         return self.__str__()
+    
+    def __forge__(self):
+        return f"({self.left.__forge__()} {self.operator} {self.right.__forge__()})"
+    
+    def __electrum__(self):
+        return f"({self.left.__electrum__()} {self.operator} {self.right.__electrum__()})"
 
 
 class LiteralNode(LTLNode):
@@ -168,6 +205,12 @@ class LiteralNode(LTLNode):
         ### TODO: COuld we override so that this is more meaningful
         # for some cases?
         return f"'{self.value}' holds"
+    
+    def __forge__(self):
+        return self.value
+    
+    def __electrum__(self):
+        return self.value
 
 
 class UntilNode(BinaryOperatorNode):
@@ -183,6 +226,12 @@ class UntilNode(BinaryOperatorNode):
         rhs = self.right.__to_english__()
         english = f"{lhs} until {rhs}."
         return english
+    
+    def __forge__(self):
+        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
+    
+    def __electrum__(self):
+        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
 
 
 class NextNode(UnaryOperatorNode):
@@ -197,6 +246,12 @@ class NextNode(UnaryOperatorNode):
         op = self.operand.__to_english__()
         english = f"in the next state, {op}."
         return english
+    
+    def __forge__(self):
+        return f"(NEXT_STATE {self.operand.__forge__()})"
+    
+    def __electrum__(self):
+        return f"(AFTER {self.operand.__electrum__()})"
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -219,6 +274,12 @@ class GloballyNode(UnaryOperatorNode):
 
         english = random.choice(patterns)
         return english
+    
+    def __forge__(self):
+        return f"(ALWAYS {self.operand.__forge__()})"
+    
+    def __electrum__(self):
+        return f"(ALWAYS {self.operand.__electrum__()})"
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -241,6 +302,12 @@ class FinallyNode(UnaryOperatorNode):
 
         english = f"eventually, {op}"
         return english
+    
+    def __forge__(self):
+        return f"(EVENTUALLY {self.operand.__forge__()})"
+    
+    def __electrum__(self):
+        return f"(EVENTUALLY {self.operand.__electrum__()})"
 
 
 class OrNode(BinaryOperatorNode):
@@ -258,6 +325,8 @@ class OrNode(BinaryOperatorNode):
         rhs = self.right.__to_english__()
         english = f"{lhs} or {rhs}."
         return english
+    
+
 
 
 class AndNode(BinaryOperatorNode):

@@ -17,7 +17,7 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
-    def __init__(self, userLogs, complexity=5):
+    def __init__(self, userLogs, complexity=5, syntax="Classic"):
         self.userLogs = userLogs
         self.numUserLogs = len(userLogs)
 
@@ -27,7 +27,35 @@ class ExerciseBuilder:
         ## TODO: We want complexity to be persistent for user, and scale up or down.
         self.complexity = complexity
    
+        self.syntax = syntax
+
+
+    def toSpotSyntax(self, s):
+        return str(ltlnode.parse_ltl_string(s))
     
+
+
+    def getLTLFormulaAsString(self, node):
+
+
+        ## Check if node is a string ##
+        if isinstance(node, str):
+            node = ltlnode.parse_ltl_string(node)
+
+
+        if self.syntax == "Classic":
+            return str(node)
+        elif self.syntax == "Forge":
+            return node.__forge__()
+        elif self.syntax == "Electrum":
+            return node.__electrum__()
+        elif self.syntax == "English":
+            ## We should hopefully never get here. However, 
+            ## I'm adding it here to suggest a way forward.
+            return node.__to_english__()
+
+        ## Default to classic syntax
+        return str(node)
 
 
     def aggregateLogs(self, bucketsizeinhours=1):
@@ -272,7 +300,7 @@ class ExerciseBuilder:
         options = []
         for misconception in d:
             options.append({
-                "option": str(misconception.node),
+                "option": self.getLTLFormulaAsString(misconception.node),
                 "isCorrect": False,
                 "misconceptions": [str(misconception.misconception)]
             })
@@ -289,7 +317,7 @@ class ExerciseBuilder:
             return None
         
         merged_options.append({
-                "option": str(ltl),
+                "option": self.getLTLFormulaAsString(ltl),
                 "isCorrect": True,
                 "misconceptions": []
             })
@@ -318,12 +346,11 @@ class ExerciseBuilder:
         if options is None:
             return None
         
-
-        parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
+        parenthesized_answer = self.toSpotSyntax(answer)
         
         trace_options = []
         for o in options:
-            formula = o['option']
+            formula = self.toSpotSyntax(o['option'])
             isCorrect = o['isCorrect']
             misconceptions = o['misconceptions']
 
@@ -350,22 +377,24 @@ class ExerciseBuilder:
                 'option': random.choice(trace_choices),
                 'isCorrect': isCorrect,
                 'misconceptions': misconceptions,
-                'generatedFromFormula': formula
+                'generatedFromFormula': self.getLTLFormulaAsString(formula) ## Should this be the formula we want?
             })
     
 
         if len(trace_options) < 2:
             return None
 
+        answer_in_correct_syntax = self.getLTLFormulaAsString(ltlnode.parse_ltl_string(answer))
+
         return {
-            "question": parenthesized_answer,
+            "question": answer_in_correct_syntax,
             "type": self.TRACESATMC,
             "options": trace_options,
         }
 
     def build_tracesat_yn_question(self, answer):
         formulae = self.get_options_with_misconceptions_as_formula(answer)
-        parenthesized_answer = str(ltlnode.parse_ltl_string(answer))
+        parenthesized_answer = self.toSpotSyntax(answer)
     
 
         feedbackString = "No further feedback is currently available. We recommend stepping through the trace to see where/if it diverges from the formula."
@@ -383,12 +412,19 @@ class ExerciseBuilder:
             ## Choose a random option
             formula = random.choice(formulae)
             yesIsCorrect = formula['isCorrect']
-            formula_asString = formula['option']
+            formula_asString = self.toSpotSyntax(formula['option'])
             if yesIsCorrect: 
                 potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             else:
                 potential_trace_choices = spotutils.generate_traces(f_accepted=formula_asString, f_rejected=parenthesized_answer)
-                feedbackString = f"The trace is accepted by the formula <code>{formula_asString}</code>, but not by the formula <code>{parenthesized_answer}</code>."
+
+
+                ## LTL Formula to Show
+                option_in_correct_syntax = self.getLTLFormulaAsString(formula_asString)
+                correct_option_in_correct_syntax  = self.getLTLFormulaAsString(parenthesized_answer)
+
+
+                feedbackString = f"The trace is accepted by the formula <code>{option_in_correct_syntax}</code>, but not by the formula <code>{correct_option_in_correct_syntax}</code>."
             misconceptions = formula['misconceptions']
         
         if len(potential_trace_choices) == 0:
@@ -415,9 +451,9 @@ class ExerciseBuilder:
             }
 
         ]
-
+        answer_in_correct_syntax = self.getLTLFormulaAsString(ltlnode.parse_ltl_string(answer))
         return {
-            "question": parenthesized_answer,
+            "question": answer_in_correct_syntax,
             "trace": trace_option,
             "type": self.TRACESATYN,
             "options": options,

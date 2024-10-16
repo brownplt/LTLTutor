@@ -1,5 +1,8 @@
-from flask import Flask, render_template, request
-from ltlnode import parse_ltl_string
+from flask import Flask, render_template, request, Blueprint
+from flask_login import login_required, current_user
+
+
+from ltlnode import parse_ltl_string, SUPPORTED_SYNTAXES
 from codebook import getAllApplicableMisconceptions
 import os
 import json
@@ -15,8 +18,6 @@ from itertools import chain
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from flask_login import login_required, current_user
-from flask import Blueprint
 from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
@@ -231,6 +232,7 @@ def loganswer(questiontype):
     data = request.json
     student_selection = data['selected_option']
     correct_answer = data['correct_option']
+
     isCorrect = data['correct']
 
     misconceptions = ast.literal_eval(data['misconceptions'])
@@ -243,7 +245,9 @@ def loganswer(questiontype):
     mp_formula_literals = []
     # If response has a mp_class field, log it
     if MP_FORMULA_KEY in data:
-        to_classify = data[MP_FORMULA_KEY]
+
+        ## TODO: For this classification, we need to ensure we are in classic syntax.
+        to_classify = str(parse_ltl_string(data[MP_FORMULA_KEY]))
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
         mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
 
@@ -255,11 +259,16 @@ def loganswer(questiontype):
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect, 
                                       questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
+    
+
     if questiontype == "english_to_ltl":
         to_return = {}
         if not isCorrect:
 
-            fgen = FeedbackGenerator(correct_answer, student_selection)
+            correct_answer_spot_syntax = str(parse_ltl_string(correct_answer))
+            student_selection_spot_syntax = str(parse_ltl_string(student_selection))
+
+            fgen = FeedbackGenerator(correct_answer_spot_syntax, student_selection_spot_syntax)
             to_return['subsumed'] = fgen.correctAnswerSubsumes()
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
@@ -282,6 +291,13 @@ def loganswer(questiontype):
 @app.route('/exercise/generate', methods=['GET'])
 @login_required
 def newexercise():
+
+
+    syntax_choice = request.cookies.get('ltlsyntax')
+    if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
+        syntax_choice = 'Classic'
+
+
     userId = getUserName()
 
     ## TODO: Try and do better than this
@@ -317,7 +333,7 @@ def newexercise():
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
     complexity = answer_logger.getComplexity(userId=userId)       
-    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity)
+    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity, syntax = syntax_choice)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
@@ -366,6 +382,12 @@ def robotrain(sourceuri, exercise_name):
 @app.route('/stepper', methods=['GET', 'POST'])
 def ltlstepper():
 
+
+    ## Get the syntax choice from the cookie
+    syntax_choice = request.cookies.get('ltlsyntax')
+    if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
+        syntax_choice = 'Classic'
+
     if request.method == 'GET':
         return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[])
 
@@ -381,7 +403,7 @@ def ltlstepper():
         return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
     try:
-        result = traceSatisfactionPerStep(node = node, trace = trace)
+        result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
