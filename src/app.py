@@ -382,6 +382,12 @@ def robotrain(sourceuri, exercise_name):
 @app.route('/stepper', methods=['GET', 'POST'])
 def ltlstepper():
 
+
+    ## Get the syntax choice from the cookie
+    syntax_choice = request.cookies.get('ltlsyntax')
+    if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
+        syntax_choice = 'Classic'
+
     if request.method == 'GET':
         return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[])
 
@@ -397,7 +403,7 @@ def ltlstepper():
         return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
 
     try:
-        result = traceSatisfactionPerStep(node = node, trace = trace)
+        result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
