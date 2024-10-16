@@ -251,7 +251,7 @@ class NextNode(UnaryOperatorNode):
         return f"(NEXT_STATE {self.operand.__forge__()})"
     
     def __electrum__(self):
-        return f"(NEXT {self.operand.__electrum__()})"
+        return f"(AFTER {self.operand.__electrum__()})"
 
 
 class GloballyNode(UnaryOperatorNode):

@@ -8,7 +8,7 @@ formula
     | formula ( 'U' | 'UNTIL' ) formula       # U
     | formula '->' formula                    # implication
     | formula '<->' formula                   # equivalence
-    | ('X' | 'NEXT' | 'NEXT_STATE') formula   # X
+    | ('X' | 'AFTER' | 'NEXT_STATE') formula   # X
     | ('F' | 'EVENTUALLY') formula            # F
     | ('G' | 'ALWAYS') formula                # G
     | '!' formula                             # not
