@@ -99,7 +99,7 @@ def applyMisconception(node_orig, misconception):
 def getAllApplicableMisconceptions(node):
 
     formula = str(node)
-    def equivalentToOriginal(n):
+    def equivalentToOriginal(n) -> bool:
         as_str = str(n)
         return LTLNode.equiv(formula, as_str)
 
