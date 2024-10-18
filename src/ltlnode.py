@@ -73,9 +73,7 @@ class LTLNode(ABC):
 
     @staticmethod
     def equiv(formula1, formula2):
-        areEquivalent(formula1, formula2)
-
-
+        return areEquivalent(formula1, formula2)
 
 class ltlListenerImpl(ltlListener) :
     def __init__(self):
