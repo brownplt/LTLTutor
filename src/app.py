@@ -21,6 +21,16 @@ from stepper import traceSatisfactionPerStep
 from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
+
+
+
+
+
+
+
+
+
+
 port = os.getenv('PORT', default='5000')
 
 app = Flask(__name__)
@@ -300,22 +310,18 @@ def newexercise():
 
     userId = getUserName()
 
-    ## TODO: Try and do better than this
-    def generate_new_name():
 
-        # Make a request to the Random Word API to get 2 random words
-        response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
-        
-        # Check if the request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            words = response.json()
-            # Concatenate the two words with a hyphen
-            username = '-'.join(words)
-            return username
-        else:
-            # Raise an exception if the request was unsuccessful
-            response.raise_for_status()
+    
+    def generate_new_name():
+        WORDS = [
+        "apple", "book", "chair", "dog", "elephant", "flag", "garden", "hat", "ice", 
+        "juice", "kite", "lamp", "moon", "nest", "orange", "pencil", "queen", "rose", 
+        "sun", "tree", "umbrella", "vase", "water", "xylophone", "yellow", "zebra", 
+        "ant", "bird", "cloud", "dolphin", "egg"
+        ]
+        return random.choice(WORDS) + "-" + random.choice(WORDS) + "-" + str(uuid.uuid4())[:4]
+
+
 
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
     literals_pool = list("abcdehijknpqstvz")
