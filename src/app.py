@@ -304,7 +304,7 @@ def newexercise():
     def generate_new_name():
 
         # Make a request to the Random Word API to get 2 random words
-        response = requests.get("https://random-word-api.herokuapp.com/word?number=2")
+        response = requests.get("https://random-word-api.herokuapp.com/word?number=2", timeout=5)
         
         # Check if the request was successful
         if response.status_code == 200:
@@ -316,7 +316,7 @@ def newexercise():
         else:
             # Raise an exception if the request was unsuccessful
             response.raise_for_status()
-
+        return "Some-Exercise"
     ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
     literals_pool = list("abcdehijknpqstvz")
     num_literals = random.randint(2, 4)
