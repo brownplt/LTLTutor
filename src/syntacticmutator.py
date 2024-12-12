@@ -35,7 +35,7 @@ def applyRandomMutation(o_node):
 
         ## If the parent is a UnaryOperatorNode
         if isinstance(parent, UnaryOperatorNode):
-            parent.child = new_child
+            parent.operand = new_child
         elif isinstance(parent, BinaryOperatorNode) and parent.left == subtree:
             parent.left = new_child
         elif isinstance(parent, BinaryOperatorNode) and subtree:
@@ -52,10 +52,10 @@ def findParentNode(root, node):
         return None
 
     if isinstance(root, UnaryOperatorNode):
-        if root.child == node:
+        if root.operand == node:
             return root
         else:
-            return findParentNode(root.child, node)
+            return findParentNode(root.operand, node)
     elif isinstance(root, BinaryOperatorNode):
         if root.left == node or root.right == node:
             return root
@@ -74,7 +74,7 @@ def isEquivalentToAny(node, nodes):
         # Returns True if it is, False otherwise
     
         for n in nodes:
-            if node.isEquivalentTo(n):
+            if LTLNode.equiv(node, n):
                 return True
     
         return False
@@ -86,7 +86,7 @@ def collectNodes(node):
     nodes = [node]
     
     if isinstance(node, UnaryOperatorNode):
-        nodes.extend(collectNodes(node.child))
+        nodes.extend(collectNodes(node.operand))
     elif isinstance(node, BinaryOperatorNode):
         nodes.extend(collectNodes(node.left))
         nodes.extend(collectNodes(node.right))
@@ -126,12 +126,13 @@ def swapOperands(node : BinaryOperatorNode):
 
 def changeBinaryOperator(node : BinaryOperatorNode):
         
-        # Get the current operator
-        currentOperator = node.operator
-    
+        # Get the current class
+        currentOperator = node.__class__
+
+
         ## Get all classes that inherit from BinaryOperatorNode
         binopclasses = BinaryOperatorNode.__subclasses__()
-        candidatebinops = [c.operator for c in binopclasses if c.operator != currentOperator]
+        candidatebinops = [c for c in binopclasses if c != currentOperator]
     
         # Choose a random operator from the list of candidate operators
         newOperator = random.choice(candidatebinops)
@@ -145,18 +146,18 @@ def changeBinaryOperator(node : BinaryOperatorNode):
 def changeUnaryOperator(node : UnaryOperatorNode):
     
     # Get the current operator
-    currentOperator = node.operator
+    currentOperator = node.__class__
 
 
     ## Get all classes that inherit from UnaryOperatorNode
     unopclasses = UnaryOperatorNode.__subclasses__()
-    candidateunops = [c.operator for c in unopclasses if c.operator != currentOperator]
+    candidateunops = [c for c in unopclasses if c != currentOperator]
 
     # Choose a random operator from the list of candidate operators
     newOperator = random.choice(candidateunops)
 
     # Create a new node with the new operator
-    newNode = unopclasses[candidateunops.index(newOperator)](node.child)
+    newNode = unopclasses[candidateunops.index(newOperator)](node.operand)
     return newNode
 
 

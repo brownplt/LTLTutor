@@ -158,6 +158,10 @@ class ExerciseBuilder:
         for m, weight in misconception_weights.items():
 
             misconception = MisconceptionCode.from_string(m)
+
+            if misconception is None:
+                continue
+
             associatedOperators = misconception.associatedOperators()
             associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
 
@@ -334,7 +338,7 @@ class ExerciseBuilder:
             merged_options.append({
                 "option": self.getLTLFormulaAsString(mutated_node),
                 "isCorrect": False,
-                "misconceptions": [MisconceptionCode.Syntactic]
+                "misconceptions": [str(MisconceptionCode.Syntactic)]
             })
         
 
