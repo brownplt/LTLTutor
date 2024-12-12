@@ -12,6 +12,9 @@ class MisconceptionCode(Enum):
     ImplicitG = "ImplicitG"
     OtherImplicit = "OtherImplicit"
     WeakU = "WeakU"
+
+
+
     #### Ignoring these codes since they have no relevance here ###
     #Unlabeled = "Unlabeled"
     #BadProp = "BadProp"
@@ -106,7 +109,6 @@ def getAllApplicableMisconceptions(node):
     xs = [        applyMisconception(node, misconception)    for misconception in MisconceptionCode]
     xs = [ x  for x in xs if (x is not None and x.misconception is not None) ]
     
-    ## TODO: Make sure results are not EQUIVALENT to the original node
     xs = [ x  for x in xs if not equivalentToOriginal(x.node) ]
     return xs
     

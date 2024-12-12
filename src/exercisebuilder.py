@@ -8,6 +8,7 @@ import random
 import re
 import math
 import ltltoeng
+from syntacticmutator import applyRandomMutationNotEquivalentTo
 
 
 class ExerciseBuilder:
@@ -16,6 +17,9 @@ class ExerciseBuilder:
     TRACESATMC = "tracesatisfaction_mc"
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
+
+
+    SYNTACTIC_MUT_CODE = "RANDOM_SYNTACTIC_MUTATION"
 
     def __init__(self, userLogs, complexity=5, syntax="Classic"):
         self.userLogs = userLogs
@@ -321,6 +325,21 @@ class ExerciseBuilder:
                 "isCorrect": True,
                 "misconceptions": []
             })
+        
+
+        ### NOW, ADD A SINGLE RANDOM SYNTACTIC MUTATION
+        ## THAT IS NOT EQUIVALENT TO THE CORRECT ANSWER
+        ## OR ANY OF THE OTHER OPTIONS
+        notEquivalentToNodes = [ltlnode.parse_ltl_string(o['option']) for o in merged_options]
+        mutated_node = applyRandomMutationNotEquivalentTo(ltl, notEquivalentToNodes)
+        if mutated_node is not None:
+            merged_options.append({
+                "option": self.getLTLFormulaAsString(mutated_node),
+                "isCorrect": False,
+                "misconceptions": [self.SYNTACTIC_MUT_CODE]
+            })
+        
+
         return merged_options
 
     def build_english_to_ltl_question(self, answer):
