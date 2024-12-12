@@ -13,7 +13,7 @@ class MisconceptionCode(Enum):
     OtherImplicit = "OtherImplicit"
     WeakU = "WeakU"
 
-
+    ## THIS IS A NON-MISCONCEPTION CODE USED AS A CONTROL ##
     Syntactic = "RandomSyntactic"  ### Should this be here??? Does adding this break anything?
 
     #### Ignoring these codes since they have no relevance here ###
@@ -58,6 +58,7 @@ class MisconceptionCode(Enum):
             ### TODO: This one is tricky, less meaningful...
             ## But ensure that Next and Until are present ##
             return list(set([UntilNode.symbol, NextNode.symbol] + TEMPORAL_SUBSET))
+        #### Ignoring these codes since they have no relevance here ###
         else:
             return []
 
