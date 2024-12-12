@@ -14,6 +14,7 @@ class MisconceptionCode(Enum):
     WeakU = "WeakU"
 
 
+    Syntactic = "RandomSyntactic"  ### Should this be here??? Does adding this break anything?
 
     #### Ignoring these codes since they have no relevance here ###
     #Unlabeled = "Unlabeled"

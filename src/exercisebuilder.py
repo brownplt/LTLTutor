@@ -19,8 +19,6 @@ class ExerciseBuilder:
     ENGLISHTOLTL = "englishtoltl"
 
 
-    SYNTACTIC_MUT_CODE = "RANDOM_SYNTACTIC_MUTATION"
-
     def __init__(self, userLogs, complexity=5, syntax="Classic"):
         self.userLogs = userLogs
         self.numUserLogs = len(userLogs)
@@ -336,7 +334,7 @@ class ExerciseBuilder:
             merged_options.append({
                 "option": self.getLTLFormulaAsString(mutated_node),
                 "isCorrect": False,
-                "misconceptions": [self.SYNTACTIC_MUT_CODE]
+                "misconceptions": [MisconceptionCode.Syntactic]
             })
         
 
