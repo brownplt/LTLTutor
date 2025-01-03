@@ -11,7 +11,11 @@
         </h4>
         <p class="card-text">
 
-            The operators <code>F</code>, <code>G</code>, and <code>U</code> dictate how propositions fan out over time:
+            You might think that the <code>F</code>, <code>G</code>, and <code>U</code> operators 
+            behave in a way that limits their effects to just one state. 
+            However, each of these operators is designed to 'fan out' over a sequence of states,
+             influencing how conditions are satisfied over time.
+
         <ul>
             <li><code>F p</code> guarantees that the proposition <code>p</code> will hold true at least once in the
                 future.
@@ -25,10 +29,12 @@
             <li><code>p U q</code> specifies that <code>p</code> holds in every state until <code>q</code> becomes true.
                 Crucially, <code>q</code> must eventually become true for the formula to be satisfied.</li>
         </ul>
+
         If you find yourself swapping these operators or using them incorrectly,
         focus on what each specifically dictates about the states where the conditions must be met.
         For example, swapping <code>F</code> and <code>G</code> would mean changing from an event
         that happens at least once to a condition that must always hold. These are very different requirements!
+
         </p>
 
     </div>

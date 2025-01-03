@@ -11,15 +11,19 @@
       </h4>
       <p class="card-text">
 
-        In LTL, the formula <code>G x</code> means that the proposition <code>x</code> is
-        always true from the current state onwards, not just in the current state. 
+
+        It may be the case that you believe the <code>G</code> (Globally) operator implicitly 
+        applies at some state, meaning it automatically applies at a particular point in time.
+        However, the Globally operator has a stronger meaning: it asserts that the proposition <code>x</code> 
+        must hold true at all future states, starting from the current state onwards.
         On the other hand, simply stating the proposition <code>x</code> only
-        requires that <code>x</code> be true in the current state.
+        requires that <code>x</code> be true in the current state, placing no constraints on future states.
         <br><br>
         For example, if <code>x</code> represents <i>'the system is secure'</i>, 
-        then <code>G x</code> would mean that the system must be secure at all times, in every possible future state.
-        On the other hand, <code>x</code> would mean that the system is secure in the current state, but it may not be secure in the future.
-
+        the statement <code>x</code> means that the system is secure in the current state, 
+        but doesn't guarantee that it will remain secure in the future.
+        <code>G x</code>, on the other hand, states that the system is secure, and will remain secure
+        in every possible future state.
       </p>
 
     </div>

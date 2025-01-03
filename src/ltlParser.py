@@ -13,17 +13,17 @@ def serializedATN():
         4,1,18,48,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,24,8,1,1,1,1,1,1,1,1,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,1,41,8,1,10,1,12,1,
-        44,9,1,1,2,1,2,1,2,0,1,2,3,0,2,4,0,4,1,0,7,9,1,0,10,11,1,0,12,13,
-        1,0,3,4,54,0,6,1,0,0,0,2,23,1,0,0,0,4,45,1,0,0,0,6,7,3,2,1,0,7,8,
-        5,0,0,1,8,1,1,0,0,0,9,10,6,1,-1,0,10,11,7,0,0,0,11,24,3,2,1,6,12,
-        13,7,1,0,0,13,24,3,2,1,5,14,15,7,2,0,0,15,24,3,2,1,4,16,17,5,14,
-        0,0,17,24,3,2,1,3,18,19,5,15,0,0,19,20,3,2,1,0,20,21,5,16,0,0,21,
+        44,9,1,1,2,1,2,1,2,0,1,2,3,0,2,4,0,4,1,0,2,4,1,0,5,6,1,0,7,8,1,0,
+        11,12,54,0,6,1,0,0,0,2,23,1,0,0,0,4,45,1,0,0,0,6,7,3,2,1,0,7,8,5,
+        0,0,1,8,1,1,0,0,0,9,10,6,1,-1,0,10,11,5,1,0,0,11,24,3,2,1,11,12,
+        13,7,0,0,0,13,24,3,2,1,10,14,15,7,1,0,0,15,24,3,2,1,9,16,17,7,2,
+        0,0,17,24,3,2,1,8,18,19,5,15,0,0,19,20,3,2,1,0,20,21,5,16,0,0,21,
         24,1,0,0,0,22,24,3,4,2,0,23,9,1,0,0,0,23,12,1,0,0,0,23,14,1,0,0,
         0,23,16,1,0,0,0,23,18,1,0,0,0,23,22,1,0,0,0,24,42,1,0,0,0,25,26,
-        10,11,0,0,26,27,5,1,0,0,27,41,3,2,1,12,28,29,10,10,0,0,29,30,5,2,
-        0,0,30,41,3,2,1,11,31,32,10,9,0,0,32,33,7,3,0,0,33,41,3,2,1,10,34,
-        35,10,8,0,0,35,36,5,5,0,0,36,41,3,2,1,9,37,38,10,7,0,0,38,39,5,6,
-        0,0,39,41,3,2,1,8,40,25,1,0,0,0,40,28,1,0,0,0,40,31,1,0,0,0,40,34,
+        10,7,0,0,26,27,5,9,0,0,27,41,3,2,1,8,28,29,10,6,0,0,29,30,5,10,0,
+        0,30,41,3,2,1,7,31,32,10,5,0,0,32,33,7,3,0,0,33,41,3,2,1,6,34,35,
+        10,4,0,0,35,36,5,13,0,0,36,41,3,2,1,5,37,38,10,3,0,0,38,39,5,14,
+        0,0,39,41,3,2,1,4,40,25,1,0,0,0,40,28,1,0,0,0,40,31,1,0,0,0,40,34,
         1,0,0,0,40,37,1,0,0,0,41,44,1,0,0,0,42,40,1,0,0,0,42,43,1,0,0,0,
         43,3,1,0,0,0,44,42,1,0,0,0,45,46,5,17,0,0,46,5,1,0,0,0,3,23,40,42
     ]
@@ -38,9 +38,9 @@ class ltlParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'|'", "'&'", "'U'", "'UNTIL'", "'->'", 
-                     "'<->'", "'X'", "'AFTER'", "'NEXT_STATE'", "'F'", "'EVENTUALLY'", 
-                     "'G'", "'ALWAYS'", "'!'", "'('", "')'" ]
+    literalNames = [ "<INVALID>", "'!'", "'X'", "'AFTER'", "'NEXT_STATE'", 
+                     "'F'", "'EVENTUALLY'", "'G'", "'ALWAYS'", "'&'", "'|'", 
+                     "'U'", "'UNTIL'", "'->'", "'<->'", "'('", "')'" ]
 
     symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                       "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
@@ -384,57 +384,57 @@ class ltlParser ( Parser ):
             self.state = 23
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [7, 8, 9]:
-                localctx = ltlParser.XContext(self, localctx)
+            if token in [1]:
+                localctx = ltlParser.NotContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
 
                 self.state = 10
-                _la = self._input.LA(1)
-                if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 896) != 0)):
-                    self._errHandler.recoverInline(self)
-                else:
-                    self._errHandler.reportMatch(self)
-                    self.consume()
+                self.match(ltlParser.T__0)
                 self.state = 11
-                self.formula(6)
+                self.formula(11)
                 pass
-            elif token in [10, 11]:
-                localctx = ltlParser.FContext(self, localctx)
+            elif token in [2, 3, 4]:
+                localctx = ltlParser.XContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 12
                 _la = self._input.LA(1)
-                if not(_la==10 or _la==11):
+                if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 28) != 0)):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
                 self.state = 13
-                self.formula(5)
+                self.formula(10)
                 pass
-            elif token in [12, 13]:
-                localctx = ltlParser.GContext(self, localctx)
+            elif token in [5, 6]:
+                localctx = ltlParser.FContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 14
                 _la = self._input.LA(1)
-                if not(_la==12 or _la==13):
+                if not(_la==5 or _la==6):
                     self._errHandler.recoverInline(self)
                 else:
                     self._errHandler.reportMatch(self)
                     self.consume()
                 self.state = 15
-                self.formula(4)
+                self.formula(9)
                 pass
-            elif token in [14]:
-                localctx = ltlParser.NotContext(self, localctx)
+            elif token in [7, 8]:
+                localctx = ltlParser.GContext(self, localctx)
                 self._ctx = localctx
                 _prevctx = localctx
                 self.state = 16
-                self.match(ltlParser.T__13)
+                _la = self._input.LA(1)
+                if not(_la==7 or _la==8):
+                    self._errHandler.recoverInline(self)
+                else:
+                    self._errHandler.reportMatch(self)
+                    self.consume()
                 self.state = 17
-                self.formula(3)
+                self.formula(8)
                 pass
             elif token in [15]:
                 localctx = ltlParser.ParenthesesContext(self, localctx)
@@ -470,73 +470,73 @@ class ltlParser ( Parser ):
                     self._errHandler.sync(self)
                     la_ = self._interp.adaptivePredict(self._input,1,self._ctx)
                     if la_ == 1:
-                        localctx = ltlParser.DisjunctionContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
+                        localctx = ltlParser.ConjunctionContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 25
-                        if not self.precpred(self._ctx, 11):
+                        if not self.precpred(self._ctx, 7):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 11)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
                         self.state = 26
-                        self.match(ltlParser.T__0)
+                        self.match(ltlParser.T__8)
                         self.state = 27
-                        self.formula(12)
+                        self.formula(8)
                         pass
 
                     elif la_ == 2:
-                        localctx = ltlParser.ConjunctionContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
+                        localctx = ltlParser.DisjunctionContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 28
-                        if not self.precpred(self._ctx, 10):
+                        if not self.precpred(self._ctx, 6):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 10)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 6)")
                         self.state = 29
-                        self.match(ltlParser.T__1)
+                        self.match(ltlParser.T__9)
                         self.state = 30
-                        self.formula(11)
+                        self.formula(7)
                         pass
 
                     elif la_ == 3:
                         localctx = ltlParser.UContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 31
-                        if not self.precpred(self._ctx, 9):
+                        if not self.precpred(self._ctx, 5):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 9)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 5)")
                         self.state = 32
                         _la = self._input.LA(1)
-                        if not(_la==3 or _la==4):
+                        if not(_la==11 or _la==12):
                             self._errHandler.recoverInline(self)
                         else:
                             self._errHandler.reportMatch(self)
                             self.consume()
                         self.state = 33
-                        self.formula(10)
+                        self.formula(6)
                         pass
 
                     elif la_ == 4:
                         localctx = ltlParser.ImplicationContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 34
-                        if not self.precpred(self._ctx, 8):
+                        if not self.precpred(self._ctx, 4):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 8)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 4)")
                         self.state = 35
-                        self.match(ltlParser.T__4)
+                        self.match(ltlParser.T__12)
                         self.state = 36
-                        self.formula(9)
+                        self.formula(5)
                         pass
 
                     elif la_ == 5:
                         localctx = ltlParser.EquivalenceContext(self, ltlParser.FormulaContext(self, _parentctx, _parentState))
                         self.pushNewRecursionContext(localctx, _startState, self.RULE_formula)
                         self.state = 37
-                        if not self.precpred(self._ctx, 7):
+                        if not self.precpred(self._ctx, 3):
                             from antlr4.error.Errors import FailedPredicateException
-                            raise FailedPredicateException(self, "self.precpred(self._ctx, 7)")
+                            raise FailedPredicateException(self, "self.precpred(self._ctx, 3)")
                         self.state = 38
-                        self.match(ltlParser.T__5)
+                        self.match(ltlParser.T__13)
                         self.state = 39
-                        self.formula(8)
+                        self.formula(4)
                         pass
 
              
@@ -607,23 +607,23 @@ class ltlParser ( Parser ):
 
     def formula_sempred(self, localctx:FormulaContext, predIndex:int):
             if predIndex == 0:
-                return self.precpred(self._ctx, 11)
+                return self.precpred(self._ctx, 7)
          
 
             if predIndex == 1:
-                return self.precpred(self._ctx, 10)
+                return self.precpred(self._ctx, 6)
          
 
             if predIndex == 2:
-                return self.precpred(self._ctx, 9)
+                return self.precpred(self._ctx, 5)
          
 
             if predIndex == 3:
-                return self.precpred(self._ctx, 8)
+                return self.precpred(self._ctx, 4)
          
 
             if predIndex == 4:
-                return self.precpred(self._ctx, 7)
+                return self.precpred(self._ctx, 3)
          
 
 

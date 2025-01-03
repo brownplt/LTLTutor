@@ -11,11 +11,15 @@
       </h4>
       <p class="card-text">
 
-        In LTL, the formula <code>F p</code> asserts that <code>p</code> will eventually be true.
-        This means that <code>p</code> can be true in the current state, but it doesn't have to be. 
-        
-        What <em>is</em> required is that <code>p</code> becomes true at least once in any future state, including potentially the present state.
+        It may be the case that you believe the <code>F</code> (finally) operator implicitly applies at some state, 
+        meaning it will automatically trigger at a particular point in time. 
+
+        However, the <code>F</code> operator has a different meaning in LTL.
+        It asserts that <code>p</code> will eventually be true, but it doesn't specify \emph{when}. 
+
         <br>
+        What <em>is</em> required is that <code>p</code> becomes true at least once in any future state, 
+        including potentially the present state.
         Importantly, <code> F p</code> doesn't specify when <code>p</code> will become true, only that it will 
         definitely become true. Thus both these traces satisfy <code>F p</code>:
 
