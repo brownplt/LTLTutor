@@ -12,6 +12,10 @@ class MisconceptionCode(Enum):
     ImplicitG = "ImplicitG"
     OtherImplicit = "OtherImplicit"
     WeakU = "WeakU"
+
+    ## THIS IS A NON-MISCONCEPTION CODE USED AS A CONTROL ##
+    Syntactic = "RandomSyntactic"  ### Should this be here??? Does adding this break anything?
+
     #### Ignoring these codes since they have no relevance here ###
     #Unlabeled = "Unlabeled"
     #BadProp = "BadProp"
@@ -54,6 +58,7 @@ class MisconceptionCode(Enum):
             ### TODO: This one is tricky, less meaningful...
             ## But ensure that Next and Until are present ##
             return list(set([UntilNode.symbol, NextNode.symbol] + TEMPORAL_SUBSET))
+        #### Ignoring these codes since they have no relevance here ###
         else:
             return []
 
@@ -106,7 +111,6 @@ def getAllApplicableMisconceptions(node):
     xs = [        applyMisconception(node, misconception)    for misconception in MisconceptionCode]
     xs = [ x  for x in xs if (x is not None and x.misconception is not None) ]
     
-    ## TODO: Make sure results are not EQUIVALENT to the original node
     xs = [ x  for x in xs if not equivalentToOriginal(x.node) ]
     return xs
     
