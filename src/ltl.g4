@@ -3,17 +3,17 @@ grammar ltl;
 ltl: formula EOF;
 
 formula
-    : formula '|' formula                     # disjunction
-    | formula '&' formula                     # conjunction
-    | formula ( 'U' | 'UNTIL' ) formula       # U
-    | formula '->' formula                    # implication
-    | formula '<->' formula                   # equivalence
+    : '!' formula                             # not
     | ('X' | 'AFTER' | 'NEXT_STATE') formula   # X
     | ('F' | 'EVENTUALLY') formula            # F
     | ('G' | 'ALWAYS') formula                # G
-    | '!' formula                             # not
-    | '(' formula ')'                         # parentheses
-    | atomicFormula                           # literal
+    | formula '&' formula                       # conjunction
+    | formula '|' formula                       # disjunction
+    | formula ( 'U' | 'UNTIL' ) formula         # U
+    | formula '->' formula                      # implication
+    | formula '<->' formula                     # equivalence
+    | '(' formula ')'                           # parentheses
+    | atomicFormula                             # literal
     ;
 
 atomicFormula: ID;
