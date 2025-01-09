@@ -1,31 +1,27 @@
 <div class="card">
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true });
-    </script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+  </script>
 
-    <div class="card-body">
-      <h4 class="card-title">Globally 
-        <span class="badge badge-pill badge-primary float-right">Review</span>
-      </h4>
-      <p class="card-text">
+  <div class="card-body">
+    <h4 class="card-title">Globally
+      <span class="badge badge-pill badge-primary float-right">Review</span>
+    </h4>
+    <p class="card-text"> You might believe that the <code>G</code> (Globally) operator implicitly
+      applies at some point in time, meaning it automatically holds at a specific state.
+      However, the <code>G</code> operator has a stronger implication: it asserts that the proposition
+      <code>G x</code> must hold true at every future state, starting from the current one and
+      onward. In contrast, simply stating <code>x</code> only requires that <code>x</code> be true
+      in the current state, with no guarantee or constraint on future states.
+      <br><br>
+      For example, if <code>x</code> represents <i>'the system is secure'</i>,
+      the statement <code>x</code> means that the system is secure in the current state,
+      but it doesn't ensure that the system will remain secure in the future.
+      The statement <code>G x</code>, however, asserts that the system is secure in the current
+      state and will remain secure in every future state.
+    </p>
 
-
-        It may be the case that you believe the <code>G</code> (Globally) operator implicitly 
-        applies at some state, meaning it automatically applies at a particular point in time.
-        However, the Globally operator has a stronger meaning: it asserts that the proposition <code>x</code> 
-        must hold true at all future states, starting from the current state onwards.
-        On the other hand, simply stating the proposition <code>x</code> only
-        requires that <code>x</code> be true in the current state, placing no constraints on future states.
-        <br><br>
-        For example, if <code>x</code> represents <i>'the system is secure'</i>, 
-        the statement <code>x</code> means that the system is secure in the current state, 
-        but doesn't guarantee that it will remain secure in the future.
-        <code>G x</code>, on the other hand, states that the system is secure, and will remain secure
-        in every possible future state.
-      </p>
-
-    </div>
   </div>
-  
+</div>
