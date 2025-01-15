@@ -1,33 +1,33 @@
 <div class="card">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+  </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true });
-    </script>
+  <div class="card-body">
+    <h4 class="card-title">Until 
+      <span class="badge badge-pill badge-primary float-right">Refutation</span>
+    </h4>
+    <p class="card-text">
+      You might think that <code>x U y</code> (Until) is satisfied only when both the right subterm <code>y</code> 
+      and the negation of the left subterm <code>x</code> hold true. 
+      However, the "Until" operator is more permissive than this.
+      In fact, it only requires that <code>x</code> holds true at every step until <code>y</code>
+      becomes true. Once <code>y</code> holds, it doesn't matter whether <code>x</code> is true or false.
 
-    <div class="card-body">
-      <h4 class="card-title">Until 
-        <span class="badge badge-pill badge-primary float-right">Review</span>
-       </h4>
-      <p class="card-text">
-
-        In LTL, <code>x U y</code> means that <code>x</code> holds at every step until 
-       <code>y</code> holds. Importantly, <code>x</code> does not need to be false when <code>y</code> is true.
-       <br>
-       Instead, think of it this way: <code>y</code> eventually becomes true (at some future point), and up until that point, 
-       <code>x</code> continuously holds true. 
-       
-         <br>
-         For example, the following trace satisfies the formula <code>x U y</code> even though
-         <code>x</code> is true at the same time as <code>y</code>.
-        <pre class="mermaid"> 
-            flowchart LR;
-            n1["x & !y"]-->n2["x & y"];
-            n2["x & y"]-->n3["!x & !y"];  
-            n3["!x & !y"]-->n3["!x & !y"];  
-        </pre>
-      </p>
-
-    </div>
+      <br>
+      To put it another way: <code>y</code> eventually becomes true at some point in the future, and <i>until</i>
+      that moment, <code>x</code> must continuously hold true. 
+      This does not require <code>x</code> to stop being true at the same time that <code>y</code> becomes true.
+      <br>
+      For example, consider the following trace that satisfies the formula <code>x U y</code>, even though <code>x</code> is true at the same time as <code>y</code>:
+      <pre class="mermaid"> 
+        flowchart LR;
+        n1["x & !y"]-->n2["x & y"];
+        n2["x & y"]-->n3["!x & !y"];  
+        n3["!x & !y"]-->n3["!x & !y"];  
+      </pre>
+      This shows that <code>x</code> can still hold true when <code>y</code> is satisfied, as long as <code>x</code> holds up until <code>y</code> does.
+    </p>
   </div>
-  
+</div>

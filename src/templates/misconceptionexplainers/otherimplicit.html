@@ -11,14 +11,18 @@
         <span class="badge badge-pill badge-primary float-right">Tip</span>
       </h4>
       <p class="card-text">
+        You may be tempted to make implicit assumptions about LTL formulae, based on your
+        understanding of the system or the context in which the formula is used. 
+        Unlike natural language, however, LTL is not open to interpretation or ambiguity.
+        It is a precise language used to define specific behaviors and conditions over time.
+        Each operator and syntax has a clear definition and function, and does not 
+        encode implicit meanings or assumptions.
 
-        When interpreting LTL formulae, it's essential to be cautious of not allowing implicit assumptions to color your understanding of what the formula explicitly states. 
-        LTL is a precise language used to define specific behaviors and conditions over time, and each operator and syntax has a clear definition and function. 
-        It's important to interpret these formulas based on what is directly presented, not what we might assume or infer beyond the text.
         <br>
         For instance, if you come across a formula like <code>G (p -> q)</code>, it is easy to implicitly infer properties that aren't supported by the formula.
         For example, one might assume that <code>q</code> must always follow <code>p</code> or that <code>p</code> triggers <code>q</code>.
         However, the formula itself doesn't explicitly state these conditions. It only says that if <code>p</code> is true at any point, then <code>q</code> must also be true at that point.
+
       </p>
 
     </div>

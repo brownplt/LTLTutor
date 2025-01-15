@@ -5,11 +5,24 @@
         Until
         <span class="badge badge-pill badge-primary float-right">Review</span>
       </h4>
+      
       <p class="card-text mt-3">
-        In LTL, <code>x U y</code> means that <code>x</code> holds at every step until 
-       <code>y</code> becomes true. Importantly, <code>x U y</code> guarantees that there
-       is a time in the future when <code>y</code> becomes true. 
-       Similarly, <code>x U y</code> guarantees that <code>x</code> holds at the current state.
+
+        You may think that if <code>x</code> is always true,
+        the formula <code>x U y</code> ("x until y") is always satisfied, 
+        even if <code>y</code> is never true. 
+
+        <br><br>
+        
+        In reality, <code>x U y</code> states two things:
+        <ul>
+          <li> <code>x</code> holds at every moment in time until <code>y</code> becomes true.
+            This means the <code>x</code> must be true at the current state.
+          </li>
+          <li> <code>y</code> will eventually become true at some point in the future.</li>
+        </ul>
+        What this means is that if <code>y</code> never becomes true, 
+        then <code>x U y</code> is false, regardless of whether <code>x</code> holds for all preceding moments.
       </p>
     </div>
   </div>
