@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{course_name}} Responses</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>Exercise Responses for {{ course_name }}</h1>
+    <button id="downloadJsonBtn">Download As JSON</button>
+    <table id="responsesTable" class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Timestamp</th>
+                <th>Misconception</th>
+                <th>Question Text</th>
+                <th>Question Options</th>
+                <th>Correct Answer</th>
+                <th>Question Type</th>
+                <th>MP Class</th>
+                <th>Exercise</th>
+                <th>Course</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for response_id, response in responses.items() %}
+            <tr>
+                <td>{{ response_id }}</td>
+                <td>{{ response.user_id }}</td>
+                <td>{{ response.timestamp }}</td>
+                <td>{{ response.misconception }}</td>
+                <td>{{ response.question_text }}</td>
+                <td>{{ response.question_options }}</td>
+                <td>{{ response.correct_answer }}</td>
+                <td>{{ response.question_type }}</td>
+                <td>{{ response.mp_class }}</td>
+                <td>{{ response.exercise }}</td>
+                <td>{{ response.course }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#responsesTable').DataTable();
+
+            document.getElementById('downloadJsonBtn').addEventListener('click', function() {
+                const data = {{ responses|tojson }};
+                const jsonStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'responses.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+</body>
+</html>

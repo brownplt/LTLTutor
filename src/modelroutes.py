@@ -103,4 +103,5 @@ def viewexerciseresponses(course_name):
             "exercise": response.exercise,
             "course": response.course
         }
-    return json.dumps(to_return)
+    #return json.dumps(to_return)
+    return render_template('courseresponses.html', course_name=course_name, responses=to_return)
