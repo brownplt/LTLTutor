@@ -42,9 +42,7 @@
             {%set qindex = loop.index %}
             <div class="card mt-4 question">
 
-                {% if q.type == "englishtoltl" %}
-                {% include 'ltltoengrater.html' %}
-                {% endif %}
+
 
 
                 <div class="card-header mb-2">
@@ -78,6 +76,8 @@
                         </div>
                     </div>
                 </div>
+
+
 
                 <div class="card-body">
 
@@ -144,7 +144,10 @@
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
-
+                    
+                    {% if q.type == "englishtoltl" %}
+                        {% include 'ltltoengrater.html' %}
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
