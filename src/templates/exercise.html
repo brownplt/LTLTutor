@@ -40,6 +40,10 @@
             {%set qindex = loop.index %}
             <div class="card mt-4 question">
 
+                {% if q.type == "englishtoltl" %}
+                {% include 'ltltoengrater.html' %}
+                {% endif %}
+
 
                 <div class="card-header mb-2">
                     <div class="row">

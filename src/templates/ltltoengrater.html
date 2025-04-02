@@ -1,0 +1,69 @@
+<form id="ltl-rating-form-{{ qindex }}" class="ltl-rating-form">
+    <!-- Rating Slider -->
+    <div class="form-group">
+        <label for="rating">Rating:</label>
+        <div class="slider-container">
+            <input type="range" id="rating-{{ qindex }}" name="rating" min="1" max="5" value="3" class="slider">
+            <div class="smiley-container">
+                <span>😡</span>
+                <span>😟</span>
+                <span>😐</span>
+                <span>🙂</span>
+                <span>😄</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Fields for English and LTL -->
+    <input type="hidden" id="english-{{ qindex }}" name="english" value="{{ q.description }}">
+    <input type="hidden" id="ltl-{{ qindex }}" name="ltl" value="{% for option in q.options if option.isCorrect %}{{ option.option }}{% endfor %}">
+
+    <!-- Comments Text Area -->
+    <div class="form-group">
+        <label for="comments">Comments (Optional):</label>
+        <textarea id="comments-{{ qindex }}" name="comments" class="form-control" rows="3" placeholder="Add your comments here..."></textarea>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="button" class="btn btn-primary mt-3" onclick="submitRating({{ qindex }})">Submit</button>
+</form>
+
+<script>
+    async function submitRating(qindex) {
+        // Get form data
+        const rating = document.getElementById(`rating-${qindex}`).value;
+        const english = document.getElementById(`english-${qindex}`).value;
+        const ltl = document.getElementById(`ltl-${qindex}`).value;
+        const comments = document.getElementById(`comments-${qindex}`).value;
+
+        // Prepare the payload
+        const payload = {
+            rating: rating,
+            english: english,
+            ltl: ltl,
+            comments: comments
+        };
+
+        try {
+            // Make the POST request
+            const response = await fetch('//logenglishltlrating', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                // Handle success (e.g., show a success message)
+                alert('Rating submitted successfully!');
+            } else {
+                // Handle failure (e.g., show an error message)
+                alert('Failed to submit rating. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+</script>

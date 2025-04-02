@@ -9,7 +9,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 
 STUDENT_RESPONSE_TABLE = 'student_responses'
 GENERATED_EXERCISE_TABLE = 'generated_exercise'
-
+ENGLISH_LTL_TABLE = 'english_ltl_pairs'
 
 
 def get_db_uri():
@@ -61,6 +61,18 @@ class GeneratedExercise(Base):
     exercise_data = Column(String)
     complexity = Column(Integer)
     exerciseName = Column(String)
+
+
+class EnglishLTLRating(Base):
+    __tablename__ = ENGLISH_LTL_TABLE
+    id = Column(Integer, primary_key=True)
+    english = Column(String)
+    ltl = Column(String)
+    score = Column(Integer)
+    comments = Column(String)
+    user_id = Column(String)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
 
 class Logger:
     def __init__(self):
@@ -142,6 +154,27 @@ class Logger:
         
         log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data, exerciseName=exercise_name)
         self.record(log)
+
+
+
+    def recordEnglishLTLPair(self, e_l_pair):
+
+        if not isinstance(e_l_pair, dict):
+            raise ValueError("e_l_pair should be a dictionary")
+        
+        if 'english' not in e_l_pair or 'ltl' not in e_l_pair:
+            raise ValueError("e_l_pair should contain 'english' and 'ltl' keys")
+        
+        english = e_l_pair['english']
+        ltl = e_l_pair['ltl']
+        rating = e_l_pair['rating']
+        comments = e_l_pair['comments']
+        userId = e_l_pair['user_id']
+
+
+        log = EnglishLTLRating(english=english, ltl=ltl, score=rating, comments=comments, user_id=userId)
+        self.record(log)
+
 
     def getComplexity(self, userId):
         if not isinstance(userId, str):
