@@ -1,69 +1,108 @@
-<form id="ltl-rating-form-{{ qindex }}" class="ltl-rating-form">
-    <!-- Rating Slider -->
-    <div class="form-group">
-        <label for="rating">Rating:</label>
-        <div class="slider-container">
-            <input type="range" id="rating-{{ qindex }}" name="rating" min="1" max="5" value="3" class="slider">
-            <div class="smiley-container">
-                <span>😡</span>
-                <span>😟</span>
-                <span>😐</span>
-                <span>🙂</span>
-                <span>😄</span>
+<div class="container">
+    <form id="ltl-rating-form-{{ qindex }}" class="ltl-rating-form border p-3 rounded position-relative form">
+        <!-- Dismiss Button -->
+        <button type="button" class="close position-absolute" style="top: 10px; right: 10px;" aria-label="Close" onclick="dismissForm({{ qindex }})">
+            <span aria-hidden="true">&times;</span>
+        </button>
+
+        <!-- Star Rating -->
+        <div class="form-group">
+            <label for="rating-{{ qindex }}" class="font-weight-bold">How would you rate the clarity of the English sentence in this question?</label>
+            <div id="star-rating-{{ qindex }}" class="star-rating">
+                <i class="fa fa-star" data-value="1"></i>
+                <i class="fa fa-star" data-value="2"></i>
+                <i class="fa fa-star" data-value="3"></i>
+                <i class="fa fa-star" data-value="4"></i>
+                <i class="fa fa-star" data-value="5"></i>
             </div>
+            <input type="hidden" id="rating-{{ qindex }}" name="rating" value="3">
         </div>
-    </div>
 
-    <!-- Hidden Fields for English and LTL -->
-    <input type="hidden" id="english-{{ qindex }}" name="english" value="{{ q.description }}">
-    <input type="hidden" id="ltl-{{ qindex }}" name="ltl" value="{% for option in q.options if option.isCorrect %}{{ option.option }}{% endfor %}">
+        <!-- Hidden Fields for English and LTL -->
+        <input type="hidden" id="english-{{ qindex }}" name="english" value="{{ q.description }}">
+        <input type="hidden" id="ltl-{{ qindex }}" name="ltl" value="{% for option in q.options if option.isCorrect %}{{ option.option }}{% endfor %}">
 
-    <!-- Comments Text Area -->
-    <div class="form-group">
-        <label for="comments">Comments (Optional):</label>
-        <textarea id="comments-{{ qindex }}" name="comments" class="form-control" rows="3" placeholder="Add your comments here..."></textarea>
-    </div>
+        <!-- Comments Text Area -->
+        <div class="form-group">
+            <textarea id="comments-{{ qindex }}" name="comments" class="form-control form-control-sm" rows="2" placeholder="Add your comments here..."></textarea>
+        </div>
 
-    <!-- Submit Button -->
-    <button type="button" class="btn btn-primary mt-3" onclick="submitRating({{ qindex }})">Submit</button>
-</form>
+        <!-- Submit Button -->
+        <div class="form-group d-flex justify-content-end">
+            <button type="button" class="btn btn-outline-dark btn-sm" onclick="submitRating({{ qindex }})">Submit</button>
+        </div>
+    </form>
 
-<script>
-    async function submitRating(qindex) {
-        // Get form data
-        const rating = document.getElementById(`rating-${qindex}`).value;
-        const english = document.getElementById(`english-${qindex}`).value;
-        const ltl = document.getElementById(`ltl-${qindex}`).value;
-        const comments = document.getElementById(`comments-${qindex}`).value;
+    <script>
+        // Star Rating Logic
+        document.querySelectorAll(`#star-rating-{{ qindex }} .fa-star`).forEach(star => {
+            star.addEventListener('click', function () {
+                const rating = this.getAttribute('data-value');
+                document.getElementById(`rating-{{ qindex }}`).value = rating;
 
-        // Prepare the payload
-        const payload = {
-            rating: rating,
-            english: english,
-            ltl: ltl,
-            comments: comments
-        };
-
-        try {
-            // Make the POST request
-            const response = await fetch('//logenglishltlrating', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                // Highlight selected stars
+                document.querySelectorAll(`#star-rating-{{ qindex }} .fa-star`).forEach(s => {
+                    s.classList.remove('selected');
+                    if (s.getAttribute('data-value') <= rating) {
+                        s.classList.add('selected');
+                    }
+                });
             });
+        });
 
-            if (response.ok) {
-                // Handle success (e.g., show a success message)
-                alert('Rating submitted successfully!');
-            } else {
-                // Handle failure (e.g., show an error message)
-                alert('Failed to submit rating. Please try again.');
+        async function submitRating(qindex) {
+            // Get form data
+            const rating = document.getElementById(`rating-${qindex}`).value;
+            const english = document.getElementById(`english-${qindex}`).value;
+            const ltl = document.getElementById(`ltl-${qindex}`).value;
+            const comments = document.getElementById(`comments-${qindex}`).value;
+
+            // Prepare the payload
+            const payload = {
+                rating: rating,
+                english: english,
+                ltl: ltl,
+                comments: comments
+            };
+
+            try {
+                // Make the POST request
+                const response = await fetch('/logenglishltlrating', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    // Handle success: Hide the form
+                    const form = document.getElementById(`ltl-rating-form-${qindex}`);
+                    form.style.display = 'none'; // Hide the form
+                } else {
+                    console.log('Failed to submit rating. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error submitting rating:', error);
+                alert('An error occurred. Please try again.');
             }
-        } catch (error) {
-            console.error('Error submitting rating:', error);
-            alert('An error occurred. Please try again.');
         }
-    }
-</script>
+
+        function dismissForm(qindex) {
+            const form = document.getElementById(`ltl-rating-form-${qindex}`);
+            form.style.display = 'none'; // Hide the form
+        }
+    </script>
+
+    <style>
+        .star-rating .fa-star {
+            font-size: 1.5rem;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        .star-rating .fa-star.selected {
+            color: #f39c12;
+        }
+    </style>
+</div>

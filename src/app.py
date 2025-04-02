@@ -424,13 +424,13 @@ def logenglishltlrating():
     english = data['english']
     ltl = data['ltl']
     rating = data['rating']
-    comment = data['comment']
+    comments = data['comments']
 
     e_ltl_pair = {
         "english": english,
         "ltl": ltl,
         "rating": rating,
-        "comments": comment,
+        "comments": comments,
         "user_id": userId
     }
 
