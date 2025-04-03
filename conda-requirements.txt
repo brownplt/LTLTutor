@@ -1,4 +1,2 @@
-# This file may be used to create an environment using:
-# $ conda create --name <env> --file <this file>
-# platform: linux-64
+
 spot=2.11.6=py39h3d6467e_1
