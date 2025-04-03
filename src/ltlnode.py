@@ -6,15 +6,9 @@ import os
 ### TODO: Ideally, this should not be in 
 ### src, but mocked in the test directory.
 
-# Check if we are in TEST mode (default is False)
-TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
-if not TEST_MODE:
-    from spotutils import areEquivalent
-else:
-    # Define a mock `areEquivalent` function for testing
-    def areEquivalent(formula1, formula2):
-        print("Called areEquivalent MOCK!!!")
-        return formula1 == formula2
+
+from spotutils import areEquivalent
+
 
 from ltlListener import ltlListener
 from antlr4 import CommonTokenStream, ParseTreeWalker
