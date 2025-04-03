@@ -1,9 +1,21 @@
 import unittest
-import codebook
+import sys
+import os
+
+
+# Add the src directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
+
+
 from ltlnode import parse_ltl_string
+import codebook
 
 
-class TestCodebook(unittest.TestCase):
+"""
+Test cases for the conceptual mutation operators in the LTL misconceptions codebook.
+"""
+class TestConceptualMutator(unittest.TestCase):
+    
     def apply_and_check_misconception(self, code, test_cases):
         """
         Helper function to test multiple input/output pairs for a given misconception code.
