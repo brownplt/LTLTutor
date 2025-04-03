@@ -14,25 +14,33 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    # Step 2: Set up Miniconda
-    # - name: Set up Miniconda
-    #   uses: conda-incubator/setup-miniconda@v2
-    #   with:
-    #     auto-update-conda: true
-    #     python-version: 3.9  # Use the Python version you're developing with
-    #     environment-file: conda-requirements.txt  # Use your conda-requirements.txt file
-    #     activate-environment: test-env  # Name of the environment to create
-    #     channel-priority: true
-    #     channels: conda-forge,defaults
+    # Step 2: Install Java (required for ANTLR)
+    - name: Install Java
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y default-jre
 
-    # Step 3: Install pip dependencies
+    # Step 3: Install ANTLR
+    - name: Install ANTLR
+      run: |
+        curl -O https://www.antlr.org/download/antlr-4.13.0-complete.jar
+        export CLASSPATH=".:$(pwd)/antlr-4.13.0-complete.jar:$CLASSPATH"
+        alias antlr4='java -jar $(pwd)/antlr-4.13.0-complete.jar'
+
+    # Step 4: Generate parser and lexer files
+    - name: Generate ANTLR files
+      working-directory: ./src
+      run: |
+        antlr4 -Dlanguage=Python3 ltl.g4
+
+    # Step 5: Install pip dependencies
     - name: Install pip dependencies
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
 
-    # Step 4: Run unittests
+    # Step 6: Run unittests
     - name: Run unittests
       run: |
         export TEST_MODE=true
-        python -m unittest discover -s test -p "test*.py"
+        python -m unittest discover -s test -p "test_*.py"
