@@ -13,6 +13,7 @@ if not TEST_MODE:
 else:
     # Define a mock `areEquivalent` function for testing
     def areEquivalent(formula1, formula2):
+        print("Called areEquivalent MOCK!!!")
         return formula1 == formula2
 
 from ltlListener import ltlListener
