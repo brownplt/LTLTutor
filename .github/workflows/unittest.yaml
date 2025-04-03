@@ -14,31 +14,12 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v3
 
-    # Step 2: Install Java (required for ANTLR)
-    - name: Install Java
+    # Step 2: Build the Docker image
+    - name: Build Docker image
       run: |
-        sudo apt-get update
-        sudo apt-get install -y default-jre
+        docker build -t ltltutor .
 
-    # Step 3: Install ANTLR
-    - name: Install ANTLR
+    # Step 3: Run tests inside the Docker container
+    - name: Run tests in Docker container
       run: |
-        curl -O https://www.antlr.org/download/antlr-4.13.0-complete.jar
-
-    # Step 4: Generate parser and lexer files
-    - name: Generate ANTLR files
-      working-directory: ./src
-      run: |
-        java -jar ../antlr-4.13.0-complete.jar -Dlanguage=Python3 ltl.g4
-
-    # Step 5: Install pip dependencies
-    - name: Install pip dependencies
-      run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
-
-    # Step 6: Run unittests
-    - name: Run unittests
-      run: |
-        export TEST_MODE=true
-        python -m unittest discover -s test -p "test_*.py"
+        docker run --rm ltltutor /bin/bash -c "source /venv/bin/activate && python -m unittest discover -s test -p 'test_*.py'"
