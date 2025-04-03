@@ -1,0 +1,35 @@
+name: Run Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main  # Run tests on pull requests targeting the 'main' branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the code
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Miniconda
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: 3.9  # Use the Python version you're developing with
+        environment-file: conda-requirements.txt  # Use your conda-requirements.txt file
+        activate-environment: test-env  # Name of the environment to create
+
+    # Step 3: Install pip dependencies
+    - name: Install pip dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # Step 4: Run unittests
+    - name: Run unittests
+      run: |
+        python -m unittest discover -s test -p "test*.py"
