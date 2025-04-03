@@ -1,16 +1,27 @@
 # Description: This file contains the classes for the nodes of the LTL syntax tree.
 
+import os
+
+
+### TODO: Ideally, this should not be in 
+### src, but mocked in the test directory.
+
+# Check if we are in TEST mode (default is False)
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
+if not TEST_MODE:
+    from spotutils import areEquivalent
+else:
+    # Define a mock `areEquivalent` function for testing
+    def areEquivalent(formula1, formula2):
+        return formula1 == formula2
+
 from ltlListener import ltlListener
 from antlr4 import CommonTokenStream, ParseTreeWalker
 from antlr4 import ParseTreeWalker, CommonTokenStream, InputStream
 from ltlLexer import ltlLexer
 from ltlParser import ltlParser
 from abc import ABC, abstractmethod
-from spotutils import areEquivalent
-import random
 import ltltoeng
-import re
-
 
 
 SUPPORTED_SYNTAXES = ['Classic', 'Forge', 'Electrum']
@@ -25,12 +36,6 @@ NEXT_SYMBOL = 'X'
 GLOBALLY_SYMBOL = 'G'
 FINALLY_SYMBOL = 'F'
 UNTIL_SYMBOL = 'U'
-
-  
-## TODO: Too much is based on the Exact syntax. We should be able to
-## switch syntaxes. Should this be server side or client side?
-## If server side, we should have a way to switch syntaxes (__str__ vs __str__(syntax))
-
 
 
 class LTLNode(ABC):

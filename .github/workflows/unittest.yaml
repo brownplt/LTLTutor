@@ -34,4 +34,5 @@ jobs:
     # Step 4: Run unittests
     - name: Run unittests
       run: |
+        export TEST_MODE=true
         python -m unittest discover -s test -p "test*.py"
