@@ -1,6 +1,6 @@
 # LTL Tutor
 
-![Build Status](https://github.com/brownplt/LTLTutor/actions/workflows/ci.yml/badge.svg)
+![Build Status](https://github.com/brownplt/LTLTutor/actions/workflows/docker-build-release.yml/badge.svg)
 
 
 An intelligent tutoring system for Linear Temporal Logic. This tutor is grounded in the findings of [Little Tricky Logics: Misconceptions in the Understanding of LTL](https://cs.brown.edu/~sk/Publications/Papers/Published/gsnk-little-tricky-logic/paper.pdf). 
