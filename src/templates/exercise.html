@@ -4,6 +4,8 @@
 <head>
     <title>LTL Tutor</title>
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -41,6 +43,8 @@
             <div class="card mt-4 question">
 
 
+
+
                 <div class="card-header mb-2">
                     <div class="row">
                         <div class="col-12">
@@ -72,6 +76,8 @@
                         </div>
                     </div>
                 </div>
+
+
 
                 <div class="card-body">
 
@@ -138,7 +144,10 @@
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
-
+                    
+                    {% if q.type == "englishtoltl" %}
+                        {% include 'ltltoengrater.html' %}
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
