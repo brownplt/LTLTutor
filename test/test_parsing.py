@@ -10,29 +10,112 @@ from ltlnode import *
 
 ## LTL String --> AST Node
 class TestParseLTLString(unittest.TestCase):
-    def test_parse_ltl_string(self):
+    def test_single_char_literal(self):
+        input_str = "a"
+        expected_node = LiteralNode
+        self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+    def test_parenthesized_literal(self):
+        input_str = "(abc)"
+        expected_node = LiteralNode
+        self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_conjunctions(self):
         test_cases = [
-            ("a", LiteralNode),
-            ("(abc)", LiteralNode),
             ("a & b", AndNode),
+            ("a & (b | c)", AndNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+    def test_disjunctions(self):
+        test_cases = [
             ("a | b", OrNode),
-            ("a & b", AndNode),
-            ("a | b", OrNode),
+            ("(a & b) | c", OrNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+    def test_negations(self):
+        test_cases = [
             ("!a", NotNode),
+            ("! a", NotNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+    def test_implications(self):
+        test_cases = [
             ("a -> b", ImpliesNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+    def test_equivalences(self):
+        test_cases = [
             ("a <-> b", EquivalenceNode),
-            ("X(a)", NextNode),
-            ("F(a)", FinallyNode),
-            ("G(a)", GloballyNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_next(self):
+        test_cases = [
+            ("X a", NextNode),
+            ("X (a & b)", NextNode),
+            ("X (a | b)", NextNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_finally(self):
+        test_cases = [
+            ("F a", FinallyNode),
+            ("F (a & b)", FinallyNode),
+            ("F (a | b)", FinallyNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_globally(self):
+        test_cases = [
+            ("G a", GloballyNode),
+            ("G (a & b)", GloballyNode),
+            ("G (a | b)", GloballyNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_until(self):
+        test_cases = [
+            ("a U b", UntilNode),
+            ("a U (b & c)", UntilNode),
+            ("(a & b) U c", UntilNode),
+        ]
+        for input_str, expected_node in test_cases:
+            with self.subTest(input=input_str, expected=expected_node):
+                self.assertIsInstance(parse_ltl_string(input_str), expected_node)
+
+
+    def test_complex_formulas(self):
+        test_cases = [
             ("X (a & b)", NextNode),
             ("(X a) & b", AndNode),
             ("(X a) | b", OrNode),
             ("G((X a) | b)", GloballyNode),
-            ("a U b", UntilNode),
-            ("a & (b | c)", AndNode),
-            ("(a & b) | c", OrNode)
         ]
-
         for input_str, expected_node in test_cases:
             with self.subTest(input=input_str, expected=expected_node):
                 self.assertIsInstance(parse_ltl_string(input_str), expected_node)
