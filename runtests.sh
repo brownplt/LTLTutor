@@ -7,15 +7,15 @@ set -e
 usage() {
     echo "Usage: $0 [option]"
     echo "Options:"
-    echo "  all          Run all tests"
+    echo "  all          Run all tests (default)"
     echo "  mutation     Run only mutation tests"
     echo "  parsing      Run only parsing tests"
     exit 1
 }
 
-# Check if an argument is provided
+# Default to "all" if no argument is provided
 if [ $# -eq 0 ]; then
-    usage
+    set -- "all"
 fi
 
 # Handle the provided option
