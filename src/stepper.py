@@ -46,6 +46,8 @@ class StepperNode:
 
 
 
+
+
     @property
     def treeAsMermaid(self):
         return self.__formula_to_mermaid__()
@@ -54,6 +56,25 @@ class StepperNode:
     def traceAsMermaid(self):
         return self.__trace_to_mermaid__()
 
+
+
+    def asAssignment(self):
+
+        # Now I need to parse the formula and get the variables.
+        # First split by & and |
+        # Then, if variable is prefixed by !, it is false
+        # Otherwise, it is true
+
+        formulaParts = re.split(r'[|&]', self.formula)
+        formulaParts = [x.strip() for x in formulaParts if x.strip() != ""]
+        assignments = {}
+        for part in formulaParts:
+
+            v = re.sub(r'!', '', part)
+            # and remove whitespace
+            v = v.strip()
+            assignments[v] = not (part.startswith('!'))
+        return assignments
 
     def __formula_to__mermaid_inner__(self):
         edges = []
@@ -139,6 +160,52 @@ class TraceSatisfactionResult:
     def __repr__(self):
         return f"TraceSatisfactionResult(prefix_states={self.prefix_states}, cycle_states={self.cycle_states})"
 
+
+
+
+
+
+
+
+def traceSatisfactionToTable(trace_satisfaction_result):
+    # TODO: Implement this function, I want an assignment of variables for each of the states
+
+    prefix_states = trace_satisfaction_result.prefix_states
+    cycle_states = trace_satisfaction_result.cycle_states
+
+
+    tbl_prefix = []
+    tbl_cycle = []
+
+
+    for state in prefix_states:
+        assignment = state.asAssignment()
+        satisfied = state.satisfied
+        trace_state = state.originaltrace[state.traceindex]
+        tbl_prefix.append({
+            "assignment": assignment,
+            "satisfied": satisfied,
+            "trace_state": trace_state
+        })
+
+
+
+    for state in cycle_states:
+        assignment = state.asAssignment()
+        satisfied = state.satisfied
+        trace_state = state.originaltrace[state.traceindex]
+        tbl_cycle.append({
+            "assignment": assignment,
+            "satisfied": satisfied,
+            "trace_state": trace_state
+        })
+
+    # Now for both of these, I want to build two tables, where trace states are columns, and assignment by variable is the rows
+    # The color of the trace state indicates if the state is satisfied or not
+
+    ## Here, ensure that ALL the variables have the same set of assignment keys
+
+    return tbl_prefix, tbl_cycle
 
 
 
