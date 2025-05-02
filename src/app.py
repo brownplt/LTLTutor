@@ -415,6 +415,27 @@ def ltlstepper():
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
+##### Eng LTL Logging Routes ###
+@app.route('/logenglishltlrating', methods=['POST'])
+@login_required
+def logenglishltlrating():
+    data = request.json
+    userId = getUserName()
+    english = data['english']
+    ltl = data['ltl']
+    comments = data['issues']
+
+    e_ltl_pair = {
+        "english": english,
+        "ltl": ltl,
+        "comments": comments,
+        "user_id": userId
+    }
+
+
+    answer_logger.recordEnglishLTLPair(e_ltl_pair)
+    return { "message": "Success" }
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=int(port))

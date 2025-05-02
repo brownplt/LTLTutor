@@ -4,6 +4,8 @@
 <head>
     <title>LTL Tutor</title>
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -41,6 +43,8 @@
             <div class="card mt-4 question">
 
 
+
+
                 <div class="card-header mb-2">
                     <div class="row">
                         <div class="col-12">
@@ -69,9 +73,13 @@
                         </div>
                         <div class="col text-right">
                             <small class="text-muted"> Question {{ qindex }} of {{ questions | length}} </small>
+                            
                         </div>
                     </div>
+                    
                 </div>
+
+
 
                 <div class="card-body">
 
@@ -100,6 +108,14 @@
                     <h5 id="{{ qindex }}question_text" class="card-title mb-2 actualQuestion"
                         style="white-space: pre-wrap;">{{ q.question}}
                     </h5>
+                    <div class="row mb-2 ml-2">
+                        {% if q.type == "englishtoltl" %}
+                            <button type="button" class="btn btn-link text-primary p-0" data-toggle="modal" data-target="#ltlToEngRaterModal-{{ qindex }}">
+                                Is this English sentence confusing or unclear?
+                            </button>
+                            {% include 'ltltoengrater.html' %}
+                        {% endif %}
+                    </div>
                     {% endif %}
 
                     <ul class="list-group">
@@ -138,6 +154,7 @@
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
+                    
 
                 </div>
             </div>
