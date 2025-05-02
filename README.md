@@ -1,15 +1,13 @@
 # LTL Tutor
 
-An intelligent tutoring system for Linear Temporal Logic. This tutor is grounded in the findings of [Little Tricky Logics: Misconceptions in the Understanding of LTL](https://cs.brown.edu/~sk/Publications/Papers/Published/gsnk-little-tricky-logic/paper.pdf). 
+![Build Status](https://github.com/brownplt/LTLTutor/actions/workflows/docker-build-release.yaml/badge.svg?branch=main)
+![Latest Tag](https://img.shields.io/github/v/tag/brownplt/LTLTutor?label=latest%20tag)
+
+An intelligent tutoring system for Linear Temporal Logic, grounded in [Little Tricky Logics: Misconceptions in the Understanding of LTL](https://cs.brown.edu/~sk/Publications/Papers/Published/gsnk-little-tricky-logic/paper.pdf). 
 
 
-## Try the tutor at [ltl-tutor.xyz](http://ltl-tutor.xyz/)
 
+**Try the tutor at [ltl-tutor.xyz](http://ltl-tutor.xyz/)**
 
+(Learn more about the tutor here!)[https://blog.brownplt.org/2024/08/08/ltltutor.html]
 
-You can host this tutor following [steps in the wiki](https://github.com/brownplt/LTLTutor/wiki/Hosting-the-LTL-Tutor).
-
-
-## TODO:
-- Forge and Electrum Syntaxes need '(' ')'
-- Better interface (it;s at the exercise gen level. You cannot just swap in and out)

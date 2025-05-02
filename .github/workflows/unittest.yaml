@@ -1,0 +1,25 @@
+name: Run Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - main  # Run tests on pull requests targeting the 'main' branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the code
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    # Step 2: Build the Docker image
+    - name: Build Docker image
+      run: |
+        docker build -t ltltutor .
+
+    # Step 3: Run tests inside the Docker container
+    - name: Run tests in Docker container
+      run: |
+        docker run --rm ltltutor /bin/bash -c "source /venv/bin/activate && python -m unittest discover -s test -p 'test_*.py'"
