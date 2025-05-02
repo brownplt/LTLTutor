@@ -1,68 +1,119 @@
 <div class="container">
-    <form id="ltl-rating-form-{{ qindex }}" class="ltl-rating-form border p-3 rounded position-relative form shadow-sm">
-        <!-- Dismiss Button -->
-        <button type="button" class="close position-absolute" style="top: 10px; right: 10px;" aria-label="Close" onclick="dismissForm({{ qindex }})">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <p class="font-weight-bold"> Help us improve the LTL Tutor</p>
-        <!-- Star Rating -->
-        <div class="form-group">
-            <label for="rating-{{ qindex }}" class="font-weight-muted">How would you rate the clarity of the English sentence in this question?</label>
-            <div id="star-rating-{{ qindex }}" class="star-rating">
-                <i class="fa fa-star" data-value="1"></i>
-                <i class="fa fa-star" data-value="2"></i>
-                <i class="fa fa-star" data-value="3"></i>
-                <i class="fa fa-star" data-value="4"></i>
-                <i class="fa fa-star" data-value="5"></i>
+    <div class="modal fade" id="ltlToEngRaterModal-{{ qindex }}" tabindex="-1" role="dialog" aria-labelledby="ltlToEngRaterModalLabel-{{ qindex }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ltlToEngRaterModalLabel-{{ qindex }}">What issues did you notice with the English sentence in this question?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form id="ltl-rating-form-{{ qindex }}" class="ltl-rating-form">
+                        <!-- Question Text -->
+                        <div class="form-group">
+                            <p class="font-weight-bold mb-2"> {{ q.question}} </p>
+                        </div>
+
+                        <!-- Multi-Checkbox Options -->
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ambiguous-{{ qindex }}" name="issues" value="Ambiguity in meaning">
+                                <label class="form-check-label" for="ambiguous-{{ qindex }}">Ambiguity in meaning</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="unnatural-word-{{ qindex }}" name="issues" value="Unnatural word">
+                                <label class="form-check-label" for="unnatural-word-{{ qindex }}">Unnatural word</label>
+                                <input type="text" class="form-control form-control-sm mt-1 ml-4 unnatural-word-text d-none" id="unnatural-word-text-{{ qindex }}" name="unnaturalWordText" placeholder="Please specify the word or phrase...">
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="bad-grammar-{{ qindex }}" name="issues" value="Bad grammar">
+                                <label class="form-check-label" for="bad-grammar-{{ qindex }}">Bad grammar</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="awkward-phrasing-{{ qindex }}" name="issues" value="Awkward or repetitive phrasing">
+                                <label class="form-check-label" for="awkward-phrasing-{{ qindex }}">Awkward or repetitive phrasing</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="temporal-scope-{{ qindex }}" name="issues" value="Temporal scope unclear">
+                                <label class="form-check-label" for="temporal-scope-{{ qindex }}">Temporal scope unclear</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="other-{{ qindex }}" name="issues" value="Other">
+                                <label class="form-check-label" for="other-{{ qindex }}">Other</label>
+                                <textarea id="other-text-{{ qindex }}" name="otherText" class="form-control form-control-sm mt-2 d-none" rows="2" placeholder="Please specify..."></textarea>
+                            </div>
+
+                        </div>
+
+                        <!-- Hidden Fields -->
+                        <input type="hidden" id="english-{{ qindex }}" name="english" value="{{ q.question}}">
+                        <input type="hidden" id="ltl-{{ qindex }}" name="ltl" value="{% for option in q.options if option.isCorrect %}{{ option.option }}{% endfor %}">
+
+                        <!-- Submit Button -->
+                        <div class="form-group">
+                            <button type="button" class="btn btn-outline-dark btn-block" onclick="submitFeedback({{ qindex }})">Submit</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <input type="hidden" id="rating-{{ qindex }}" name="rating" value="3">
         </div>
-
-        <!-- Hidden Fields for English and LTL -->
-        <input type="hidden" id="english-{{ qindex }}" name="english" value="{{ q.description }}">
-        <input type="hidden" id="ltl-{{ qindex }}" name="ltl" value="{% for option in q.options if option.isCorrect %}{{ option.option }}{% endfor %}">
-
-        <!-- Comments Text Area -->
-        <div class="form-group">
-            <textarea id="comments-{{ qindex }}" name="comments" class="form-control form-control-sm" rows="2" placeholder="Do you have any other feedback?"></textarea>
-        </div>
-
-        <!-- Submit Button -->
-        <div class="form-group">
-            <button type="button" class="btn btn-outline-dark btn-block" onclick="submitRating({{ qindex }})">Submit</button>
-        </div>
-    </form>
+    </div>
 
     <script>
-        // Star Rating Logic
-        document.querySelectorAll(`#star-rating-{{ qindex }} .fa-star`).forEach(star => {
-            star.addEventListener('click', function () {
-                const rating = this.getAttribute('data-value');
-                document.getElementById(`rating-{{ qindex }}`).value = rating;
+        document.addEventListener("DOMContentLoaded", function () {
+            const otherCheckbox = document.getElementById(`other-{{ qindex }}`);
+            const otherText = document.getElementById(`other-text-{{ qindex }}`);
+            const unnaturalWordCheckbox = document.getElementById(`unnatural-word-{{ qindex }}`);
+            const unnaturalWordText = document.getElementById(`unnatural-word-text-{{ qindex }}`);
 
-                // Highlight selected stars
-                document.querySelectorAll(`#star-rating-{{ qindex }} .fa-star`).forEach(s => {
-                    s.classList.remove('selected');
-                    if (s.getAttribute('data-value') <= rating) {
-                        s.classList.add('selected');
-                    }
+            console.log("{{ qindex }}");
+
+            if (otherCheckbox) {
+                otherCheckbox.addEventListener('change', function () {
+                    otherText.classList.toggle('d-none', !this.checked);
                 });
-            });
+            }
+
+            if (unnaturalWordCheckbox) {
+                unnaturalWordCheckbox.addEventListener('change', function () {
+                    unnaturalWordText.classList.toggle('d-none', !this.checked);
+                });
+            }
         });
 
-        async function submitRating(qindex) {
-            // Get form data
-            const rating = document.getElementById(`rating-${qindex}`).value;
+        async function submitFeedback(qindex) {
+            // Get selected issues
+            const selectedIssues = Array.from(document.querySelectorAll(`#ltl-rating-form-${qindex} input[name="issues"]:checked`))
+                .map(input => {
+                    if (input.value === "Unnatural word") {
+                        // Include the unnatural word text if the checkbox is selected
+                        const unnaturalWordText = document.getElementById(`unnatural-word-text-${qindex}`).value.trim();
+                        return unnaturalWordText ? `${input.value}: ${unnaturalWordText}` : input.value;
+                    }
+                    return input.value;
+                });
+
+            // Get the "Other" text if provided
+            const otherText = document.getElementById(`other-text-${qindex}`).value.trim();
+            if (otherText) {
+                selectedIssues.push(`Other: ${otherText}`);
+            }
+
+            // Get additional fields
             const english = document.getElementById(`english-${qindex}`).value;
             const ltl = document.getElementById(`ltl-${qindex}`).value;
-            const comments = document.getElementById(`comments-${qindex}`).value;
+            const selectedIssuesString = selectedIssues.join(', ');
+
 
             // Prepare the payload
             const payload = {
-                rating: rating,
+                issues: selectedIssuesString,
                 english: english,
-                ltl: ltl,
-                comments: comments
+                ltl: ltl
             };
 
             try {
@@ -76,33 +127,15 @@
                 });
 
                 if (response.ok) {
-                    // Handle success: Hide the form
-                    const form = document.getElementById(`ltl-rating-form-${qindex}`);
-                    form.style.display = 'none'; // Hide the form
+                    // Hide the modal on success
+                    $(`#ltlToEngRaterModal-${qindex}`).modal('hide');
                 } else {
-                    console.log('Failed to submit rating. Please try again.');
+                    console.log('Failed to submit feedback. Please try again.');
                 }
             } catch (error) {
-                console.error('Error submitting rating:', error);
+                console.error('Error submitting feedback:', error);
                 alert('An error occurred. Please try again.');
             }
         }
-
-        function dismissForm(qindex) {
-            const form = document.getElementById(`ltl-rating-form-${qindex}`);
-            form.style.display = 'none'; // Hide the form
-        }
     </script>
-
-    <style>
-        .star-rating .fa-star {
-            font-size: 1.5rem;
-            color: #ccc;
-            cursor: pointer;
-        }
-
-        .star-rating .fa-star.selected {
-            color: #f39c12;
-        }
-    </style>
 </div>

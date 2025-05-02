@@ -68,7 +68,6 @@ class EnglishLTLRating(Base):
     id = Column(Integer, primary_key=True)
     english = Column(String)
     ltl = Column(String)
-    score = Column(Integer)
     comments = Column(String)
     user_id = Column(String)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
@@ -167,12 +166,11 @@ class Logger:
         
         english = e_l_pair['english']
         ltl = e_l_pair['ltl']
-        rating = e_l_pair['rating']
         comments = e_l_pair['comments']
         userId = e_l_pair['user_id']
 
 
-        log = EnglishLTLRating(english=english, ltl=ltl, score=rating, comments=comments, user_id=userId)
+        log = EnglishLTLRating(english=english, ltl=ltl, comments=comments, user_id=userId)
         self.record(log)
 
 
