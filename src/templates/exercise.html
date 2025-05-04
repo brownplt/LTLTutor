@@ -150,7 +150,7 @@
 
 
 
-                    <button class="btn btn-primary" onclick="{{q.type}}_getfeedback(this); enableNextButton(this); scrollToFeedback()">Check
+                    <button class="btn btn-primary checkanswer" onclick="{{q.type}}_getfeedback(this); enableNextButton(this); scrollToFeedback()" disabled>Check
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
@@ -257,6 +257,18 @@
                     // If there are no more questions, show the "done" section
                     $('#done').show();
                 }
+            });
+
+            // Disable all "Check Answer" buttons initially
+            $('.checkanswer').prop('disabled', true);
+
+            // Add event listeners to radio buttons
+            $('input[type="radio"]').on('change', function () {
+                // Find the parent question card
+                const questionCard = $(this).closest('.question');
+
+                // Enable the "Check Answer" button within the same question card
+                questionCard.find('.checkanswer').prop('disabled', false);
             });
         });
     </script>
