@@ -38,25 +38,26 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:${{ env.TAG }}
 
-      # Step 6: Install Heroku CLI
-      - name: Install Heroku CLI
-        run: |
-          curl https://cli-assets.heroku.com/install.sh | sh
-
-      # Step 7: Log in to Heroku
-      - name: Log in to Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
-          heroku auth:token > ~/.netrc
-
-      # Step 8: Push Docker image to Heroku
-      - name: Push Docker image to Heroku
-        run: |
-          heroku container:push web --app ${{ secrets.HEROKU_APP_NAME }}
-
-      # Step 9: Release Docker image on Heroku
-      - name: Release Docker image on Heroku
-        run: |
-          heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+      - name: Build, Push, and Release Docker container to Heroku
+          uses: gonuit/heroku-docker-deploy@v1.3.3
+          with:
+            # Heroku account email
+            email: ${{ secrets.HEROKU_EMAIL }}
+            
+            # Heroku API key
+            heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+            
+            # Heroku app name
+            heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+            
+            # Dockerfile directory (default: "./")
+            dockerfile_directory: ./
+            
+            # Dockerfile name (default: "Dockerfile")
+            dockerfile_name: Dockerfile
+            
+            # Additional Docker build options (optional)
+            docker_options: "--no-cache"
+            
+            # Process type (default: "web")
+            process_type: web
