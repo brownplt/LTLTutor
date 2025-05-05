@@ -38,22 +38,25 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:${{ env.TAG }}
 
-      # Step 6: Log in to Heroku Container Registry
+      # Step 6: Install Heroku CLI
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      # Step 7: Log in to Heroku
       - name: Log in to Heroku
         env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}  # Set this in your repository secrets
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+          heroku auth:token > ~/.netrc
 
-      # Step 7: Tag and push the Docker image to Heroku
+      # Step 8: Push Docker image to Heroku
       - name: Push Docker image to Heroku
         run: |
-          docker tag ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
-          docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+          heroku container:push web --app ${{ secrets.HEROKU_APP_NAME }}
 
-      # Step 8: Release the Docker image on Heroku
+      # Step 9: Release Docker image on Heroku
       - name: Release Docker image on Heroku
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
           heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
