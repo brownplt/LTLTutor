@@ -38,27 +38,15 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:${{ env.TAG }}
 
-      # Step 6: Build, Push, and Release Docker container to Heroku
-      - name: Build, Push, and Release Docker container to Heroku
-        uses: gonuit/heroku-docker-deploy@v1.3.3
-        with:
-          # Heroku account email
-          email: ${{ secrets.HEROKU_EMAIL }}
-          
-          # Heroku API key
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          
-          # Heroku app name
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          
-          # Dockerfile directory (default: "./")
-          dockerfile_directory: ./
-          
-          # Dockerfile name (default: "Dockerfile")
-          dockerfile_name: Dockerfile
-          
-          # Additional Docker build options (optional)
-          docker_options: "--no-cache"
-          
-          # Process type (default: "web")
-          process_type: web
+      - name: Login to Heroku Container registry
+        env: 
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:login 
+      - name: Build and push
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:push -a ${{ secrets.HEROKU_APP_NAME }} web 
+      - name: Release
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME }} web 
