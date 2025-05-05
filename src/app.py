@@ -90,7 +90,7 @@ def index():
 
     ranked_misconceptions = sorted(misconception_weights.items(), key=lambda item: item[1], reverse=True)
     # And remove the red herring from ranked_misconceptions
-    ranked_misconceptions = [item for item in ranked_misconceptions if item[0] != red_herring]
+    ranked_misconceptions = [item for item in ranked_misconceptions if (item[0]).lower() != red_herring]
     top_two_misconceptions = ranked_misconceptions[:2]
 
     ########
