@@ -141,6 +141,24 @@
 
     <hr>
 
+
+<!-- Include the prefix table -->
+<div class="container mt-4">
+    <h3>Prefix States</h3>
+    <div>
+        {{ tableprefix | safe }}
+    </div>
+</div>
+
+<!-- Include the cyclic table -->
+<div class="container mt-4">
+    <h3>Cyclic States</h3>
+    <div>
+        {{ tablecyclic | safe }}
+    </div>
+</div>
+
+
     <script>
         $(document).ready(function () {
 

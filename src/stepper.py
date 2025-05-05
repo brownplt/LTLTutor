@@ -1,5 +1,3 @@
-
-
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
 from spotutils import is_trace_satisfied
 import re
@@ -96,7 +94,6 @@ class StepperNode:
             "trace_state": current_state,
         }
 
-        return assignments
 
     def __formula_to__mermaid_inner__(self):
         edges = []
@@ -187,8 +184,6 @@ class TraceSatisfactionResult:
 
 
 
-
-
 def traceSatisfactionToTable(trace_satisfaction_result):
     # TODO: Implement this function, I want an assignment of variables for each of the states
 
@@ -196,14 +191,46 @@ def traceSatisfactionToTable(trace_satisfaction_result):
     cycle_states = trace_satisfaction_result.cycle_states
 
 
-    tbl_prefix = [s.asAssignment() for s in prefix_states]
-    tbl_cycle = [s.asAssignment() for s in cycle_states]
+    prefix = [s.asAssignment() for s in prefix_states]
+    cycle = [s.asAssignment() for s in cycle_states]
 
+    # This should return a HTML table
+    def toTable(state_assignments):
+        """
+        Generate an HTML table from state assignments.
+        Each column represents a trace state, and each row represents a variable.
+        The color of the trace state indicates whether it is satisfied or not.
+        """
+        # Ensure all states have the same set of variables
+        all_variables = set()
+        for state in state_assignments:
+            all_variables.update(state["assignments"].keys())
 
-    # Now for both of these, I want to build two tables, where trace states are columns, and assignment by variable is the rows
-    # The color of the trace state indicates if the state is satisfied or not
+        # Start building the HTML table
+        html = '<table border="1" style="border-collapse: collapse; text-align: center;">'
 
-    ## Here, ensure that ALL the variables have the same set of assignment keys
+        # Add the header row (trace states)
+        html += '<tr><th>Variable</th>'
+        for state in state_assignments:
+            color = "green" if state["satisfied"] else "red"
+            html += f'<th style="background-color: {color};">{state["trace_state"]}</th>'
+        html += '</tr>'
+
+        # Add rows for each variable
+        for variable in sorted(all_variables):
+            html += f'<tr><td>{variable}</td>'
+            for state in state_assignments:
+                value = state["assignments"].get(variable, "N/A")
+                html += f'<td>{value}</td>'
+            html += '</tr>'
+
+        # Close the table
+        html += '</table>'
+
+        return html
+
+    tbl_prefix = toTable(prefix)
+    tbl_cycle = toTable(cycle)
 
     return tbl_prefix, tbl_cycle
 
