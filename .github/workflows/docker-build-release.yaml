@@ -38,15 +38,31 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:${{ env.TAG }}
 
-      - name: Login to Heroku Container registry
-        env: 
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:login 
-      - name: Build and push
+      # Step 6: Install Heroku CLI
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      # Step 7: (Optional) Check System Info
+      - name: Check System Info
+        run: |
+          sudo apt update && sudo apt install -y neofetch
+          neofetch
+
+      # Step 8: Login to Heroku Container Registry
+      - name: Login to Heroku Container Registry
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:push -a ${{ secrets.HEROKU_APP_NAME }} web 
-      - name: Release
+        run: heroku container:login
+
+      # Step 9: Build and Push Docker Image to Heroku
+      - name: Build and Push Docker Image to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: heroku container:release -a ${{ secrets.HEROKU_APP_NAME }} web 
+        run: heroku container:push web --app ${{ secrets.HEROKU_APP_NAME }}
+
+      # Step 10: Release Docker Image on Heroku
+      - name: Release Docker Image on Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
