@@ -65,7 +65,7 @@ class StepperNode:
         # remove {, }, and cycle, since these don't matter
         # for assignment
 
-        trace_states = self.trace.replace('{', '').replace('}', '').replace('cycle', '').split(';')
+        trace_states = self.originaltrace.replace('{', '').replace('}', '').replace('cycle', '').split(';')
 
         ## Not quite, because of the cycle.
 

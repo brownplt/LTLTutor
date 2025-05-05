@@ -413,10 +413,10 @@ def ltlstepper():
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
     
-    zz = traceSatisfactionToTable(result)
+    table_prefix, table_cycle = traceSatisfactionToTable(result)
 
 
-    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
+    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, tableprefix = table_prefix, tablecycle = table_cycle)
 
 
 ##### Eng LTL Logging Routes ###
