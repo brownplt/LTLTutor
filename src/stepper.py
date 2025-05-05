@@ -60,12 +60,25 @@ class StepperNode:
 
     def asAssignment(self):
 
+
+
+        # remove {, }, and cycle, since these don't matter
+        # for assignment
+
+        trace_states = self.trace.replace('{', '').replace('}', '').replace('cycle', '').split(';')
+
+        ## Not quite, because of the cycle.
+
+        # I need to get the trace state at the current index
+        # and then parse the formula
+        current_state = trace_states[self.traceindex]
+
         # Now I need to parse the formula and get the variables.
         # First split by & and |
         # Then, if variable is prefixed by !, it is false
         # Otherwise, it is true
 
-        formulaParts = re.split(r'[|&]', self.formula)
+        formulaParts = re.split(r'[|&]', current_state)
         formulaParts = [x.strip() for x in formulaParts if x.strip() != ""]
         assignments = {}
         for part in formulaParts:
@@ -74,6 +87,15 @@ class StepperNode:
             # and remove whitespace
             v = v.strip()
             assignments[v] = not (part.startswith('!'))
+
+
+
+        return {
+            "assignments": assignments,
+            "satisfied": self.satisfied,
+            "trace_state": current_state,
+        }
+
         return assignments
 
     def __formula_to__mermaid_inner__(self):
@@ -174,31 +196,9 @@ def traceSatisfactionToTable(trace_satisfaction_result):
     cycle_states = trace_satisfaction_result.cycle_states
 
 
-    tbl_prefix = []
-    tbl_cycle = []
+    tbl_prefix = [s.asAssignment() for s in prefix_states]
+    tbl_cycle = [s.asAssignment() for s in cycle_states]
 
-
-    for state in prefix_states:
-        assignment = state.asAssignment()
-        satisfied = state.satisfied
-        trace_state = state.originaltrace[state.traceindex]
-        tbl_prefix.append({
-            "assignment": assignment,
-            "satisfied": satisfied,
-            "trace_state": trace_state
-        })
-
-
-
-    for state in cycle_states:
-        assignment = state.asAssignment()
-        satisfied = state.satisfied
-        trace_state = state.originaltrace[state.traceindex]
-        tbl_cycle.append({
-            "assignment": assignment,
-            "satisfied": satisfied,
-            "trace_state": trace_state
-        })
 
     # Now for both of these, I want to build two tables, where trace states are columns, and assignment by variable is the rows
     # The color of the trace state indicates if the state is satisfied or not

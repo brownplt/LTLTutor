@@ -17,7 +17,7 @@ import spotutils
 from itertools import chain
 import uuid
 import requests
-from stepper import traceSatisfactionPerStep
+from stepper import traceSatisfactionPerStep, traceSatisfactionToTable
 from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
 from modelroutes import modelroutes
 
@@ -412,6 +412,10 @@ def ltlstepper():
         result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
         return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
+    
+    zz = traceSatisfactionToTable(result)
+
+
     return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
 
 
