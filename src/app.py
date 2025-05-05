@@ -79,15 +79,35 @@ def index():
     # For all the keys of misconception_weights, remove the prefix MisconceptionCode. if it is present
     misconception_weights = {k.replace("MisconceptionCode.", ""): v for k, v in misconception_weights.items()}
 
-    # Sort the misconception_weights dictionary by value in descending order and get the first 2 items
-    top_two_misconceptions = sorted(misconception_weights.items(), key=lambda item: item[1], reverse=True)[:2]
+
+    ##########
+    ## With the introduction of syntactic distractor experiments,
+    ## we may have misconception explainers that do not have a corresponding file in the 'misconceptionexplainers' directory.
+    ## The only one we expect is 'syntactic.html'.
+    ## So we need to check if the file exists in the directory before joining it with the 'misconceptionexplainers' directory.
+
+    red_herring = "syntactic"
+
+    ranked_misconceptions = sorted(misconception_weights.items(), key=lambda item: item[1], reverse=True)
+    # And remove the red herring from ranked_misconceptions
+    ranked_misconceptions = [item for item in ranked_misconceptions if (item[0]).lower() != red_herring]
+    top_two_misconceptions = ranked_misconceptions[:2]
+
+    ########
+
     # Convert the top two misconceptions back to a dictionary
     top_two_misconceptions = dict(top_two_misconceptions)
     # Convert the keys to lowercase and add '.html' to the end
     top_two_misconceptions = [k.lower() + '.html' for k, v in top_two_misconceptions.items()]
 
+
+
     # Join the keys with the 'misconceptionexplainers' directory
     top_two_misconceptions = [os.path.join('misconceptionexplainers', k) for k in top_two_misconceptions]
+
+
+
+
 
     # Now choose one of the top two misconceptions randomly
     max_misconception = random.choice(top_two_misconceptions)   
