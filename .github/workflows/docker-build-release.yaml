@@ -1,4 +1,4 @@
-name: Build and Release Docker Image
+name: Build, Release Docker Image, and Deploy to Heroku
 
 on:
   push:
@@ -37,3 +37,23 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/ltltutor:${{ env.TAG }}
+
+      # Step 6: Log in to Heroku Container Registry
+      - name: Log in to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}  # Set this in your repository secrets
+        run: |
+          echo "$HEROKU_API_KEY" | docker login --username=_ --password-stdin registry.heroku.com
+
+      # Step 7: Tag and push the Docker image to Heroku
+      - name: Push Docker image to Heroku
+        run: |
+          docker tag ${{ secrets.DOCKER_USERNAME }}/ltltutor:latest registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+          docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+
+      # Step 8: Release the Docker image on Heroku
+      - name: Release Docker image on Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
