@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Generated Exercises</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>Generated Exercises</h1>
+    <button id="downloadJsonBtn">Download As JSON</button>
+    <table id="exercisesTable" class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Timestamp</th>
+                <th>Exercise Name</th>
+                <th>Exercise Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ex_id, ex in exercises.items() %}
+            <tr>
+                <td>{{ ex_id }}</td>
+                <td>{{ ex.user_id }}</td>
+                <td>{{ ex.timestamp }}</td>
+                <td>{{ ex.exercise_name }}</td>
+                <td><pre style="white-space: pre-wrap;">{{ ex.exercise_data }}</pre></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#exercisesTable').DataTable();
+
+            document.getElementById('downloadJsonBtn').addEventListener('click', function() {
+                const data = {{ exercises|tojson }};
+                const jsonStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'generated_exercises.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+</body>
+</html>

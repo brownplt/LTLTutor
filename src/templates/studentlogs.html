@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Logs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>Your Logs</h1>
+    <button id="downloadJsonBtn">Download As JSON</button>
+    <table id="logsTable" class="display">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User ID</th>
+                <th>Timestamp</th>
+                <th>Misconception</th>
+                <th>Question Text</th>
+                <th>Question Options</th>
+                <th>Correct Answer</th>
+                <th>MP Class</th>
+                <th>Exercise</th>
+                <th>Course</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log_id, log in logs.items() %}
+            <tr>
+                <td>{{ log_id }}</td>
+                <td>{{ log.user_id }}</td>
+                <td>{{ log.timestamp }}</td>
+                <td>{{ log.misconception }}</td>
+                <td>{{ log.question_text }}</td>
+                <td>{{ log.question_options }}</td>
+                <td>{{ log.correct_answer }}</td>
+                <td>{{ log.mp_class }}</td>
+                <td>{{ log.exercise }}</td>
+                <td>{{ log.course }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#logsTable').DataTable();
+
+            document.getElementById('downloadJsonBtn').addEventListener('click', function() {
+                const data = {{ logs|tojson }};
+                const jsonStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'student_logs.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+</body>
+</html>
