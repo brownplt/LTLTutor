@@ -26,10 +26,22 @@
     <div class="container">
         {% include 'navbar.html' %}
 
+
+        <div class="mt-4 mb-4">
+            <h1 class="text-center">Your Profile</h1>
+            <p class="text-center">
+            In the last {{lookback_days}} days, you have 
+            answered <span class="font-weight-bolder"> {{num_correct}} out of {{num_answered}} </span> question(s) correctly.
+            </p>
+        </div>
+        <hr>
+
         <div class="btn-group btn-group-lg d-flex justify-content-center" role="group">
             <a href="/view/logs" class="btn btn-secondary">View Logs</a>
             <a href="/view/generatedexercises" class="btn btn-secondary">View Generated Exercises</a>
         </div>
+
+
 
         <hr>
 

@@ -11,8 +11,8 @@ modelroutes = Blueprint('modelroutes', __name__)
 logger = Logger()
 
 
-def getLogsForUser(userId):
-    logs = logger.getUserLogs(userId=userId, lookback_days=365)
+def getLogsForUser(userId, lookback_days):
+    logs = logger.getUserLogs(userId=userId, lookback_days=lookback_days)
     return logs
 
 
@@ -20,8 +20,14 @@ def getLogsForUser(userId):
 @modelroutes.route('/profile', methods=['GET'])
 @login_required
 def profile():
+    LOOKBACK_DAYS = 365
     uid = current_user.username
-    logs = getLogsForUser(uid)
+    logs = getLogsForUser(uid, LOOKBACK_DAYS)
+
+    num_logs = len(logs)
+
+    num_correct = len([log for log in logs if log.correct_answer == 'True' or log.correct_answer == True or log.correct_answer == 'true'])
+
     exercise_builder = exercisebuilder.ExerciseBuilder(logs)
     model = exercise_builder.get_model()
 
@@ -32,7 +38,7 @@ def profile():
     misconception_weights_over_time = {key.replace('MisconceptionCode.', ''): value for key, value in misconception_weights_over_time.items()}
 
 
-    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time)
+    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time, lookback_days = LOOKBACK_DAYS, num_answered = num_logs, num_correct = num_correct)
 
 
 
@@ -41,7 +47,7 @@ def profile():
 @login_required
 def viewstudentlogs():
     userId = current_user.username
-    logs = getLogsForUser(userId)
+    logs = getLogsForUser(userId, 365)
 
     logs_dict = {}
     for log in logs:
@@ -64,7 +70,7 @@ def viewstudentlogs():
 @login_required
 def viewexercise():
     userId = current_user.username
-    exercises = logger.getUserExercises(userId=userId, lookback_days=30)
+    exercises = logger.getUserExercises(userId=userId, lookback_days=365)
     to_return = {}
     for exercise in exercises:
         to_return[exercise.id] = {
