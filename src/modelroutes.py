@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, flash, current_app, Blueprint
 from flask_login import login_required, current_user
 from authroutes import Course, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor
@@ -13,7 +12,7 @@ logger = Logger()
 
 
 def getLogsForUser(userId):
-    logs = logger.getUserLogs(userId=userId, lookback_days=30)
+    logs = logger.getUserLogs(userId=userId, lookback_days=365)
     return logs
 
 
@@ -44,9 +43,9 @@ def viewstudentlogs():
     userId = current_user.username
     logs = getLogsForUser(userId)
 
-    to_return = {}
+    logs_dict = {}
     for log in logs:
-        to_return[log.id] = {
+        logs_dict[log.id] = {
             "user_id": log.user_id,
             "timestamp": log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             "misconception": log.misconception,
@@ -57,10 +56,10 @@ def viewstudentlogs():
             "exercise": log.exercise,
             "course": log.course
         }
-    return json.dumps(to_return)
-
-
+    return render_template('studentlogs.html', logs=logs_dict)
     
+
+
 @modelroutes.route('/view/generatedexercises', methods=['GET'])
 @login_required
 def viewexercise():
@@ -74,7 +73,7 @@ def viewexercise():
             "exercise_data": exercise.exercise_data,
             "exercise_name": exercise.exerciseName
         }
-    return json.dumps(to_return)
+    return render_template('studentexercises.html', exercises=to_return)
 
 
 
