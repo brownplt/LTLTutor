@@ -1,8 +1,8 @@
-# LTL Tutor
+
 
 ![Latest Tag](https://img.shields.io/github/v/tag/brownplt/LTLTutor?label=latest%20tag)
 
-An intelligent tutoring system for Linear Temporal Logic.
+### An intelligent tutoring system for Linear Temporal Logic.
 
 - **Try the tutor at [ltl-tutor.xyz](http://ltl-tutor.xyz/)**
 
