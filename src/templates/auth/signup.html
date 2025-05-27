@@ -31,7 +31,7 @@
                 {% endif %}
                 {% endwith %}
 
-                <form action="/signup" method="POST">
+                <form action="/signup" method="POST" id="signupForm">
                     <div class="form-group">
                         <label for="username">Username:</label>
                         <input type="text" id="username" name="username" class="form-control" required>
@@ -40,6 +40,11 @@
                     <div class="form-group">
                         <label for="password">Password:</label>
                         <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password:</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
                     </div>
 
                     <input type="submit" value="Signup" class="btn btn-primary">
@@ -52,5 +57,16 @@
         </div>
     </div>
     {% include 'footer.html' %}
+
+    <script>
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const pw = document.getElementById('password').value;
+        const cpw = document.getElementById('confirm_password').value;
+        if (pw !== cpw) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+        }
+    });
+    </script>
 </body>
 </html>

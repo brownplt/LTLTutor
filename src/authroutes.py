@@ -208,6 +208,13 @@ def signup():
         with Session() as session:
             username = request.form.get('username')
             password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')  # <-- Get confirm_password
+
+            # Check if passwords match
+            if password != confirm_password:
+                flash('Passwords do not match. Please try again.')
+                return render_template('auth/signup.html')
+
             existing_user = session.query(User).filter_by(username=username).first()
             if existing_user:
                 flash(f'Username {username} is already taken. Please choose another one.')
