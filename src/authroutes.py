@@ -250,7 +250,7 @@ def register_exercise():
 
             login_link = url_for('authroutes.login', user_type='course-student', course_id=course.name, _external=True)
 
-            flash(f'Course {coursename} registered successfully. <br> You can share it with students via the course code <code>{course.name}</code> or the link link <code>{login_link}</code> <br> This link will also be available in your instructor dashboard.')
+            flash(f'Course <code>{coursename}</code> registered successfully. <br><br> You can share it with students via the course code <code>{course.name}</code> or the link <code>{login_link}</code> <br><br>This link will also be available in your instructor dashboard.')
 
            
 
