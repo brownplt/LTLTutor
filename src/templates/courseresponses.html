@@ -6,114 +6,136 @@
     <title>{{course_name}} Responses</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+        <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@1.1.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    
 </head>
 <body>
-
-    <!-- TODO: Improve ergonomics here. I think a better web-dev is needed. -->
+    <div class="container">
+        {% include 'navbar.html' %}
+    </div>
 
     <p class="lead mt-3 mb-4">
         {{ course_name }} has had {{ responses|length }} responses from {{ user_counts|length }} students.
     </p>
 
-    <h2>Exercise Responses for {{ course_name }}</h2>
-    <button id="downloadJsonBtn">Download As JSON</button>
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs mb-3" id="responseTabs" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="responses-tab" data-toggle="tab" href="#responses" role="tab">Exercise Responses</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="studentsummary-tab" data-toggle="tab" href="#studentsummary" role="tab">Student Summary</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="histogram-tab" data-toggle="tab" href="#histogram-section" role="tab">Submissions per Student</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="misconceptions-tab" data-toggle="tab" href="#misconceptions" role="tab">Most Common Misconceptions</a>
+      </li>
+    </ul>
 
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="responses" role="tabpanel">
+        <h2>Exercise Responses for {{ course_name }}</h2>
+        <button id="downloadJsonBtn">Download As JSON</button>
+        <table id="responsesTable" class="display">
+            <!-- ...table as before... -->
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>Timestamp</th>
+                    <th>Misconception</th>
+                    <th>Question Text</th>
+                    <th>Question Options</th>
+                    <th>Correct Answer</th>
+                    <th>Question Type</th>
+                    <th>MP Class</th>
+                    <th>Exercise</th>
+                    <th>Course</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for response_id, response in responses.items() %}
+                <tr>
+                    <td>{{ response_id }}</td>
+                    <td>{{ response.user_id }}</td>
+                    <td>{{ response.timestamp }}</td>
+                    <td>{{ response.misconception }}</td>
+                    <td>{{ response.question_text }}</td>
+                    <td>{{ response.question_options }}</td>
+                    <td>{{ response.correct_answer }}</td>
+                    <td>{{ response.question_type }}</td>
+                    <td>{{ response.mp_class }}</td>
+                    <td>{{ response.exercise }}</td>
+                    <td>{{ response.course }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+      <div class="tab-pane fade" id="studentsummary" role="tabpanel">
+        <h2>Student Summary</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th># Submissions</th>
+                    <th>Correct Answers</th>
+                    <th>Last Submission</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user, count in user_counts.items() %}
+                <tr>
+                    <td>{{ user }}</td>
+                    <td>{{ count }}</td>
+                    <td>{{ user_correct[user] }}</td>
+                    <td>{{ user_last[user] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+      <div class="tab-pane fade" id="histogram-section" role="tabpanel">
+        <h2>Submissions per Student</h2>
+        <canvas id="histogram" width="400" height="150"></canvas>
+      </div>
+      <div class="tab-pane fade" id="misconceptions" role="tabpanel">
+        <h2>Most Common Misconceptions</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Misconception</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for misconception, count in misconception_histogram %}
+                <tr>
+                    <td>{{ misconception }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+    </div>
 
-    <table id="responsesTable" class="display">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>User ID</th>
-                <th>Timestamp</th>
-                <th>Misconception</th>
-                <th>Question Text</th>
-                <th>Question Options</th>
-                <th>Correct Answer</th>
-                <th>Question Type</th>
-                <th>MP Class</th>
-                <th>Exercise</th>
-                <th>Course</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for response_id, response in responses.items() %}
-            <tr>
-                <td>{{ response_id }}</td>
-                <td>{{ response.user_id }}</td>
-                <td>{{ response.timestamp }}</td>
-                <td>{{ response.misconception }}</td>
-                <td>{{ response.question_text }}</td>
-                <td>{{ response.question_options }}</td>
-                <td>{{ response.correct_answer }}</td>
-                <td>{{ response.question_type }}</td>
-                <td>{{ response.mp_class }}</td>
-                <td>{{ response.exercise }}</td>
-                <td>{{ response.course }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2>Student Summary</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th># Submissions</th>
-                <th>Correct Answers</th>
-                <th>Last Submission</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user, count in user_counts.items() %}
-            <tr>
-                <td>
-                    {{ user }}
-                </td>
-                <td>{{ count }}</td>
-                <td>{{ user_correct[user] }}</td>
-                <td>{{ user_last[user] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2>Submissions per Student</h2>
-    <canvas id="histogram" width="400" height="150"></canvas>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('histogram').getContext('2d');
-        const data = {
-            labels: {{ histogram|map(attribute=0)|list|tojson }},
-            datasets: [{
-                label: '# Submissions',
-                data: {{ histogram|map(attribute=1)|list|tojson }},
-                backgroundColor: 'rgba(54, 162, 235, 0.5)'
-            }]
-        };
-        new Chart(ctx, {type: 'bar', data: data});
-    </script>
-
-    <h2>Most Common Misconceptions</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Misconception</th>
-                <th>Count</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for misconception, count in misconception_histogram %}
-            <tr>
-                <td>{{ misconception }}</td>
-                <td>{{ count }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         $(document).ready(function() {
             $('#responsesTable').DataTable();
@@ -129,6 +151,24 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+            });
+
+            // Only render the chart when its tab is shown
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                if (e.target.id === 'histogram-tab') {
+                    if (!window.histogramChart) {
+                        const ctx = document.getElementById('histogram').getContext('2d');
+                        const data = {
+                            labels: {{ histogram|map(attribute=0)|list|tojson }},
+                            datasets: [{
+                                label: '# Submissions',
+                                data: {{ histogram|map(attribute=1)|list|tojson }},
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                            }]
+                        };
+                        window.histogramChart = new Chart(ctx, {type: 'bar', data: data});
+                    }
+                }
             });
         });
     </script>
