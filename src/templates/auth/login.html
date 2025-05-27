@@ -11,6 +11,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
 
+    <style>
+    .highlight-section {
+        border: 2px solid #007bff;
+        box-shadow: 0 0 10px #007bff33;
+        background-color: #eaf4ff;
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+    </style>
 </head>
 
 <body>
@@ -61,7 +69,7 @@
             aria-expanded="{{ 'true' if course_id else 'false' }}" aria-controls="collapseCourseCode">
             Have a course code?
         </p>
-        <div class="collapse{% if course_id %} show{% endif %}" id="collapseCourseCode">
+        <div class="collapse{% if course_id %} show highlight-section{% endif %}" id="collapseCourseCode">
             <form action="/login" method="POST">
 
                 <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using

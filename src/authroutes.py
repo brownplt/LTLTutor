@@ -250,10 +250,9 @@ def register_exercise():
 
             login_link = url_for('authroutes.login', user_type='course-student', course_id=course.name, _external=True)
 
-            flash(f'Course {coursename} registered successfully. Distribution link: {login_link}')
+            flash(f'Course {coursename} registered successfully. <br> You can share it with students via the course code <code>{course.name}</code> or the link link <code>{login_link}</code> <br> This link will also be available in your instructor dashboard.')
 
-            # TODO: We should also generate a signup / distribution link for the course.
-
+           
 
 
             return redirect(url_for('authroutes.register_exercise'))
