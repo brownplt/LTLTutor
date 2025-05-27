@@ -57,11 +57,11 @@
 
 
 
-        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseCourseCode" role="button"
-            aria-expanded="false" aria-controls="collapseCourseCode">
+        <p class="lead toggle-arrow {% if course_id %} {% else %}collapsed{% endif %}" data-toggle="collapse" href="#collapseCourseCode" role="button"
+            aria-expanded="{{ 'true' if course_id else 'false' }}" aria-controls="collapseCourseCode">
             Have a course code?
         </p>
-        <div class="collapse" id="collapseCourseCode">
+        <div class="collapse{% if course_id %} show{% endif %}" id="collapseCourseCode">
             <form action="/login" method="POST">
 
                 <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using
@@ -77,12 +77,11 @@
                 <div class="form-group row">
                     <label for="course_id" class="col-sm-2 col-form-label">Course:</label>
                     <div class="col-sm-10">
-                        <input type="text" id="course_id" name="course_id" class="form-control" required>
+                        <input type="text" id="course_id" name="course_id" class="form-control" required value="{{ course_id }}">
                     </div>
                 </div>
 
                 <input type="submit" value="Login as a Student" class="btn btn-primary">
-
             </form>
         </div>
 
@@ -116,38 +115,7 @@
             </form>
         </div>
 
-        <hr class="my-4">
-<!-- IS THIS RIGHT? Could we not use the course login link? -->
-        <form method="POST" action="{{ url_for('authroutes.login') }}">
-            <div class="form-group">
-                <label for="user_type">User Type:</label>
-                <select name="user_type" id="user_type" class="form-control">
-                    <option value="course-instructor" {% if user_type == 'course-instructor' %}selected{% endif %}>Instructor</option>
-                    <option value="course-student" {% if user_type == 'course-student' %}selected{% endif %}>Student</option>
-                    <option value="anonymous-student" {% if user_type == 'anonymous-student' %}selected{% endif %}>Anonymous</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="course_id">Course ID:</label>
-                <input type="text" name="course_id" id="course_id" class="form-control" value="{{ course_id }}">
-            </div>
 
-            <div class="form-group row">
-                <label for="username" class="col-sm-2 col-form-label">Username:</label>
-                <div class="col-sm-10">
-                    <input type="text" id="username" name="username" class="form-control" required>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label for="password" class="col-sm-2 col-form-label">Password:</label>
-                <div class="col-sm-10">
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-            </div>
-
-            <input type="submit" value="Login" class="btn btn-primary">
-        </form>
 
     </div>
     {% include 'footer.html' %}
