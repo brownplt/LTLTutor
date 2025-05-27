@@ -22,10 +22,11 @@
     <div class="container">
         {% include 'navbar.html' %}
     </div>
-
-    <p class="lead mt-3 mb-4">
-        {{ course_name }} has had {{ responses|length }} responses from {{ user_counts|length }} students.
-    </p>
+    <div class="container mt-4">
+        <p class="lead mt-3 mb-4">
+            {{ course_name }} has had {{ responses|length }} responses from {{ user_counts|length }} students.
+        </p>
+    </div>
 
     <!-- Nav tabs -->
     <ul class="nav nav-tabs mb-3" id="responseTabs" role="tablist">
@@ -106,10 +107,6 @@
                 {% endfor %}
             </tbody>
         </table>
-      </div>
-      <div class="tab-pane fade" id="histogram-section" role="tabpanel">
-        <h2>Submissions per Student</h2>
-        <canvas id="histogram" width="400" height="150"></canvas>
       </div>
       <div class="tab-pane fade" id="misconceptions" role="tabpanel">
         <h2>Most Common Misconceptions</h2>
