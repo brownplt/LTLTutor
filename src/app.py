@@ -70,6 +70,10 @@ def index():
         return render_template('index.html', uid = "Could not identify user. Are you logged in?")
     
     logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
+
+    num_logs = len(logs)
+    num_correct = len([log for log in logs if str(log.correct_answer).lower() == 'true'])
+
     exercise_builder = exercisebuilder.ExerciseBuilder(logs)
     model = exercise_builder.get_model()
     misconception_weights = model['misconception_weights']
@@ -111,7 +115,15 @@ def index():
 
     # Now choose one of the top two misconceptions randomly
     max_misconception = random.choice(top_two_misconceptions)   
-    return render_template('index.html',uid = getUserName(), misconception_weights = misconception_weights, misconception_count = misconception_count, max_misconception = max_misconception)
+    return render_template(
+        'index.html',
+        uid=getUserName(),
+        misconception_weights=misconception_weights,
+        misconception_count=misconception_count,
+        max_misconception=max_misconception,
+        num_logs=num_logs,
+        num_correct=num_correct
+    )
 
 @app.route('/ltl')
 def ltl():
