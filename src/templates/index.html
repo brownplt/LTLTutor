@@ -25,12 +25,18 @@
     <div class="container">
         {% include 'navbar.html' %}
 
+        <div class="container">
+                <p>
+                    You have answered {{ num_correct }} / {{ num_logs }} questions correctly in the last 30 days.<br>
+                </p>
+        </div>
+
         {% if misconception_count is not defined or misconception_count < threshold %}
         <div class="card-body bg-light">
             <h4 class="card-title">Getting Started with this tool?</h4>
             <p class="card-text">
-            Once you are familiar with the <a href="/ltl">LTL syntax</a> used by this tool, we recommend starting with
-            <a href="/entryexitticket/entry"> <button class="btn btn-primary"> this exercise </button> </a>.
+                Make sure you're familiar with one of the <a href="/ltl">LTL syntaxes</a> supported by this tool.
+                Then, begin by generating a personalized exercise using the button below.
             </p>
         </div>
         {% elif misconception_count > threshold %}
@@ -38,12 +44,9 @@
             {% include max_misconception %}
         </div>
 
-        <div>
-            <p class="card-text"> If you feel like this tutor cannot teach you any more about Linear Temporal Logic, or you 
-                are done using this tool,  we ask that you complete this <a href="/entryexitticket/exit"> <button class="btn btn-primary"> final exercise</button></a>.
-            </p>
-        </div>
         {% endif %}
+
+
 
 
         <div class="container mt-4">
