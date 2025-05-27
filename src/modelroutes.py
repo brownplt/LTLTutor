@@ -4,6 +4,7 @@ from authroutes import Course, retrieve_course_data, get_owned_courses, login_re
 from logger import Logger
 import json
 import exercisebuilder
+from collections import Counter, defaultdict
 
 
 modelroutes = Blueprint('modelroutes', __name__)
@@ -85,7 +86,7 @@ def viewexercise():
 
 @modelroutes.route('/view/responses/<course_name>', methods=['GET'])
 @login_required_as_courseinstructor
-def viewexerciseresponses(course_name):
+def viewresponses(course_name):
     userId = current_user.username
     course = retrieve_course_data(course_name)
 
@@ -108,5 +109,35 @@ def viewexerciseresponses(course_name):
             "exercise": response.exercise,
             "course": response.course
         }
-    #return json.dumps(to_return)
-    return render_template('courseresponses.html', course_name=course_name, responses=to_return)
+
+    user_counts = Counter()
+    user_correct = Counter()
+    user_last = {}
+
+    for resp in to_return.values():
+        user = resp['user_id']
+        user_counts[user] += 1
+        if str(resp['correct_answer']).lower() == 'true':
+            user_correct[user] += 1
+        user_last[user] = max(user_last.get(user, ''), resp['timestamp'])
+
+    histogram = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)
+
+    misconception_counts = Counter()
+    for resp in to_return.values():
+        misconception = resp['misconception']
+        if misconception:
+            misconception_counts[misconception] += 1
+
+    misconception_histogram = misconception_counts.most_common()
+
+    return render_template(
+        'courseresponses.html',
+        responses=to_return,
+        course_name=course_name,
+        user_counts=user_counts,
+        user_correct=user_correct,
+        user_last=user_last,
+        histogram=histogram,
+        misconception_histogram=misconception_histogram
+    )

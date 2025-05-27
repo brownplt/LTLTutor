@@ -115,7 +115,6 @@ def init_app(app):
 
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
-
     if request.method == 'POST':
         user = None
         canLogin = False
@@ -191,7 +190,9 @@ def login():
                 flash('Login failed. Please try again.')
                 return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
-        return render_template('auth/login.html')
+        user_type = request.args.get('user_type', '')
+        course_id = request.args.get('course_id', '')
+        return render_template('auth/login.html', user_type=user_type, course_id=course_id)
     else:
         return "Invalid request method.", 400
 
@@ -228,6 +229,8 @@ def signup():
     return render_template('auth/signup.html')
 
 
+
+
 @authroutes.route('/register-course', methods=['GET', 'POST'])
 @login_required_as_courseinstructor
 def register_exercise():
@@ -251,7 +254,10 @@ def register_exercise():
             course = Course(name=coursename, owner=owner)
             session.add(course)
             session.commit()
-            flash(f'Course {coursename} registered successfully.')
+
+            login_link = url_for('authroutes.login', user_type='course-student', course_id=course.name, _external=True)
+
+            flash(f'Course <code>{coursename}</code> registered successfully. <br><br> You can share it with students via the course code <code>{course.name}</code> or the link <code>{login_link}</code> <br><br>This link will also be available in your instructor dashboard.')
             return redirect(url_for('authroutes.register_exercise'))
     return render_template('instructorhome.html')
 

@@ -11,6 +11,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
 
+    <style>
+    .highlight-section {
+        border: 2px solid #007bff;
+        box-shadow: 0 0 10px #007bff33;
+        background-color: #eaf4ff;
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+    </style>
 </head>
 
 <body>
@@ -57,11 +65,11 @@
 
 
 
-        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseCourseCode" role="button"
-            aria-expanded="false" aria-controls="collapseCourseCode">
+        <p class="lead toggle-arrow {% if course_id %} {% else %}collapsed{% endif %}" data-toggle="collapse" href="#collapseCourseCode" role="button"
+            aria-expanded="{{ 'true' if course_id else 'false' }}" aria-controls="collapseCourseCode">
             Have a course code?
         </p>
-        <div class="collapse" id="collapseCourseCode">
+        <div class="collapse{% if course_id %} show highlight-section{% endif %}" id="collapseCourseCode">
             <form action="/login" method="POST">
 
                 <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using
@@ -77,12 +85,11 @@
                 <div class="form-group row">
                     <label for="course_id" class="col-sm-2 col-form-label">Course:</label>
                     <div class="col-sm-10">
-                        <input type="text" id="course_id" name="course_id" class="form-control" required>
+                        <input type="text" id="course_id" name="course_id" class="form-control" required value="{{ course_id }}">
                     </div>
                 </div>
 
                 <input type="submit" value="Login as a Student" class="btn btn-primary">
-
             </form>
         </div>
 
@@ -115,6 +122,8 @@
                 <input type="submit" value="Login" class="btn btn-primary">
             </form>
         </div>
+
+
 
     </div>
     {% include 'footer.html' %}
