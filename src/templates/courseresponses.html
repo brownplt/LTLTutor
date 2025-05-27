@@ -40,9 +40,6 @@
         <a class="nav-link" id="studentsummary-tab" data-toggle="tab" href="#studentsummary" role="tab">Student Summary</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" id="histogram-tab" data-toggle="tab" href="#histogram-section" role="tab">Submissions per Student</a>
-      </li>
-      <li class="nav-item">
         <a class="nav-link" id="misconceptions-tab" data-toggle="tab" href="#misconceptions" role="tab">Most Common Misconceptions</a>
       </li>
     </ul>
@@ -90,11 +87,11 @@
       </div>
       <div class="tab-pane fade" id="studentsummary" role="tabpanel">
         <h2>Student Summary</h2>
-        <table class="table table-bordered">
+        <table class="table table-bordered" id="studentsummaryTable">
             <thead>
                 <tr>
                     <th>User ID</th>
-                    <th># Submissions</th>
+                    <th># Questions Answered</th>
                     <th>Correct Answers</th>
                     <th>Last Submission</th>
                 </tr>
@@ -113,7 +110,7 @@
       </div>
       <div class="tab-pane fade" id="misconceptions" role="tabpanel">
         <h2>Most Common Misconceptions</h2>
-        <table class="table table-bordered">
+        <table class="table table-bordered" id="misconceptionsTable">
             <thead>
                 <tr>
                     <th>Misconception</th>
@@ -139,6 +136,9 @@
     <script>
         $(document).ready(function() {
             $('#responsesTable').DataTable();
+
+            $('#studentsummaryTable').DataTable();
+            $('#misconceptionsTable').DataTable();
 
             document.getElementById('downloadJsonBtn').addEventListener('click', function() {
                 const data = {{ responses|tojson }};
