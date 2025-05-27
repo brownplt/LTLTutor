@@ -123,6 +123,14 @@ def viewresponses(course_name):
 
     histogram = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)
 
+    misconception_counts = Counter()
+    for resp in to_return.values():
+        misconception = resp['misconception']
+        if misconception:
+            misconception_counts[misconception] += 1
+
+    misconception_histogram = misconception_counts.most_common()
+
     return render_template(
         'courseresponses.html',
         responses=to_return,
@@ -130,5 +138,6 @@ def viewresponses(course_name):
         user_counts=user_counts,
         user_correct=user_correct,
         user_last=user_last,
-        histogram=histogram
+        histogram=histogram,
+        misconception_histogram=misconception_histogram
     )

@@ -8,11 +8,17 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
 </head>
 <body>
-    <h1>Exercise Responses for {{ course_name }}</h1>
+
+    <!-- TODO: Improve ergonomics here. I think a better web-dev is needed. -->
+
+    <p class="lead mt-3 mb-4">
+        {{ course_name }} has had {{ responses|length }} responses from {{ user_counts|length }} students.
+    </p>
+
+    <h2>Exercise Responses for {{ course_name }}</h2>
     <button id="downloadJsonBtn">Download As JSON</button>
 
-    <h2>Responses Data</h2>
-    <p>Total Responses: {{ responses|length }}</p>
+
     <table id="responsesTable" class="display">
         <thead>
             <tr>
@@ -62,7 +68,7 @@
             {% for user, count in user_counts.items() %}
             <tr>
                 <td>
-                    <a href="{{ url_for('viewstudentlogs', user_id=user) }}">{{ user }}</a>
+                    {{ user }}
                 </td>
                 <td>{{ count }}</td>
                 <td>{{ user_correct[user] }}</td>
@@ -87,6 +93,24 @@
         };
         new Chart(ctx, {type: 'bar', data: data});
     </script>
+
+    <h2>Most Common Misconceptions</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Misconception</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for misconception, count in misconception_histogram %}
+            <tr>
+                <td>{{ misconception }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
