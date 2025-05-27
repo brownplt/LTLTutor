@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor: Exercise Home</title>
+    <title>LTL Tutor: Instructor Home</title>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -34,15 +34,13 @@
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
                 <div class="card-footer">
-                    <div class="alert alert-success alert-dismissible fade show">
-                        <ul class="mb-0">
+                    <div>
+                        
                             {% for message in messages %}
-                            <li>{{ message }}</li>
+                                    {{ message | safe}}
+                                    <hr>
                             {% endfor %}
-                        </ul>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+
                     </div>
                 </div>
                 {% endif %}
@@ -60,8 +58,14 @@
                 <ul class="list-group list-group-flush" id="owned_courses">
                     {% for course in owned_course_names %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{course}}
-                        <a href="/view/responses/{{course}}" class="btn btn-primary btn-sm">View Logs</a> 
+                        <span>{{course}}</span>
+                        <div>
+                            <a href="/view/responses/{{course}}" class="btn btn-primary btn-sm">View Logs</a>
+                            <button class="btn btn-secondary btn-sm ml-2 copy-login-link-btn"
+                                data-login-link="{{ url_for('authroutes.login', user_type='course-student', course_id=course, _external=True) }}">
+                                Copy Student Login Link
+                            </button>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>
@@ -71,6 +75,19 @@
 
     </div>
     {% include 'footer.html' %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.copy-login-link-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const link = btn.getAttribute('data-login-link');
+                navigator.clipboard.writeText(link).then(function() {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy Student Login Link'; }, 1500);
+                });
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>
