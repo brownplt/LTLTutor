@@ -125,6 +125,18 @@ class StepperNode:
         return g + postfix
         
 
+    # And hopefully satclass and unsatclass are things in the CSS
+    def __formula_to_html__(self):
+        # First the children.
+        # Then replace the children in the formula with the children HTML (but remember that the formula ALSO has some id)
+        # Then if the node is satisfied, add a class of "satclass", otherwise
+        # add a class of "unsatclass"
+
+        
+
+
+
+
 
 class TraceSatisfactionResult:
     def __init__(self, prefix_states : list[StepperNode], cycle_states : list[StepperNode]):
