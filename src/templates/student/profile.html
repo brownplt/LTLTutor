@@ -100,6 +100,79 @@
         {% endfor %}
         <hr>
 
+        <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
+        <canvas id="allMisconceptionsChart"></canvas>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Prepare data for all misconceptions
+            const misconceptionData = {
+                {% for misconception, weights in misconception_weights_over_time.items() %}
+                    "{{ misconception }}": {{ weights | tojson }},
+                {% endfor %}
+            };
+
+            // Find the latest timestamp to compute "days ago"
+            let latestTimestamp = 0;
+            for (const weights of Object.values(misconceptionData)) {
+                for (const w of weights) {
+                    const t = new Date(w.time).getTime();
+                    if (t > latestTimestamp) latestTimestamp = t;
+                }
+            }
+
+            // Build datasets for Chart.js
+            const datasets = [];
+            const colors = [
+                'rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(255, 205, 86)', 'rgb(54, 162, 235)',
+                'rgb(153, 102, 255)', 'rgb(255, 159, 64)', 'rgb(201, 203, 207)'
+            ];
+            let colorIdx = 0;
+            for (const [misconception, weights] of Object.entries(misconceptionData)) {
+                if (weights.length > 0) {
+                    datasets.push({
+                        label: misconception,
+                        data: weights.map(w => {
+                            const t = new Date(w.time).getTime();
+                            // Calculate days ago (rounded to 1 decimal)
+                            const daysAgo = (latestTimestamp - t) / (1000 * 60 * 60 * 24);
+                            return { x: -daysAgo, y: w.weight }; // negative so "0" is today, -N is N days ago
+                        }),
+                        fill: false,
+                        borderColor: colors[colorIdx % colors.length],
+                        tension: 0.1
+                    });
+                    colorIdx++;
+                }
+            }
+
+            const ctx = document.getElementById('allMisconceptionsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: 'Days Ago' },
+                            reverse: true, // So 0 (today) is on the right, N days ago on the left
+                            ticks: {
+                                callback: function(value) {
+                                    return Math.abs(value).toFixed(1);
+                                }
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Estimated Weight' }
+                        }
+                    }
+                }
+            });
+        </script>
+
 
     </div>
     {% include 'footer.html' %}
