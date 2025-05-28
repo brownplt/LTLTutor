@@ -155,27 +155,30 @@
             </div>
             <div class="tab-pane fade" id="table-view" role="tabpanel">
                 <!-- Table view goes here -->
-                <table class="table table-bordered">
+                <table class="table table-bordered" id="stateTable">
                     <thead>
                         <tr>
-                            <th>State #</th>
-                            <th>Formula Tree</th>
-                            <th>Trace</th>
+                            <th></th>
+                            {% for ps in prefixstates + cyclestates %}
+                            <th>State {{ loop.index }}</th>
+                            {% endfor %}
                         </tr>
                     </thead>
                     <tbody>
-                        {% for ps in prefixstates + cyclestates %}
                         <tr>
-                            <td>{{ loop.index }}</td>
+                            <th>Trace State</th>
+                            {% for ps in prefixstates + cyclestates %}
+                            <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th>Formula Tree</th>
+                            {% for ps in prefixstates + cyclestates %}
                             <td>
                                 <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
                             </td>
-                            <td>
-                                <!-- The trace value at step i should go here, but idk ~~ go here -->
-                                <pre>{{ ps.traceAssignmentStr }}</pre>
-                            </td>
+                            {% endfor %}
                         </tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
