@@ -1,5 +1,3 @@
-
-
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
 from spotutils import is_trace_satisfied
 import re
@@ -44,7 +42,12 @@ class StepperNode:
         self.traceindex = traceindex
         self.originaltrace = originaltrace
 
-
+        # Set traceAssignmentStr to everything in trace UNTIL the first ';', with 'cycle{' removed if present
+        if trace:
+            first_part = trace.split(';', 1)[0].replace('cycle{', '').strip()
+            self.traceAssignmentStr = first_part
+        else:
+            self.traceAssignmentStr = ""
 
     @property
     def treeAsMermaid(self):
@@ -54,6 +57,10 @@ class StepperNode:
     def traceAsMermaid(self):
         return self.__trace_to_mermaid__()
 
+
+    @property
+    def formulaAsHTML(self):
+        return self.__formula_to_html__()
 
     def __formula_to__mermaid_inner__(self):
         edges = []
@@ -79,8 +86,6 @@ class StepperNode:
         return prefix + ';'.join(edges) + postfix
 
     def __trace_to_mermaid__(self):
-
-
 
 
         def get_nth_node_in_graph(edges, n):
@@ -123,6 +128,23 @@ class StepperNode:
 
         return g + postfix
         
+
+    # And hopefully satclass and unsatclass are things in the CSS
+    def __formula_to_html__(self):
+        # First the children.
+        # Then replace the children in the formula with the children HTML (but remember that the formula ALSO has some id)
+        # Then if the node is satisfied, add a class of "satclass", otherwise
+        # add a class of "unsatclass"
+
+        #children_html = [c.__formula_to_html__() for c in self.children]
+        # Replace the children in the formula with the children HTML
+        formula_html = self.formula
+        for child in self.children:
+            formula_html = formula_html.replace(child.formula, child.__formula_to_html__())
+        if self.satisfied:
+            return f'<span class="satformula">{formula_html}</span>'
+        else:
+            return f'<span class="unsatformula">{formula_html}</span>'
 
 
 class TraceSatisfactionResult:

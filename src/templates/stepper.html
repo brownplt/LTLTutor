@@ -48,6 +48,35 @@
             display: block;
             /* Ensures the div is treated as a block-level element */
         }
+
+        .cycle-state-col {
+            background-color: #f3f7fa !important;
+            /* much lighter blue/gray shade */
+
+
+            /* maybe some on-hover tooltip to say this state is part of a cycle? */
+
+        }
+
+        .satformula {
+            border: 2px dashed #28a745;
+            /* green dashed border */
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: #155724;
+
+            display: inline-block;
+        }
+
+        .unsatformula {
+
+            border: 2px solid #dc3545;
+            /* red solid border */
+            border-radius: 6px;
+            padding: 4px 8px;
+
+            display: inline-block;
+        }
     </style>
 
 </head>
@@ -102,40 +131,109 @@
         </div>
 
 
-        <div id="statecontainer">
-            {% for ps in prefixstates + cyclestates %}
+        <ul class="nav nav-tabs mb-3 mt-4" id="stepperTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="stepper-tab" data-toggle="tab" href="#stepper-view" role="tab">Stepper
+                    View</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View<sup>Beta</sup></a>
+            </li>
+        </ul>
 
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="stepper-view" role="tabpanel">
+                <!-- Stepper view lets you see the entire trace at once, and each tree state one by one. -->
 
-            <div class="container stepper-container">
+                <div id="statecontainer">
+                    {% for ps in prefixstates + cyclestates %}
+                    <div class="container stepper-container">
 
-                <div class="formula-tree-container mt-2">
-                    <h4><span class="help float-right"> This tree represents the formula <code> {{formula}} </code>,
-                            structuring its sub-formulae in a hierarchical manner. Each node in the tree is represented
-                            by a green box if it is satisfied, and an orange box with two lines if it is not
-                            satisfied.</span> </h4>
+                        <div class="formula-tree-container mt-2">
+                            <h4><span class="help float-right"> This tree represents the formula <code> {{formula}} </code>,
+                                    structuring its sub-formulae in a hierarchical manner. Each node in the tree is
+                                    represented
+                                    by a green box if it is satisfied, and an orange box with two lines if it is not
+                                    satisfied.</span> </h4>
 
-                    <div>
-                        <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                            <div>
+                                <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="trace-container mt-2">
+                            <h4><span class="help float-right"> By clicking the <code>Previous State</code> and <code>Next
+                                    State</code>
+                                    buttons, you can examine the formula's satisfaction at different points in this
+                                    trace.
+                                </span></h4>
+                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                            <br>
+                            <div class="btn-group d-flex justify-content-center" role="group">
+                                <button class="prev btn btn-primary" title="Previous State"><i
+                                        class="fas fa-arrow-left"></i></button>
+                                <button class="next btn btn-primary" title="Next State"><i
+                                        class="fas fa-arrow-right"></i></button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <hr>
-
-                <div class="trace-container mt-2">
-                    <h4><span class="help float-right"> By clicking the <code>Previous State</code> and <code>Next State</code>
-                            buttons, you can examine the formula's satisfaction at different points in this trace.
-                        </span></h4>
-                    <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
-                    <br>
-                    <div class="btn-group d-flex justify-content-center" role="group">
-                        <button class="prev btn btn-primary" title="Previous State"><i
-                                class="fas fa-arrow-left"></i></button>
-                        <button class="next btn btn-primary" title="Next State"><i
-                                class="fas fa-arrow-right"></i></button>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+            <!-- This view lets you look at multiple tree views at once, for state by state. -->
+            <div class="tab-pane fade" id="table-view" role="tabpanel">
+
+
+                <p>
+                Sub-formulae are demarcated by their bounding boxes, which
+                indicate whether they are <span class="satformula">satisfied</span> or
+                                    <span class="unsatformula">unsatisfied</span>.
+                                   
+                </p>
+                <!-- Table view goes here -->
+                <table class="table table-bordered" id="stateTable">
+                    <thead>
+                        <tr>
+                            <th class="w-auto"></th>
+                            {% for ps in prefixstates %}
+                                <th></th>
+                            {% endfor %}
+                            {% if cyclestates %}
+                                <th class="cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="w-auto">Trace State</th>
+                            {% for ps in prefixstates %}
+                                <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                            {% endfor %}
+                            {% for ps in cyclestates %}
+                                <td class="cycle-state-col"><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th class="w-auto">
+                                Formula
+                                </span>
+                            </th>
+                            {% for ps in prefixstates %}
+                                <td>
+                                    {{ ps.formulaAsHTML | safe }}
+                                </td>
+                            {% endfor %}
+                            {% for ps in cyclestates %}
+                                <td class="cycle-state-col">
+                                    {{ ps.formulaAsHTML | safe }}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -217,6 +315,8 @@
                     }
                 })
             });
+
+           
         });
     </script>
 
