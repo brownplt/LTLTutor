@@ -57,7 +57,6 @@
                 {% endfor %}
             };
 
-
             
             // Find the latest timestamp to compute "days ago"
             let latestTimestamp = 0;
@@ -81,9 +80,8 @@
                         label: misconception,
                         data: weights.map(w => {
                             const t = new Date(w.time).getTime();
-                            // Calculate days ago (rounded to 1 decimal)
                             const daysAgo = (latestTimestamp - t) / (1000 * 60 * 60 * 24);
-                            return { x: -daysAgo, y: w.weight }; // negative so "0" is today, -N is N days ago
+                            return { x: daysAgo, y: w.weight }; // 0 is today, N is N days ago
                         }),
                         fill: false,
                         borderColor: colors[colorIdx % colors.length],
@@ -106,10 +104,12 @@
                         x: {
                             type: 'linear',
                             title: { display: true, text: 'Days Ago' },
-                            reverse: true, // So 0 (today) is on the right, N days ago on the left
+                            reverse: true, // 0 (today) on the right, N days ago on the left
+                            min: 0,
+                            // Optionally, set max to the oldest daysAgo value
                             ticks: {
                                 callback: function(value) {
-                                    return Math.abs(value).toFixed(1);
+                                    return value.toFixed(1);
                                 }
                             }
                         },
