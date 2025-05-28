@@ -134,23 +134,24 @@
                             }
                         },
                         y: {
-                            title: { display: true, text: 'Estimated Weight' },
-                            min: 0,
-                            max: 1,
+                            title: { display: true, text: 'Misconception Likelihood' },
+                           // min: 0,
+                           // max: 1,
                             ticks: {
                                 callback: function(value) {
-                                    if (value === 1) {
-                                        return 'More likely you have this misconception';
-                                    } else if (value === 0.5) {
-                                        return 'Threshold';
-                                    } else if (value === 0) {
-                                        return 'Less likely you have this misconception';
-                                    } else {
-                                        return '';
-                                    }
+                                    // if (value === 1) {
+                                    //     return 'More likely you have this misconception';
+                                    // } else if (value === 0.5) {
+                                    //     return 'Threshold';
+                                    // } else if (value === 0) {
+                                    //     return 'Less likely you have this misconception';
+                                    // } else {
+                                    //     return '';
+                                    // }
+                                    return '';
                                 },
-                                stepSize: 0.5, // Only show ticks at 0, 0.5, 1
-                                autoSkip: false
+                                //stepSize: 0.5, // Only show ticks at 0, 0.5, 1
+                                //autoSkip: false
                             }
                         }
                     }
