@@ -50,8 +50,8 @@
         }
 
         .cycle-state-col {
-            background-color: #bfc0c1 !important;
-            /* light blue/gray shade */
+            background-color: #f3f7fa !important;
+            /* much lighter blue/gray shade */
 
 
             /* maybe some on-hover tooltip to say this state is part of a cycle? */
@@ -137,7 +137,7 @@
                     View</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View</a>
+                <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View (Beta)</a>
             </li>
         </ul>
 
@@ -184,11 +184,19 @@
             </div>
             <!-- This view lets you look at multiple tree views at once, for state by state. -->
             <div class="tab-pane fade" id="table-view" role="tabpanel">
+
+
+                <p>
+                Sub-formulae are demarcated by their bounding boxes, which
+                indicate whether they are <span class="satformula">satisfied</span> or
+                                    <span class="unsatformula">unsatisfied</span>.
+                                   
+                </p>
                 <!-- Table view goes here -->
                 <table class="table table-bordered" id="stateTable">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th class="w-auto"></th>
                             {% for ps in prefixstates %}
                                 <th></th>
                             {% endfor %}
@@ -196,11 +204,10 @@
                                 <th class="cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
                             {% endif %}
                         </tr>
-                        
                     </thead>
                     <tbody>
                         <tr>
-                            <th>Trace State</th>
+                            <th class="w-auto">Trace State</th>
                             {% for ps in prefixstates %}
                                 <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
                             {% endfor %}
@@ -209,7 +216,10 @@
                             {% endfor %}
                         </tr>
                         <tr>
-                            <th>Formula</th>
+                            <th class="w-auto">
+                                Formula
+                                </span>
+                            </th>
                             {% for ps in prefixstates %}
                                 <td>
                                     {{ ps.formulaAsHTML | safe }}
@@ -217,7 +227,7 @@
                             {% endfor %}
                             {% for ps in cyclestates %}
                                 <td class="cycle-state-col">
-                                   {{ ps.formulaAsHTML | safe }}
+                                    {{ ps.formulaAsHTML | safe }}
                                 </td>
                             {% endfor %}
                         </tr>
