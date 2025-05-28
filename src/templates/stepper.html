@@ -50,7 +50,7 @@
         }
 
         .cycle-state-col {
-            background-color: #9bb2c3 !important;
+            background-color: #bfc0c1 !important;
             /* light blue/gray shade */
 
 
@@ -58,31 +58,24 @@
 
         }
 
-        #stateTable td,
-        #stateTable th {
-            width: auto;
-            max-width: none;
-            min-width: 0;
-            overflow: visible;
-            vertical-align: top;
-            white-space: normal;
+        .satformula {
+            border: 2px dashed #28a745;
+            /* green dashed border */
+            border-radius: 6px;
+            padding: 4px 8px;
+            color: #155724;
+
+            display: inline-block;
         }
 
-        #stateTable pre.mermaid {
-            display: block;
-            padding: 0;
-            margin: 0;
-            background: none;
-            border: none;
-            width: auto;
-            max-width: none;
-            overflow: visible;
-        }
+        .unsatformula {
 
-        #stateTable .mermaid svg {
-            width: 100% !important;
-            height: auto !important;
-            max-width: none !important;
+            border: 2px solid #dc3545;
+            /* red solid border */
+            border-radius: 6px;
+            padding: 4px 8px;
+
+            display: inline-block;
         }
     </style>
 
@@ -138,7 +131,7 @@
         </div>
 
 
-        <ul class="nav nav-tabs mb-3" id="stepperTabs" role="tablist">
+        <ul class="nav nav-tabs mb-3 mt-4" id="stepperTabs" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="stepper-tab" data-toggle="tab" href="#stepper-view" role="tab">Stepper
                     View</a>
@@ -147,15 +140,13 @@
                 <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View</a>
             </li>
         </ul>
+
         <div class="tab-content">
             <div class="tab-pane fade show active" id="stepper-view" role="tabpanel">
                 <!-- Stepper view lets you see the entire trace at once, and each tree state one by one. -->
 
-
                 <div id="statecontainer">
                     {% for ps in prefixstates + cyclestates %}
-
-
                     <div class="container stepper-container">
 
                         <div class="formula-tree-container mt-2">
@@ -195,17 +186,18 @@
             <div class="tab-pane fade" id="table-view" role="tabpanel">
                 <!-- Table view goes here -->
                 <table class="table table-bordered" id="stateTable">
-                    <!-- <thead>
+                    <thead>
                         <tr>
                             <th></th>
                             {% for ps in prefixstates %}
-                                <th>State {{ loop.index }}</th>
+                                <th></th>
                             {% endfor %}
-                            {% for ps in cyclestates %}
-                                <th class="cycle-state-col">State {{ loop.index + prefixstates|length }}</th>
-                            {% endfor %}
+                            {% if cyclestates %}
+                                <th class="cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
+                            {% endif %}
                         </tr>
-                    </thead> -->
+                        
+                    </thead>
                     <tbody>
                         <tr>
                             <th>Trace State</th>
@@ -217,15 +209,15 @@
                             {% endfor %}
                         </tr>
                         <tr>
-                            <th>Formula Tree</th>
+                            <th>Formula</th>
                             {% for ps in prefixstates %}
                                 <td>
-                                    <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
+                                    {{ ps.formulaAsHTML | safe }}
                                 </td>
                             {% endfor %}
                             {% for ps in cyclestates %}
                                 <td class="cycle-state-col">
-                                    <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
+                                   {{ ps.formulaAsHTML | safe }}
                                 </td>
                             {% endfor %}
                         </tr>
@@ -260,30 +252,6 @@
                 });
             };
 
-            function renderMermaidDiagramTable(graphElements) {
-    mermaid.run({
-        nodes: graphElements
-    }).then((data) => {
-        graphElements.forEach(function (element) {
-            let $element = $(element);
-            // Set SVG width to 100% and remove max-width
-            $element.find('svg').css({
-                width: '100%',
-                height: 'auto',
-                'max-width': 'none'
-            });
-            // Optionally, let the parent td expand
-            $element.closest('td').css({
-                'width': 'auto',
-                'max-width': 'none',
-                'overflow': 'visible'
-            });
-        });
-    }).catch((err) => {
-        console.error("Error rendering mermaid diagram");
-        console.error(err);
-    });
-}
 
             var stepperContainers = document.querySelectorAll('.stepper-container');
             var currentIndex = 0;
@@ -338,17 +306,7 @@
                 })
             });
 
-            // Render Mermaid diagrams in the table view when the tab is shown
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-                if ($(e.target).attr('href') === '#table-view') {
-                    let to_render = document.querySelectorAll('#table-view .mermaid');
-                    console.log("Rendering Mermaid diagrams in table view", to_render);
-                    // to_render.forEach(function(element) {
-                    //     renderMermaidDiagram(element);
-                    // });
-                    renderMermaidDiagramTable(to_render);
-                }
-            });
+           
         });
     </script>
 

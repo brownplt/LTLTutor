@@ -58,6 +58,10 @@ class StepperNode:
         return self.__trace_to_mermaid__()
 
 
+    @property
+    def formulaAsHTML(self):
+        return self.__formula_to_html__()
+
     def __formula_to__mermaid_inner__(self):
         edges = []
         if self.satisfied:
@@ -132,10 +136,15 @@ class StepperNode:
         # Then if the node is satisfied, add a class of "satclass", otherwise
         # add a class of "unsatclass"
 
-        
-
-
-
+        #children_html = [c.__formula_to_html__() for c in self.children]
+        # Replace the children in the formula with the children HTML
+        formula_html = self.formula
+        for child in self.children:
+            formula_html = formula_html.replace(child.formula, child.__formula_to_html__())
+        if self.satisfied:
+            return f'<span class="satformula">{formula_html}</span>'
+        else:
+            return f'<span class="unsatformula">{formula_html}</span>'
 
 
 class TraceSatisfactionResult:
