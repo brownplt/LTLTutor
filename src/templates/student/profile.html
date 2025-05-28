@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
 
-
-
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.2"></script>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
@@ -46,64 +46,118 @@
         <hr>
 
 
-        {% for misconception, weights in misconception_weights_over_time.items() %}
+        <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
+        <canvas id="allMisconceptionsChart"></canvas>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prepare data for all misconceptions
+            const misconceptionData = {
+                {% for misconception, weights in misconception_weights_over_time.items() %}
+                    "{{ misconception }}" : {{ weights | tojson }},
+                {% endfor %}
+            };
 
-        {% if weights|length > 0 %}
-        <p class="lead toggle-arrow collapsed" data-toggle="collapse"
-            href="#estimatedMisconceptionsDiv{{misconception}}" role="button" aria-expanded="false"
-            aria-controls="estimatedMisconceptionsDiv{{misconception}}"> Estimation of <code>{{misconception}}</code>
-            over time <span class="help">  <a href="https://arxiv.org/abs/2211.01677">You can learn more about what this misconception means here.</a>  </span></p>
-        <div class="collapse" id="estimatedMisconceptionsDiv{{misconception}}">
-            <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
+            
+            // Find the latest timestamp to compute "days ago"
+            let latestTimestamp = 0;
+            for (const weights of Object.values(misconceptionData)) {
+                for (const w of weights) {
+                    const t = new Date(w.time).getTime();
+                    if (t > latestTimestamp) latestTimestamp = t;
+                }
+            }
 
-            <script>
-                var ctx = document.getElementById('estimatedMisconceptions{{misconception}}').getContext('2d');
-                var weightsData = {{ weights | tojson }};
+            // Build datasets for Chart.js
+            const datasets = [];
+            const colors = [
+                'rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(255, 205, 86)', 'rgb(54, 162, 235)',
+                'rgb(153, 102, 255)', 'rgb(255, 159, 64)', 'rgb(201, 203, 207)'
+            ];
+            let colorIdx = 0;
+            for (const [misconception, weights] of Object.entries(misconceptionData)) {
+                if (weights.length > 0) {
+                    datasets.push({
+                        label: misconception,
+                        data: weights.map(w => {
+                            const t = new Date(w.time).getTime();
+                            const hoursAgo = (latestTimestamp - t) / (1000 * 60 * 60);
+                            const jitter = (Math.random() - 0.5) * 0.2; // jitter up to ±0.1 hours
+                            return { x: -hoursAgo + jitter, y: w.weight };
+                        }),
+                        fill: false,
+                        borderColor: colors[colorIdx % colors.length],
+                        tension: 0.1
+                    });
+                    colorIdx++;
+                }
+            }
 
-                var dataWithTimestamps = weightsData.map(function (weight) {
-                    return { x: new Date(weight["time"]).getTime(), y: weight["weight"] };
-                });
-
-                // Calculate minimum timestamp and subtract one hour
-                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 360000; // 360000 milliseconds = 6 mins
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        datasets: [{
-                            label: '{{ misconception }}',
-                            data: dataWithTimestamps,
-                            fill: false,
-                            borderColor: 'rgb(75, 192, 192)', // Line color
-                            pointBackgroundColor: 'rgb(25, 100, 100)', // Darker color for points
-                            tension: 0.1
-                        }]
+            const ctx = document.getElementById('allMisconceptionsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 0.5,
+                                    yMax: 0.5,
+                                    borderColor: 'rgba(120,120,120,0.5)',
+                                    borderWidth: 2,
+                                    borderDash: [4, 6],
+                                    label: {
+                                        content: 'Threshold (0.5)',
+                                        enabled: true,
+                                        position: 'end',
+                                        color: '#666',
+                                        backgroundColor: 'rgba(255,255,255,0.7)'
+                                    }
+                                }
+                            }
+                        }
                     },
-                    options: {
-                        scales: {
-                            x: {
-                                type: 'linear', // Use a linear scale for the x-axis
-                                position: 'bottom', // Position the x-axis at the bottom
-                                title: {
-                                    display: true,
-                                    text: 'Time'
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: { display: true, text: 'Hours Ago' },
+                            reverse: false, // 0 (today) on the left, -N days ago to the right
+                            //min: -168,      // show up to 168 hours ago (7 days), adjust as needed
+                            max: 1,         // now + 1
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1);
+                                }
+                            }
+                        },
+                        y: {
+                            title: { display: true, text: 'Estimated Weight' },
+                            min: 0,
+                            max: 1,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value === 1) {
+                                        return 'More likely you have this misconception';
+                                    } else if (value === 0.5) {
+                                        return 'Threshold';
+                                    } else if (value === 0) {
+                                        return 'Less likely you have this misconception';
+                                    } else {
+                                        return '';
+                                    }
                                 },
-                                min: minTimestamp, // Set the calculated minimum timestamp as the start of the x-axis
+                                stepSize: 0.5, // Only show ticks at 0, 0.5, 1
+                                autoSkip: false
                             }
                         }
                     }
-                });
-            </script>
-        </div>
-
-        {% endif %}
-        {% endfor %}
-        <hr>
-
-
+                }
+            });
+        });
+        </script>
     </div>
-    {% include 'footer.html' %}
-
 </body>
-
 </html>
