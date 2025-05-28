@@ -171,7 +171,8 @@
                                 <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
                             </td>
                             <td>
-                                <pre class="mermaid" id="{{ps.id}}trace_table">{{ ps.traceAsMermaid | safe }}</pre>
+                                <!-- The trace value at step i should go here, but idk ~~ go here -->
+                                <pre>{{ ps.originaltrace[ps.traceindex] }}</pre>
                             </td>
                         </tr>
                         {% endfor %}
