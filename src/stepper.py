@@ -1,5 +1,3 @@
-
-
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
 from spotutils import is_trace_satisfied
 import re
@@ -44,7 +42,12 @@ class StepperNode:
         self.traceindex = traceindex
         self.originaltrace = originaltrace
 
-
+        # Set traceAssignmentStr to everything in trace UNTIL the first ';', with 'cycle{' removed if present
+        if trace:
+            first_part = trace.split(';', 1)[0].replace('cycle{', '').strip()
+            self.traceAssignmentStr = first_part
+        else:
+            self.traceAssignmentStr = ""
 
     @property
     def treeAsMermaid(self):
@@ -79,8 +82,6 @@ class StepperNode:
         return prefix + ';'.join(edges) + postfix
 
     def __trace_to_mermaid__(self):
-
-
 
 
         def get_nth_node_in_graph(edges, n):
