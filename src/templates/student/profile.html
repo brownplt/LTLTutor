@@ -53,11 +53,11 @@
             // Prepare data for all misconceptions
             const misconceptionData = {
                 {% for misconception, weights in misconception_weights_over_time.items() %}
-                    "{{ misconception }}": {{ weights | tojson }},
+                    "{{ misconception }}" : {{ weights | tojson }},
                 {% endfor %}
             };
 
-            console.log('Misconception Data:', misconceptionData);
+            
             // Find the latest timestamp to compute "days ago"
             let latestTimestamp = 0;
             for (const weights of Object.values(misconceptionData)) {
@@ -80,8 +80,9 @@
                         label: misconception,
                         data: weights.map(w => {
                             const t = new Date(w.time).getTime();
-                            const daysAgo = (latestTimestamp - t) / (1000 * 60 * 60 * 24);
-                            return { x: daysAgo, y: w.weight }; // 0 is today, N is N days ago
+                            const hoursAgo = (latestTimestamp - t) / (1000 * 60 * 60);
+                            const jitter = (Math.random() - 0.5) * 0.2; // jitter up to ±0.1 hours
+                            return { x: -hoursAgo + jitter, y: w.weight };
                         }),
                         fill: false,
                         borderColor: colors[colorIdx % colors.length],
@@ -122,9 +123,10 @@
                     scales: {
                         x: {
                             type: 'linear',
-                            title: { display: true, text: 'Days Ago' },
-                            reverse: true,
-                            min: 0,
+                            title: { display: true, text: 'Hours Ago' },
+                            reverse: false, // 0 (today) on the left, -N days ago to the right
+                            //min: -168,      // show up to 168 hours ago (7 days), adjust as needed
+                            max: 1,         // now + 1
                             ticks: {
                                 callback: function(value) {
                                     return value.toFixed(1);
@@ -137,12 +139,25 @@
                             max: 1,
                             ticks: {
                                 callback: function(value) {
-                                    if (value > 0.5) {
-                                        return value + ' (likely misconception)';
+                                    if (value === 1) {
+                                        return 'More likely you have this misconception';
                                     } else if (value === 0.5) {
-                                        return value + ' (threshold)';
+                                        return 'Threshold';
+                                    } else if (value === 0) {
+                                        return 'Less likely you have this misconception';
                                     } else {
-                                        return value + ' (improving)';
+                                        return '';
                                     }
-                                }
-                           
+                                },
+                                stepSize: 0.5, // Only show ticks at 0, 0.5, 1
+                                autoSkip: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+        </script>
+    </div>
+</body>
+</html>
