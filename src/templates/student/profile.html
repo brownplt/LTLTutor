@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LTL Tutor</title>
 
-
-
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.2"></script>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
@@ -48,8 +48,8 @@
 
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
         <canvas id="allMisconceptionsChart"></canvas>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
+        document.addEventListener('DOMContentLoaded', function() {
             // Prepare data for all misconceptions
             const misconceptionData = {
                 {% for misconception, weights in misconception_weights_over_time.items() %}
@@ -57,7 +57,7 @@
                 {% endfor %}
             };
 
-            
+            console.log('Misconception Data:', misconceptionData);
             // Find the latest timestamp to compute "days ago"
             let latestTimestamp = 0;
             for (const weights of Object.values(misconceptionData)) {
@@ -105,9 +105,9 @@
                                     type: 'line',
                                     yMin: 0.5,
                                     yMax: 0.5,
-                                    borderColor: 'rgba(120,120,120,0.5)', // muted gray
+                                    borderColor: 'rgba(120,120,120,0.5)',
                                     borderWidth: 2,
-                                    borderDash: [4, 6], // dotted line
+                                    borderDash: [4, 6],
                                     label: {
                                         content: 'Threshold (0.5)',
                                         enabled: true,
