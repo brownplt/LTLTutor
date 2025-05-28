@@ -46,60 +46,6 @@
         <hr>
 
 
-        {% for misconception, weights in misconception_weights_over_time.items() %}
-
-        {% if weights|length > 0 %}
-        <p class="lead toggle-arrow collapsed" data-toggle="collapse"
-            href="#estimatedMisconceptionsDiv{{misconception}}" role="button" aria-expanded="false"
-            aria-controls="estimatedMisconceptionsDiv{{misconception}}"> Estimation of <code>{{misconception}}</code>
-            over time <span class="help">  <a href="https://arxiv.org/abs/2211.01677">You can learn more about what this misconception means here.</a>  </span></p>
-        <div class="collapse" id="estimatedMisconceptionsDiv{{misconception}}">
-            <canvas id="estimatedMisconceptions{{misconception}}"></canvas>
-
-            <script>
-                var ctx = document.getElementById('estimatedMisconceptions{{misconception}}').getContext('2d');
-                var weightsData = {{ weights | tojson }};
-
-                var dataWithTimestamps = weightsData.map(function (weight) {
-                    return { x: new Date(weight["time"]).getTime(), y: weight["weight"] };
-                });
-
-                // Calculate minimum timestamp and subtract one hour
-                var minTimestamp = Math.min(...dataWithTimestamps.map(data => data.x)) - 360000; // 360000 milliseconds = 6 mins
-
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        datasets: [{
-                            label: '{{ misconception }}',
-                            data: dataWithTimestamps,
-                            fill: false,
-                            borderColor: 'rgb(75, 192, 192)', // Line color
-                            pointBackgroundColor: 'rgb(25, 100, 100)', // Darker color for points
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                type: 'linear', // Use a linear scale for the x-axis
-                                position: 'bottom', // Position the x-axis at the bottom
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
-                                min: minTimestamp, // Set the calculated minimum timestamp as the start of the x-axis
-                            }
-                        }
-                    }
-                });
-            </script>
-        </div>
-
-        {% endif %}
-        {% endfor %}
-        <hr>
-
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
         <canvas id="allMisconceptionsChart"></canvas>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
