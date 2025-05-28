@@ -98,15 +98,33 @@
                 options: {
                     responsive: true,
                     plugins: {
-                        legend: { display: true }
+                        legend: { display: true },
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 0.5,
+                                    yMax: 0.5,
+                                    borderColor: 'rgba(120,120,120,0.5)', // muted gray
+                                    borderWidth: 2,
+                                    borderDash: [4, 6], // dotted line
+                                    label: {
+                                        content: 'Threshold (0.5)',
+                                        enabled: true,
+                                        position: 'end',
+                                        color: '#666',
+                                        backgroundColor: 'rgba(255,255,255,0.7)'
+                                    }
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: {
                             type: 'linear',
                             title: { display: true, text: 'Days Ago' },
-                            reverse: true, // 0 (today) on the right, N days ago on the left
+                            reverse: true,
                             min: 0,
-                            // Optionally, set max to the oldest daysAgo value
                             ticks: {
                                 callback: function(value) {
                                     return value.toFixed(1);
@@ -114,17 +132,17 @@
                             }
                         },
                         y: {
-                            title: { display: true, text: 'Estimated Weight' }
-                        }
-                    }
-                }
-            });
-        </script>
-
-
-    </div>
-    {% include 'footer.html' %}
-
-</body>
-
-</html>
+                            title: { display: true, text: 'Estimated Weight' },
+                            min: 0,
+                            max: 1,
+                            ticks: {
+                                callback: function(value) {
+                                    if (value > 0.5) {
+                                        return value + ' (likely misconception)';
+                                    } else if (value === 0.5) {
+                                        return value + ' (threshold)';
+                                    } else {
+                                        return value + ' (improving)';
+                                    }
+                                }
+                           
