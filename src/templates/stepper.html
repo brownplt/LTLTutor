@@ -48,6 +48,15 @@
             display: block;
             /* Ensures the div is treated as a block-level element */
         }
+
+        .cycle-state-col {
+            background-color: #9bb2c3 !important;
+            /* light blue/gray shade */
+
+
+            /* maybe some on-hover tooltip to say this state is part of a cycle? */
+
+        }
     </style>
 
 </head>
@@ -159,28 +168,38 @@
             <div class="tab-pane fade" id="table-view" role="tabpanel">
                 <!-- Table view goes here -->
                 <table class="table table-bordered" id="stateTable">
-                    <thead>
+                    <!-- <thead>
                         <tr>
                             <th></th>
-                            <!-- We should do something about cycle states, where they are with a border or something. -->
-                            {% for ps in prefixstates + cyclestates %}
-                            <th>State {{ loop.index }}</th>
+                            {% for ps in prefixstates %}
+                                <th>State {{ loop.index }}</th>
+                            {% endfor %}
+                            {% for ps in cyclestates %}
+                                <th class="cycle-state-col">State {{ loop.index + prefixstates|length }}</th>
                             {% endfor %}
                         </tr>
-                    </thead>
+                    </thead> -->
                     <tbody>
                         <tr>
                             <th>Trace State</th>
-                            {% for ps in prefixstates + cyclestates %}
-                            <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                            {% for ps in prefixstates %}
+                                <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                            {% endfor %}
+                            {% for ps in cyclestates %}
+                                <td class="cycle-state-col"><pre>{{ ps.traceAssignmentStr }}</pre></td>
                             {% endfor %}
                         </tr>
                         <tr>
                             <th>Formula Tree</th>
-                            {% for ps in prefixstates + cyclestates %}
-                            <td>
-                                <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
-                            </td>
+                            {% for ps in prefixstates %}
+                                <td>
+                                    <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
+                                </td>
+                            {% endfor %}
+                            {% for ps in cyclestates %}
+                                <td class="cycle-state-col">
+                                    <pre class="mermaid" id="{{ps.id}}tree_table">{{ ps.treeAsMermaid | safe }}</pre>
+                                </td>
                             {% endfor %}
                         </tr>
                     </tbody>
@@ -266,6 +285,18 @@
                         renderDiagrams();
                     }
                 })
+            });
+
+            // Render Mermaid diagrams in the table view when the tab is shown
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                if ($(e.target).attr('href') === '#table-view') {
+                    let to_render = document.querySelectorAll('#table-view .mermaid');
+                    console.log("Rendering Mermaid diagrams in table view", to_render);
+                    // to_render.forEach(function(element) {
+                    //     renderMermaidDiagram(element);
+                    // });
+                    renderMermaidDiagram(to_render);
+                }
             });
         });
     </script>
