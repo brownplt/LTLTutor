@@ -148,9 +148,13 @@ class StepperNode:
 
         # Sort children by length (longest first) to avoid partial overlaps
         for child in sorted(self.children, key=lambda c: -len(c.formula)):
-            pattern = r'\b{}\b'.format(child.formula)
+            if '(' in child.formula or ')' in child.formula:
+                # Use full replace for formulas with parentheses
+                pattern = re.escape(child.formula)
+            else:
+                # Use word boundary for simple formulas
+                pattern = r'\b{}\b'.format(re.escape(child.formula))
             replacement = child.__formula_to_html__()
-            # Replace all occurrences with word boundaries
             formula_html = re.sub(pattern, replacement, formula_html)
 
         if self.satisfied:
