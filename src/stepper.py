@@ -139,27 +139,19 @@ class StepperNode:
         
 
     # And hopefully satclass and unsatclass are things in the CSS
+
+    ### Hacky, we should improve this via tree parsing or something?
+    ### THis approach doesn't work I think :(
+    ## Like LTL Node to HTML
     def __formula_to_html__(self):
         formula_html = self.formula
 
-
-        ## THis breaks something else now!
-        # Replace only the first occurrence of each child formula, outside of HTML tags
-        for child in self.children:
-            # Escape special regex characters in the formula
-            pattern = r'\b{}\b'.format(re.escape(child.formula))
+        # Sort children by length (longest first) to avoid partial overlaps
+        for child in sorted(self.children, key=lambda c: -len(c.formula)):
+            pattern = r'\b{}\b'.format(child.formula)
             replacement = child.__formula_to_html__()
-
-            # Replace only outside of tags
-            def replacer(match):
-                # Check if we're inside a tag (very basic check)
-                before = formula_html[:match.start()]
-                if before.endswith('>'):
-                    return match.group(0)  # Don't replace inside tags
-                return replacement
-
-            # Only replace the first occurrence
-            formula_html, count = re.subn(pattern, replacer, formula_html, count=1)
+            # Replace all occurrences with word boundaries
+            formula_html = re.sub(pattern, replacement, formula_html)
 
         if self.satisfied:
             return f'<span class="satformula">{formula_html}</span>'
