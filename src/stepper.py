@@ -142,6 +142,8 @@ class StepperNode:
     def __formula_to_html__(self):
         formula_html = self.formula
 
+
+        ## THis breaks something else now!
         # Replace only the first occurrence of each child formula, outside of HTML tags
         for child in self.children:
             # Escape special regex characters in the formula
