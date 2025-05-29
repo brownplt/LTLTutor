@@ -131,16 +131,25 @@ class StepperNode:
 
     # And hopefully satclass and unsatclass are things in the CSS
     def __formula_to_html__(self):
-        # First the children.
-        # Then replace the children in the formula with the children HTML (but remember that the formula ALSO has some id)
-        # Then if the node is satisfied, add a class of "satclass", otherwise
-        # add a class of "unsatclass"
-
-        #children_html = [c.__formula_to_html__() for c in self.children]
-        # Replace the children in the formula with the children HTML
         formula_html = self.formula
+
+        # Replace only the first occurrence of each child formula, outside of HTML tags
         for child in self.children:
-            formula_html = formula_html.replace(child.formula, child.__formula_to_html__())
+            # Escape special regex characters in the formula
+            pattern = r'\b{}\b'.format(re.escape(child.formula))
+            replacement = child.__formula_to_html__()
+
+            # Replace only outside of tags
+            def replacer(match):
+                # Check if we're inside a tag (very basic check)
+                before = formula_html[:match.start()]
+                if before.endswith('>'):
+                    return match.group(0)  # Don't replace inside tags
+                return replacement
+
+            # Only replace the first occurrence
+            formula_html, count = re.subn(pattern, replacer, formula_html, count=1)
+
         if self.satisfied:
             return f'<span class="satformula">{formula_html}</span>'
         else:
