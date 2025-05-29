@@ -46,6 +46,7 @@ class StepperNode:
         if trace:
             first_part = trace.split(';', 1)[0].replace('cycle{', '').strip()
             self.traceAssignmentStr = first_part
+            
         else:
             self.traceAssignmentStr = ""
 
@@ -61,6 +62,14 @@ class StepperNode:
     @property
     def formulaAsHTML(self):
         return self.__formula_to_html__()
+
+    @property
+    def formattedTraceAssignment(self):
+        asStr = self.traceAssignmentStr
+        asStr = asStr.replace('&', '\u2003')
+        asStr = asStr.replace('! ', '!')
+        asStr = asStr.replace('!', '¬')
+        return asStr
 
     def __formula_to__mermaid_inner__(self):
         edges = []
