@@ -78,6 +78,14 @@ class NodeRepr:
 
     def __mermaid_str__(self):
         asStr = self.__str__()
+
+        # And now, we replace the VAR_SEPARATOR with a space
+        asStr = asStr.replace(self.VAR_SEPARATOR, '\u2003')
+        # I also want to replace '! ' with '!'
+        asStr = asStr.replace('! ', '!')
+        #and replace '!' with '¬'
+        asStr = asStr.replace('!', '¬')
+
         return f'{self.id}["{asStr}"]'
     
     def __str__(self):

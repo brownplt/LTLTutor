@@ -209,10 +209,10 @@
                         <tr>
                             <th class="w-auto">Trace State</th>
                             {% for ps in prefixstates %}
-                                <td><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                                <td><pre>{{ ps.formattedTraceAssignment }}</pre></td>
                             {% endfor %}
                             {% for ps in cyclestates %}
-                                <td class="cycle-state-col"><pre>{{ ps.traceAssignmentStr }}</pre></td>
+                                <td class="cycle-state-col"><pre>{{ ps.formattedTraceAssignment }}</pre></td>
                             {% endfor %}
                         </tr>
                         <tr>
