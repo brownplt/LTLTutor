@@ -213,6 +213,9 @@ def final_state_globally_pattern(node):
     return None
 
 
+##### TODO: Look for SEMANTIC EQUIVALENCY! ####
+
+
 def apply_special_pattern_if_possible(node):
 
     for pattern in patterns:
