@@ -184,6 +184,35 @@ def apply_next_special_pattern_if_possible(node):
     return None
 
 
+#### Final State Patterns ####
+# Pattern: G (p -> Xp)
+# English: Once p (holds), it will always hold.
+@pattern
+def final_state_next_pattern(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.NextNode and type(right.operand) is ltlnode.LiteralNode:
+                return "once " + left.__to_english__() + ", it will always hold."
+    return None
+
+
+# Pattern : G (p -> Gp)
+# English: Once p (holds), it will always hold.
+@pattern
+def final_state_globally_pattern(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.GloballyNode and type(right.operand) is ltlnode.LiteralNode:
+                return "once " + left.__to_english__() + ", it will always hold."
+    return None
+
+
 def apply_special_pattern_if_possible(node):
 
     for pattern in patterns:
