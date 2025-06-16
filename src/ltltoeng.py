@@ -12,6 +12,9 @@ def pattern(func):
     return func
 
 
+#### MAYBE WE DO SOME KIND OF MINIMAL REWRITE?
+
+
 #### Globally special cases ####
 
 # Pattern: G ( p -> (F q) )
@@ -214,7 +217,7 @@ def final_state_globally_pattern(node):
 
 
 ##### TODO: Look for SEMANTIC EQUIVALENCY! ####
-
+            # WITH A PATTERN?
 
 def apply_special_pattern_if_possible(node):
 
