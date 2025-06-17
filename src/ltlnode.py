@@ -200,9 +200,9 @@ class LiteralNode(LTLNode):
         if x is not None:
             return x
 
-        ### TODO: COuld we override so that this is more meaningful
+        ### TODO: Could we override so that this is more meaningful
         # for some cases?
-        return f"'{self.value}' holds"
+        return f"[]'{self.value}']"
     
     def __forge__(self):
         return self.value
