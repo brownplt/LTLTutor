@@ -71,6 +71,13 @@ class StepperNode:
         asStr = asStr.replace('!', '¬')
         return asStr
 
+    def getAllSubformulae(self):
+        """Extract all subformulae from this node and its children recursively."""
+        result = [(self.formula, self.satisfied)]
+        for child in self.children:
+            result.extend(child.getAllSubformulae())
+        return result
+
     def __formula_to__mermaid_inner__(self):
         edges = []
         if self.satisfied:
@@ -172,6 +179,40 @@ class TraceSatisfactionResult:
         return {
             "prefix_states": self.prefix_states,
             "cycle_states": self.cycle_states
+        }
+    
+    def getMatrixView(self):
+        """Generate matrix view data for table display."""
+        all_states = self.prefix_states + self.cycle_states
+        
+        if not all_states:
+            return {"subformulae": [], "matrix": []}
+        
+        # Collect all unique subformulae across all states
+        all_subformulae_set = set()
+        for state in all_states:
+            subformulae = state.getAllSubformulae()
+            for formula, _ in subformulae:
+                all_subformulae_set.add(formula)
+        
+        # Sort subformulae for consistent ordering (simple ones first, complex ones last)
+        all_subformulae = sorted(list(all_subformulae_set), key=lambda x: (len(x), x))
+        
+        # Build matrix: rows are subformulae, columns are time steps
+        matrix = []
+        for subformula in all_subformulae:
+            row = []
+            for state in all_states:
+                # Find this subformula in the current state
+                subformulae = state.getAllSubformulae()
+                subformula_dict = {f: s for f, s in subformulae}
+                satisfaction = subformula_dict.get(subformula, False)
+                row.append(1 if satisfaction else 0)
+            matrix.append(row)
+        
+        return {
+            "subformulae": all_subformulae,
+            "matrix": matrix
         }
 
     def __repr__(self):
