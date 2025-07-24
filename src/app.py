@@ -39,14 +39,10 @@ answer_logger = Logger()
 
 
 def getUserName():
-    if current_user.is_authenticated:
-        return current_user.username
-    return "Anonymous"
+    return current_user.username
 
 def getUserId():
-    if current_user.is_authenticated:
-        return current_user.id
-    return None
+    return current_user.id
 
     
 
@@ -54,12 +50,7 @@ def getUserId():
 def flatten(lst):
     return list(chain.from_iterable(lst))
 
-@app.template_filter('zip')
-def zip_filter(a, b):
-    return zip(a, b)
-
 app.jinja_env.filters['flatten'] = flatten
-app.jinja_env.filters['zip'] = zip_filter
 
 
 sk = os.environ.get('SECRET_KEY')
