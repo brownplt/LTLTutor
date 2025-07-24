@@ -186,7 +186,7 @@ class TraceSatisfactionResult:
         all_states = self.prefix_states + self.cycle_states
         
         if not all_states:
-            return {"subformulae": [], "matrix": []}
+            return {"subformulae": [], "matrix": [], "rows": []}
         
         # Collect all unique subformulae across all states
         all_subformulae_set = set()
@@ -200,6 +200,7 @@ class TraceSatisfactionResult:
         
         # Build matrix: rows are subformulae, columns are time steps
         matrix = []
+        rows = []  # Combined data for easier template iteration
         for subformula in all_subformulae:
             row = []
             for state in all_states:
@@ -209,10 +210,12 @@ class TraceSatisfactionResult:
                 satisfaction = subformula_dict.get(subformula, False)
                 row.append(1 if satisfaction else 0)
             matrix.append(row)
+            rows.append({"subformula": subformula, "values": row})
         
         return {
             "subformulae": all_subformulae,
-            "matrix": matrix
+            "matrix": matrix,
+            "rows": rows
         }
 
     def __repr__(self):

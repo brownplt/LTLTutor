@@ -207,18 +207,18 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for subformula, row in zip(matrix_data.subformulae, matrix_data.matrix) %}
+                        {% for row_data in matrix_data.rows %}
                         <tr>
-                            <td class="font-monospace"><code>{{ subformula }}</code></td>
+                            <td class="font-monospace"><code>{{ row_data.subformula }}</code></td>
                             {% for i in range(prefixstates|length) %}
-                                <td class="text-center {% if row[i] == 1 %}table-success{% else %}table-danger{% endif %}">
-                                    {{ row[i] }}
+                                <td class="text-center {% if row_data.values[i] == 1 %}table-success{% else %}table-danger{% endif %}">
+                                    {{ row_data.values[i] }}
                                 </td>
                             {% endfor %}
                             {% if cyclestates %}
                                 {% for i in range(cyclestates|length) %}
-                                    <td class="text-center cycle-state-col {% if row[prefixstates|length + i] == 1 %}table-success{% else %}table-danger{% endif %}">
-                                        {{ row[prefixstates|length + i] }}
+                                    <td class="text-center cycle-state-col {% if row_data.values[prefixstates|length + i] == 1 %}table-success{% else %}table-danger{% endif %}">
+                                        {{ row_data.values[prefixstates|length + i] }}
                                     </td>
                                 {% endfor %}
                             {% endif %}
