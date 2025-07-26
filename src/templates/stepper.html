@@ -273,7 +273,7 @@
                     <thead>
                         <tr>
                             <th class="w-auto">Subformula</th>
-                            {% if matrix_data.rows and matrix_data.rows|length > 0 %}
+                            {% if matrix_data.rows and matrix_data.rows|length > 0 and matrix_data.rows[0] and 'values' in matrix_data.rows[0] %}
                                 {% set num_columns = matrix_data.rows[0]['values']|length %}
                                 {% for i in range(num_columns) %}
                                     <th class="text-center">{{ i }}</th>
@@ -283,6 +283,7 @@
                     </thead>
                     <tbody>
                         {% for row_data in matrix_data.rows %}
+                            {% if row_data and 'subformula' in row_data and 'values' in row_data %}
                         <tr>
                             <td class="font-monospace"><code>{{ row_data['subformula'] }}</code></td>
                             {% for value in row_data['values'] %}
@@ -291,6 +292,7 @@
                                 </td>
                             {% endfor %}
                         </tr>
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
