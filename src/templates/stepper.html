@@ -274,7 +274,7 @@
                         <tr>
                             <th class="w-auto">Subformula</th>
                             {% if matrix_data.rows and matrix_data.rows|length > 0 %}
-                                {% set num_columns = matrix_data.rows[0].values|length %}
+                                {% set num_columns = matrix_data.rows[0]['values']|length %}
                                 {% for i in range(num_columns) %}
                                     <th class="text-center">{{ i }}</th>
                                 {% endfor %}
@@ -284,8 +284,8 @@
                     <tbody>
                         {% for row_data in matrix_data.rows %}
                         <tr>
-                            <td class="font-monospace"><code>{{ row_data.subformula }}</code></td>
-                            {% for value in row_data.values %}
+                            <td class="font-monospace"><code>{{ row_data['subformula'] }}</code></td>
+                            {% for value in row_data['values'] %}
                                 <td class="text-center">
                                     <span class="{% if value == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ value }}</span>
                                 </td>
