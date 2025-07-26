@@ -77,6 +77,17 @@
 
             display: inline-block;
         }
+
+        /* Matrix view text colors */
+        .matrix-satisfied {
+            color: #28a745 !important;
+            font-weight: bold;
+        }
+
+        .matrix-unsatisfied {
+            color: #dc3545 !important;
+            font-weight: bold;
+        }
     </style>
 
 </head>
@@ -139,9 +150,15 @@
             <li class="nav-item">
                 <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View<sup>Beta</sup></a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" id="matrix-tab" data-toggle="tab" href="#matrix-view" role="tab">Matrix View<sup>Alpha</sup></a>
+            </li>
         </ul>
 
         <div class="tab-content">
+            <!-- ================================ -->
+            <!-- STEPPER VIEW - Interactive stepping through formula satisfaction -->
+            <!-- ================================ -->
             <div class="tab-pane fade show active" id="stepper-view" role="tabpanel">
                 <!-- Stepper view lets you see the entire trace at once, and each tree state one by one. -->
 
@@ -182,19 +199,79 @@
                     {% endfor %}
                 </div>
             </div>
-            <!-- This view lets you look at multiple tree views at once, for state by state. -->
+            <!-- ================================ -->
+            <!-- TABLE VIEW - Detailed formula view with satisfaction highlighting -->
+            <!-- ================================ -->
             <div class="tab-pane fade" id="table-view" role="tabpanel">
-
-
+                {% if matrix_data.subformulae %}
+                    <p>
+                    Sub-formulae are demarcated by their bounding boxes, which
+                    indicate whether they are <span class="satformula">satisfied</span> or
+                                        <span class="unsatformula">unsatisfied</span>.
+                    </p>
+                    <!-- Detailed table view -->
+                    <table class="table table-bordered" id="stateTable">
+                        <thead>
+                            <tr>
+                                <th class="w-auto"></th>
+                                {% for ps in prefixstates %}
+                                    <th></th>
+                                {% endfor %}
+                                {% if cyclestates %}
+                                    <th class="cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th class="w-auto">Trace State</th>
+                                {% for ps in prefixstates %}
+                                    <td><pre>{{ ps.formattedTraceAssignment }}</pre></td>
+                                {% endfor %}
+                                {% for ps in cyclestates %}
+                                    <td class="cycle-state-col"><pre>{{ ps.formattedTraceAssignment }}</pre></td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <th class="w-auto">
+                                    Formula
+                                    </span>
+                                </th>
+                                {% for ps in prefixstates %}
+                                    <td>
+                                        {{ ps.formulaAsHTML | safe }}
+                                    </td>
+                                {% endfor %}
+                                {% for ps in cyclestates %}
+                                    <td class="cycle-state-col">
+                                        {{ ps.formulaAsHTML | safe }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div class="alert alert-info">
+                        <p><strong>No formula loaded.</strong></p>
+                        <p>Please enter an LTL formula and trace to see the table view.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <!-- ================================ -->
+            <!-- MATRIX VIEW - Binary matrix display of subformula satisfaction over time -->
+            <!-- ================================ -->
+            <div class="tab-pane fade" id="matrix-view" role="tabpanel">
                 <p>
-                Sub-formulae are demarcated by their bounding boxes, which
-                indicate whether they are <span class="satformula">satisfied</span> or
-                                    <span class="unsatformula">unsatisfied</span>.
-                                   
+                This matrix view shows how each subformula's satisfaction evolves over time.
+                Each row represents a subformula, and each column represents a time step.
+                Values are shown as <strong class="matrix-satisfied">1</strong> (satisfied) or <strong class="matrix-unsatisfied">0</strong> (unsatisfied).
                 </p>
-                <!-- Table view goes here -->
-                <table class="table table-bordered" id="stateTable">
+                
+                {% if matrix_data.subformulae %}
+                <!-- Matrix view table -->
+                <table class="table table-bordered table-sm" id="matrixTable">
                     <thead>
+                        <!-- Top header row for cycle indication -->
                         <tr>
                             <th class="w-auto"></th>
                             {% for ps in prefixstates %}
@@ -204,35 +281,45 @@
                                 <th class="cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
                             {% endif %}
                         </tr>
+                        <!-- Time step numbers row -->
+                        <tr>
+                            <th class="w-auto">Subformula</th>
+                            {% for i in range(prefixstates|length) %}
+                                <th class="text-center">{{ i }}</th>
+                            {% endfor %}
+                            {% for i in range(cyclestates|length) %}
+                                <th class="text-center cycle-state-col">{{ prefixstates|length + i }}</th>
+                            {% endfor %}
+                        </tr>
                     </thead>
                     <tbody>
+                        {% for row_data in matrix_data.rows %}
+                            {% if row_data and 'subformula' in row_data and 'values' in row_data %}
                         <tr>
-                            <th class="w-auto">Trace State</th>
-                            {% for ps in prefixstates %}
-                                <td><pre>{{ ps.formattedTraceAssignment }}</pre></td>
-                            {% endfor %}
-                            {% for ps in cyclestates %}
-                                <td class="cycle-state-col"><pre>{{ ps.formattedTraceAssignment }}</pre></td>
+                            <td class="font-monospace"><code>{{ row_data['subformula'] }}</code></td>
+                            {% for i in range(row_data['values']|length) %}
+                                {% set value = row_data['values'][i] %}
+                                {% if i < prefixstates|length %}
+                                    <td class="text-center">
+                                        <span class="{% if value == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ value }}</span>
+                                    </td>
+                                {% else %}
+                                    <td class="text-center cycle-state-col">
+                                        <span class="{% if value == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ value }}</span>
+                                    </td>
+                                {% endif %}
                             {% endfor %}
                         </tr>
-                        <tr>
-                            <th class="w-auto">
-                                Formula
-                                </span>
-                            </th>
-                            {% for ps in prefixstates %}
-                                <td>
-                                    {{ ps.formulaAsHTML | safe }}
-                                </td>
-                            {% endfor %}
-                            {% for ps in cyclestates %}
-                                <td class="cycle-state-col">
-                                    {{ ps.formulaAsHTML | safe }}
-                                </td>
-                            {% endfor %}
-                        </tr>
+                            {% endif %}
+                        {% endfor %}
                     </tbody>
                 </table>
+                {% else %}
+                    <div class="alert alert-info">
+                        <p><strong>No formula loaded.</strong></p>
+                        <p>Please enter an LTL formula and trace to see the matrix view.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

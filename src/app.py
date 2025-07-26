@@ -427,7 +427,7 @@ def ltlstepper():
         syntax_choice = 'Classic'
 
     if request.method == 'GET':
-        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[])
+        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
 
     if request.method == 'POST':
         ltl = request.form.get('formula')
@@ -438,13 +438,15 @@ def ltlstepper():
     try:
         node = parse_ltl_string(ltl)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[])
+        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
 
     try:
         result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[])
-    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace)
+        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
+    
+    matrix_data = result.getMatrixView()
+    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, matrix_data=matrix_data)
 
 
 ##### Eng LTL Logging Routes ###
