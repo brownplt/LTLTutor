@@ -268,50 +268,28 @@
                 </p>
                 
                 {% if matrix_data.subformulae %}
-                <!-- DEBUG: Show matrix data info -->
-                <div style="background: #f8f9fa; padding: 10px; margin: 10px 0; border: 1px solid #ddd;">
-                    <small>DEBUG: matrix_data.subformulae count: {{ matrix_data.subformulae|length }}, prefixstates count: {{ prefixstates|length }}, cyclestates count: {{ cyclestates|length }}</small>
-                </div>
                 <!-- Matrix view table -->
                 <table class="table table-bordered table-sm" id="matrixTable">
                     <thead>
                         <tr>
                             <th class="w-auto">Subformula</th>
-                            {% for i in range(prefixstates|length) %}
-                                <th class="text-center">{{ i }}</th>
-                            {% endfor %}
-                            {% if cyclestates %}
-                                <th class="text-center cycle-state-col" colspan="{{ cyclestates|length }}">Cycle</th>
+                            {% if matrix_data.rows and matrix_data.rows|length > 0 %}
+                                {% set num_columns = matrix_data.rows[0].values|length %}
+                                {% for i in range(num_columns) %}
+                                    <th class="text-center">{{ i }}</th>
+                                {% endfor %}
                             {% endif %}
                         </tr>
-                        {% if cyclestates %}
-                        <tr>
-                            <th class="w-auto"></th>
-                            {% for i in range(prefixstates|length) %}
-                                <th class="text-center">{{ i }}</th>
-                            {% endfor %}
-                            {% for i in range(cyclestates|length) %}
-                                <th class="text-center cycle-state-col">{{ prefixstates|length + i }}</th>
-                            {% endfor %}
-                        </tr>
-                        {% endif %}
                     </thead>
                     <tbody>
                         {% for row_data in matrix_data.rows %}
                         <tr>
                             <td class="font-monospace"><code>{{ row_data.subformula }}</code></td>
-                            {% for i in range(prefixstates|length) %}
+                            {% for value in row_data.values %}
                                 <td class="text-center">
-                                    <span class="{% if row_data.values[i] == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ row_data.values[i] }}</span>
+                                    <span class="{% if value == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ value }}</span>
                                 </td>
                             {% endfor %}
-                            {% if cyclestates %}
-                                {% for i in range(cyclestates|length) %}
-                                    <td class="text-center cycle-state-col">
-                                        <span class="{% if row_data.values[prefixstates|length + i] == 1 %}matrix-satisfied{% else %}matrix-unsatisfied{% endif %}">{{ row_data.values[prefixstates|length + i] }}</span>
-                                    </td>
-                                {% endfor %}
-                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
