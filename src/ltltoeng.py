@@ -2,6 +2,12 @@ import ltlnode
 import random
 import re
 
+try:
+    import inflect
+    _inflect_engine = inflect.engine()
+except ImportError:
+    _inflect_engine = None
+
 ## We should list the various patterns of LTL formulae that we can handle
 
 ### What do we do about nested Globally and Finally nodes? ###
@@ -24,10 +30,44 @@ def clean_for_composition(english_text):
     return text
 
 
+def join_with_conjunction(items, conj='and'):
+    """Join items with proper grammar using inflect if available.
+    
+    Examples:
+        ['p', 'q'] -> 'p and q'
+        ['p', 'q', 'r'] -> 'p, q, and r'
+    """
+    if _inflect_engine:
+        return _inflect_engine.join(items, conj=conj)
+    # Fallback for when inflect is not available
+    if len(items) == 0:
+        return ''
+    elif len(items) == 1:
+        return items[0]
+    elif len(items) == 2:
+        return f'{items[0]} {conj} {items[1]}'
+    else:
+        return ', '.join(items[:-1]) + f', {conj} {items[-1]}'
+
+
+def use_article(word):
+    """Add appropriate article (a/an) before a word.
+    
+    Example: 'event' -> 'an event', 'state' -> 'a state'
+    """
+    if _inflect_engine:
+        return _inflect_engine.a(word)
+    # Simple fallback
+    if word[0].lower() in 'aeiou':
+        return f'an {word}'
+    return f'a {word}'
+
+
 #### Globally special cases ####
 
 # Pattern: G ( p -> (F q) )
 # English, whenever p (holds), eventually q will (hold)
+# Note: We check that left is not an UntilNode to allow more specific patterns to match first
 
 @pattern
 def response_pattern_to_english(node):
@@ -36,6 +76,9 @@ def response_pattern_to_english(node):
         if type(op) is ltlnode.ImpliesNode:
             left = op.left
             right = op.right
+            # Skip if left is Until - let more specific pattern handle it
+            if type(left) is ltlnode.UntilNode:
+                return None
             if type(right) is ltlnode.FinallyNode:
                 left_eng = clean_for_composition(left.__to_english__())
                 right_eng = clean_for_composition(right.operand.__to_english__())
@@ -46,12 +89,16 @@ def response_pattern_to_english(node):
 
 # Pattern G (F p)
 # English: p (happens) repeatedly
+# Note: Skip if inner is AndNode to let more specific patterns handle simultaneity
 @pattern
 def recurrence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
         if type(op) is ltlnode.FinallyNode:
             inner_op = op.operand
+            # Skip if inner is AndNode - let more specific pattern handle it
+            if type(inner_op) is ltlnode.AndNode:
+                return None
             inner_eng = clean_for_composition(inner_op.__to_english__())
             if type(inner_op) is ltlnode.LiteralNode:
                 return f"{inner_eng} will happen infinitely often"
@@ -149,12 +196,17 @@ def finally_never_globally_pattern_to_english(node):
 
 # F (G p)
 # English: Eventually, p will always (hold)
+# Note: Skip if inner is an ImpliesNode with Finally on right - let more specific pattern handle it
 @pattern
 def finally_globally_pattern_to_english(node):
     if type(node) is ltlnode.FinallyNode:
         op = node.operand
         if type(op) is ltlnode.GloballyNode:
-            inner_eng = clean_for_composition(op.operand.__to_english__())
+            inner = op.operand
+            # Skip if inner is implication with Finally - let more specific pattern handle it
+            if type(inner) is ltlnode.ImpliesNode and type(inner.right) is ltlnode.FinallyNode:
+                return None
+            inner_eng = clean_for_composition(inner.__to_english__())
             return f"eventually, {inner_eng} will always be true"
     return None
 
@@ -197,6 +249,85 @@ def nested_until_pattern_to_english(node):
             r_eng = clean_for_composition(right.__to_english__())
             return f"{p_eng} until {q_eng}, and this continues until {r_eng}"
     return None
+
+
+#### Context-aware patterns for nested temporal operators ####
+# These patterns help address deictic shift issues where temporal references can be ambiguous
+
+# Pattern: G(F(p & q))
+# English: at all times, there will eventually be a point where both p and q hold simultaneously
+@pattern
+def globally_finally_and_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.FinallyNode:
+            inner = op.operand
+            if type(inner) is ltlnode.AndNode:
+                left_eng = clean_for_composition(inner.left.__to_english__())
+                right_eng = clean_for_composition(inner.right.__to_english__())
+                return f"at all times, there will eventually be a point where both {left_eng} and {right_eng} hold simultaneously"
+    return None
+
+
+# Pattern: F(G(p -> F q))
+# English: eventually we reach a point where, from then on, whenever p then eventually q
+@pattern
+def finally_globally_implies_finally_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.GloballyNode:
+            inner = op.operand
+            if type(inner) is ltlnode.ImpliesNode:
+                if type(inner.right) is ltlnode.FinallyNode:
+                    left_eng = clean_for_composition(inner.left.__to_english__())
+                    right_eng = clean_for_composition(inner.right.operand.__to_english__())
+                    return f"eventually we reach a point where, from then on, whenever {left_eng} then eventually {right_eng}"
+    return None
+
+
+# Pattern: (G p) U (F q)
+# English: at all times p holds, and this continues until eventually q occurs
+@pattern
+def globally_until_finally_pattern_to_english(node):
+    if type(node) is ltlnode.UntilNode:
+        left = node.left
+        right = node.right
+        if type(left) is ltlnode.GloballyNode and type(right) is ltlnode.FinallyNode:
+            left_eng = clean_for_composition(left.operand.__to_english__())
+            right_eng = clean_for_composition(right.operand.__to_english__())
+            return f"at all times {left_eng} holds, and this continues until eventually {right_eng} occurs"
+    return None
+
+
+# Pattern: X(p U q)
+# English: in the next step, p will hold until q holds
+@pattern
+def next_until_pattern_to_english(node):
+    if type(node) is ltlnode.NextNode:
+        op = node.operand
+        if type(op) is ltlnode.UntilNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            return f"in the next step, {left_eng} will hold until {right_eng} holds"
+    return None
+
+
+# Pattern: G((p U q) -> F r)
+# English: whenever p holds until q holds, eventually r will occur
+@pattern
+def globally_until_implies_finally_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(left) is ltlnode.UntilNode and type(right) is ltlnode.FinallyNode:
+                p_eng = clean_for_composition(left.left.__to_english__())
+                q_eng = clean_for_composition(left.right.__to_english__())
+                r_eng = clean_for_composition(right.operand.__to_english__())
+                return f"whenever {p_eng} holds until {q_eng} holds, eventually {r_eng} will occur"
+    return None
+
 
 #### neXt special cases ####
 

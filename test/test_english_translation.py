@@ -191,5 +191,64 @@ class TestEquivalenceTranslation(unittest.TestCase):
         )
 
 
+class TestContextAwareTranslations(unittest.TestCase):
+    """Test context-aware translations that address deictic shift issues"""
+    
+    def setUp(self):
+        random.seed(42)
+    
+    def test_globally_finally_and_simultaneity(self):
+        """G(F(p & q)) should make simultaneity context clear"""
+        node = parse_ltl_string("G(F(p & q))")
+        english = node.__to_english__()
+        # Should mention both temporal context and simultaneity
+        self.assertIn("at all times", english.lower())
+        self.assertIn("eventually", english.lower())
+        self.assertIn("simultaneously", english.lower())
+    
+    def test_finally_globally_implies_finally_context(self):
+        """F(G(p -> F q)) should clarify nested temporal references"""
+        node = parse_ltl_string("F(G(p -> F q))")
+        english = node.__to_english__()
+        # Should establish clear temporal context
+        self.assertIn("eventually", english.lower())
+        self.assertIn("from then on", english.lower())
+        self.assertIn("whenever", english.lower())
+    
+    def test_globally_until_finally_context(self):
+        """(G p) U (F q) should clarify the until relationship"""
+        node = parse_ltl_string("(G p) U (F q)")
+        english = node.__to_english__()
+        # Should clarify that globally p continues until eventually q
+        self.assertIn("at all times", english.lower())
+        self.assertIn("until", english.lower())
+        self.assertIn("eventually", english.lower())
+    
+    def test_next_until_context(self):
+        """X(p U q) should clarify the next step context"""
+        node = parse_ltl_string("X(p U q)")
+        english = node.__to_english__()
+        # Should mention next step and the until relationship
+        self.assertIn("next step", english.lower())
+        self.assertIn("until", english.lower())
+    
+    def test_globally_until_implies_finally_context(self):
+        """G((p U q) -> F r) should handle the implication properly"""
+        node = parse_ltl_string("G((p U q) -> F r)")
+        english = node.__to_english__()
+        # Should mention whenever, until, and eventually
+        self.assertIn("whenever", english.lower())
+        self.assertIn("until", english.lower())
+        self.assertIn("eventually", english.lower())
+    
+    def test_nested_until_clarity(self):
+        """(p U q) U r should clarify nested until relationships"""
+        node = parse_ltl_string("(p U q) U r")
+        english = node.__to_english__()
+        # Should have two mentions of "until"
+        self.assertEqual(english.lower().count("until"), 2)
+        self.assertIn("continues", english.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
