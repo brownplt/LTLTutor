@@ -162,7 +162,7 @@ class TestEnglishTranslation(unittest.TestCase):
         self.assertEqual(english.count("until"), 2)
     
     def test_no_double_periods(self):
-        """Translations should not have double periods"""
+        """Translations should not have consecutive periods (e.g., '..', '...')"""
         formulas = [
             "G p", "F p", "X p", "p U q", "p & q", "p | q",
             "G (p -> F q)", "G (F p)", "!(F p)"
@@ -170,8 +170,8 @@ class TestEnglishTranslation(unittest.TestCase):
         for formula in formulas:
             node = parse_ltl_string(formula)
             english = node.__to_english__()
-            # Should not have .. or ...
-            self.assertNotIn("..", english, f"Formula {formula} has double periods")
+            # Should not have consecutive periods
+            self.assertNotIn("..", english, f"Formula {formula} has consecutive periods")
 
 
 class TestEquivalenceTranslation(unittest.TestCase):

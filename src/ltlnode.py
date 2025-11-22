@@ -263,7 +263,7 @@ class GloballyNode(UnaryOperatorNode):
         patterns = [
             f"it is always the case that {op}",
             f"at all times, {op}",
-            f"{op} always holds"
+            f"{op} is always true"
         ]
 
         english = random.choice(patterns)
@@ -287,13 +287,7 @@ class FinallyNode(UnaryOperatorNode):
             return x
         op = self.operand.__to_english__().rstrip('.')
 
-        patterns = [
-            f"eventually, {op}",
-            f"at some point, {op}",
-            f"{op} will eventually occur"
-        ]
-
-        english = random.choice(patterns)
+        english = f"eventually, {op}"
         return english
     
     def __forge__(self):
