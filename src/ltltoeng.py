@@ -58,7 +58,7 @@ def use_article(word):
     if _inflect_engine:
         return _inflect_engine.a(word)
     # Simple fallback
-    if word[0].lower() in 'aeiou':
+    if word and word[0].lower() in 'aeiou':
         return f'an {word}'
     return f'a {word}'
 
@@ -295,12 +295,12 @@ def globally_until_finally_pattern_to_english(node):
         if type(left) is ltlnode.GloballyNode and type(right) is ltlnode.FinallyNode:
             left_eng = clean_for_composition(left.operand.__to_english__())
             right_eng = clean_for_composition(right.operand.__to_english__())
-            return f"at all times {left_eng} holds, and this continues until eventually {right_eng} occurs"
+            return f"at all times {left_eng}, and this continues until eventually {right_eng} occurs"
     return None
 
 
 # Pattern: X(p U q)
-# English: in the next step, p will hold until q holds
+# English: in the next step, p until q
 @pattern
 def next_until_pattern_to_english(node):
     if type(node) is ltlnode.NextNode:
@@ -308,12 +308,12 @@ def next_until_pattern_to_english(node):
         if type(op) is ltlnode.UntilNode:
             left_eng = clean_for_composition(op.left.__to_english__())
             right_eng = clean_for_composition(op.right.__to_english__())
-            return f"in the next step, {left_eng} will hold until {right_eng} holds"
+            return f"in the next step, {left_eng} until {right_eng}"
     return None
 
 
 # Pattern: G((p U q) -> F r)
-# English: whenever p holds until q holds, eventually r will occur
+# English: whenever p until q, eventually r will occur
 @pattern
 def globally_until_implies_finally_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
@@ -325,7 +325,7 @@ def globally_until_implies_finally_pattern_to_english(node):
                 p_eng = clean_for_composition(left.left.__to_english__())
                 q_eng = clean_for_composition(left.right.__to_english__())
                 r_eng = clean_for_composition(right.operand.__to_english__())
-                return f"whenever {p_eng} holds until {q_eng} holds, eventually {r_eng} will occur"
+                return f"whenever {p_eng} until {q_eng}, eventually {r_eng} will occur"
     return None
 
 
