@@ -58,9 +58,9 @@ def use_article(word):
     if _inflect_engine:
         return _inflect_engine.a(word)
     # Simple fallback
-    if word and word[0].lower() in 'aeiou':
+    if word and len(word) > 0 and word[0].lower() in 'aeiou':
         return f'an {word}'
-    return f'a {word}'
+    return f'a {word}' if word else word
 
 
 #### Globally special cases ####
