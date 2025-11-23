@@ -14,6 +14,11 @@ import codebook
 """
 Test cases for the conceptual mutation operators in the LTL misconceptions codebook.
 """
+
+# Number of iterations for diversity tests to ensure we see multiple variants
+NUM_DIVERSITY_ITERATIONS = 20
+
+
 class TestConceptualMutator(unittest.TestCase):
     
     def apply_and_check_misconception(self, code, test_cases):
@@ -135,7 +140,7 @@ class TestConceptualMutator(unittest.TestCase):
 
         for input, expected_outputs in test_cases:
             results_seen = set()
-            for i in range(20):
+            for i in range(NUM_DIVERSITY_ITERATIONS):
                 with self.subTest(input=input, iteration=i):
                     ast = parse_ltl_string(input)
                     result = str(
@@ -147,7 +152,7 @@ class TestConceptualMutator(unittest.TestCase):
                     results_seen.add(result)
             
             self.assertGreater(len(results_seen), 1, 
-                              f"Only saw {results_seen} across 20 attempts for {input}")
+                              f"Only saw {results_seen} across {NUM_DIVERSITY_ITERATIONS} attempts for {input}")
 
     def test_implicit_g(self):
         test_cases = [
@@ -183,7 +188,7 @@ class TestConceptualMutator(unittest.TestCase):
 
         for input, expected_outputs in test_cases:
             results_seen = set()
-            for i in range(20):  # Run multiple times to see diversity
+            for i in range(NUM_DIVERSITY_ITERATIONS):
                 with self.subTest(input=input, iteration=i):
                     ast = parse_ltl_string(input)
                     result = str(
@@ -195,10 +200,10 @@ class TestConceptualMutator(unittest.TestCase):
                                   f"Unexpected result: {result}")
                     results_seen.add(result)
             
-            # After 20 attempts, we should have seen multiple variants
+            # After NUM_DIVERSITY_ITERATIONS attempts, we should have seen multiple variants
             # (with high probability if the implementation is correct)
             self.assertGreater(len(results_seen), 1, 
-                              f"Only saw {results_seen} across 20 attempts for {input}")
+                              f"Only saw {results_seen} across {NUM_DIVERSITY_ITERATIONS} attempts for {input}")
 
     def test_weak_u(self):
         test_cases = [

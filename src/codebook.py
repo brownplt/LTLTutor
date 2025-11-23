@@ -121,6 +121,8 @@ def collectAllMutationLocations(node, f, path=None):
     Collect all locations in the tree where mutation f can be applied.
     Returns a list of path lists where each path is a list of directions
     to reach that node from the root.
+    
+    Each returned path is an independent copy to avoid aliasing issues.
     """
     if path is None:
         path = []
@@ -179,8 +181,8 @@ def applyMutationAtPath(node, f, path):
         child_result.node = node
         return child_result
     
-    # Should not reach here
-    return MutationResult(node)
+    # Invalid path - this indicates a bug in path generation
+    raise ValueError(f"Invalid path: cannot apply direction '{direction}' to node of type {type(node).__name__}")
 
 
 def applyTilFirstRandom(node, f):
