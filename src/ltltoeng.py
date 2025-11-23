@@ -129,42 +129,43 @@ def recurrence_pattern_to_english(node):
 
 #### Final State Patterns ####
 
-# Pattern: G (p -> X p)
-# English: Once p (holds), it will always hold.
-@pattern
-def final_state_next_pattern(node):
+def _check_final_state_pattern(node, right_node_type):
+    """Helper to check if a node matches the final state pattern G(p -> Op p).
+    
+    Args:
+        node: The node to check
+        right_node_type: The expected type for the right side operator (NextNode or GloballyNode)
+    
+    Returns:
+        English translation if pattern matches, None otherwise
+    """
     if type(node) is ltlnode.GloballyNode:
         op = node.operand
         if type(op) is ltlnode.ImpliesNode:
             left = op.left
             right = op.right
-            if type(right) is ltlnode.NextNode:
+            if type(right) is right_node_type:
                 # Check if both left and right.operand are literals with the same value
-                if (type(left) is ltlnode.LiteralNode and 
+                if (type(left) is ltlnode.LiteralNode and
                     type(right.operand) is ltlnode.LiteralNode and
                     left.value == right.operand.value):
                     left_eng = clean_for_composition(left.__to_english__())
                     return f"once {left_eng}, it will always hold"
     return None
+
+
+# Pattern: G (p -> X p)
+# English: Once p (holds), it will always hold.
+@pattern
+def final_state_next_pattern(node):
+    return _check_final_state_pattern(node, ltlnode.NextNode)
 
 
 # Pattern: G (p -> G p)
 # English: Once p (holds), it will always hold.
 @pattern
 def final_state_globally_pattern(node):
-    if type(node) is ltlnode.GloballyNode:
-        op = node.operand
-        if type(op) is ltlnode.ImpliesNode:
-            left = op.left
-            right = op.right
-            if type(right) is ltlnode.GloballyNode:
-                # Check if both left and right.operand are literals with the same value
-                if (type(left) is ltlnode.LiteralNode and 
-                    type(right.operand) is ltlnode.LiteralNode and
-                    left.value == right.operand.value):
-                    left_eng = clean_for_composition(left.__to_english__())
-                    return f"once {left_eng}, it will always hold"
-    return None
+    return _check_final_state_pattern(node, ltlnode.GloballyNode)
 
 
 ## Chain precedence
