@@ -251,6 +251,43 @@ class TestContextAwareTranslations(unittest.TestCase):
         self.assertIn("continues", english.lower())
 
 
+class TestFinalStatePatterns(unittest.TestCase):
+    """Test final state patterns where a proposition becomes permanently true"""
+    
+    def setUp(self):
+        random.seed(42)
+    
+    def test_final_state_next_pattern(self):
+        """G(p -> X p) should translate to 'once p, it will always hold'"""
+        node = parse_ltl_string("G(p -> X p)")
+        english = node.__to_english__()
+        self.assertIn("once", english.lower())
+        self.assertIn("always hold", english.lower())
+        self.assertIn("'p'", english)
+    
+    def test_final_state_globally_pattern(self):
+        """G(p -> G p) should translate to 'once p, it will always hold'"""
+        node = parse_ltl_string("G(p -> G p)")
+        english = node.__to_english__()
+        self.assertIn("once", english.lower())
+        self.assertIn("always hold", english.lower())
+        self.assertIn("'p'", english)
+    
+    def test_final_state_different_literals_next(self):
+        """G(p -> X q) should not match final state pattern"""
+        node = parse_ltl_string("G(p -> X q)")
+        english = node.__to_english__()
+        # Should not use "once" phrasing since literals differ
+        self.assertNotIn("once", english.lower())
+    
+    def test_final_state_different_literals_globally(self):
+        """G(p -> G q) should not match final state pattern"""
+        node = parse_ltl_string("G(p -> G q)")
+        english = node.__to_english__()
+        # Should not use "once" phrasing since literals differ
+        self.assertNotIn("once", english.lower())
+
+
 class TestCapitalization(unittest.TestCase):
     """Test that English translations follow proper capitalization conventions"""
     

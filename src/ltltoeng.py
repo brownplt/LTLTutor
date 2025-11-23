@@ -127,6 +127,46 @@ def recurrence_pattern_to_english(node):
     return None
 
 
+#### Final State Patterns ####
+
+# Pattern: G (p -> X p)
+# English: Once p (holds), it will always hold.
+@pattern
+def final_state_next_pattern(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.NextNode:
+                # Check if both left and right.operand are literals with the same value
+                if (type(left) is ltlnode.LiteralNode and 
+                    type(right.operand) is ltlnode.LiteralNode and
+                    left.value == right.operand.value):
+                    left_eng = clean_for_composition(left.__to_english__())
+                    return f"once {left_eng}, it will always hold"
+    return None
+
+
+# Pattern: G (p -> G p)
+# English: Once p (holds), it will always hold.
+@pattern
+def final_state_globally_pattern(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.GloballyNode:
+                # Check if both left and right.operand are literals with the same value
+                if (type(left) is ltlnode.LiteralNode and 
+                    type(right.operand) is ltlnode.LiteralNode and
+                    left.value == right.operand.value):
+                    left_eng = clean_for_composition(left.__to_english__())
+                    return f"once {left_eng}, it will always hold"
+    return None
+
+
 ## Chain precedence
 # Pattern G(p -> (q U r))
 # English: Whenever p (happens), q will (hold) until r (holds)
