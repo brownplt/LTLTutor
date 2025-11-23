@@ -200,9 +200,10 @@ class LiteralNode(LTLNode):
         if x is not None:
             return x
 
-        ### TODO: COuld we override so that this is more meaningful
-        # for some cases?
-        return f"'{self.value}' holds"
+        # For literals, use simpler phrasing
+        # Note: We don't capitalize here because the literal is in quotes
+        # and should remain as-is per capitalize_sentence() logic
+        return f"'{self.value}'"
     
     def __forge__(self):
         return self.value
@@ -220,10 +221,9 @@ class UntilNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__()
-        rhs = self.right.__to_english__()
-        english = f"{lhs} until {rhs}."
-        return english
+        lhs = self.left.__to_english__().rstrip('.')
+        rhs = self.right.__to_english__().rstrip('.')
+        return ltltoeng.capitalize_sentence(f"{lhs} until {rhs}")
     
     def __forge__(self):
         return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
@@ -241,9 +241,8 @@ class NextNode(UnaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        op = self.operand.__to_english__()
-        english = f"in the next state, {op}."
-        return english
+        op = self.operand.__to_english__().rstrip('.')
+        return ltltoeng.capitalize_sentence(f"in the next step, {op}")
     
     def __forge__(self):
         return f"(NEXT_STATE {self.operand.__forge__()})"
@@ -262,16 +261,15 @@ class GloballyNode(UnaryOperatorNode):
         if x is not None:
             return x
 
-
-        op = self.operand.__to_english__()
+        op = self.operand.__to_english__().rstrip('.')
         patterns = [
             f"it is always the case that {op}",
-            f"in all future states, {op}",
-            f"globally, {op}"
+            f"at all times, {op}",
+            f"{op} is always true"
         ]
 
         english = random.choice(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
     
     def __forge__(self):
         return f"(ALWAYS {self.operand.__forge__()})"
@@ -289,17 +287,10 @@ class FinallyNode(UnaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        op = self.operand.__to_english__()
-
-        patterns = [
-            f"eventually, {op}",
-            f"now or in the future, {op}",
-            f"at this or some future point, {op}"
-        ]
-
+        op = self.operand.__to_english__().rstrip('.')
 
         english = f"eventually, {op}"
-        return english
+        return ltltoeng.capitalize_sentence(english)
     
     def __forge__(self):
         return f"(EVENTUALLY {self.operand.__forge__()})"
@@ -319,10 +310,9 @@ class OrNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__()
-        rhs = self.right.__to_english__()
-        english = f"{lhs} or {rhs}."
-        return english
+        lhs = self.left.__to_english__().rstrip('.')
+        rhs = self.right.__to_english__().rstrip('.')
+        return ltltoeng.capitalize_sentence(f"either {lhs} or {rhs}")
     
 
 
@@ -336,10 +326,9 @@ class AndNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__()
-        rhs = self.right.__to_english__()
-        english = f"{lhs} and {rhs}."
-        return english
+        lhs = self.left.__to_english__().rstrip('.')
+        rhs = self.right.__to_english__().rstrip('.')
+        return ltltoeng.capitalize_sentence(f"both {lhs} and {rhs}")
 
 
 class NotNode(UnaryOperatorNode):
@@ -352,37 +341,37 @@ class NotNode(UnaryOperatorNode):
         if x is not None:
             return x
 
-        op = self.operand.__to_english__()
+        op = self.operand.__to_english__().rstrip('.')
 
         ## If the operand is a literal, we can just negate it
         if isinstance(self.operand, LiteralNode):
-            english = f"{op}"
-            # Replace 'holds' with does not hold in english.
-            if "holds" in english:
-                english = english.replace("holds", "does not hold")
-        ## TODO: We can start donig some more. better special cases.
+            return ltltoeng.capitalize_sentence(f"not {op}")
         else:
-            english = f"it is not the case that {op}."
-        return english
+            return ltltoeng.capitalize_sentence(f"it is not the case that {op}")
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
     def __init__(self, left, right):
         super().__init__(ImpliesNode.symbol, left, right)
 
-    def __to_english__(self,depth=0):
-        lhs = self.left.__to_english__()
-        rhs = self.right.__to_english__()
+    def __to_english__(self):
+        x = ltltoeng.apply_special_pattern_if_possible(self)
+        if x is not None:
+            return x
+            
+        lhs = self.left.__to_english__().rstrip('.')
+        rhs = self.right.__to_english__().rstrip('.')
 
         # Potential patterns:
         patterns = [
             f"if {lhs}, then {rhs}",
-            f"{rhs} is necessary for {lhs}"
+            f"{lhs} implies {rhs}",
+            f"whenever {lhs}, then {rhs}"
         ]
 
         # Choose a pattern randomly, and then return the corrected sentence
         english = random.choice(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -394,20 +383,19 @@ class EquivalenceNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__()
-        rhs = self.right.__to_english__()
+        lhs = self.left.__to_english__().rstrip('.')
+        rhs = self.right.__to_english__().rstrip('.')
 
         # Potential patterns:
         patterns = [
-            f"{lhs} is necessary and sufficient for {rhs}",
+            f"{lhs} if and only if {rhs}",
             f"{lhs} exactly when {rhs}",
-            f"{lhs} is equivalent to {rhs}",
-            f"{lhs} if and only if {rhs}"
+            f"{lhs} is equivalent to {rhs}"
         ]
 
         # Choose a pattern randomly, and then return the corrected sentence
         english = random.choice(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
 
 
 

@@ -32,4 +32,5 @@ Werkzeug
 zipp 
 psycopg2-binary
 flask-login
+inflect
 
