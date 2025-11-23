@@ -119,7 +119,7 @@ def getAllApplicableMisconceptions(node):
 def collectAllMutationLocations(node, f, path=None):
     """
     Collect all locations in the tree where mutation f can be applied.
-    Returns a list of path tuples where path is a list of directions
+    Returns a list of path lists where each path is a list of directions
     to reach that node from the root.
     """
     if path is None:
@@ -143,10 +143,15 @@ def collectAllMutationLocations(node, f, path=None):
     return locations
 
 
-def applyMutationAtPath(node, path, f):
+def applyMutationAtPath(node, f, path):
     """
     Apply a mutation function f at a specific path in the tree.
     Path is a list of 'left', 'right', or 'operand' directions.
+    
+    Note: This function modifies the node tree in-place and uses a pattern
+    where child_result.node is reassigned to point to the parent node.
+    This is intentional and matches the pattern used in applyTilFirst.
+    The caller should pass a deep copy if the original needs to be preserved.
     """
     if not path:
         # We're at the target node, apply the mutation
@@ -157,17 +162,19 @@ def applyMutationAtPath(node, path, f):
     remaining_path = path[1:]
     
     if isinstance(node, UnaryOperatorNode) and direction == 'operand':
-        child_result = applyMutationAtPath(node.operand, remaining_path, f)
+        child_result = applyMutationAtPath(node.operand, f, remaining_path)
+        # Thread the result back through the parent: replace child with mutated version,
+        # then update result to point to the whole subtree
         node.operand = child_result.node
         child_result.node = node
         return child_result
     elif isinstance(node, BinaryOperatorNode) and direction == 'left':
-        child_result = applyMutationAtPath(node.left, remaining_path, f)
+        child_result = applyMutationAtPath(node.left, f, remaining_path)
         node.left = child_result.node
         child_result.node = node
         return child_result
     elif isinstance(node, BinaryOperatorNode) and direction == 'right':
-        child_result = applyMutationAtPath(node.right, remaining_path, f)
+        child_result = applyMutationAtPath(node.right, f, remaining_path)
         node.right = child_result.node
         child_result.node = node
         return child_result
@@ -193,7 +200,7 @@ def applyTilFirstRandom(node, f):
     path = random.choice(locations)
     
     # Apply the mutation at the selected location
-    return applyMutationAtPath(node, path, f)
+    return applyMutationAtPath(node, f, path)
 
 
 def applyTilFirst(node, f):
