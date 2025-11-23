@@ -31,7 +31,7 @@ class TestEnglishTranslation(unittest.TestCase):
         """Simple negation should be clean"""
         node = parse_ltl_string("!p")
         english = node.__to_english__()
-        self.assertEqual(english, "not 'p'")
+        self.assertEqual(english, "Not 'p'")
     
     def test_globally_natural_phrasing(self):
         """Globally operator should use natural phrasing"""
@@ -68,32 +68,33 @@ class TestEnglishTranslation(unittest.TestCase):
         english = node.__to_english__()
         # Should NOT be "'q' holds is necessary for 'p' holds"
         self.assertNotIn("is necessary for", english)
-        # Should be proper English
+        # Should be proper English (case-insensitive check)
         self.assertTrue(
-            "if 'p', then 'q'" == english or
-            "'p' implies 'q'" == english or
-            "whenever 'p', then 'q'" == english
+            "if 'p', then 'q'" == english.lower() or
+            "'p' implies 'q'" == english.lower() or
+            "whenever 'p', then 'q'" == english.lower()
         )
     
     def test_and_operator(self):
         """And operator should use 'both ... and'"""
         node = parse_ltl_string("p & q")
         english = node.__to_english__()
-        self.assertIn("both", english)
-        self.assertIn("and", english)
+        self.assertIn("both", english.lower())
+        self.assertIn("and", english.lower())
     
     def test_or_operator(self):
         """Or operator should use 'either ... or'"""
         node = parse_ltl_string("p | q")
         english = node.__to_english__()
-        self.assertIn("either", english)
-        self.assertIn("or", english)
+        self.assertIn("either", english.lower())
+        self.assertIn("or", english.lower())
     
     def test_until_operator(self):
         """Until operator should be clean"""
         node = parse_ltl_string("p U q")
         english = node.__to_english__()
-        self.assertEqual(english, "'p' until 'q'")
+        # Check case-insensitive since it may be capitalized
+        self.assertEqual(english.lower(), "'p' until 'q'")
     
     def test_response_pattern(self):
         """G(p -> F q) should be natural"""
@@ -101,8 +102,8 @@ class TestEnglishTranslation(unittest.TestCase):
         english = node.__to_english__()
         # Should be clean without redundant 'holds'
         self.assertNotIn("holds", english)
-        self.assertIn("whenever", english)
-        self.assertIn("eventually", english)
+        self.assertIn("whenever", english.lower())
+        self.assertIn("eventually", english.lower())
     
     def test_recurrence_pattern(self):
         """G(F p) should be natural"""
@@ -140,19 +141,19 @@ class TestEnglishTranslation(unittest.TestCase):
         """F(p & q) should mention simultaneity"""
         node = parse_ltl_string("F (p & q)")
         english = node.__to_english__()
-        self.assertIn("eventually", english)
+        self.assertIn("eventually", english.lower())
         self.assertTrue(
-            "simultaneously" in english or
-            "same time" in english or
-            "both" in english
+            "simultaneously" in english.lower() or
+            "same time" in english.lower() or
+            "both" in english.lower()
         )
     
     def test_finally_globally_pattern(self):
         """F(G p) should be natural"""
         node = parse_ltl_string("F (G p)")
         english = node.__to_english__()
-        self.assertIn("eventually", english)
-        self.assertIn("always", english)
+        self.assertIn("eventually", english.lower())
+        self.assertIn("always", english.lower())
     
     def test_nested_until(self):
         """(p U q) U r should be clear"""
@@ -248,6 +249,45 @@ class TestContextAwareTranslations(unittest.TestCase):
         # Should have two mentions of "until"
         self.assertEqual(english.lower().count("until"), 2)
         self.assertIn("continues", english.lower())
+
+
+class TestCapitalization(unittest.TestCase):
+    """Test that English translations follow proper capitalization conventions"""
+    
+    def setUp(self):
+        random.seed(42)
+    
+    def test_sentences_start_with_capital(self):
+        """Most sentences should start with a capital letter"""
+        formulas = [
+            "G p",
+            "F p", 
+            "X p",
+            "p & q",
+            "p | q",
+            "!p",
+            "G (p -> F q)",
+            "G(F(p & q))",
+            "F(G p)"
+        ]
+        for formula in formulas:
+            with self.subTest(formula=formula):
+                node = parse_ltl_string(formula)
+                english = node.__to_english__()
+                # Should start with capital letter (unless it starts with a quote)
+                if english and not english.startswith("'"):
+                    self.assertTrue(
+                        english[0].isupper(),
+                        f"'{english}' should start with a capital letter"
+                    )
+    
+    def test_literals_not_capitalized_when_quoted(self):
+        """Literals in quotes at the start should not be capitalized"""
+        # When a translation naturally starts with a quoted literal,
+        # the quote should remain as-is
+        node = parse_ltl_string("p")
+        english = node.__to_english__()
+        self.assertEqual(english, "'p'")  # Should not become "'P'"
 
 
 if __name__ == "__main__":

@@ -63,6 +63,27 @@ def use_article(word):
     return f'a {word}' if word else word
 
 
+def capitalize_sentence(text):
+    """Capitalize the first letter of a sentence.
+    
+    Handles edge cases like quoted literals at the start.
+    
+    Examples:
+        'whenever p' -> 'Whenever p'
+        "'p' holds" -> "'p' holds" (don't capitalize inside quotes)
+        "at all times" -> "At all times"
+    """
+    if not text:
+        return text
+    
+    # If text starts with a quote, don't capitalize the quoted content
+    if text.startswith("'"):
+        return text
+    
+    # Capitalize the first letter
+    return text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+
+
 #### Globally special cases ####
 
 # Pattern: G ( p -> (F q) )
@@ -354,7 +375,7 @@ def apply_special_pattern_if_possible(node):
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
-            return result
+            return capitalize_sentence(result)
     return None
 
 
