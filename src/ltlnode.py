@@ -201,6 +201,8 @@ class LiteralNode(LTLNode):
             return x
 
         # For literals, use simpler phrasing
+        # Note: We don't capitalize here because the literal is in quotes
+        # and should remain as-is per capitalize_sentence() logic
         return f"'{self.value}'"
     
     def __forge__(self):
@@ -352,7 +354,7 @@ class ImpliesNode(BinaryOperatorNode):
     def __init__(self, left, right):
         super().__init__(ImpliesNode.symbol, left, right)
 
-    def __to_english__(self,depth=0):
+    def __to_english__(self):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
