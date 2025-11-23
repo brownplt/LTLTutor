@@ -116,12 +116,15 @@ def getAllApplicableMisconceptions(node):
     
 
 
-def collectAllMutationLocations(node, f, path=[]):
+def collectAllMutationLocations(node, f, path=None):
     """
     Collect all locations in the tree where mutation f can be applied.
     Returns a list of path tuples where path is a list of directions
     to reach that node from the root.
     """
+    if path is None:
+        path = []
+    
     locations = []
     
     # Try applying the mutation at current node
