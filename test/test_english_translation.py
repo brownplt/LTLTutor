@@ -327,5 +327,68 @@ class TestCapitalization(unittest.TestCase):
         self.assertEqual(english, "'p'")  # Should not become "'P'"
 
 
+class TestNgramSelection(unittest.TestCase):
+    """Test that n-gram selection produces consistent, natural translations"""
+    
+    def test_ngram_consistency(self):
+        """N-gram selection should produce consistent results (not random)"""
+        # Run multiple times with different random seeds
+        # The n-gram scorer should override randomness
+        formulas = ["G p", "p -> q", "p <-> q"]
+        
+        for formula in formulas:
+            results = set()
+            for seed in range(10):
+                random.seed(seed)
+                node = parse_ltl_string(formula)
+                english = node.__to_english__()
+                results.add(english)
+            
+            # With n-gram selection, there should be exactly one result
+            # (the best-scored one), not multiple random ones
+            self.assertEqual(
+                len(results), 1,
+                f"N-gram selection should produce consistent results for {formula}, "
+                f"but got: {results}"
+            )
+    
+    def test_ngram_globally_selection(self):
+        """N-gram scorer should select the most natural globally translation"""
+        node = parse_ltl_string("G p")
+        english = node.__to_english__()
+        # The scorer should pick "It is always the case that 'p'" 
+        # as the highest-scoring option based on n-gram patterns
+        self.assertEqual(english, "It is always the case that 'p'")
+    
+    def test_ngram_implication_selection(self):
+        """N-gram scorer should select the most natural implication translation"""
+        node = parse_ltl_string("p -> q")
+        english = node.__to_english__()
+        # The scorer should pick "If 'p', then 'q'" as more natural
+        self.assertEqual(english, "If 'p', then 'q'")
+    
+    def test_ngram_equivalence_selection(self):
+        """N-gram scorer should select the most natural equivalence translation"""
+        node = parse_ltl_string("p <-> q")
+        english = node.__to_english__()
+        # The scorer should pick "'p' if and only if 'q'" as most natural
+        self.assertEqual(english, "'p' if and only if 'q'")
+    
+    def test_nested_translations_lowercase(self):
+        """Nested translations should use lowercase (not capitalized)"""
+        # F(n -> G z) should have lowercase inner translations
+        node = parse_ltl_string("F(n -> G z)")
+        english = node.__to_english__()
+        # Inner implication should be lowercase
+        self.assertIn("implies it is always", english.lower())
+    
+    def test_nested_globally_implication(self):
+        """G(p -> q) should have lowercase inner implication"""
+        node = parse_ltl_string("G(p -> q)")
+        english = node.__to_english__()
+        # Should contain "if 'p', then 'q'" not "If 'p', then 'q'"
+        self.assertIn("if 'p', then 'q'", english)
+
+
 if __name__ == "__main__":
     unittest.main()

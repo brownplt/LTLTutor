@@ -221,8 +221,8 @@ class UntilNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__().rstrip('.')
-        rhs = self.right.__to_english__().rstrip('.')
+        lhs = ltltoeng.get_nested_english(self.left)
+        rhs = ltltoeng.get_nested_english(self.right)
         return ltltoeng.capitalize_sentence(f"{lhs} until {rhs}")
     
     def __forge__(self):
@@ -241,7 +241,7 @@ class NextNode(UnaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        op = self.operand.__to_english__().rstrip('.')
+        op = ltltoeng.get_nested_english(self.operand)
         return ltltoeng.capitalize_sentence(f"in the next step, {op}")
     
     def __forge__(self):
@@ -261,14 +261,14 @@ class GloballyNode(UnaryOperatorNode):
         if x is not None:
             return x
 
-        op = self.operand.__to_english__().rstrip('.')
+        op = ltltoeng.get_nested_english(self.operand)
         patterns = [
             f"it is always the case that {op}",
             f"at all times, {op}",
             f"{op} is always true"
         ]
 
-        english = random.choice(patterns)
+        english = ltltoeng.select_from_patterns(patterns)
         return ltltoeng.capitalize_sentence(english)
     
     def __forge__(self):
@@ -287,7 +287,7 @@ class FinallyNode(UnaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        op = self.operand.__to_english__().rstrip('.')
+        op = ltltoeng.get_nested_english(self.operand)
 
         english = f"eventually, {op}"
         return ltltoeng.capitalize_sentence(english)
@@ -310,8 +310,8 @@ class OrNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__().rstrip('.')
-        rhs = self.right.__to_english__().rstrip('.')
+        lhs = ltltoeng.get_nested_english(self.left)
+        rhs = ltltoeng.get_nested_english(self.right)
         return ltltoeng.capitalize_sentence(f"either {lhs} or {rhs}")
     
 
@@ -326,8 +326,8 @@ class AndNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__().rstrip('.')
-        rhs = self.right.__to_english__().rstrip('.')
+        lhs = ltltoeng.get_nested_english(self.left)
+        rhs = ltltoeng.get_nested_english(self.right)
         return ltltoeng.capitalize_sentence(f"both {lhs} and {rhs}")
 
 
@@ -341,7 +341,7 @@ class NotNode(UnaryOperatorNode):
         if x is not None:
             return x
 
-        op = self.operand.__to_english__().rstrip('.')
+        op = ltltoeng.get_nested_english(self.operand)
 
         ## If the operand is a literal, we can just negate it
         if isinstance(self.operand, LiteralNode):
@@ -359,8 +359,8 @@ class ImpliesNode(BinaryOperatorNode):
         if x is not None:
             return x
             
-        lhs = self.left.__to_english__().rstrip('.')
-        rhs = self.right.__to_english__().rstrip('.')
+        lhs = ltltoeng.get_nested_english(self.left)
+        rhs = ltltoeng.get_nested_english(self.right)
 
         # Potential patterns:
         patterns = [
@@ -369,8 +369,8 @@ class ImpliesNode(BinaryOperatorNode):
             f"whenever {lhs}, then {rhs}"
         ]
 
-        # Choose a pattern randomly, and then return the corrected sentence
-        english = random.choice(patterns)
+        # Select the best pattern using n-gram scoring
+        english = ltltoeng.select_from_patterns(patterns)
         return ltltoeng.capitalize_sentence(english)
 
 
@@ -383,8 +383,8 @@ class EquivalenceNode(BinaryOperatorNode):
         x = ltltoeng.apply_special_pattern_if_possible(self)
         if x is not None:
             return x
-        lhs = self.left.__to_english__().rstrip('.')
-        rhs = self.right.__to_english__().rstrip('.')
+        lhs = ltltoeng.get_nested_english(self.left)
+        rhs = ltltoeng.get_nested_english(self.right)
 
         # Potential patterns:
         patterns = [
@@ -393,8 +393,8 @@ class EquivalenceNode(BinaryOperatorNode):
             f"{lhs} is equivalent to {rhs}"
         ]
 
-        # Choose a pattern randomly, and then return the corrected sentence
-        english = random.choice(patterns)
+        # Select the best pattern using n-gram scoring
+        english = ltltoeng.select_from_patterns(patterns)
         return ltltoeng.capitalize_sentence(english)
 
 
