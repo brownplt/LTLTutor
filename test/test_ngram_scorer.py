@@ -39,6 +39,17 @@ class TestTokenize(unittest.TestCase):
         self.assertIn("it", tokens)
         self.assertIn("is", tokens)
         self.assertIn("always", tokens)
+    
+    def test_tokenize_empty_string(self):
+        """Empty string should return empty list"""
+        tokens = tokenize("")
+        self.assertEqual(tokens, [])
+    
+    def test_tokenize_multiple_quoted(self):
+        """Multiple quoted literals should all be preserved"""
+        tokens = tokenize("'p' if and only if 'q'")
+        self.assertEqual(tokens.count("'p'"), 1)
+        self.assertEqual(tokens.count("'q'"), 1)
 
 
 class TestNgrams(unittest.TestCase):

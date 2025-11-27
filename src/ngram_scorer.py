@@ -23,7 +23,6 @@ BIGRAM_SCORES = {
     ('always', 'the'): 8,
     ('the', 'case'): 8,
     ('case', 'that'): 8,
-    ('is', 'always'): 9,
     ('always', 'true'): 9,
     
     # Eventually phrases
@@ -122,25 +121,39 @@ def tokenize(text):
     Returns:
         List of tokens (words in lowercase, quoted content preserved)
     """
-    # Replace quoted content temporarily
+    # Handle empty input
+    if not text:
+        return []
+    
+    # Pattern for quoted content - handles non-empty single-quoted strings
+    # Note: LTL literals are typically like 'p', 'q', etc., so we don't need
+    # to handle escaped quotes within literals
     quoted_pattern = r"'[^']+'"
     quoted_items = re.findall(quoted_pattern, text)
     
-    # Replace quoted content with placeholders
-    placeholder = "QUOTED_LITERAL"
-    text_without_quotes = re.sub(quoted_pattern, placeholder, text)
+    # Replace quoted content with unique placeholders
+    placeholder_base = "QUOTEDLITERAL"
+    text_with_placeholders = text
+    for i, quoted in enumerate(quoted_items):
+        text_with_placeholders = text_with_placeholders.replace(
+            quoted, f"{placeholder_base}{i}", 1
+        )
     
-    # Tokenize
-    words = re.findall(r'\b\w+\b', text_without_quotes.lower())
+    # Tokenize to lowercase words
+    words = re.findall(r'\b\w+\b', text_with_placeholders.lower())
     
     # Restore quoted items
     result = []
-    quote_idx = 0
     for word in words:
-        if word == placeholder.lower():
-            result.append(quoted_items[quote_idx] if quote_idx < len(quoted_items) else word)
-            quote_idx += 1
-        else:
+        # Check if this word is a placeholder
+        restored = False
+        for i, quoted in enumerate(quoted_items):
+            placeholder = f"{placeholder_base.lower()}{i}"
+            if word == placeholder:
+                result.append(quoted)
+                restored = True
+                break
+        if not restored:
             result.append(word)
     
     return result
