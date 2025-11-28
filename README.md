@@ -3,7 +3,9 @@
 An adaptive, misconception-driven tutoring system for **Linear Temporal Logic (LTL)**.
 
 **Try it:** [https://ltl-tutor.xyz](https://ltl-tutor.xyz)
+
 **Blog post:** [https://blog.brownplt.org/2024/08/08/ltltutor.html](https://blog.brownplt.org/2024/08/08/ltltutor.html)
+
 **CAV 2025 Distinguished Paper:** [https://cs.brown.edu/~sk/Publications/Papers/Published/pgnk-ltl-tutor/paper.pdf](https://cs.brown.edu/~sk/Publications/Papers/Published/pgnk-ltl-tutor/paper.pdf)
 
 ![Latest Tag](https://img.shields.io/github/v/tag/brownplt/LTLTutor?label=latest%20tag)
