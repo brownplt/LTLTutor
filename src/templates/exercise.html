@@ -172,29 +172,28 @@
 
         </div>
 
-        <div id="done" style="display: none;" class="card">
-            <div class="card-body">
-                <h6 class="card-title">Exercise completed! </h6>
-                <!-- <h6 class="card-subtitle mb-2 text-muted">You have completed the exercise</h6> -->
-
-                <p class="card-text">You got <span id="correctCount">0</span> questions correct and
-                    <span id="incorrectCount">0</span> questions incorrect.
-                </p>
+        <div id="done" style="display: none;" class="card shadow-sm mt-4">
+            <div class="card-header bg-success text-white text-center">
+                <h4 class="mb-0">Exercise Complete!</h4>
             </div>
-            <!-- I'd like a long button here that says, back to dashboard -->
-            <div class="btn-group d-flex mb-3" role="group" aria-label="Navigation Buttons">
-                <button class="btn btn-lg btn-secondary" onclick="window.location.href='/'">Dashboard</button>
-                <button class="btn btn-lg btn-secondary ml-2" onclick="window.location.href='/profile'">See Your Profile</button>
-            </div>
-            
-            <div class="card-body bg-light shadow rounded mb-3">
-
-                <h4 class="card-title">What Next?</h4>
-
-
-                <a href="/exercise/generate" class="btn btn-lg btn-primary btn-block">Generate another Exercise.</a>
-                <br>
+            <div class="card-body text-center">
+                <div class="py-3">
+                    <h5 class="text-success"><span id="correctCount">0</span> Correct</h5>
+                    <h5 class="text-danger"><span id="incorrectCount">0</span> Incorrect</h5>
+                </div>
                 <hr>
+                <h6 class="text-muted mb-3">What's next?</h6>
+                <div class="d-flex flex-column flex-md-row justify-content-center">
+                    <a href="/exercise/generate" class="btn btn-primary m-1">
+                        New Exercise
+                    </a>
+                    <a href="/profile" class="btn btn-outline-secondary m-1">
+                        View Profile
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary m-1">
+                        Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     </div>
