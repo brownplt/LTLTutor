@@ -181,7 +181,7 @@ class ExerciseBuilder:
                     recent_count += frequency
             
             # Calculate trend using comparative analysis
-            trend_score = self._calculate_trend(entries, now)
+            trend_score, _ = self._calculate_trend(entries, now)
             
             # Combine BKT probability with frequency-based weight
             base_weight = math.log1p(recency_weighted_sum) / log_scale_divisor
