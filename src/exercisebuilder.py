@@ -101,37 +101,107 @@ class ExerciseBuilder:
 
    
     def calculate_misconception_weights(self, concept_history):
-
+        """
+        Calculate weights for each misconception based on:
+        1. Recency: Recent misconceptions are weighted more heavily (exponential decay)
+        2. Frequency: More frequent misconceptions get higher weights
+        3. Trend: Worsening misconceptions get boosted, improving ones decay faster
+        4. Drilling: Persistent high-frequency misconceptions get additional boost
+        """
         weights = {}
-        default_weight = 0.5  # This is a parameter you can adjust
-
+        default_weight = 0.5
+        
+        # Decay parameters
+        recency_half_life_hours = 24  # Misconceptions decay by half every 24 hours
+        drilling_threshold = 3  # Minimum recent occurrences to trigger drilling boost
+        recent_window_hours = 48  # Window to consider for "recent" misconceptions
+        
+        now = datetime.datetime.now()
+        
         for concept, entries in concept_history.items():
+            if not entries:
+                weights[concept] = default_weight
+                continue
+                
             entries.sort()  # Sort by date
-            weight = default_weight
-            previous_frequency = 0
-
+            
+            # Calculate recency-weighted frequency
+            recency_weighted_sum = 0
+            recent_count = 0
+            total_count = 0
+            
             for date, frequency in entries:
-                hours_ago = (datetime.datetime.now() - date).total_seconds() / 3600
-                recency_weight = 1 / (1 + hours_ago)  # Decay function
-
-                # Check if frequency has increased or decreased
-                if frequency < previous_frequency:
-                    weight_change = -recency_weight * (previous_frequency - frequency)
-                else:
-                    weight_change = recency_weight * (frequency - previous_frequency)
-
-
-
-                weight += weight_change
-                previous_frequency = frequency
-
-            # Apply sigmoid function to scale weight between 0 and 1 (adjusted for default weight by 0.5)
+                hours_ago = (now - date).total_seconds() / 3600
+                
+                # Exponential decay based on half-life
+                decay_factor = math.pow(0.5, hours_ago / recency_half_life_hours)
+                recency_weighted_sum += frequency * decay_factor
+                total_count += frequency
+                
+                # Track recent occurrences for drilling
+                if hours_ago <= recent_window_hours:
+                    recent_count += frequency
+            
+            # Calculate trend (comparing recent vs older periods)
+            trend_score = self._calculate_trend(entries, now)
+            
+            # Base weight from recency-weighted frequency
+            # Use log scale to prevent extreme values
+            base_weight = math.log1p(recency_weighted_sum) / 3
+            
+            # Apply trend adjustment
+            # Positive trend (worsening) increases weight, negative (improving) decreases
+            trend_adjustment = trend_score * 0.2
+            
+            # Apply drilling boost for persistent recent misconceptions
+            drilling_boost = 0
+            if recent_count >= drilling_threshold:
+                drilling_boost = min(0.3, recent_count * 0.05)
+            
+            weight = default_weight + base_weight + trend_adjustment + drilling_boost
+            
+            # Apply sigmoid function to scale weight between 0 and 1
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
-        if max(weights.values()) < default_weight:
+        if weights and max(weights.values()) < default_weight:
             print("Increasing complexity for user")
             self.complexity += 1
         return weights
+    
+    def _calculate_trend(self, entries, now, window_hours=48):
+        """
+        Calculate the trend of misconception frequency.
+        Returns positive value if misconception is worsening (increasing),
+        negative if improving (decreasing), 0 if stable or insufficient data.
+        """
+        if len(entries) < 2:
+            return 0
+        
+        # Split into recent and older periods
+        recent_sum = 0
+        recent_count = 0
+        older_sum = 0
+        older_count = 0
+        
+        for date, frequency in entries:
+            hours_ago = (now - date).total_seconds() / 3600
+            if hours_ago <= window_hours:
+                recent_sum += frequency
+                recent_count += 1
+            elif hours_ago <= window_hours * 2:
+                older_sum += frequency
+                older_count += 1
+        
+        # Calculate averages
+        recent_avg = recent_sum / recent_count if recent_count > 0 else 0
+        older_avg = older_sum / older_count if older_count > 0 else 0
+        
+        # Return normalized trend (-1 to 1)
+        if older_avg == 0:
+            return 0.5 if recent_avg > 0 else 0
+        
+        trend = (recent_avg - older_avg) / max(recent_avg, older_avg)
+        return max(-1, min(1, trend))
 
     def operatorToSpot(self, operator):
         if operator in ["&", "&&"]:
