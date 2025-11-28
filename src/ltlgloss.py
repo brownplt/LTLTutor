@@ -12,6 +12,7 @@ pick the best-fitting gloss while keeping track of which frame was selected.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Iterable
@@ -46,8 +47,17 @@ def _normalize_sentence(text: str) -> str:
     """Clean a sentence and ensure it ends with punctuation."""
 
     cleaned = ltltoeng.correct_grammar(text.strip())
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    cleaned = re.sub(r"\s+([,.;:!?])", r"\1", cleaned)
+    cleaned = re.sub(r"\(\s+", "(", cleaned)
+    cleaned = re.sub(r"\s+\)", ")", cleaned)
+
+    if cleaned and cleaned[0].isalpha():
+        cleaned = cleaned[0].upper() + cleaned[1:]
+
     if cleaned and cleaned[-1] not in {".", "!", "?"}:
         cleaned += "."
+
     return cleaned
 
 
