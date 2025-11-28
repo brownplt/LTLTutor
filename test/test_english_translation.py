@@ -327,5 +327,87 @@ class TestCapitalization(unittest.TestCase):
         self.assertEqual(english, "'p'")  # Should not become "'P'"
 
 
+class TestPropositionalLogicPatterns(unittest.TestCase):
+    """Test propositional logic patterns for natural English"""
+    
+    def setUp(self):
+        random.seed(42)
+    
+    def test_double_negation(self):
+        """!!p should simplify to just p"""
+        node = parse_ltl_string("!!p")
+        english = node.__to_english__()
+        # Should not have "not" or awkward phrasing
+        self.assertEqual(english, "'p'")
+    
+    def test_negated_and_de_morgan(self):
+        """!(p & q) should use 'not both'"""
+        node = parse_ltl_string("!(p & q)")
+        english = node.__to_english__()
+        self.assertIn("not both", english.lower())
+        self.assertIn("'p'", english)
+        self.assertIn("'q'", english)
+    
+    def test_negated_or_de_morgan(self):
+        """!(p | q) should use 'neither...nor'"""
+        node = parse_ltl_string("!(p | q)")
+        english = node.__to_english__()
+        self.assertIn("neither", english.lower())
+        self.assertIn("nor", english.lower())
+    
+    def test_negated_implication(self):
+        """!(p -> q) should be 'p but not q'"""
+        node = parse_ltl_string("!(p -> q)")
+        english = node.__to_english__()
+        self.assertIn("but not", english.lower())
+    
+    def test_and_of_negations(self):
+        """!p & !q should use 'neither...nor'"""
+        node = parse_ltl_string("!p & !q")
+        english = node.__to_english__()
+        self.assertIn("neither", english.lower())
+        self.assertIn("nor", english.lower())
+    
+    def test_or_of_negations(self):
+        """!p | !q should use 'not both'"""
+        node = parse_ltl_string("!p | !q")
+        english = node.__to_english__()
+        self.assertIn("not both", english.lower())
+    
+    def test_conjunction_implies(self):
+        """(p & q) -> r should be 'if both p and q, then r'"""
+        node = parse_ltl_string("(p & q) -> r")
+        english = node.__to_english__()
+        self.assertIn("if both", english.lower())
+        self.assertIn("then", english.lower())
+    
+    def test_disjunction_implies(self):
+        """(p | q) -> r should be 'if either p or q, then r'"""
+        node = parse_ltl_string("(p | q) -> r")
+        english = node.__to_english__()
+        self.assertIn("if either", english.lower())
+        self.assertIn("then", english.lower())
+    
+    def test_implies_conjunction(self):
+        """p -> (q & r) should be 'if p, then both q and r'"""
+        node = parse_ltl_string("p -> (q & r)")
+        english = node.__to_english__()
+        self.assertIn("if", english.lower())
+        self.assertIn("then both", english.lower())
+    
+    def test_implies_disjunction(self):
+        """p -> (q | r) should be 'if p, then either q or r'"""
+        node = parse_ltl_string("p -> (q | r)")
+        english = node.__to_english__()
+        self.assertIn("if", english.lower())
+        self.assertIn("then either", english.lower())
+    
+    def test_negation_implies(self):
+        """!p -> q should use 'unless'"""
+        node = parse_ltl_string("!p -> q")
+        english = node.__to_english__()
+        self.assertIn("unless", english.lower())
+
+
 if __name__ == "__main__":
     unittest.main()

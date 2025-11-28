@@ -76,12 +76,53 @@ def capitalize_sentence(text):
     if not text:
         return text
     
+    # Clean up any double spaces or whitespace issues
+    text = ' '.join(text.split())
+    
     # If text starts with a quote, don't capitalize the quoted content
     if text.startswith("'"):
         return text
     
     # Capitalize the first letter
     return text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+
+
+def smooth_grammar(text):
+    """Apply grammar smoothing rules to improve readability.
+    
+    Fixes common awkward phrasings that arise from composition.
+    """
+    if not text:
+        return text
+    
+    # Fix "both both" -> "both"
+    text = text.replace("both both", "both")
+    
+    # Fix "either either" -> "either"  
+    text = text.replace("either either", "either")
+    
+    # Fix "not not" -> "" (double negation in text)
+    text = text.replace("not not ", "")
+    
+    # Fix "if if" -> "if"
+    text = text.replace("if if", "if")
+    
+    # Fix "then then" -> "then"
+    text = text.replace("then then", "then")
+    
+    # Fix awkward "it is the case that it is the case that"
+    text = text.replace("it is the case that it is the case that", "it is the case that")
+    
+    # Fix "it is not the case that it is not the case that" -> ""
+    text = text.replace("it is not the case that it is not the case that", "")
+    
+    # Fix ", ," -> ","
+    text = text.replace(", ,", ",")
+    
+    # Fix double spaces
+    text = ' '.join(text.split())
+    
+    return text
 
 
 #### Globally special cases ####
@@ -506,11 +547,188 @@ def apply_next_special_pattern_if_possible(node):
     return None
 
 
+#### Propositional Logic Patterns ####
+# These patterns handle common propositional logic structures that can be awkward in English
+# Source: Standard logical equivalences and De Morgan's laws
+
+# Pattern: !!p (double negation)
+# English: p (simplified)
+@pattern
+def double_negation_pattern_to_english(node):
+    if type(node) is ltlnode.NotNode:
+        op = node.operand
+        if type(op) is ltlnode.NotNode:
+            inner_eng = op.operand.__to_english__()
+            return inner_eng  # Already capitalized from inner call
+    return None
+
+
+# Pattern: !(p & q) (negated conjunction - De Morgan)
+# English: not both p and q / either not p or not q
+# Source: De Morgan's Laws - more natural to say "not both" than "it is not the case that both"
+@pattern
+def negated_and_pattern_to_english(node):
+    if type(node) is ltlnode.NotNode:
+        op = node.operand
+        if type(op) is ltlnode.AndNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            return f"not both {left_eng} and {right_eng}"
+    return None
+
+
+# Pattern: !(p | q) (negated disjunction - De Morgan)  
+# English: neither p nor q
+# Source: De Morgan's Laws - "neither...nor" is the natural English form
+@pattern
+def negated_or_pattern_to_english(node):
+    if type(node) is ltlnode.NotNode:
+        op = node.operand
+        if type(op) is ltlnode.OrNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            return f"neither {left_eng} nor {right_eng}"
+    return None
+
+
+# Pattern: !(p -> q) (negated implication)
+# English: p but not q
+# Logically equivalent to: p & !q
+# Source: Material implication - negating "if p then q" means p is true but q is false
+@pattern
+def negated_implication_pattern_to_english(node):
+    if type(node) is ltlnode.NotNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            return f"{left_eng}, but not {right_eng}"
+    return None
+
+
+# Pattern: p -> !q
+# English: if p, then not q / p excludes q
+@pattern
+def implies_negation_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        right = node.right
+        if type(right) is ltlnode.NotNode:
+            left_eng = clean_for_composition(node.left.__to_english__())
+            right_eng = clean_for_composition(right.operand.__to_english__())
+            # For simple literals, use cleaner phrasing
+            if type(node.left) is ltlnode.LiteralNode and type(right.operand) is ltlnode.LiteralNode:
+                return f"{left_eng} excludes {right_eng}"
+            return f"if {left_eng}, then not {right_eng}"
+    return None
+
+
+# Pattern: !p -> q  
+# English: if not p, then q / q unless p
+@pattern
+def negation_implies_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        left = node.left
+        if type(left) is ltlnode.NotNode:
+            left_eng = clean_for_composition(left.operand.__to_english__())
+            right_eng = clean_for_composition(node.right.__to_english__())
+            return f"{right_eng} unless {left_eng}"
+    return None
+
+
+# Pattern: !p & !q
+# English: neither p nor q (same as !(p | q) by De Morgan)
+@pattern
+def and_of_negations_pattern_to_english(node):
+    if type(node) is ltlnode.AndNode:
+        left = node.left
+        right = node.right
+        if type(left) is ltlnode.NotNode and type(right) is ltlnode.NotNode:
+            left_eng = clean_for_composition(left.operand.__to_english__())
+            right_eng = clean_for_composition(right.operand.__to_english__())
+            return f"neither {left_eng} nor {right_eng}"
+    return None
+
+
+# Pattern: !p | !q
+# English: not both p and q (same as !(p & q) by De Morgan)
+@pattern
+def or_of_negations_pattern_to_english(node):
+    if type(node) is ltlnode.OrNode:
+        left = node.left
+        right = node.right
+        if type(left) is ltlnode.NotNode and type(right) is ltlnode.NotNode:
+            left_eng = clean_for_composition(left.operand.__to_english__())
+            right_eng = clean_for_composition(right.operand.__to_english__())
+            return f"not both {left_eng} and {right_eng}"
+    return None
+
+
+# Pattern: (p & q) -> r
+# English: if both p and q, then r
+@pattern
+def conjunction_implies_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        left = node.left
+        if type(left) is ltlnode.AndNode:
+            p_eng = clean_for_composition(left.left.__to_english__())
+            q_eng = clean_for_composition(left.right.__to_english__())
+            r_eng = clean_for_composition(node.right.__to_english__())
+            return f"if both {p_eng} and {q_eng}, then {r_eng}"
+    return None
+
+
+# Pattern: (p | q) -> r
+# English: if either p or q, then r
+@pattern
+def disjunction_implies_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        left = node.left
+        if type(left) is ltlnode.OrNode:
+            p_eng = clean_for_composition(left.left.__to_english__())
+            q_eng = clean_for_composition(left.right.__to_english__())
+            r_eng = clean_for_composition(node.right.__to_english__())
+            return f"if either {p_eng} or {q_eng}, then {r_eng}"
+    return None
+
+
+# Pattern: p -> (q & r)
+# English: if p, then both q and r
+@pattern
+def implies_conjunction_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        right = node.right
+        if type(right) is ltlnode.AndNode:
+            # Skip if this looks like a temporal pattern (F inside)
+            if type(right.left) is ltlnode.FinallyNode or type(right.right) is ltlnode.FinallyNode:
+                return None
+            p_eng = clean_for_composition(node.left.__to_english__())
+            q_eng = clean_for_composition(right.left.__to_english__())
+            r_eng = clean_for_composition(right.right.__to_english__())
+            return f"if {p_eng}, then both {q_eng} and {r_eng}"
+    return None
+
+
+# Pattern: p -> (q | r)
+# English: if p, then either q or r
+@pattern
+def implies_disjunction_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        right = node.right
+        if type(right) is ltlnode.OrNode:
+            p_eng = clean_for_composition(node.left.__to_english__())
+            q_eng = clean_for_composition(right.left.__to_english__())
+            r_eng = clean_for_composition(right.right.__to_english__())
+            return f"if {p_eng}, then either {q_eng} or {r_eng}"
+    return None
+
+
 def apply_special_pattern_if_possible(node):
 
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
+            # Apply grammar smoothing and capitalization
+            result = smooth_grammar(result)
             return capitalize_sentence(result)
     return None
 
