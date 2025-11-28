@@ -68,16 +68,38 @@ def areDisjoint(f, g):
 
 
 def generate_accepting_words(automaton, max_runs=5):
+    """Generate up to max_runs distinct accepting words by excluding previously seen traces."""
     words = []
+    current_aut = automaton
+    
     for _ in range(max_runs):
-        run = automaton.accepting_run()
+        # Check if current automaton is empty
+        if current_aut.is_empty():
+            break
+            
+        run = current_aut.accepting_run()
         if run:
             # Convert run to a word that the automaton accepts
             word = spot.twa_word(run)
-            word = str(word)
-            words.append(word)
+            word_str = str(word)
+            
+            # Only add if we haven't seen it (safety check)
+            if word_str not in words:
+                words.append(word_str)
+            
+            # Exclude this trace from future runs
+            try:
+                # Build automaton that accepts only this trace
+                trace_aut = word.as_automaton()
+                # Complement it (now accepts everything EXCEPT this trace)
+                not_trace_aut = spot.complement(trace_aut)
+                # Product with current automaton to exclude this trace
+                current_aut = spot.product(current_aut, not_trace_aut)
+            except Exception as e:
+                print(f"Warning: Could not exclude trace '{word_str}': {e}")
+                break
         else:
-            break  # Stop if no further accepting run is found
+            break  # Stop if no accepting run is found
     return words
 
 def generate_accepted_traces(formula, max_traces=5):
