@@ -8,6 +8,38 @@ try:
 except ImportError:
     _inflect_engine = None
 
+try:
+    from ngram_scorer import select_best_translation
+    _use_ngram_selection = True
+except ImportError:
+    _use_ngram_selection = False
+
+
+def select_from_patterns(patterns, use_ngram=True):
+    """Select the best translation from multiple candidates.
+    
+    If n-gram scoring is available and use_ngram is True, uses n-gram scoring
+    to select the most natural-sounding translation. Otherwise, falls back to
+    random selection.
+    
+    Args:
+        patterns: List of candidate English translations
+        use_ngram: Whether to use n-gram scoring (default: True)
+        
+    Returns:
+        The selected translation
+    """
+    if not patterns:
+        return None
+    
+    if len(patterns) == 1:
+        return patterns[0]
+    
+    if use_ngram and _use_ngram_selection:
+        return select_best_translation(patterns)
+    else:
+        return random.choice(patterns)
+
 ## We should list the various patterns of LTL formulae that we can handle
 
 ### What do we do about nested Globally and Finally nodes? ###
@@ -82,6 +114,37 @@ def capitalize_sentence(text):
     
     # Capitalize the first letter
     return text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+
+
+def uncapitalize_sentence(text):
+    """Uncapitalize the first letter of a sentence for nested contexts.
+    
+    Handles edge cases like quoted literals at the start.
+    
+    Examples:
+        'Whenever p' -> 'whenever p'
+        "'p' holds" -> "'p' holds" (don't change quoted content)
+        'At all times' -> 'at all times'
+    """
+    if not text:
+        return text
+    
+    # If text starts with a quote, don't modify
+    if text.startswith("'"):
+        return text
+    
+    # Uncapitalize the first letter
+    return text[0].lower() + text[1:] if len(text) > 1 else text.lower()
+
+
+def get_nested_english(node):
+    """Get English translation for a node in a nested context.
+    
+    Returns the uncapitalized translation (without trailing periods)
+    for use in composed translations.
+    """
+    english = node.__to_english__().rstrip('.')
+    return uncapitalize_sentence(english)
 
 
 #### Globally special cases ####
