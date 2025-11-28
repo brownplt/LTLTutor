@@ -8,6 +8,7 @@ import random
 import re
 import math
 import ltltoeng
+import ltlgloss
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
 
@@ -289,14 +290,19 @@ class ExerciseBuilder:
     def gen_nl_question(self, formula):
 
         as_node = ltlnode.parse_ltl_string(formula)
-        formula_eng = as_node.__to_english__()
-        if formula_eng is None or formula_eng == "":
+        gloss_result = ltlgloss.gloss_formula(as_node)
+
+        if gloss_result.best_gloss is None or gloss_result.best_gloss == "":
             return None
-        
-        formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
+
+        formula_eng_corrected = ltltoeng.correct_grammar(gloss_result.best_gloss)
         ### If there are multiple '.' in a row, replace with a single '.'
-        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng)
-        return formula_eng_corrected
+        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
+        return {
+            "text": formula_eng_corrected,
+            "frame": gloss_result.frame.value,
+            "candidates": {frame.value: gloss for frame, gloss in gloss_result.frame_glosses.items()},
+        }
 
 
     def get_options_with_misconceptions_as_formula(self, answer):
@@ -357,7 +363,9 @@ class ExerciseBuilder:
             return None
 
         return {
-            "question": question,
+            "question": question["text"] if isinstance(question, dict) else question,
+            "gloss_frame": question.get("frame", "") if isinstance(question, dict) else "",
+            "gloss_candidates": question.get("candidates", {}) if isinstance(question, dict) else {},
             "type": self.ENGLISHTOLTL,
             "options": options
         }

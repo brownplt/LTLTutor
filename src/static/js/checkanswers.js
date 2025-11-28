@@ -15,6 +15,14 @@ function getQuestionTrace(parentNode) {
     return parentNode.querySelector('.actualQuestionTrace').innerText;
 }
 
+function getQuestionFrame(parentNode) {
+    let questionNode = parentNode.querySelector('.actualQuestion');
+    if (questionNode && questionNode.dataset) {
+        return questionNode.dataset.glossFrame || "";
+    }
+    return "";
+}
+
 function getQuestionOptions(parentNode) {
 
     let allRadios = parentNode.querySelectorAll('input[type=radio]');
@@ -213,6 +221,7 @@ async function tracesatisfaction_mc_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
+        question_frame: getQuestionFrame(parent_node),
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
         exercise: getExerciseName()
     }
@@ -242,6 +251,7 @@ async function tracesatisfaction_yn_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
+        question_frame: getQuestionFrame(parent_node),
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
         exercise: getExerciseName()
     }
@@ -271,6 +281,7 @@ async function englishtoltl_getfeedback(button) {
         misconceptions: selected_radio.dataset.misconceptions,
         question_text: question_text,
         question_options: question_options,
+        question_frame: getQuestionFrame(parent_node),
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
         exercise: getExerciseName()
     }
