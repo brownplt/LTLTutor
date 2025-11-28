@@ -115,6 +115,11 @@ class ExerciseBuilder:
         recency_half_life_hours = 24  # Misconceptions decay by half every 24 hours
         drilling_threshold = 3  # Minimum recent occurrences to trigger drilling boost
         recent_window_hours = 48  # Window to consider for "recent" misconceptions
+        # Normalizes log-scaled frequency; higher values reduce impact of high frequency
+        log_scale_divisor = 3
+        
+        # Pre-calculate decay constant for performance (exponential decay formula)
+        decay_constant = -math.log(2) / recency_half_life_hours
         
         now = datetime.datetime.now()
         
@@ -134,7 +139,7 @@ class ExerciseBuilder:
                 hours_ago = (now - date).total_seconds() / 3600
                 
                 # Exponential decay based on half-life
-                decay_factor = math.pow(0.5, hours_ago / recency_half_life_hours)
+                decay_factor = math.exp(decay_constant * hours_ago)
                 recency_weighted_sum += frequency * decay_factor
                 total_count += frequency
                 
@@ -146,8 +151,7 @@ class ExerciseBuilder:
             trend_score = self._calculate_trend(entries, now)
             
             # Base weight from recency-weighted frequency
-            # Use log scale to prevent extreme values
-            base_weight = math.log1p(recency_weighted_sum) / 3
+            base_weight = math.log1p(recency_weighted_sum) / log_scale_divisor
             
             # Apply trend adjustment
             # Positive trend (worsening) increases weight, negative (improving) decreases
@@ -177,6 +181,9 @@ class ExerciseBuilder:
         if len(entries) < 2:
             return 0
         
+        # Trend value for new misconceptions (no older data to compare)
+        new_misconception_trend = 0.5
+        
         # Split into recent and older periods
         recent_sum = 0
         recent_count = 0
@@ -198,7 +205,7 @@ class ExerciseBuilder:
         
         # Return normalized trend (-1 to 1)
         if older_avg == 0:
-            return 0.5 if recent_avg > 0 else 0
+            return new_misconception_trend if recent_avg > 0 else 0
         
         trend = (recent_avg - older_avg) / max(recent_avg, older_avg)
         return max(-1, min(1, trend))
