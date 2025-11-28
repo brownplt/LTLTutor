@@ -53,6 +53,17 @@ def flatten(lst):
 app.jinja_env.filters['flatten'] = flatten
 
 
+@app.template_filter('fromjson')
+def fromjson_filter(s):
+    """Parse a JSON string into a Python object"""
+    try:
+        return json.loads(s) if s else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+app.jinja_env.filters['fromjson'] = fromjson_filter
+
+
 sk = os.environ.get('SECRET_KEY')
 app.secret_key = sk
 
@@ -328,6 +339,51 @@ def loganswer(questiontype):
         return { "message": "INVALID QUESTION TYPE!!." }
     return { "message": "No further feedback." }
 
+
+@app.route('/exercise/predefined', methods=['GET', 'POST'])
+@login_required
+def exercise_predefined_get():
+    """Load an exercise from a sourceuri (preload:, instructor:, or URL)"""
+    if request.method == 'GET':
+        sourceuri = request.args.get('sourceuri')
+    else:
+        sourceuri = request.form.get('sourceuri')
+    
+    if not sourceuri:
+        return redirect('/loadfromjson')
+    
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        
+        # Try to extract literals from questions for trace expansion
+        literals = set()
+        for q in data:
+            if q.get('type') == 'englishtoltl':
+                # Get literals from correct answer
+                for opt in q.get('options', []):
+                    if opt.get('isCorrect'):
+                        try:
+                            literals.update(exerciseprocessor.getFormulaLiterals(opt['option']))
+                        except:
+                            pass
+            elif 'question' in q:
+                # For trace questions, try to parse the formula
+                try:
+                    literals.update(exerciseprocessor.getFormulaLiterals(q['question']))
+                except:
+                    pass
+        
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals) if literals else [])
+        
+        # Generate exercise name from sourceuri
+        exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
+        
+    except Exception as e:
+        print(f"Error loading exercise from {sourceuri}: {e}")
+        return f"Error loading exercise: {str(e)}"
+    
+    return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_name)
 
 
 @app.route('/exercise/generate', methods=['GET'])

@@ -29,6 +29,7 @@ Session = sessionmaker(bind=engine, expire_on_commit=True)
 
 USER_TABLE = 'users'
 COURSE_TABLE = 'registered_courses'
+INSTRUCTOR_EXERCISE_TABLE = 'instructor_exercises'
 
 
 class Course(Base):
@@ -36,6 +37,18 @@ class Course(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     owner = Column(String)
+
+
+class InstructorExercise(Base):
+    """Stores exercises created by instructors"""
+    __tablename__ = INSTRUCTOR_EXERCISE_TABLE
+    id = Column(Integer, primary_key=True)
+    name = Column(String)  # Human-readable name
+    owner = Column(String)  # Username of instructor who created it
+    course = Column(String, nullable=True)  # Optional: assigned to a specific course
+    exercise_json = Column(String)  # JSON string of the exercise questions
+    created_at = Column(String)  # ISO timestamp
+    updated_at = Column(String)  # ISO timestamp
 
 
 
@@ -99,6 +112,9 @@ if USER_TABLE not in inspector.get_table_names():
 
 if COURSE_TABLE not in inspector.get_table_names():
     Base.metadata.tables[COURSE_TABLE].create(engine)
+
+if INSTRUCTOR_EXERCISE_TABLE not in inspector.get_table_names():
+    Base.metadata.tables[INSTRUCTOR_EXERCISE_TABLE].create(engine)
 
 def init_app(app):
     login_manager = LoginManager()
@@ -283,3 +299,211 @@ def getUserCourse(username):
             return ""
 
         return course.course_id
+
+
+# =====================================================
+# Instructor Exercise Management Routes
+# =====================================================
+
+def get_instructor_exercises(username):
+    """Get all exercises created by an instructor"""
+    with Session() as session:
+        exercises = session.query(InstructorExercise).filter_by(owner=username).all()
+        return exercises
+
+
+def get_instructor_exercise_by_id(exercise_id):
+    """Get a specific exercise by ID"""
+    with Session() as session:
+        exercise = session.query(InstructorExercise).filter_by(id=exercise_id).first()
+        return exercise
+
+
+def get_exercises_for_course(course_name):
+    """Get all exercises assigned to a specific course"""
+    with Session() as session:
+        exercises = session.query(InstructorExercise).filter_by(course=course_name).all()
+        return exercises
+
+
+@authroutes.route('/instructor/exercises', methods=['GET'])
+@login_required_as_courseinstructor
+def list_instructor_exercises():
+    """List all exercises created by the instructor"""
+    username = current_user.username
+    exercises = get_instructor_exercises(username)
+    owned_courses = get_owned_courses(username)
+    course_names = [c.name for c in owned_courses]
+    return render_template('instructor/exercises.html', 
+                           exercises=exercises, 
+                           course_names=course_names)
+
+
+@authroutes.route('/instructor/exercises/new', methods=['GET', 'POST'])
+@login_required_as_courseinstructor
+def create_instructor_exercise():
+    """Create a new exercise"""
+    import json
+    from datetime import datetime
+    
+    if request.method == 'POST':
+        exercise_name = request.form.get('exercise_name', '').strip()
+        exercise_json = request.form.get('exercise_json', '[]')
+        course = request.form.get('course', None)
+        
+        if not exercise_name:
+            flash('Exercise name is required.')
+            return redirect(url_for('authroutes.create_instructor_exercise'))
+        
+        # Validate JSON
+        try:
+            questions = json.loads(exercise_json)
+            if not isinstance(questions, list):
+                raise ValueError("Exercise must be a list of questions")
+        except (json.JSONDecodeError, ValueError) as e:
+            flash(f'Invalid exercise JSON: {str(e)}')
+            return redirect(url_for('authroutes.create_instructor_exercise'))
+        
+        now = datetime.utcnow().isoformat()
+        
+        with Session() as session:
+            exercise = InstructorExercise(
+                name=exercise_name,
+                owner=current_user.username,
+                course=course if course else None,
+                exercise_json=exercise_json,
+                created_at=now,
+                updated_at=now
+            )
+            session.add(exercise)
+            session.commit()
+            exercise_id = exercise.id
+        
+        flash(f'Exercise "{exercise_name}" created successfully!')
+        return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
+    
+    # GET request - show the exercise builder
+    owned_courses = get_owned_courses(current_user.username)
+    course_names = [c.name for c in owned_courses]
+    return render_template('instructor/exercise_builder.html', 
+                           exercise=None,
+                           course_names=course_names)
+
+
+@authroutes.route('/instructor/exercises/<int:exercise_id>', methods=['GET', 'POST'])
+@login_required_as_courseinstructor
+def edit_instructor_exercise(exercise_id):
+    """Edit an existing exercise"""
+    import json
+    from datetime import datetime
+    
+    with Session() as session:
+        exercise = session.query(InstructorExercise).filter_by(id=exercise_id).first()
+        
+        if not exercise:
+            flash('Exercise not found.')
+            return redirect(url_for('authroutes.list_instructor_exercises'))
+        
+        if exercise.owner != current_user.username:
+            flash('You do not have permission to edit this exercise.')
+            return redirect(url_for('authroutes.list_instructor_exercises'))
+        
+        if request.method == 'POST':
+            exercise_name = request.form.get('exercise_name', '').strip()
+            exercise_json = request.form.get('exercise_json', '[]')
+            course = request.form.get('course', None)
+            
+            if not exercise_name:
+                flash('Exercise name is required.')
+                return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
+            
+            # Validate JSON
+            try:
+                questions = json.loads(exercise_json)
+                if not isinstance(questions, list):
+                    raise ValueError("Exercise must be a list of questions")
+            except (json.JSONDecodeError, ValueError) as e:
+                flash(f'Invalid exercise JSON: {str(e)}')
+                return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
+            
+            exercise.name = exercise_name
+            exercise.exercise_json = exercise_json
+            exercise.course = course if course else None
+            exercise.updated_at = datetime.utcnow().isoformat()
+            session.commit()
+            
+            flash(f'Exercise "{exercise_name}" updated successfully!')
+            return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
+        
+        # GET request
+        owned_courses = get_owned_courses(current_user.username)
+        course_names = [c.name for c in owned_courses]
+        
+        # Make a copy of the exercise data to pass to the template
+        exercise_data = {
+            'id': exercise.id,
+            'name': exercise.name,
+            'course': exercise.course,
+            'exercise_json': exercise.exercise_json,
+            'created_at': exercise.created_at,
+            'updated_at': exercise.updated_at
+        }
+        
+    return render_template('instructor/exercise_builder.html', 
+                           exercise=exercise_data,
+                           course_names=course_names)
+
+
+@authroutes.route('/instructor/exercises/<int:exercise_id>/delete', methods=['POST'])
+@login_required_as_courseinstructor
+def delete_instructor_exercise(exercise_id):
+    """Delete an exercise"""
+    with Session() as session:
+        exercise = session.query(InstructorExercise).filter_by(id=exercise_id).first()
+        
+        if not exercise:
+            flash('Exercise not found.')
+            return redirect(url_for('authroutes.list_instructor_exercises'))
+        
+        if exercise.owner != current_user.username:
+            flash('You do not have permission to delete this exercise.')
+            return redirect(url_for('authroutes.list_instructor_exercises'))
+        
+        exercise_name = exercise.name
+        session.delete(exercise)
+        session.commit()
+        
+        flash(f'Exercise "{exercise_name}" deleted.')
+    
+    return redirect(url_for('authroutes.list_instructor_exercises'))
+
+
+@authroutes.route('/instructor/exercises/<int:exercise_id>/suggest', methods=['POST'])
+@login_required_as_courseinstructor
+def suggest_distractors_for_exercise(exercise_id):
+    """API endpoint to suggest distractors for a question"""
+    import json
+    import syntacticmutator
+    import ltlnode
+    
+    question = request.form.get('question', '')
+    answer = request.form.get('answer', '')
+    kind = request.form.get('kind', 'englishtoltl')
+    
+    distractors = []
+    error = None
+    
+    if kind == 'englishtoltl':
+        try:
+            parsed = ltlnode.parse_ltl_string(answer)
+            if parsed:
+                mutations = syntacticmutator.getAllMutationsOf(parsed)
+                for mutation in mutations:
+                    distractors.append({
+                        'formula': str(mutation['formula']),
+                        'code': mutation['code']
+                    })
+        except Exception as e:
+            error = str(e)
+    
+    return json.dumps({'distractors': distractors, 'error': error}), 200, {'Content-Type': 'application/json'}
