@@ -478,15 +478,14 @@ def delete_instructor_exercise(exercise_id):
     return redirect(url_for('authroutes.list_instructor_exercises'))
 
 
-@authroutes.route('/instructor/exercises/<int:exercise_id>/suggest', methods=['POST'])
+@authroutes.route('/instructor/suggest-distractors', methods=['POST'])
 @login_required_as_courseinstructor
-def suggest_distractors_for_exercise(exercise_id):
+def suggest_distractors():
     """API endpoint to suggest distractors for a question"""
     import json
     import syntacticmutator
     import ltlnode
     
-    question = request.form.get('question', '')
     answer = request.form.get('answer', '')
     kind = request.form.get('kind', 'englishtoltl')
     
@@ -506,4 +505,5 @@ def suggest_distractors_for_exercise(exercise_id):
         except Exception as e:
             error = str(e)
     
+    return json.dumps({'distractors': distractors, 'error': error}), 200, {'Content-Type': 'application/json'}    
     return json.dumps({'distractors': distractors, 'error': error}), 200, {'Content-Type': 'application/json'}

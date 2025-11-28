@@ -209,7 +209,28 @@
                                     <!-- Options will be rendered here -->
                                 </div>
 
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addManualOption()">
+                                <!-- Manual Option Form (inline, not browser prompt) -->
+                                <div id="manualOptionForm" class="card bg-light mt-2" style="display:none;">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold">Option Text</label>
+                                            <input type="text" class="form-control form-control-sm" id="manualOptionText"
+                                                   placeholder="Enter the option (e.g., LTL formula or trace)">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold">Misconceptions (optional)</label>
+                                            <input type="text" class="form-control form-control-sm" id="manualOptionMisconceptions"
+                                                   placeholder="e.g., ImplicitG, Precedence">
+                                            <small class="form-text text-muted">Comma-separated misconception codes</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-primary" onclick="submitManualOption()">Add Option</button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="hideManualOptionForm()">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addManualOptionBtn" onclick="showManualOptionForm()">
                                     + Add Manual Option
                                 </button>
 
@@ -380,18 +401,41 @@
         renderOptions();
     }
 
-    function addManualOption() {
-        const option = prompt('Enter the option text:');
-        if (!option) return;
+    function showManualOptionForm() {
+        document.getElementById('manualOptionForm').style.display = 'block';
+        document.getElementById('addManualOptionBtn').style.display = 'none';
+        document.getElementById('manualOptionText').value = '';
+        document.getElementById('manualOptionMisconceptions').value = '';
+        document.getElementById('manualOptionText').focus();
+    }
+
+    function hideManualOptionForm() {
+        document.getElementById('manualOptionForm').style.display = 'none';
+        document.getElementById('addManualOptionBtn').style.display = 'inline-block';
+    }
+
+    function submitManualOption() {
+        const optionText = document.getElementById('manualOptionText').value.trim();
+        const misconceptionsText = document.getElementById('manualOptionMisconceptions').value.trim();
         
-        const misconceptions = prompt('Enter misconceptions (comma-separated, or leave empty):');
+        if (!optionText) {
+            document.getElementById('manualOptionText').classList.add('is-invalid');
+            return;
+        }
+        document.getElementById('manualOptionText').classList.remove('is-invalid');
+        
+        const misconceptions = misconceptionsText 
+            ? misconceptionsText.split(',').map(m => m.trim()).filter(m => m)
+            : [];
         
         currentOptions.push({
-            option: option,
+            option: optionText,
             isCorrect: false,
-            misconceptions: misconceptions ? misconceptions.split(',').map(m => m.trim()) : []
+            misconceptions: misconceptions
         });
+        
         renderOptions();
+        hideManualOptionForm();
     }
 
     function suggestDistractors() {
@@ -410,9 +454,8 @@
         container.style.display = 'block';
         list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating suggestions...</div>';
         
-        // Make AJAX request
-        $.post('{{ url_for("authroutes.suggest_distractors_for_exercise", exercise_id=exercise.id if exercise else 0) }}', {
-            question: question,
+        // Make AJAX request to the generic suggest endpoint
+        $.post('{{ url_for("authroutes.suggest_distractors") }}', {
             answer: answer,
             kind: kind
         }, function(response) {
@@ -436,8 +479,8 @@
                     </div>
                 </div>
             `).join('');
-        }).fail(function() {
-            list.innerHTML = '<div class="list-group-item text-danger">Failed to get suggestions. Try again.</div>';
+        }).fail(function(xhr, status, error) {
+            list.innerHTML = `<div class="list-group-item text-danger">Failed to get suggestions: ${escapeHtml(error || 'Unknown error')}</div>`;
         });
     }
 
