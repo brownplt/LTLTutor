@@ -153,10 +153,11 @@ class TestRegressionModel(unittest.TestCase):
             (now - datetime.timedelta(hours=24), 3),  # Recent: higher frequency
         ]
         
-        trend = builder._calculate_trend(entries, now)
+        trend_score, has_recent_data = builder._calculate_trend(entries, now)
         
         # Trend should be positive (worsening)
-        self.assertGreater(trend, 0)
+        self.assertGreater(trend_score, 0)
+        self.assertTrue(has_recent_data)
 
     def test_trend_calculation_improving(self):
         """Test that improving trends are detected."""
@@ -169,23 +170,55 @@ class TestRegressionModel(unittest.TestCase):
             (now - datetime.timedelta(hours=24), 1),  # Recent: lower frequency
         ]
         
-        trend = builder._calculate_trend(entries, now)
+        trend_score, has_recent_data = builder._calculate_trend(entries, now)
         
         # Trend should be negative (improving)
-        self.assertLess(trend, 0)
+        self.assertLess(trend_score, 0)
+        self.assertTrue(has_recent_data)
 
     def test_trend_calculation_insufficient_data(self):
         """Test that insufficient data returns neutral trend."""
         now = datetime.datetime.now()
         builder = ExerciseBuilder([])
         
-        # Single entry - insufficient for trend
+        # Single entry - returns slight positive (new misconception)
         entries = [(now - datetime.timedelta(hours=24), 2)]
         
-        trend = builder._calculate_trend(entries, now)
+        trend_score, has_recent_data = builder._calculate_trend(entries, now)
         
-        # Should return 0 for insufficient data
-        self.assertEqual(trend, 0)
+        # Should return 0.25 for new misconception with recent data
+        self.assertEqual(trend_score, 0.25)
+        self.assertTrue(has_recent_data)
+    
+    def test_trend_calculation_no_entries(self):
+        """Test that no entries returns zero trend with no recent data."""
+        now = datetime.datetime.now()
+        builder = ExerciseBuilder([])
+        
+        entries = []
+        
+        trend_score, has_recent_data = builder._calculate_trend(entries, now)
+        
+        # Should return 0 with no recent data
+        self.assertEqual(trend_score, 0)
+        self.assertFalse(has_recent_data)
+    
+    def test_trend_calculation_historical_data_only(self):
+        """Test that historical data (older than 96h) still calculates trends."""
+        now = datetime.datetime.now()
+        builder = ExerciseBuilder([])
+        
+        # Create entries all older than 96 hours
+        entries = [
+            (now - datetime.timedelta(hours=200), 1),  # Very old: low frequency
+            (now - datetime.timedelta(hours=150), 3),  # Less old: higher frequency
+        ]
+        
+        trend_score, has_recent_data = builder._calculate_trend(entries, now)
+        
+        # Should still calculate trend based on relative comparison
+        self.assertGreater(trend_score, 0)  # Worsening over historical period
+        self.assertFalse(has_recent_data)  # No recent data flag
 
     def test_exponential_decay_over_time(self):
         """Test that weights decay exponentially over time."""

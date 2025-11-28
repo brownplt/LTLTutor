@@ -213,22 +213,29 @@ class ExerciseBuilder:
     def _calculate_trend(self, entries, now, window_hours=48):
         """
         Calculate the trend of misconception frequency.
-        Returns positive value if misconception is worsening (increasing),
-        negative if improving (decreasing), 0 if stable or insufficient data.
+        Returns a tuple (trend_score, has_recent_data) where:
+        - trend_score: positive if worsening, negative if improving, 0 if stable
+        - has_recent_data: True if there's data within the recent window
+        
+        If no data is within the recent/older windows, uses relative time-based
+        splitting to compare the most recent half of data with the older half.
         """
         if len(entries) < 2:
-            return 0
+            # Single entry - new misconception
+            if len(entries) == 1:
+                return (0.25, True)  # Slight positive to indicate it exists but no trend yet
+            return (0, False)
         
-        # Trend value for new misconceptions (no older data to compare)
-        new_misconception_trend = 0.5
+        # Sort entries by date (oldest first)
+        sorted_entries = sorted(entries, key=lambda x: x[0])
         
-        # Split into recent and older periods
+        # First, try the absolute time window approach
         recent_sum = 0
         recent_count = 0
         older_sum = 0
         older_count = 0
         
-        for date, frequency in entries:
+        for date, frequency in sorted_entries:
             hours_ago = (now - date).total_seconds() / 3600
             if hours_ago <= window_hours:
                 recent_sum += frequency
@@ -237,21 +244,35 @@ class ExerciseBuilder:
                 older_sum += frequency
                 older_count += 1
         
-        # Calculate averages
-        recent_avg = recent_sum / recent_count if recent_count > 0 else 0
-        older_avg = older_sum / older_count if older_count > 0 else 0
+        # If we have data in both windows, use absolute time comparison
+        if recent_count > 0 and older_count > 0:
+            recent_avg = recent_sum / recent_count
+            older_avg = older_sum / older_count
+            max_avg = max(recent_avg, older_avg)
+            if max_avg == 0:
+                return (0, True)
+            trend = (recent_avg - older_avg) / max_avg
+            return (max(-1, min(1, trend)), True)
         
-        # Return normalized trend (-1 to 1)
-        if older_avg == 0:
-            return new_misconception_trend if recent_avg > 0 else 0
+        # If only recent data exists, it's a new or returning misconception
+        if recent_count > 0 and older_count == 0:
+            return (0.25, True)  # Slight positive - new activity
         
-        # Avoid division by zero when both averages are 0
+        # No data in recent windows - use relative comparison of all data
+        # Split entries into two halves (recent half vs older half)
+        mid = len(sorted_entries) // 2
+        older_half = sorted_entries[:mid]
+        recent_half = sorted_entries[mid:]
+        
+        older_avg = sum(f for _, f in older_half) / len(older_half)
+        recent_avg = sum(f for _, f in recent_half) / len(recent_half)
+        
         max_avg = max(recent_avg, older_avg)
         if max_avg == 0:
-            return 0
+            return (0, False)
         
         trend = (recent_avg - older_avg) / max_avg
-        return max(-1, min(1, trend))
+        return (max(-1, min(1, trend)), False)
 
     def operatorToSpot(self, operator):
         if operator in ["&", "&&"]:
@@ -627,11 +648,12 @@ class ExerciseBuilder:
             n = len(buckets_for_misconception)
 
             # Calculate trend for this misconception
-            trend_score = self._calculate_trend(buckets_for_misconception, now)
+            trend_score, has_recent_data = self._calculate_trend(buckets_for_misconception, now)
             trend_label = self._get_trend_label(trend_score)
             misconception_trends[misconception] = {
                 "score": trend_score,
-                "label": trend_label
+                "label": trend_label,
+                "has_recent_data": has_recent_data
             }
 
             for i in range(n):
