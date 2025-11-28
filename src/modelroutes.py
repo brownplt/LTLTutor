@@ -34,12 +34,14 @@ def profile():
 
     complexity = model['complexity']
     misconception_weights_over_time = model['misconception_weights_over_time']
+    misconception_trends = model.get('misconception_trends', {})
 
     ## I want to remove 'MisconceptionCode.' from the keys of misconception_weights_over_time
     misconception_weights_over_time = {key.replace('MisconceptionCode.', ''): value for key, value in misconception_weights_over_time.items()}
+    misconception_trends = {key.replace('MisconceptionCode.', ''): value for key, value in misconception_trends.items()}
 
 
-    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time, lookback_days = LOOKBACK_DAYS, num_answered = num_logs, num_correct = num_correct)
+    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time, misconception_trends = misconception_trends, lookback_days = LOOKBACK_DAYS, num_answered = num_logs, num_correct = num_correct)
 
 
 

@@ -45,8 +45,47 @@
 
         <hr>
 
+        <!-- Misconception Trends Summary -->
+        {% if misconception_trends %}
+        <h3 class="mt-5">Misconception Trends Summary</h3>
+        <p class="text-muted">Based on Bayesian Knowledge Tracing analysis comparing your recent (48h) vs. historical performance.</p>
+        <div class="row">
+            {% for misconception, trend in misconception_trends.items() %}
+            {% if trend.score != 0 or misconception_weights_over_time[misconception]|length > 0 %}
+            <div class="col-md-4 mb-3">
+                <div class="card {% if trend.score >= 0.5 %}border-danger{% elif trend.score >= 0.2 %}border-warning{% elif trend.score <= -0.2 %}border-success{% else %}border-secondary{% endif %}">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ misconception }}</h6>
+                        <p class="card-text">
+                            <span class="badge {% if trend.score >= 0.5 %}badge-danger{% elif trend.score >= 0.2 %}badge-warning{% elif trend.score <= -0.2 %}badge-success{% else %}badge-secondary{% endif %}">
+                                {{ trend.label }}
+                            </span>
+                        </p>
+                        <small class="text-muted">
+                            {% if trend.score > 0 %}
+                                ↑ Trend score: {{ "%.2f"|format(trend.score) }}
+                            {% elif trend.score < 0 %}
+                                ↓ Trend score: {{ "%.2f"|format(trend.score) }}
+                            {% else %}
+                                — No recent data
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <hr>
+        {% endif %}
+
 
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
+        <p class="text-muted">
+            This chart shows how your misconception likelihood has evolved over time using 
+            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a> 
+            combined with spaced repetition principles.
+        </p>
         <canvas id="allMisconceptionsChart"></canvas>
         <script>
         document.addEventListener('DOMContentLoaded', function() {

@@ -102,23 +102,48 @@ class ExerciseBuilder:
    
     def calculate_misconception_weights(self, concept_history):
         """
-        Calculate weights for each misconception based on:
-        1. Recency: Recent misconceptions are weighted more heavily (exponential decay)
-        2. Frequency: More frequent misconceptions get higher weights
-        3. Trend: Worsening misconceptions get boosted, improving ones decay faster
-        4. Drilling: Persistent high-frequency misconceptions get additional boost
+        Calculate weights for each misconception using an approach inspired by
+        Bayesian Knowledge Tracing (BKT) combined with spaced repetition principles.
+        
+        References:
+        - Corbett, A.T. & Anderson, J.R. (1994). Knowledge tracing: Modeling the
+          acquisition of procedural knowledge. User Modeling and User-Adapted
+          Interaction, 4(4), 253-278. https://doi.org/10.1007/BF01099821
+        - Pavlik, P.I. & Anderson, J.R. (2008). Using a model to compute the optimal
+          schedule of practice. Journal of Experimental Psychology: Applied, 14(2),
+          101-117. https://doi.org/10.1037/1076-898X.14.2.101
+        
+        The model considers:
+        1. Recency: Exponential decay based on spacing effect research (Ebbinghaus)
+        2. Frequency: Log-scaled to prevent extreme values from dominating
+        3. Trend: Bayesian-style update comparing recent vs historical performance
+        4. Drilling: Spaced repetition boost for persistent misconceptions
         """
         weights = {}
         default_weight = 0.5
         
-        # Decay parameters
-        recency_half_life_hours = 24  # Misconceptions decay by half every 24 hours
-        drilling_threshold = 3  # Minimum recent occurrences to trigger drilling boost
-        recent_window_hours = 48  # Window to consider for "recent" misconceptions
-        # Normalizes log-scaled frequency; higher values reduce impact of high frequency
+        # BKT-inspired parameters
+        # P(L0): Initial probability of having the misconception
+        prior_probability = 0.5
+        # P(T): Transition probability - likelihood of state change per observation
+        # In standard BKT: P(L_n|obs) = P(L_{n-1}) * (1 - P(T)) + (1 - P(L_{n-1})) * P(G)
+        # We adapt this for misconceptions where evidence increases belief
+        transition_rate = 0.1
+        # Decay half-life based on spacing effect research (~24h for short-term)
+        recency_half_life_hours = 24
+        # Drilling threshold (spaced repetition trigger)
+        drilling_threshold = 3
+        # Recent window for trend analysis
+        recent_window_hours = 48
+        # Log scale divisor for frequency normalization
         log_scale_divisor = 3
+        # Weight combination factors:
+        # BKT weight factor - how much the probabilistic estimate contributes
+        bkt_weight_factor = 0.4
+        # Frequency weight factor - how much the frequency-based estimate contributes
+        frequency_weight_factor = 0.6
         
-        # Pre-calculate decay constant for performance (exponential decay formula)
+        # Pre-calculate decay constant: ln(2) / half-life
         decay_constant = -math.log(2) / recency_half_life_hours
         
         now = datetime.datetime.now()
@@ -130,7 +155,8 @@ class ExerciseBuilder:
                 
             entries.sort()  # Sort by date
             
-            # Calculate recency-weighted frequency
+            # BKT-style sequential update for misconception probability
+            p_misconception = prior_probability
             recency_weighted_sum = 0
             recent_count = 0
             total_count = 0
@@ -138,33 +164,45 @@ class ExerciseBuilder:
             for date, frequency in entries:
                 hours_ago = (now - date).total_seconds() / 3600
                 
-                # Exponential decay based on half-life
+                # Exponential decay factor (Ebbinghaus forgetting curve inspired)
                 decay_factor = math.exp(decay_constant * hours_ago)
                 recency_weighted_sum += frequency * decay_factor
                 total_count += frequency
+                
+                # Adapted BKT update: evidence of misconception increases belief
+                # Standard BKT: P(L_n) = P(L_{n-1}) + (1 - P(L_{n-1})) * P(T)
+                # We scale by evidence strength (frequency * recency)
+                evidence_strength = min(1.0, frequency * decay_factor)
+                p_misconception = p_misconception + (1 - p_misconception) * transition_rate * evidence_strength
+                p_misconception = min(0.95, p_misconception)  # Cap to avoid certainty
                 
                 # Track recent occurrences for drilling
                 if hours_ago <= recent_window_hours:
                     recent_count += frequency
             
-            # Calculate trend (comparing recent vs older periods)
+            # Calculate trend using comparative analysis
             trend_score = self._calculate_trend(entries, now)
             
-            # Base weight from recency-weighted frequency
+            # Combine BKT probability with frequency-based weight
             base_weight = math.log1p(recency_weighted_sum) / log_scale_divisor
             
-            # Apply trend adjustment
+            # Trend adjustment: Bayesian-style evidence weighting
             # Positive trend (worsening) increases weight, negative (improving) decreases
             trend_adjustment = trend_score * 0.2
             
-            # Apply drilling boost for persistent recent misconceptions
+            # Spaced repetition drilling boost for persistent misconceptions
             drilling_boost = 0
             if recent_count >= drilling_threshold:
+                # Boost proportional to recent frequency, capped at 0.3
                 drilling_boost = min(0.3, recent_count * 0.05)
             
-            weight = default_weight + base_weight + trend_adjustment + drilling_boost
+            # Final weight combines BKT probability with frequency-based estimate
+            # bkt_weight_factor controls probabilistic contribution
+            # frequency_weight_factor controls frequency-based contribution
+            weight = (p_misconception * bkt_weight_factor) + (default_weight + base_weight) * frequency_weight_factor
+            weight += trend_adjustment + drilling_boost
             
-            # Apply sigmoid function to scale weight between 0 and 1
+            # Sigmoid squashing to bound output between 0 and 1
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
         if weights and max(weights.values()) < default_weight:
@@ -207,7 +245,12 @@ class ExerciseBuilder:
         if older_avg == 0:
             return new_misconception_trend if recent_avg > 0 else 0
         
-        trend = (recent_avg - older_avg) / max(recent_avg, older_avg)
+        # Avoid division by zero when both averages are 0
+        max_avg = max(recent_avg, older_avg)
+        if max_avg == 0:
+            return 0
+        
+        trend = (recent_avg - older_avg) / max_avg
         return max(-1, min(1, trend))
 
     def operatorToSpot(self, operator):
@@ -564,12 +607,13 @@ class ExerciseBuilder:
         concept_history = self.aggregateLogs()
         misconception_weights_over_time = { k : [] for k in concept_history.keys()}
         misconception_weights = {}
+        misconception_trends = {}
 
         ## Buckets is a dictionary where keys are misconceptions and values are lists of tuples (timestamp, frequency) 
         misconception_weights = self.calculate_misconception_weights(concept_history)
         misconception_count = 0
 
-        
+        now = datetime.datetime.now()
 
         for misconception in concept_history:
 
@@ -581,6 +625,14 @@ class ExerciseBuilder:
             ## Sort the buckets by date
             buckets_for_misconception.sort(key=lambda x: x[0])
             n = len(buckets_for_misconception)
+
+            # Calculate trend for this misconception
+            trend_score = self._calculate_trend(buckets_for_misconception, now)
+            trend_label = self._get_trend_label(trend_score)
+            misconception_trends[misconception] = {
+                "score": trend_score,
+                "label": trend_label
+            }
 
             for i in range(n):
                 time_bucket, frequency = buckets_for_misconception[i]
@@ -603,6 +655,22 @@ class ExerciseBuilder:
         return {
             "misconception_weights": misconception_weights,
             "misconception_weights_over_time": misconception_weights_over_time,
+            "misconception_trends": misconception_trends,
             "complexity": self.complexity,
             'misconception_count': misconception_count
         }
+    
+    def _get_trend_label(self, trend_score):
+        """
+        Convert a trend score (-1 to 1) to a human-readable label.
+        """
+        if trend_score <= -0.5:
+            return "Improving significantly"
+        elif trend_score <= -0.2:
+            return "Improving"
+        elif trend_score < 0.2:
+            return "Stable"
+        elif trend_score < 0.5:
+            return "Needs attention"
+        else:
+            return "Needs focus"
