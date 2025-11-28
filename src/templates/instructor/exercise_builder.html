@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor: {{ 'Edit' if exercise else 'Create' }} Exercise</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <style>
+        .question-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+        }
+        .question-card.selected {
+            border-left-color: #28a745;
+            background-color: #f8fff8;
+        }
+        .option-correct {
+            background-color: #d4edda;
+        }
+        .option-incorrect {
+            background-color: #fff;
+        }
+        .distractor-suggestion {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .distractor-suggestion:hover {
+            background-color: #e9ecef;
+        }
+        .distractor-suggestion.selected {
+            background-color: #cce5ff;
+        }
+        #questionsList {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .misconception-badge {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{{ 'Edit' if exercise else 'Create' }} Exercise</h1>
+            <a href="{{ url_for('authroutes.list_instructor_exercises') }}" class="btn btn-outline-secondary">
+                ← Back to Exercises
+            </a>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show">
+            {% for message in messages %}
+            {{ message | safe }}
+            {% endfor %}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <form id="exerciseForm" method="POST">
+            <div class="row">
+                <!-- Left Column: Exercise Metadata & Questions List -->
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>Exercise Details</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="exercise_name">Exercise Name *</label>
+                                <input type="text" class="form-control" id="exercise_name" name="exercise_name"
+                                       value="{{ exercise.name if exercise else '' }}" required
+                                       placeholder="e.g., Week 3: Temporal Operators">
+                            </div>
+                            <div class="form-group">
+                                <label for="course">Assign to Course</label>
+                                <select class="form-control" id="course" name="course">
+                                    <option value="">-- Not assigned --</option>
+                                    {% for course_name in course_names %}
+                                    <option value="{{ course_name }}" 
+                                            {{ 'selected' if exercise and exercise.course == course_name else '' }}>
+                                        {{ course_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Assign to a course to make it available to students.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <strong>Questions (<span id="questionCount">0</span>)</strong>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="addNewQuestion()">
+                                + Add
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="questionsList" class="list-group list-group-flush">
+                                <!-- Questions will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="exercise_json" name="exercise_json" value="[]">
+                    
+                    <div class="btn-group btn-block mb-3">
+                        <button type="submit" class="btn btn-success">
+                            {{ 'Update' if exercise else 'Create' }} Exercise
+                        </button>
+                        {% if exercise %}
+                        <a href="{{ url_for('exercise_predefined_get') }}?sourceuri=instructor:{{ exercise.id }}" 
+                           class="btn btn-outline-primary" target="_blank">
+                            Preview
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right Column: Question Editor -->
+                <div class="col-md-8">
+                    <div class="card" id="questionEditorCard">
+                        <div class="card-header">
+                            <strong>Question Editor</strong>
+                            <span id="editingIndicator" class="badge badge-secondary ml-2" style="display:none;">
+                                Editing Question #<span id="editingQuestionNum"></span>
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div id="noQuestionSelected" class="text-center text-muted py-5">
+                                <p>Select a question from the list to edit, or click "+ Add" to create a new question.</p>
+                            </div>
+
+                            <div id="questionEditor" style="display:none;">
+                                <div class="form-group">
+                                    <label for="questionKind">Question Type</label>
+                                    <select class="form-control" id="questionKind">
+                                        <option value="englishtoltl">English to LTL</option>
+                                        <option value="tracesatisfaction_mc">Trace Satisfaction (Multiple Choice)</option>
+                                        <option value="tracesatisfaction_yn">Trace Satisfaction (Yes/No)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="questionText">Question Text</label>
+                                    <textarea class="form-control" id="questionText" rows="2"
+                                              placeholder="Enter the question text..."></textarea>
+                                    <small class="form-text text-muted" id="questionHint">
+                                        For English to LTL: Enter the English description.
+                                    </small>
+                                </div>
+
+                                <div class="form-group" id="traceGroup" style="display:none;">
+                                    <label for="traceText">Trace (for Yes/No questions)</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="traceText"
+                                               placeholder="e.g., e & h; !e & h; cycle{e & h}">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-info" onclick="suggestTraces()" title="Suggest traces based on formula">
+                                                Suggest
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Format: state1; state2; cycle{repeating_state}
+                                    </small>
+                                </div>
+
+                                <!-- Suggested Traces (for Y/N questions) -->
+                                <div id="suggestedTraces" class="mb-3" style="display:none;">
+                                    <div class="card border-info">
+                                        <div class="card-header py-2 bg-info text-white">
+                                            <small class="font-weight-bold">Suggested Traces</small>
+                                            <button type="button" class="close text-white" onclick="$('#suggestedTraces').hide()">
+                                                <span>&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-success"><small>✓ Satisfying Traces</small></h6>
+                                                    <div id="satisfyingTracesList" class="small"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-danger"><small>✗ Rejecting Traces</small></h6>
+                                                    <div id="rejectingTracesList" class="small"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="correctAnswer">Correct Answer</label>
+                                    <input type="text" class="form-control" id="correctAnswer"
+                                           placeholder="Enter the correct answer (LTL formula or trace)">
+                                </div>
+
+                                <hr>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>Answer Options</strong>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="suggestDistractorsBtn" onclick="suggestDistractors()">
+                                            Suggest Distractors
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" id="suggestTracesBtn" onclick="suggestTracesForMC()" style="display:none;">
+                                            Suggest Traces
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Suggested Distractors -->
+                                <div id="suggestedDistractors" class="mb-3" style="display:none;">
+                                    <div class="card bg-light">
+                                        <div class="card-header py-2">
+                                            <small class="font-weight-bold">Suggested Distractors</small>
+                                            <button type="button" class="close" onclick="$('#suggestedDistractors').hide()">
+                                                <span>&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <div id="distractorsList" class="list-group list-group-flush">
+                                                <!-- Distractors will be populated here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Current Options -->
+                                <div id="optionsList">
+                                    <!-- Options will be rendered here -->
+                                </div>
+
+                                <!-- Manual Option Form (inline, not browser prompt) -->
+                                <div id="manualOptionForm" class="card bg-light mt-2" style="display:none;">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold">Option Text</label>
+                                            <input type="text" class="form-control form-control-sm" id="manualOptionText"
+                                                   placeholder="Enter the option (e.g., LTL formula or trace)">
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <label class="small font-weight-bold">Misconceptions (optional)</label>
+                                            <input type="text" class="form-control form-control-sm" id="manualOptionMisconceptions"
+                                                   placeholder="e.g., ImplicitG, Precedence">
+                                            <small class="form-text text-muted">Comma-separated misconception codes</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-primary" onclick="submitManualOption()">Add Option</button>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="hideManualOptionForm()">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addManualOptionBtn" onclick="showManualOptionForm()">
+                                    + Add Manual Option
+                                </button>
+
+                                <hr>
+
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary" onclick="saveCurrentQuestion()">
+                                        Save Question
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentQuestion()">
+                                        Delete Question
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="cancelEditing()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+    // State
+    let questions = [];
+    let currentQuestionIndex = -1;
+    let currentOptions = [];
+
+    // Initialize from existing exercise
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if exercise and exercise.exercise_json %}
+        try {
+            questions = JSON.parse('{{ exercise.exercise_json | safe }}');
+        } catch (e) {
+            console.error('Failed to parse exercise JSON:', e);
+            questions = [];
+        }
+        {% endif %}
+        renderQuestionsList();
+    });
+
+    // Update question kind hint and show/hide appropriate buttons
+    document.getElementById('questionKind').addEventListener('change', function() {
+        const kind = this.value;
+        const hint = document.getElementById('questionHint');
+        const traceGroup = document.getElementById('traceGroup');
+        const suggestDistractorsBtn = document.getElementById('suggestDistractorsBtn');
+        const suggestTracesBtn = document.getElementById('suggestTracesBtn');
+        
+        if (kind === 'englishtoltl') {
+            hint.textContent = 'For English to LTL: Enter the English description of the LTL formula.';
+            traceGroup.style.display = 'none';
+            suggestDistractorsBtn.style.display = 'inline-block';
+            suggestTracesBtn.style.display = 'none';
+        } else if (kind === 'tracesatisfaction_mc') {
+            hint.textContent = 'For Trace Satisfaction (MC): Enter the LTL formula in the Question field. Options will be traces.';
+            traceGroup.style.display = 'none';
+            suggestDistractorsBtn.style.display = 'none';
+            suggestTracesBtn.style.display = 'inline-block';
+        } else {
+            hint.textContent = 'For Trace Satisfaction (Y/N): Enter the LTL formula in the Question field. Provide or suggest a trace below.';
+            traceGroup.style.display = 'block';
+            suggestDistractorsBtn.style.display = 'none';
+            suggestTracesBtn.style.display = 'none';
+        }
+    });
+
+    function renderQuestionsList() {
+        const list = document.getElementById('questionsList');
+        const count = document.getElementById('questionCount');
+        count.textContent = questions.length;
+        
+        if (questions.length === 0) {
+            list.innerHTML = '<div class="list-group-item text-muted text-center">No questions yet</div>';
+            return;
+        }
+        
+        list.innerHTML = questions.map((q, i) => {
+            const isSelected = i === currentQuestionIndex;
+            const typeLabel = {
+                'englishtoltl': 'E→LTL',
+                'tracesatisfaction_mc': 'Trace MC',
+                'tracesatisfaction_yn': 'Trace Y/N'
+            }[q.type] || q.type;
+            
+            return `
+                <a href="#" class="list-group-item list-group-item-action ${isSelected ? 'active' : ''}"
+                   onclick="selectQuestion(${i}); return false;">
+                    <div class="d-flex justify-content-between">
+                        <small class="font-weight-bold">#${i + 1}</small>
+                        <small class="badge badge-${isSelected ? 'light' : 'secondary'}">${typeLabel}</small>
+                    </div>
+                    <small class="text-truncate d-block" style="max-width: 100%;">
+                        ${escapeHtml(q.question.substring(0, 50))}${q.question.length > 50 ? '...' : ''}
+                    </small>
+                </a>
+            `;
+        }).join('');
+        
+        // Update hidden field
+        document.getElementById('exercise_json').value = JSON.stringify(questions);
+    }
+
+    function selectQuestion(index) {
+        currentQuestionIndex = index;
+        const q = questions[index];
+        
+        document.getElementById('noQuestionSelected').style.display = 'none';
+        document.getElementById('questionEditor').style.display = 'block';
+        document.getElementById('editingIndicator').style.display = 'inline';
+        document.getElementById('editingQuestionNum').textContent = index + 1;
+        
+        // Populate form
+        document.getElementById('questionKind').value = q.type || 'englishtoltl';
+        document.getElementById('questionKind').dispatchEvent(new Event('change'));
+        document.getElementById('questionText').value = q.question || '';
+        document.getElementById('traceText').value = q.trace || '';
+        
+        // Find correct answer
+        const correctOption = q.options.find(o => o.isCorrect);
+        document.getElementById('correctAnswer').value = correctOption ? correctOption.option : '';
+        
+        // Load options
+        currentOptions = q.options.map(o => ({...o}));
+        renderOptions();
+        
+        renderQuestionsList();
+    }
+
+    function addNewQuestion() {
+        const newQuestion = {
+            question: '',
+            type: 'englishtoltl',
+            options: []
+        };
+        questions.push(newQuestion);
+        selectQuestion(questions.length - 1);
+    }
+
+    function renderOptions() {
+        const list = document.getElementById('optionsList');
+        
+        if (currentOptions.length === 0) {
+            list.innerHTML = '<p class="text-muted">No options yet. Add the correct answer and suggest distractors.</p>';
+            return;
+        }
+        
+        list.innerHTML = currentOptions.map((opt, i) => `
+            <div class="card mb-2 ${opt.isCorrect ? 'option-correct' : 'option-incorrect'}">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center">
+                                ${opt.isCorrect ? '<span class="badge badge-success mr-2">✓ Correct</span>' : ''}
+                                <code>${escapeHtml(opt.option)}</code>
+                            </div>
+                            ${opt.misconceptions && opt.misconceptions.length > 0 ? `
+                                <div class="mt-1">
+                                    ${opt.misconceptions.map(m => `<span class="badge badge-warning misconception-badge">${escapeHtml(m.replace('MisconceptionCode.', ''))}</span>`).join(' ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="removeOption(${i})">×</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function removeOption(index) {
+        currentOptions.splice(index, 1);
+        renderOptions();
+    }
+
+    function showManualOptionForm() {
+        document.getElementById('manualOptionForm').style.display = 'block';
+        document.getElementById('addManualOptionBtn').style.display = 'none';
+        document.getElementById('manualOptionText').value = '';
+        document.getElementById('manualOptionMisconceptions').value = '';
+        document.getElementById('manualOptionText').focus();
+    }
+
+    function hideManualOptionForm() {
+        document.getElementById('manualOptionForm').style.display = 'none';
+        document.getElementById('addManualOptionBtn').style.display = 'inline-block';
+    }
+
+    function submitManualOption() {
+        const optionText = document.getElementById('manualOptionText').value.trim();
+        const misconceptionsText = document.getElementById('manualOptionMisconceptions').value.trim();
+        
+        if (!optionText) {
+            document.getElementById('manualOptionText').classList.add('is-invalid');
+            return;
+        }
+        document.getElementById('manualOptionText').classList.remove('is-invalid');
+        
+        const misconceptions = misconceptionsText 
+            ? misconceptionsText.split(',').map(m => m.trim()).filter(m => m)
+            : [];
+        
+        currentOptions.push({
+            option: optionText,
+            isCorrect: false,
+            misconceptions: misconceptions
+        });
+        
+        renderOptions();
+        hideManualOptionForm();
+    }
+
+    function suggestDistractors() {
+        const answer = document.getElementById('correctAnswer').value;
+        const question = document.getElementById('questionText').value;
+        const kind = document.getElementById('questionKind').value;
+        
+        if (!answer) {
+            alert('Please enter a correct answer first.');
+            return;
+        }
+        
+        // Show loading state
+        const container = document.getElementById('suggestedDistractors');
+        const list = document.getElementById('distractorsList');
+        container.style.display = 'block';
+        list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating suggestions...</div>';
+        
+        // Make AJAX request to the generic suggest endpoint
+        $.post('{{ url_for("authroutes.suggest_distractors") }}', {
+            answer: answer,
+            kind: kind
+        }, function(data) {
+            // data is already parsed by jQuery since response is application/json
+            
+            if (data.error) {
+                list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
+                return;
+            }
+            
+            if (data.distractors.length === 0) {
+                list.innerHTML = '<div class="list-group-item text-muted">No suggestions available for this formula.</div>';
+                return;
+            }
+            
+            list.innerHTML = data.distractors.map(d => `
+                <div class="list-group-item distractor-suggestion" onclick="addDistractor('${escapeJs(d.formula)}', '${escapeJs(d.code)}')">
+                    <div class="d-flex justify-content-between">
+                        <code>${escapeHtml(d.formula)}</code>
+                        <span class="badge badge-info">${escapeHtml(d.code)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }).fail(function(xhr, status, error) {
+            list.innerHTML = `<div class="list-group-item text-danger">Failed to get suggestions: ${escapeHtml(error || 'Unknown error')}</div>`;
+        });
+    }
+
+    // Suggest traces for Yes/No questions
+    function suggestTraces() {
+        const formula = document.getElementById('questionText').value.trim();
+        
+        if (!formula) {
+            alert('Please enter an LTL formula in the Question field first.');
+            return;
+        }
+        
+        const container = document.getElementById('suggestedTraces');
+        const satList = document.getElementById('satisfyingTracesList');
+        const rejList = document.getElementById('rejectingTracesList');
+        
+        container.style.display = 'block';
+        satList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        rejList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        
+        $.post('{{ url_for("authroutes.suggest_traces") }}', {
+            formula: formula
+        }, function(data) {
+            if (data.error) {
+                satList.innerHTML = `<span class="text-danger">${escapeHtml(data.error)}</span>`;
+                rejList.innerHTML = '';
+                return;
+            }
+            
+            if (data.satisfying.length === 0) {
+                satList.innerHTML = '<span class="text-muted">No satisfying traces found</span>';
+            } else {
+                satList.innerHTML = data.satisfying.map(t => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;" 
+                         onclick="selectTrace('${escapeJs(t.trace)}', true)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                    </div>
+                `).join('');
+            }
+            
+            if (data.rejecting.length === 0) {
+                rejList.innerHTML = '<span class="text-muted">No rejecting traces found</span>';
+            } else {
+                rejList.innerHTML = data.rejecting.map(t => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;"
+                         onclick="selectTrace('${escapeJs(t.trace)}', false)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                    </div>
+                `).join('');
+            }
+        }).fail(function(xhr, status, error) {
+            satList.innerHTML = `<span class="text-danger">Error: ${escapeHtml(error)}</span>`;
+            rejList.innerHTML = '';
+        });
+    }
+
+    // Suggest traces for MC questions (adds as options)
+    function suggestTracesForMC() {
+        const formula = document.getElementById('questionText').value.trim();
+        
+        if (!formula) {
+            alert('Please enter an LTL formula in the Question field first.');
+            return;
+        }
+        
+        const container = document.getElementById('suggestedDistractors');
+        const list = document.getElementById('distractorsList');
+        container.style.display = 'block';
+        list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating trace suggestions...</div>';
+        
+        $.post('{{ url_for("authroutes.suggest_traces") }}', {
+            formula: formula
+        }, function(data) {
+            if (data.error) {
+                list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
+                return;
+            }
+            
+            let html = '';
+            
+            if (data.satisfying.length > 0) {
+                html += '<div class="list-group-item bg-light py-1"><small class="text-success font-weight-bold">✓ Satisfying Traces (correct answers)</small></div>';
+                html += data.satisfying.map(t => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', true)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="badge badge-success float-right">Satisfies</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (data.rejecting.length > 0) {
+                html += '<div class="list-group-item bg-light py-1"><small class="text-danger font-weight-bold">✗ Rejecting Traces (incorrect answers)</small></div>';
+                html += data.rejecting.map(t => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', false)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="badge badge-danger float-right">Rejects</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (!html) {
+                html = '<div class="list-group-item text-muted">No traces generated. Try a different formula.</div>';
+            }
+            
+            list.innerHTML = html;
+        }).fail(function(xhr, status, error) {
+            list.innerHTML = `<div class="list-group-item text-danger">Failed to get traces: ${escapeHtml(error)}</div>`;
+        });
+    }
+
+    function selectTrace(trace, satisfies) {
+        document.getElementById('traceText').value = trace;
+        // For Y/N, set the correct answer based on whether it satisfies
+        document.getElementById('correctAnswer').value = satisfies ? 'Yes' : 'No';
+        
+        // Auto-populate the options for Y/N
+        currentOptions = [
+            { option: 'Yes', isCorrect: satisfies, misconceptions: [] },
+            { option: 'No', isCorrect: !satisfies, misconceptions: [] }
+        ];
+        renderOptions();
+        
+        $('#suggestedTraces').hide();
+    }
+
+    function addTraceOption(trace, isCorrect) {
+        // Check if already added
+        if (currentOptions.some(o => o.option === trace)) {
+            alert('This trace is already added.');
+            return;
+        }
+        
+        currentOptions.push({
+            option: trace,
+            isCorrect: isCorrect,
+            misconceptions: isCorrect ? [] : ['TraceEvaluation']
+        });
+        renderOptions();
+    }
+
+    function addDistractor(formula, code) {
+        // Check if already added
+        if (currentOptions.some(o => o.option === formula)) {
+            alert('This option is already added.');
+            return;
+        }
+        
+        currentOptions.push({
+            option: formula,
+            isCorrect: false,
+            misconceptions: [code]
+        });
+        renderOptions();
+    }
+
+    function saveCurrentQuestion() {
+        if (currentQuestionIndex < 0) return;
+        
+        const questionText = document.getElementById('questionText').value.trim();
+        const correctAnswer = document.getElementById('correctAnswer').value.trim();
+        const kind = document.getElementById('questionKind').value;
+        const trace = document.getElementById('traceText').value.trim();
+        
+        if (!questionText) {
+            alert('Question text is required.');
+            return;
+        }
+        
+        if (!correctAnswer) {
+            alert('Correct answer is required.');
+            return;
+        }
+        
+        // Update or add correct answer in options
+        const existingCorrectIndex = currentOptions.findIndex(o => o.isCorrect);
+        if (existingCorrectIndex >= 0) {
+            currentOptions[existingCorrectIndex].option = correctAnswer;
+        } else {
+            currentOptions.unshift({
+                option: correctAnswer,
+                isCorrect: true,
+                misconceptions: []
+            });
+        }
+        
+        // Build question object
+        const question = {
+            question: questionText,
+            type: kind,
+            options: currentOptions
+        };
+        
+        if (kind === 'tracesatisfaction_yn' && trace) {
+            question.trace = trace;
+        }
+        
+        questions[currentQuestionIndex] = question;
+        renderQuestionsList();
+        
+        // Visual feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Saved!';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-primary');
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 1000);
+    }
+
+    function deleteCurrentQuestion() {
+        if (currentQuestionIndex < 0) return;
+        
+        if (!confirm('Are you sure you want to delete this question?')) return;
+        
+        questions.splice(currentQuestionIndex, 1);
+        currentQuestionIndex = -1;
+        currentOptions = [];
+        
+        document.getElementById('noQuestionSelected').style.display = 'block';
+        document.getElementById('questionEditor').style.display = 'none';
+        document.getElementById('editingIndicator').style.display = 'none';
+        
+        renderQuestionsList();
+    }
+
+    function cancelEditing() {
+        currentQuestionIndex = -1;
+        currentOptions = [];
+        
+        document.getElementById('noQuestionSelected').style.display = 'block';
+        document.getElementById('questionEditor').style.display = 'none';
+        document.getElementById('editingIndicator').style.display = 'none';
+        
+        renderQuestionsList();
+    }
+
+    // Form submission
+    document.getElementById('exerciseForm').addEventListener('submit', function(e) {
+        // Save current question if editing
+        if (currentQuestionIndex >= 0) {
+            // Auto-save current question
+            const questionText = document.getElementById('questionText').value.trim();
+            const correctAnswer = document.getElementById('correctAnswer').value.trim();
+            
+            if (questionText && correctAnswer) {
+                const kind = document.getElementById('questionKind').value;
+                const trace = document.getElementById('traceText').value.trim();
+                
+                const existingCorrectIndex = currentOptions.findIndex(o => o.isCorrect);
+                if (existingCorrectIndex >= 0) {
+                    currentOptions[existingCorrectIndex].option = correctAnswer;
+                } else {
+                    currentOptions.unshift({
+                        option: correctAnswer,
+                        isCorrect: true,
+                        misconceptions: []
+                    });
+                }
+                
+                const question = {
+                    question: questionText,
+                    type: kind,
+                    options: currentOptions
+                };
+                
+                if (kind === 'tracesatisfaction_yn' && trace) {
+                    question.trace = trace;
+                }
+                
+                questions[currentQuestionIndex] = question;
+            }
+        }
+        
+        // Update hidden field
+        document.getElementById('exercise_json').value = JSON.stringify(questions);
+    });
+
+    // Utility functions
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function escapeJs(text) {
+        return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+    </script>
+</body>
+
+</html>

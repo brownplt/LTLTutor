@@ -200,3 +200,31 @@ class Logger:
             student_responses = session.query(StudentResponse).filter(StudentResponse.course == course_name).all()
             return student_responses
     
+    def getUserExerciseResponses(self, userId, exercise_name):
+        """Get the number of unique questions answered by a user for a specific exercise."""
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+        if not isinstance(exercise_name, str):
+            raise ValueError("exercise_name should be a string")
+
+        with self.Session() as session:
+            # Count distinct question_text entries for this user/exercise combo
+            from sqlalchemy import func
+            count = session.query(func.count(func.distinct(StudentResponse.question_text))).filter(
+                StudentResponse.user_id == userId,
+                StudentResponse.exercise == exercise_name
+            ).scalar()
+            return count or 0
+    
+    def getCompletedExercises(self, userId, exercise_names_and_counts):
+        """Given a list of (exercise_name, question_count) tuples, return which ones the user has completed."""
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+        
+        completed = set()
+        for exercise_name, question_count in exercise_names_and_counts:
+            answered = self.getUserExerciseResponses(userId, exercise_name)
+            if answered >= question_count:
+                completed.add(exercise_name)
+        return completed
+    
