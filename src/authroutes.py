@@ -482,9 +482,9 @@ def delete_instructor_exercise(exercise_id):
 @login_required_as_courseinstructor
 def suggest_distractors():
     """API endpoint to suggest distractors for a question"""
-    import json
-    import syntacticmutator
+    from flask import jsonify
     import ltlnode
+    from codebook import getAllApplicableMisconceptions
     
     answer = request.form.get('answer', '')
     kind = request.form.get('kind', 'englishtoltl')
@@ -496,14 +496,84 @@ def suggest_distractors():
         try:
             parsed = ltlnode.parse_ltl_string(answer)
             if parsed:
-                mutations = syntacticmutator.getAllMutationsOf(parsed)
-                for mutation in mutations:
+                # Use the same approach as authorquestion in app.py
+                applicable = getAllApplicableMisconceptions(parsed)
+                for misconception in applicable:
                     distractors.append({
-                        'formula': str(mutation['formula']),
-                        'code': mutation['code']
+                        'formula': str(misconception.node),
+                        'code': str(misconception.misconception)
                     })
+                
+                # Merge labels for equal formulae
+                merged = []
+                for distractor in distractors:
+                    existing = next((d for d in merged if d['formula'] == distractor['formula']), None)
+                    if existing:
+                        existing['code'] += f", {distractor['code']}"
+                    else:
+                        merged.append(distractor)
+                distractors = merged
         except Exception as e:
             error = str(e)
     
-    return json.dumps({'distractors': distractors, 'error': error}), 200, {'Content-Type': 'application/json'}    
-    return json.dumps({'distractors': distractors, 'error': error}), 200, {'Content-Type': 'application/json'}
+    return jsonify({'distractors': distractors, 'error': error})
+
+
+@authroutes.route('/instructor/suggest-traces', methods=['POST'])
+@login_required_as_courseinstructor
+def suggest_traces():
+    """API endpoint to suggest traces for trace satisfaction questions"""
+    from flask import jsonify
+    import spotutils
+    import exerciseprocessor
+    import ltlnode
+    
+    formula = request.form.get('formula', '')
+    
+    satisfying_traces = []
+    rejecting_traces = []
+    error = None
+    
+    try:
+        # Parse and validate the formula
+        parsed = ltlnode.parse_ltl_string(formula)
+        formula_str = str(parsed)
+        
+        # Get literals from formula for trace expansion
+        literals = list(exerciseprocessor.getFormulaLiterals(formula_str))
+        
+        # Generate satisfying traces
+        sat_traces = spotutils.generate_accepted_traces(formula_str, max_traces=5)
+        for trace in sat_traces:
+            trace_str = str(trace)
+            expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
+            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(trace_str)
+            satisfying_traces.append({
+                'trace': expanded,
+                'raw': trace_str,
+                'mermaid': mermaid,
+                'satisfies': True
+            })
+        
+        # Generate rejecting traces (traces that satisfy NOT formula)
+        negated = f"!({formula_str})"
+        rej_traces = spotutils.generate_accepted_traces(negated, max_traces=5)
+        for trace in rej_traces:
+            trace_str = str(trace)
+            expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
+            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(trace_str)
+            rejecting_traces.append({
+                'trace': expanded,
+                'raw': trace_str,
+                'mermaid': mermaid,
+                'satisfies': False
+            })
+            
+    except Exception as e:
+        error = str(e)
+    
+    return jsonify({
+        'satisfying': satisfying_traces,
+        'rejecting': rejecting_traces,
+        'error': error
+    })

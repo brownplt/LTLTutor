@@ -165,11 +165,42 @@
 
                                 <div class="form-group" id="traceGroup" style="display:none;">
                                     <label for="traceText">Trace (for Yes/No questions)</label>
-                                    <input type="text" class="form-control" id="traceText"
-                                           placeholder="e.g., e & h; !e & h; cycle{e & h}">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="traceText"
+                                               placeholder="e.g., e & h; !e & h; cycle{e & h}">
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-info" onclick="suggestTraces()" title="Suggest traces based on formula">
+                                                Suggest
+                                            </button>
+                                        </div>
+                                    </div>
                                     <small class="form-text text-muted">
                                         Format: state1; state2; cycle{repeating_state}
                                     </small>
+                                </div>
+
+                                <!-- Suggested Traces (for Y/N questions) -->
+                                <div id="suggestedTraces" class="mb-3" style="display:none;">
+                                    <div class="card border-info">
+                                        <div class="card-header py-2 bg-info text-white">
+                                            <small class="font-weight-bold">Suggested Traces</small>
+                                            <button type="button" class="close text-white" onclick="$('#suggestedTraces').hide()">
+                                                <span>&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="card-body p-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6 class="text-success"><small>✓ Satisfying Traces</small></h6>
+                                                    <div id="satisfyingTracesList" class="small"></div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6 class="text-danger"><small>✗ Rejecting Traces</small></h6>
+                                                    <div id="rejectingTracesList" class="small"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
@@ -182,9 +213,14 @@
 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <strong>Answer Options</strong>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="suggestDistractors()">
-                                        Suggest Distractors
-                                    </button>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="suggestDistractorsBtn" onclick="suggestDistractors()">
+                                            Suggest Distractors
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info" id="suggestTracesBtn" onclick="suggestTracesForMC()" style="display:none;">
+                                            Suggest Traces
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Suggested Distractors -->
@@ -276,21 +312,29 @@
         renderQuestionsList();
     });
 
-    // Update question kind hint
+    // Update question kind hint and show/hide appropriate buttons
     document.getElementById('questionKind').addEventListener('change', function() {
         const kind = this.value;
         const hint = document.getElementById('questionHint');
         const traceGroup = document.getElementById('traceGroup');
+        const suggestDistractorsBtn = document.getElementById('suggestDistractorsBtn');
+        const suggestTracesBtn = document.getElementById('suggestTracesBtn');
         
         if (kind === 'englishtoltl') {
             hint.textContent = 'For English to LTL: Enter the English description of the LTL formula.';
             traceGroup.style.display = 'none';
+            suggestDistractorsBtn.style.display = 'inline-block';
+            suggestTracesBtn.style.display = 'none';
         } else if (kind === 'tracesatisfaction_mc') {
-            hint.textContent = 'For Trace Satisfaction (MC): Enter the LTL formula. Options will be traces.';
+            hint.textContent = 'For Trace Satisfaction (MC): Enter the LTL formula in the Question field. Options will be traces.';
             traceGroup.style.display = 'none';
+            suggestDistractorsBtn.style.display = 'none';
+            suggestTracesBtn.style.display = 'inline-block';
         } else {
-            hint.textContent = 'For Trace Satisfaction (Y/N): Enter the LTL formula. Provide a trace below.';
+            hint.textContent = 'For Trace Satisfaction (Y/N): Enter the LTL formula in the Question field. Provide or suggest a trace below.';
             traceGroup.style.display = 'block';
+            suggestDistractorsBtn.style.display = 'none';
+            suggestTracesBtn.style.display = 'none';
         }
     });
 
@@ -458,8 +502,8 @@
         $.post('{{ url_for("authroutes.suggest_distractors") }}', {
             answer: answer,
             kind: kind
-        }, function(response) {
-            const data = JSON.parse(response);
+        }, function(data) {
+            // data is already parsed by jQuery since response is application/json
             
             if (data.error) {
                 list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
@@ -482,6 +526,143 @@
         }).fail(function(xhr, status, error) {
             list.innerHTML = `<div class="list-group-item text-danger">Failed to get suggestions: ${escapeHtml(error || 'Unknown error')}</div>`;
         });
+    }
+
+    // Suggest traces for Yes/No questions
+    function suggestTraces() {
+        const formula = document.getElementById('questionText').value.trim();
+        
+        if (!formula) {
+            alert('Please enter an LTL formula in the Question field first.');
+            return;
+        }
+        
+        const container = document.getElementById('suggestedTraces');
+        const satList = document.getElementById('satisfyingTracesList');
+        const rejList = document.getElementById('rejectingTracesList');
+        
+        container.style.display = 'block';
+        satList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        rejList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
+        
+        $.post('{{ url_for("authroutes.suggest_traces") }}', {
+            formula: formula
+        }, function(data) {
+            if (data.error) {
+                satList.innerHTML = `<span class="text-danger">${escapeHtml(data.error)}</span>`;
+                rejList.innerHTML = '';
+                return;
+            }
+            
+            if (data.satisfying.length === 0) {
+                satList.innerHTML = '<span class="text-muted">No satisfying traces found</span>';
+            } else {
+                satList.innerHTML = data.satisfying.map(t => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;" 
+                         onclick="selectTrace('${escapeJs(t.trace)}', true)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                    </div>
+                `).join('');
+            }
+            
+            if (data.rejecting.length === 0) {
+                rejList.innerHTML = '<span class="text-muted">No rejecting traces found</span>';
+            } else {
+                rejList.innerHTML = data.rejecting.map(t => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;"
+                         onclick="selectTrace('${escapeJs(t.trace)}', false)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                    </div>
+                `).join('');
+            }
+        }).fail(function(xhr, status, error) {
+            satList.innerHTML = `<span class="text-danger">Error: ${escapeHtml(error)}</span>`;
+            rejList.innerHTML = '';
+        });
+    }
+
+    // Suggest traces for MC questions (adds as options)
+    function suggestTracesForMC() {
+        const formula = document.getElementById('questionText').value.trim();
+        
+        if (!formula) {
+            alert('Please enter an LTL formula in the Question field first.');
+            return;
+        }
+        
+        const container = document.getElementById('suggestedDistractors');
+        const list = document.getElementById('distractorsList');
+        container.style.display = 'block';
+        list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating trace suggestions...</div>';
+        
+        $.post('{{ url_for("authroutes.suggest_traces") }}', {
+            formula: formula
+        }, function(data) {
+            if (data.error) {
+                list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
+                return;
+            }
+            
+            let html = '';
+            
+            if (data.satisfying.length > 0) {
+                html += '<div class="list-group-item bg-light py-1"><small class="text-success font-weight-bold">✓ Satisfying Traces (correct answers)</small></div>';
+                html += data.satisfying.map(t => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', true)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="badge badge-success float-right">Satisfies</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (data.rejecting.length > 0) {
+                html += '<div class="list-group-item bg-light py-1"><small class="text-danger font-weight-bold">✗ Rejecting Traces (incorrect answers)</small></div>';
+                html += data.rejecting.map(t => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', false)">
+                        <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="badge badge-danger float-right">Rejects</span>
+                    </div>
+                `).join('');
+            }
+            
+            if (!html) {
+                html = '<div class="list-group-item text-muted">No traces generated. Try a different formula.</div>';
+            }
+            
+            list.innerHTML = html;
+        }).fail(function(xhr, status, error) {
+            list.innerHTML = `<div class="list-group-item text-danger">Failed to get traces: ${escapeHtml(error)}</div>`;
+        });
+    }
+
+    function selectTrace(trace, satisfies) {
+        document.getElementById('traceText').value = trace;
+        // For Y/N, set the correct answer based on whether it satisfies
+        document.getElementById('correctAnswer').value = satisfies ? 'Yes' : 'No';
+        
+        // Auto-populate the options for Y/N
+        currentOptions = [
+            { option: 'Yes', isCorrect: satisfies, misconceptions: [] },
+            { option: 'No', isCorrect: !satisfies, misconceptions: [] }
+        ];
+        renderOptions();
+        
+        $('#suggestedTraces').hide();
+    }
+
+    function addTraceOption(trace, isCorrect) {
+        // Check if already added
+        if (currentOptions.some(o => o.option === trace)) {
+            alert('This trace is already added.');
+            return;
+        }
+        
+        currentOptions.push({
+            option: trace,
+            isCorrect: isCorrect,
+            misconceptions: isCorrect ? [] : ['TraceEvaluation']
+        });
+        renderOptions();
     }
 
     function addDistractor(formula, code) {
