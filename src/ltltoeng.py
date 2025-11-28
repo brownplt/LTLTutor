@@ -210,6 +210,51 @@ def chain_response_pattern_to_english(node):
     return None
 
 
+## Immediate Response Pattern
+# Pattern: G(p -> X q)
+# English: Whenever p (holds), q must hold in the very next step
+# Source: Dwyer, M.B., Avrunin, G.S., Corbett, J.C. "Patterns in Property Specifications for Finite-State Verification"
+#         Proceedings of ICSE 1999. http://patterns.projects.cs.ksu.edu/
+@pattern
+def immediate_response_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.NextNode:
+                # Don't match if it's the final state pattern G(p -> X p)
+                if (type(left) is ltlnode.LiteralNode and 
+                    type(right.operand) is ltlnode.LiteralNode and
+                    left.value == right.operand.value):
+                    return None
+                left_eng = clean_for_composition(left.__to_english__())
+                right_eng = clean_for_composition(right.operand.__to_english__())
+                return f"whenever {left_eng}, {right_eng} must hold in the next step"
+    return None
+
+
+## Bounded Response Pattern  
+# Pattern: G(p -> X(F q))
+# English: Whenever p (holds), q will eventually occur (starting from the next step)
+# Source: Dwyer et al. "Patterns in Property Specifications" ICSE 1999
+#         This is a variant of the response pattern with a one-step delay
+@pattern
+def bounded_response_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.NextNode:
+                inner = right.operand
+                if type(inner) is ltlnode.FinallyNode:
+                    left_eng = clean_for_composition(left.__to_english__())
+                    right_eng = clean_for_composition(inner.operand.__to_english__())
+                    return f"whenever {left_eng}, {right_eng} will eventually occur after the next step"
+    return None
+
+
 ## G !p
 # English: It will never be the case that p (holds)
 @pattern
@@ -268,8 +313,55 @@ def finally_globally_pattern_to_english(node):
             # Skip if inner is implication with Finally - let more specific pattern handle it
             if type(inner) is ltlnode.ImpliesNode and type(inner.right) is ltlnode.FinallyNode:
                 return None
+            # Skip if inner is AndNode - let persistence pattern handle it
+            if type(inner) is ltlnode.AndNode:
+                return None
             inner_eng = clean_for_composition(inner.__to_english__())
             return f"eventually, {inner_eng} will always be true"
+    return None
+
+
+## Persistence Pattern (Stability)
+# Pattern: F(G p)
+# English: Eventually p will become true and remain true forever
+# Source: Manna, Z. and Pnueli, A. "The Temporal Logic of Reactive and Concurrent Systems" (1992)
+#         Also known as "stability" - the system eventually stabilizes to a state where p holds
+# Note: This is the same structure as finally_globally but with literal-specific phrasing
+@pattern
+def persistence_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.GloballyNode:
+            inner = op.operand
+            # Only match simple literals for this specific phrasing
+            if type(inner) is ltlnode.LiteralNode:
+                inner_eng = clean_for_composition(inner.__to_english__())
+                return f"eventually {inner_eng} will become true and stay true forever"
+    return None
+
+
+## Persistence After Trigger Pattern
+# Pattern: F(p & G q)
+# English: Eventually p will occur and from that point on, q will always hold
+# Source: Dwyer et al. "Patterns in Property Specifications" ICSE 1999
+#         This captures scenarios where a trigger event causes a permanent change
+@pattern
+def persistence_after_trigger_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.AndNode:
+            left = op.left
+            right = op.right
+            # Check for p & G q
+            if type(right) is ltlnode.GloballyNode:
+                trigger_eng = clean_for_composition(left.__to_english__())
+                persistent_eng = clean_for_composition(right.operand.__to_english__())
+                return f"eventually {trigger_eng} will occur, and from then on {persistent_eng} will always hold"
+            # Check for G p & q (reversed order)
+            if type(left) is ltlnode.GloballyNode:
+                trigger_eng = clean_for_composition(right.__to_english__())
+                persistent_eng = clean_for_composition(left.operand.__to_english__())
+                return f"eventually {trigger_eng} will occur, and from then on {persistent_eng} will always hold"
     return None
 
 
@@ -280,6 +372,9 @@ def finally_and_pattern_to_english(node):
     if type(node) is ltlnode.FinallyNode:
         op = node.operand
         if type(op) is ltlnode.AndNode:
+            # Skip if one side is GloballyNode - let persistence_after_trigger handle it
+            if type(op.left) is ltlnode.GloballyNode or type(op.right) is ltlnode.GloballyNode:
+                return None
             left_eng = clean_for_composition(op.left.__to_english__())
             right_eng = clean_for_composition(op.right.__to_english__())
             return f"eventually, both {left_eng} and {right_eng} will be true simultaneously"
