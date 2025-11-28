@@ -127,6 +127,23 @@ def smooth_grammar(text):
 
 #### Globally special cases ####
 
+# G G ... G p (idempotent globally - G G = G)
+# English: Always p / At all times p
+# Source: G is idempotent: G G p ≡ G p
+@pattern
+def idempotent_globally_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.GloballyNode:
+            # Unwrap all consecutive Globally operators
+            innermost = op.operand
+            while type(innermost) is ltlnode.GloballyNode:
+                innermost = innermost.operand
+            inner_eng = clean_for_composition(innermost.__to_english__())
+            return f"at all times, {inner_eng}"
+    return None
+
+
 # Pattern: G ( p -> (F q) )
 # English, whenever p (holds), eventually q will (hold)
 # Note: We check that left is not an UntilNode to allow more specific patterns to match first
@@ -152,6 +169,7 @@ def response_pattern_to_english(node):
 # Pattern G (F p)
 # English: p (happens) repeatedly
 # Note: Skip if inner is AndNode to let more specific patterns handle simultaneity
+# Source: This is the "recurrence" or "infinitely often" pattern from Manna & Pnueli
 @pattern
 def recurrence_pattern_to_english(node):
     if type(node) is ltlnode.GloballyNode:
@@ -161,6 +179,33 @@ def recurrence_pattern_to_english(node):
             # Skip if inner is AndNode - let more specific pattern handle it
             if type(inner_op) is ltlnode.AndNode:
                 return None
+            # Handle G F (p -> q) - "infinitely often, if p then q"
+            if type(inner_op) is ltlnode.ImpliesNode:
+                # Check for G F (p -> G q) - special case
+                if type(inner_op.right) is ltlnode.GloballyNode:
+                    left_eng = clean_for_composition(inner_op.left.__to_english__())
+                    right_eng = clean_for_composition(inner_op.right.operand.__to_english__())
+                    return f"infinitely often, {left_eng} will trigger {right_eng} to hold permanently"
+                left_eng = clean_for_composition(inner_op.left.__to_english__())
+                right_eng = clean_for_composition(inner_op.right.__to_english__())
+                return f"infinitely often, if {left_eng} then {right_eng}"
+            # Handle G F G ... patterns (recurrence with nested globally)
+            # G F G x = G F x by absorption (once you're in G F, adding more G F doesn't change meaning)
+            # Source: Manna & Pnueli - alternating temporal operators
+            if type(inner_op) is ltlnode.GloballyNode:
+                # Unwrap to find innermost non-G-F alternation
+                innermost = inner_op.operand
+                while type(innermost) is ltlnode.FinallyNode or type(innermost) is ltlnode.GloballyNode:
+                    innermost = innermost.operand
+                inner_eng = clean_for_composition(innermost.__to_english__())
+                return f"{inner_eng} will happen infinitely often"
+            # Handle G F F x = G F x (F F = F)
+            if type(inner_op) is ltlnode.FinallyNode:
+                innermost = inner_op.operand
+                while type(innermost) is ltlnode.FinallyNode:
+                    innermost = innermost.operand
+                inner_eng = clean_for_composition(innermost.__to_english__())
+                return f"{inner_eng} will happen infinitely often"
             inner_eng = clean_for_composition(inner_op.__to_english__())
             if type(inner_op) is ltlnode.LiteralNode:
                 return f"{inner_eng} will happen infinitely often"
@@ -311,7 +356,24 @@ def never_globally_pattern_to_english(node):
             return f"it is never the case that {negated_eng}"
 
 
-##### Finally special cases ####
+#### Finally special cases ####
+
+# F F ... F p (idempotent finally - F F = F)
+# English: Eventually p
+# Source: F is idempotent: F F p ≡ F p
+@pattern
+def idempotent_finally_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.FinallyNode:
+            # Unwrap all consecutive Finally operators
+            innermost = op.operand
+            while type(innermost) is ltlnode.FinallyNode:
+                innermost = innermost.operand
+            inner_eng = clean_for_composition(innermost.__to_english__())
+            return f"eventually, {inner_eng}"
+    return None
+
 
 # F ( !p )
 # English: Eventually, it will not be the case that p (holds)
@@ -357,6 +419,28 @@ def finally_globally_pattern_to_english(node):
             # Skip if inner is AndNode - let persistence pattern handle it
             if type(inner) is ltlnode.AndNode:
                 return None
+            # Handle F G (p -> q) - "eventually, the rule 'if p then q' will always hold"
+            if type(inner) is ltlnode.ImpliesNode:
+                left_eng = clean_for_composition(inner.left.__to_english__())
+                right_eng = clean_for_composition(inner.right.__to_english__())
+                return f"eventually, the rule 'if {left_eng} then {right_eng}' will always hold"
+            # Handle F G F ... patterns (eventual recurrence) - collapses to G F by absorption
+            # Source: Manna & Pnueli - alternating F/G chains simplify
+            if type(inner) is ltlnode.FinallyNode:
+                # F G F x = "eventually, x will happen infinitely often"
+                # Keep unwinding to find the innermost
+                innermost = inner.operand
+                while type(innermost) is ltlnode.GloballyNode or type(innermost) is ltlnode.FinallyNode:
+                    innermost = innermost.operand
+                inner_eng = clean_for_composition(innermost.__to_english__())
+                return f"eventually, {inner_eng} will happen infinitely often"
+            # Handle F G G x = F G x (G G = G)
+            if type(inner) is ltlnode.GloballyNode:
+                innermost = inner.operand
+                while type(innermost) is ltlnode.GloballyNode:
+                    innermost = innermost.operand
+                inner_eng = clean_for_composition(innermost.__to_english__())
+                return f"eventually, {inner_eng} will become true and remain true forever"
             inner_eng = clean_for_composition(inner.__to_english__())
             return f"eventually, {inner_eng} will always be true"
     return None
@@ -403,6 +487,24 @@ def persistence_after_trigger_pattern_to_english(node):
                 trigger_eng = clean_for_composition(right.__to_english__())
                 persistent_eng = clean_for_composition(left.operand.__to_english__())
                 return f"eventually {trigger_eng} will occur, and from then on {persistent_eng} will always hold"
+    return None
+
+
+## Trigger-to-Permanence Pattern
+# Pattern: F(p -> G q)
+# English: Eventually, once p occurs, q will hold forever after
+# Source: Common requirements pattern - "eventually a trigger causes permanent behavior"
+@pattern
+def trigger_to_permanence_pattern_to_english(node):
+    if type(node) is ltlnode.FinallyNode:
+        op = node.operand
+        if type(op) is ltlnode.ImpliesNode:
+            left = op.left
+            right = op.right
+            if type(right) is ltlnode.GloballyNode:
+                trigger_eng = clean_for_composition(left.__to_english__())
+                result_eng = clean_for_composition(right.operand.__to_english__())
+                return f"eventually, once {trigger_eng}, then {result_eng} will hold forever after"
     return None
 
 
