@@ -85,9 +85,9 @@ def applyMisconception(node_orig, misconception):
     elif misconception == MisconceptionCode.ExclusiveU:
         return applyTilFirst(node, applyExclusiveU)
     elif misconception == MisconceptionCode.ImplicitF:
-        return applyTilFirst(node, applyImplicitF)
+        return applyTilFirstRandom(node, applyImplicitF)
     elif misconception == MisconceptionCode.ImplicitG:
-        return applyTilFirst(node, applyImplicitG)
+        return applyTilFirstRandom(node, applyImplicitG)
     elif misconception == MisconceptionCode.WeakU:
         return applyTilFirst(node, applyWeakU)
     elif misconception == MisconceptionCode.OtherImplicit:
@@ -116,7 +116,101 @@ def getAllApplicableMisconceptions(node):
     
 
 
+def collectAllMutationLocations(node, f, path=None):
+    """
+    Collect all locations in the tree where mutation f can be applied.
+    Returns a list of path lists where each path is a list of directions
+    to reach that node from the root.
+    
+    Each returned path is an independent copy to avoid aliasing issues.
+    """
+    if path is None:
+        path = []
+    
+    locations = []
+    
+    # Try applying the mutation at current node
+    res = f(node)
+    if res.misconception:
+        # Store just the path, we'll apply the mutation later
+        locations.append(list(path))
+    
+    # Recurse into children
+    if isinstance(node, UnaryOperatorNode):
+        locations.extend(collectAllMutationLocations(node.operand, f, path + ['operand']))
+    elif isinstance(node, BinaryOperatorNode):
+        locations.extend(collectAllMutationLocations(node.left, f, path + ['left']))
+        locations.extend(collectAllMutationLocations(node.right, f, path + ['right']))
+    
+    return locations
+
+
+def applyMutationAtPath(node, f, path):
+    """
+    Apply a mutation function f at a specific path in the tree.
+    Path is a list of 'left', 'right', or 'operand' directions.
+    
+    Note: This function modifies the node tree in-place and uses a pattern
+    where child_result.node is reassigned to point to the parent node.
+    This is intentional and matches the pattern used in applyTilFirst.
+    The caller should pass a deep copy if the original needs to be preserved.
+    """
+    if not path:
+        # We're at the target node, apply the mutation
+        return f(node)
+    
+    # Navigate to the target location
+    direction = path[0]
+    remaining_path = path[1:]
+    
+    if isinstance(node, UnaryOperatorNode) and direction == 'operand':
+        child_result = applyMutationAtPath(node.operand, f, remaining_path)
+        # Thread the result back through the parent: replace child with mutated version,
+        # then update result to point to the whole subtree
+        node.operand = child_result.node
+        child_result.node = node
+        return child_result
+    elif isinstance(node, BinaryOperatorNode) and direction == 'left':
+        child_result = applyMutationAtPath(node.left, f, remaining_path)
+        node.left = child_result.node
+        child_result.node = node
+        return child_result
+    elif isinstance(node, BinaryOperatorNode) and direction == 'right':
+        child_result = applyMutationAtPath(node.right, f, remaining_path)
+        node.right = child_result.node
+        child_result.node = node
+        return child_result
+    
+    # Invalid path - this indicates a bug in path generation
+    raise ValueError(f"Invalid path: cannot apply direction '{direction}' to node of type {type(node).__name__}")
+
+
+def applyTilFirstRandom(node, f):
+    """
+    Apply mutation f to a randomly selected location in the tree where it's applicable.
+    This ensures diverse mutations when multiple locations are possible.
+    Use this for simple mutations like ImplicitG/ImplicitF where we want to randomly
+    select from all possible application sites.
+    """
+    # Collect all possible mutation locations
+    locations = collectAllMutationLocations(node, f)
+    
+    if not locations:
+        return MutationResult(node)
+    
+    # Randomly select one location
+    path = random.choice(locations)
+    
+    # Apply the mutation at the selected location
+    return applyMutationAtPath(node, f, path)
+
+
 def applyTilFirst(node, f):
+    """
+    Apply mutation f at the first applicable location found (depth-first search).
+    This is the original behavior, used for complex mutations that should be applied
+    as a unit at the first matching location.
+    """
     res = f(node)
     if res.misconception:
         return res
