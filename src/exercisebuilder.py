@@ -536,7 +536,7 @@ class ExerciseBuilder:
                 continue
 
             trace_options.append( {
-                'option': random.choice(trace_choices),
+                'option': spotutils.weighted_trace_choice(trace_choices),
                 'isCorrect': isCorrect,
                 'misconceptions': misconceptions,
                 'generatedFromFormula': self.getLTLFormulaAsString(formula) ## Should this be the formula we want?
@@ -592,8 +592,8 @@ class ExerciseBuilder:
         if len(potential_trace_choices) == 0:
             return None
         
-        # TODO: Should this be expanded?
-        trace_option = random.choice(potential_trace_choices)
+        # Use weighted selection to slightly prefer shorter traces
+        trace_option = spotutils.weighted_trace_choice(potential_trace_choices)
 
         ## THink about this -- how can we give feedback here!
         yes_misconceptions = [] if yesIsCorrect else misconceptions

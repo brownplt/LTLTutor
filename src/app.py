@@ -224,7 +224,7 @@ def authorquestion():
                 potential_trace_choices = spotutils.generate_traces(f_accepted=f, f_rejected=answer_formula, max_traces=10)
                 trace_choices = [t for t in potential_trace_choices if t not in added_traces]
                 if len(trace_choices) > 0:
-                    c = random.choice(trace_choices)
+                    c = spotutils.weighted_trace_choice(trace_choices)
                     ms = distractor['code']
                     new_distractors.append({
                         'formula': c,
