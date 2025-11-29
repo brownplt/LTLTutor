@@ -287,7 +287,14 @@ def get_owned_courses(username):
     with Session() as session:
         exercises = session.query(Course).filter_by(owner=username).all()
         return exercises
-    
+
+
+def get_course_students(course_name):
+    """Return all students enrolled in a course."""
+    with Session() as session:
+        students = session.query(CourseStudent).filter_by(course_id=course_name).all()
+        return students
+
 
 ## TODO: Only works if exactly one course per user.
 # May have to change.

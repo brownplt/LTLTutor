@@ -15,10 +15,20 @@ import exercisebuilder
 import random
 import spotutils
 from itertools import chain
+from collections import Counter, defaultdict
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
-from authroutes import authroutes, init_app, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor, getUserCourse
+from authroutes import (
+    authroutes,
+    init_app,
+    retrieve_course_data,
+    get_owned_courses,
+    login_required_as_courseinstructor,
+    getUserCourse,
+    get_course_students,
+    get_exercises_for_course,
+)
 from modelroutes import modelroutes
 
 
@@ -132,7 +142,6 @@ def index():
     completed_exercises = set()
     user_course = getUserCourse(userId)
     if user_course:
-        from authroutes import get_exercises_for_course
         course_exercises = get_exercises_for_course(user_course)
         
         # Check which exercises the user has completed
@@ -269,7 +278,57 @@ def instructorhome():
     userId = getUserName()
     authored = get_owned_courses(userId)
     owned_course_names = [course.name for course in authored]
-    return render_template('instructorhome.html', uid = userId, owned_course_names=owned_course_names)
+
+    course_summaries = []
+    for course in authored:
+        responses = answer_logger.getCourseResponses(course.name)
+
+        misconception_counter = Counter([
+            resp.misconception for resp in responses if resp.misconception
+        ])
+        top_misconceptions = misconception_counter.most_common(3)
+
+        responses_by_exercise_user = defaultdict(lambda: defaultdict(int))
+        for resp in responses:
+            if resp.exercise:
+                responses_by_exercise_user[resp.exercise][resp.user_id] += 1
+
+        exercise_completion = []
+        course_exercises = get_exercises_for_course(course.name)
+        for ex in course_exercises:
+            questions = json.loads(ex.exercise_json) if ex.exercise_json else []
+            question_count = len(questions)
+            user_counts = responses_by_exercise_user.get(ex.name, {})
+            started = len(user_counts)
+            completed = len([
+                user for user, count in user_counts.items()
+                if question_count > 0 and count >= question_count
+            ])
+
+            exercise_completion.append({
+                'name': ex.name,
+                'question_count': question_count,
+                'started': started,
+                'completed': completed
+            })
+
+        students = get_course_students(course.name)
+        student_usernames = [student.username for student in students]
+
+        course_summaries.append({
+            'name': course.name,
+            'response_count': len(responses),
+            'students': student_usernames,
+            'top_misconceptions': top_misconceptions,
+            'exercise_completion': exercise_completion
+        })
+
+    return render_template(
+        'instructorhome.html',
+        uid=userId,
+        owned_course_names=owned_course_names,
+        course_summaries=course_summaries
+    )
 
 
 
@@ -279,8 +338,6 @@ def instructorhome():
 @login_required
 def exercise(exercise_name):
     """Load an exercise by name - checks instructor exercises first, then falls back to course-based lookup"""
-    from authroutes import get_exercises_for_course
-    
     # First, try to find instructor exercises for a course with this name
     exercises = get_exercises_for_course(exercise_name)
     

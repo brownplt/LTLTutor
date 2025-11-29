@@ -49,26 +49,83 @@
         </div>
 
 
-        {% if owned_course_names and owned_course_names|length > 0 %}
+        {% if course_summaries and course_summaries|length > 0 %}
         <div class="container mt-4 mb-2 justify-content-center">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">Courses You Have Registered</h5>
                 </div>
-                <ul class="list-group list-group-flush" id="owned_courses">
-                    {% for course in owned_course_names %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>{{course}}</span>
-                        <div>
-                            <a href="/view/responses/{{course}}" class="btn btn-primary btn-sm">View Logs</a>
-                            <button class="btn btn-secondary btn-sm ml-2 copy-login-link-btn"
-                                data-login-link="{{ url_for('authroutes.login', user_type='course-student', course_id=course, _external=True) }}">
-                                Copy Student Login Link
-                            </button>
+                <div class="list-group list-group-flush" id="owned_courses">
+                    {% for course in course_summaries %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{course.name}}</h6>
+                                <small class="text-muted">{{ course.response_count }} responses recorded</small>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge badge-info">{{ course.students|length }} student(s)</span>
+                                <a href="/view/responses/{{course.name}}" class="btn btn-primary btn-sm ml-2">View Logs</a>
+                                <button class="btn btn-secondary btn-sm ml-2 copy-login-link-btn"
+                                        data-login-link="{{ url_for('authroutes.login', user_type='course-student', course_id=course.name, _external=True) }}">
+                                    Copy Student Login Link
+                                </button>
+                            </div>
                         </div>
-                    </li>
+
+                        <div class="mt-3">
+                            <p class="mb-1"><strong>Enrolled students:</strong>
+                                {% if course.students %}
+                                    <span class="text-monospace">{{ course.students|join(', ') }}</span>
+                                {% else %}
+                                    <span class="text-muted">No students have signed up yet.</span>
+                                {% endif %}
+                            </p>
+
+                            <div>
+                                <h6>Top misconceptions</h6>
+                                {% if course.top_misconceptions %}
+                                <ul class="mb-2">
+                                    {% for misconception, count in course.top_misconceptions %}
+                                    <li><strong>{{ misconception }}</strong>: {{ count }} time(s)</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p class="text-muted">No misconception data yet.</p>
+                                {% endif %}
+                            </div>
+
+                            <h6 class="mt-3">Exercise completion</h6>
+                            {% if course.exercise_completion %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Exercise</th>
+                                            <th>Questions</th>
+                                            <th>Students Started</th>
+                                            <th>Students Completed</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for exercise in course.exercise_completion %}
+                                        <tr>
+                                            <td>{{ exercise.name }}</td>
+                                            <td>{{ exercise.question_count }}</td>
+                                            <td>{{ exercise.started }}</td>
+                                            <td>{{ exercise.completed }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No exercises assigned to this course yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
         {% endif %}
