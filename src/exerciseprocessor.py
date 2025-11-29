@@ -11,7 +11,15 @@ def load_questions_from_sourceuri(sourceuri, staticfolderpath):
         sourceuri = sourceuri.replace('preload:', '')
         path_to_json = os.path.join(staticfolderpath, sourceuri)
         with open(path_to_json, 'r') as file:
-            return json.load(file)  
+            return json.load(file)
+    elif sourceuri.startswith('instructor:'):
+        # Load from instructor-created exercise in database
+        exercise_id = sourceuri.replace('instructor:', '')
+        from authroutes import get_instructor_exercise_by_id
+        exercise = get_instructor_exercise_by_id(int(exercise_id))
+        if exercise is None:
+            raise Exception(f"Exercise {exercise_id} not found")
+        return json.loads(exercise.exercise_json)
     else:
         response = requests.get(sourceuri)
         if response.status_code != 200:

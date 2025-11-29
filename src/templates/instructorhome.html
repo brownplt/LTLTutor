@@ -73,6 +73,26 @@
         </div>
         {% endif %}
 
+        <!-- Exercises Section -->
+        <div class="container mt-4 mb-2 justify-content-center">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Exercises</h5>
+                    <a href="{{ url_for('authroutes.list_instructor_exercises') }}" class="btn btn-primary btn-sm">
+                        Manage Exercises
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        Create custom exercises with questions and distractors for your students.
+                    </p>
+                    <a href="{{ url_for('authroutes.create_instructor_exercise') }}" class="btn btn-outline-primary">
+                        + Create New Exercise
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
     {% include 'footer.html' %}
     <script>

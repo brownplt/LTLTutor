@@ -53,6 +53,17 @@ def flatten(lst):
 app.jinja_env.filters['flatten'] = flatten
 
 
+@app.template_filter('fromjson')
+def fromjson_filter(s):
+    """Parse a JSON string into a Python object"""
+    try:
+        return json.loads(s) if s else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+app.jinja_env.filters['fromjson'] = fromjson_filter
+
+
 sk = os.environ.get('SECRET_KEY')
 app.secret_key = sk
 
@@ -114,7 +125,24 @@ def index():
 
 
     # Now choose one of the top two misconceptions randomly
-    max_misconception = random.choice(top_two_misconceptions)   
+    max_misconception = random.choice(top_two_misconceptions)
+    
+    # Get course exercises if user is a course student
+    course_exercises = []
+    completed_exercises = set()
+    user_course = getUserCourse(userId)
+    if user_course:
+        from authroutes import get_exercises_for_course
+        course_exercises = get_exercises_for_course(user_course)
+        
+        # Check which exercises the user has completed
+        if course_exercises:
+            exercise_counts = []
+            for ex in course_exercises:
+                questions = json.loads(ex.exercise_json) if ex.exercise_json else []
+                exercise_counts.append((ex.name, len(questions)))
+            completed_exercises = answer_logger.getCompletedExercises(userId, exercise_counts)
+    
     return render_template(
         'index.html',
         uid=getUserName(),
@@ -122,7 +150,10 @@ def index():
         misconception_count=misconception_count,
         max_misconception=max_misconception,
         num_logs=num_logs,
-        num_correct=num_correct
+        num_correct=num_correct,
+        user_course=user_course,
+        course_exercises=course_exercises,
+        completed_exercises=completed_exercises
     )
 
 @app.route('/ltl')
@@ -246,21 +277,41 @@ def instructorhome():
 
 @app.route('/exercise/load/<exercise_name>', methods=['GET'])
 @login_required
-def exercise(exercise_name):   
-    exercise = retrieve_course_data(exercise_name)
-    ## Ensure that the exercise exists, else return an error
-    if not exercise:
-        return f"Exercise {exercise_name} not found."
-
-    exercise_content = exercise.exercise_data
-
-    try:
-        data = json.loads(exercise_content)
-        data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = [])
-    except:
-        return f"Error loading exercise {exercise_name}"
-    return render_template('exercise.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
+def exercise(exercise_name):
+    """Load an exercise by name - checks instructor exercises first, then falls back to course-based lookup"""
+    from authroutes import get_exercises_for_course
+    
+    # First, try to find instructor exercises for a course with this name
+    exercises = get_exercises_for_course(exercise_name)
+    
+    if exercises and len(exercises) > 0:
+        # Use the first exercise assigned to this course
+        exercise_obj = exercises[0]
+        try:
+            data = json.loads(exercise_obj.exercise_json)
+            data = exerciseprocessor.randomize_questions(data)
+            
+            # Extract literals for trace expansion
+            literals = set()
+            for q in data:
+                if 'question' in q:
+                    try:
+                        literals.update(exerciseprocessor.getFormulaLiterals(q['question']))
+                    except:
+                        pass
+            
+            data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals))
+            return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_obj.name)
+        except Exception as e:
+            return f"Error loading exercise: {str(e)}"
+    
+    # Fall back to old behavior - check if there's course data
+    course = retrieve_course_data(exercise_name)
+    if not course:
+        return f"Exercise or course '{exercise_name}' not found."
+    
+    # Course exists but has no exercises assigned
+    return f"No exercises found for course '{exercise_name}'. Ask your instructor to assign exercises."
 
 
 
@@ -328,6 +379,51 @@ def loganswer(questiontype):
         return { "message": "INVALID QUESTION TYPE!!." }
     return { "message": "No further feedback." }
 
+
+@app.route('/exercise/predefined', methods=['GET', 'POST'])
+@login_required
+def exercise_predefined_get():
+    """Load an exercise from a sourceuri (preload:, instructor:, or URL)"""
+    if request.method == 'GET':
+        sourceuri = request.args.get('sourceuri')
+    else:
+        sourceuri = request.form.get('sourceuri')
+    
+    if not sourceuri:
+        return redirect('/loadfromjson')
+    
+    try:
+        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        data = exerciseprocessor.randomize_questions(data)
+        
+        # Try to extract literals from questions for trace expansion
+        literals = set()
+        for q in data:
+            if q.get('type') == 'englishtoltl':
+                # Get literals from correct answer
+                for opt in q.get('options', []):
+                    if opt.get('isCorrect'):
+                        try:
+                            literals.update(exerciseprocessor.getFormulaLiterals(opt['option']))
+                        except:
+                            pass
+            elif 'question' in q:
+                # For trace questions, try to parse the formula
+                try:
+                    literals.update(exerciseprocessor.getFormulaLiterals(q['question']))
+                except:
+                    pass
+        
+        data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals) if literals else [])
+        
+        # Generate exercise name from sourceuri
+        exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
+        
+    except Exception as e:
+        print(f"Error loading exercise from {sourceuri}: {e}")
+        return f"Error loading exercise: {str(e)}"
+    
+    return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_name)
 
 
 @app.route('/exercise/generate', methods=['GET'])

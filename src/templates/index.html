@@ -25,77 +25,110 @@
     <div class="container">
         {% include 'navbar.html' %}
 
-        <div class="container justify-content-right mt-3 mb-3">
-                <p class="text-muted">
-                    You have answered {{ num_correct }} / {{ num_logs }} questions correctly in the last 30 days.<br>
-                </p>
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap">
+            <div class="d-flex align-items-center">
+                {% if num_logs > 0 %}
+                <span class="badge badge-light p-2 mr-2" style="font-size: 0.9em;">
+                    {{ num_correct }}/{{ num_logs }} correct <small class="text-muted">(30 days)</small>
+                </span>
+                {% endif %}
+                {% if user_course %}
+                <span class="badge badge-info p-2">{{ user_course }}</span>
+                {% endif %}
+            </div>
         </div>
 
-        {% if misconception_count is not defined or misconception_count < threshold %}
-        <div class="card-body bg-light">
-            <h4 class="card-title">Getting Started with this tool?</h4>
-            <p class="card-text">
-                Make sure you're familiar with one of the <a href="/ltl">LTL syntaxes</a> supported by this tool.
-                Then, begin by generating a personalized exercise using the button below.
-            </p>
+        <!-- Course Exercises Section -->
+        {% if course_exercises and course_exercises|length > 0 %}
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Exercises for {{ user_course }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Your instructor has assigned the following exercises:</p>
+                <div class="list-group">
+                    {% for exercise in course_exercises %}
+                    {% set is_completed = exercise.name in completed_exercises %}
+                    <a href="{{ url_for('exercise_predefined_get') }}?sourceuri=instructor:{{ exercise.id }}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if is_completed %}list-group-item-success{% endif %}">
+                        <div>
+                            <strong>{{ exercise.name }}</strong>
+                            {% set questions = exercise.exercise_json | fromjson if exercise.exercise_json else [] %}
+                            <small class="text-muted ml-2">({{ questions|length }} questions)</small>
+                            {% if is_completed %}
+                            <span class="badge badge-success ml-2">✓ Completed</span>
+                            {% endif %}
+                        </div>
+                        <span class="badge badge-{% if is_completed %}secondary{% else %}primary{% endif %} badge-pill">
+                            {% if is_completed %}Retake →{% else %}Start →{% endif %}
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
-        {% elif misconception_count > threshold %}
-        <div class="p-3 mb-2 mt-2">
-            {% include max_misconception %}
-        </div>
-
         {% endif %}
 
+        {% if misconception_count is defined and misconception_count > threshold %}
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">Recommended Review</h5>
+            </div>
+            <div class="card-body">
+                {% include max_misconception %}
+            </div>
+        </div>
+        {% endif %}
 
-
-
-        <div class="container mt-4">
-            <div class="jumbotron text-center">
-                <div class="d-flex justify-content-center">
-                    <a href="/exercise/generate" class="btn btn-lg btn-primary">Begin a personalized exercise</a>
-                </div>
-                <p class="text-muted"> Exercises adapt in complexity and topic based on your previous responses. As your understanding
-                    of LTL improves, the exercises will become more challenging, and focus on areas where you need more practice.
+        <!-- Main Action Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body text-center py-5">
+                <h2 class="mb-3">Practice LTL</h2>
+                <p class="text-muted mb-4">
+                    Exercises adapt in complexity and topic based on your previous responses.<br>
+                    As you improve, exercises become more challenging and focus on areas where you need practice.
                 </p>
+                <a href="/exercise/generate" class="btn btn-lg btn-primary px-5">
+                    Begin Personalized Exercise
+                </a>
+            </div>
+        </div>
 
+        <!-- Getting Started Card (for new users) -->
+        {% if misconception_count is not defined or misconception_count < threshold %}
+        <div class="card bg-light mb-4">
+            <div class="card-body">
+                <h5 class="card-title">New to LTL Tutor?</h5>
+                <p class="card-text mb-2">
+                    Make sure you're familiar with one of the <a href="/ltl">LTL syntaxes</a> supported by this tool,
+                    then start with a personalized exercise above.
+                </p>
+                <small class="text-muted">
+                    <em>Areas for review will appear after you complete a few exercises.</em>
+                </small>
+            </div>
+        </div>
+        {% endif %}
 
-                <h4 class="text-center test-muted">OR</h4>
-
-                <div class="d-flex justify-content-center">
-                    <p class="text-muted"> If you know the name of a specific pre-defined exercise, load it here.   </p> <br>
-                    <div class="input-group mt-2 mb-3 w-50">
-                        <input type="text" class="form-control" id="exerciseIdInput" placeholder="Exercise Name">
-                        <div class="input-group-append">
-                            <button class="btn btn-primary" type="button" onclick="loadExercise()">Load</button>
-                        </div>
+        <!-- Load Specific Exercise -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6 class="text-muted mb-3">Have an exercise code?</h6>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="exerciseIdInput" placeholder="Enter exercise name...">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="loadExercise()">Load Exercise</button>
                     </div>
                 </div>
-
-
             </div>
-
-
-            {% if misconception_count is defined and misconception_count < threshold %}
-            <div class="alert-secondary alert">
-                <strong> Still identifying areas for review</strong>
-                <p>An area or concept for review will appear once you have completed a few more exercises.</p>
-            </div>
-        {% endif %}
-
-            <script>
-                function loadExercise() {
-                    var exerciseId = document.getElementById('exerciseIdInput').value;
-                    window.location.href = '/exercise/load/' + exerciseId;
-                }
-            </script>
         </div>
 
-
-        
-
-
-
-
+        <script>
+            function loadExercise() {
+                var exerciseId = document.getElementById('exerciseIdInput').value;
+                window.location.href = '/exercise/load/' + exerciseId;
+            }
+        </script>
 
 
     </div>

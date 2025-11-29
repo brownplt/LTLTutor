@@ -1,27 +1,7 @@
-<pre
-    class="badge badge-light uidbadge"><span class="float-left">[Version {% include 'version.html' %}]</span> <span id="userid_field" class="float-right"> Logged in as {{uid}} </span> </pre>
-
-    <div id="blogPostAlert" class="alert alert-success alert-dismissible fade show" role="alert">
-        <p class="lead">Want to know more about the LTL tutor? <a href="https://blog.brownplt.org/2024/08/08/ltltutor.html">Read this blog post!</a></p>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const alertDiv = document.getElementById('blogPostAlert');
-    
-            // Check if the alert has been dismissed before
-            if (localStorage.getItem('blogPostAlertDismissed') === 'true') {
-                alertDiv.style.display = 'none';
-            }
-    
-            // Add event listener to the close button
-            alertDiv.querySelector('.close').addEventListener('click', function () {
-                localStorage.setItem('blogPostAlertDismissed', 'true');
-            });
-        });
-    </script>
+<div class="d-flex justify-content-between align-items-center py-1 px-2 bg-light border-bottom small text-muted">
+    <span>Version {% include 'version.html' %}</span>
+    <span id="userid_field">{{uid}}</span>
+</div>
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">

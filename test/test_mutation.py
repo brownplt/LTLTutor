@@ -6,6 +6,9 @@ import os
 # Add the src directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
+# Mock spot module to avoid import error
+from unittest.mock import MagicMock
+sys.modules['spot'] = MagicMock()
 
 from ltlnode import parse_ltl_string
 import codebook
