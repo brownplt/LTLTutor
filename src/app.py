@@ -330,7 +330,11 @@ def loganswer(questiontype):
 
     misconceptions = ast.literal_eval(data['misconceptions'])
     question_text = data['question_text']
-    question_options = json.dumps(data['question_options'])
+    question_frame = data.get('question_frame', '')
+    question_options_payload = {"options": data['question_options']}
+    if question_frame:
+        question_options_payload["question_frame"] = question_frame
+    question_options = json.dumps(question_options_payload)
 
     userId = getUserName()
     courseId = getUserCourse(userId)

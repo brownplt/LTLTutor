@@ -84,7 +84,7 @@
 
                     {% if q.type == "tracesatisfaction_yn" %}
                     <h5 id="{{ qindex }}question_text" class="card-title mb-2">
-                        <pre><code class="actualQuestion language-ltl"> {{ q.question}} </code></pre>
+                        <pre><code class="actualQuestion language-ltl" data-gloss-frame="{{ q.gloss_frame | default('') }}"> {{ q.question}} </code></pre>
                     </h5>
                     <pre class="mermaid" id="q{{qindex}}_yn_trace"
                         aria-label="{{q.trace}}"> {{ q.mermaid | safe}}  </pre>
@@ -94,10 +94,11 @@
                     </div>
                     {% elif q.type == "tracesatisfaction_mc" %}
                     <h5 id="{{ qindex }}question_text" class="card-title mb-2">
-                        <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre>
+                        <pre><code class="actualQuestion language-ltl" data-gloss-frame="{{ q.gloss_frame | default('') }}">{{ q.question}}</code></pre>
                     </h5>
                     {% else %}
                     <h5 id="{{ qindex }}question_text" class="card-title mb-2 actualQuestion"
+                        data-gloss-frame="{{ q.gloss_frame | default('') }}"
                         style="white-space: pre-wrap;">{{ q.question}}
                     </h5>
                     {% endif %}
