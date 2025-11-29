@@ -71,9 +71,9 @@
 
         {% if misconception_count is defined and misconception_count > threshold %}
         <div class="card border-warning mb-4">
-            <div class="card-header bg-warning">
+            <!-- <div class="card-header bg-warning">
                 <h5 class="mb-0">Recommended Review</h5>
-            </div>
+            </div> -->
             <div class="card-body">
                 {% include max_misconception %}
             </div>
@@ -83,14 +83,14 @@
         <!-- Main Action Card -->
         <div class="card shadow-sm mb-4">
             <div class="card-body text-center py-5">
-                <h2 class="mb-3">Practice LTL</h2>
+                <a href="/exercise/generate" class="btn btn-lg btn-primary px-5">
+                    Begin Personalized Exercise
+                </a>
                 <p class="text-muted mb-4">
                     Exercises adapt in complexity and topic based on your previous responses.<br>
                     As you improve, exercises become more challenging and focus on areas where you need practice.
                 </p>
-                <a href="/exercise/generate" class="btn btn-lg btn-primary px-5">
-                    Begin Personalized Exercise
-                </a>
+
             </div>
         </div>
 
