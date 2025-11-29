@@ -9,7 +9,23 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
-from spotutils import weighted_trace_choice
+from spotutils import weighted_trace_choice, _count_trace_steps
+
+
+class TestCountTraceSteps(unittest.TestCase):
+    """Test cases for trace step counting helper function."""
+
+    def test_single_step(self):
+        """Trace with no semicolons should have 1 step."""
+        self.assertEqual(_count_trace_steps("a"), 1)
+        self.assertEqual(_count_trace_steps("cycle{!a | b}"), 1)
+
+    def test_multiple_steps(self):
+        """Traces with semicolons should have multiple steps."""
+        self.assertEqual(_count_trace_steps("a; b"), 2)
+        self.assertEqual(_count_trace_steps("a; b; c"), 3)
+        self.assertEqual(_count_trace_steps("a & !b; b; cycle{!a | b}"), 3)
+        self.assertEqual(_count_trace_steps("!a | b; a & !b; b; cycle{!a | b}"), 4)
 
 
 class TestWeightedTraceChoice(unittest.TestCase):
@@ -39,9 +55,9 @@ class TestWeightedTraceChoice(unittest.TestCase):
 
     def test_shorter_traces_selected_more_often(self):
         """Shorter traces should be selected more frequently than longer ones."""
-        # Create traces with significantly different lengths
-        short_trace = "a"  # length 1
-        long_trace = "a; b; c; d; e; f; g; h; i; j; k; l; m; n; o; p; q; r; s; t"  # length 59
+        # Create traces with significantly different step counts
+        short_trace = "a"  # 1 step
+        long_trace = "a; b; c; d; e; f; g; h; i; j; k; l; m; n; o; p; q; r; s; t"  # 20 steps
         traces = [short_trace, long_trace]
         
         # Run many trials
@@ -57,14 +73,14 @@ class TestWeightedTraceChoice(unittest.TestCase):
                 long_count += 1
         
         # Short trace should be selected more often due to weighting
-        # With inverse length weighting:
+        # With inverse step count weighting:
         # short weight = 1/(1+1) = 0.5
-        # long weight = 1/(1+59) = 0.0167
-        # So short should be ~97% of selections
+        # long weight = 1/(1+20) = 0.048
+        # So short should be ~91% of selections
         self.assertGreater(short_count, long_count,
             f"Short trace should be selected more often. Got short={short_count}, long={long_count}")
         
-        # Short should be selected at least 80% of the time with these lengths
+        # Short should be selected at least 80% of the time with these step counts
         self.assertGreater(short_count / trials, 0.8,
             f"Short trace should be selected at least 80% of the time. Got {short_count/trials:.2%}")
 
@@ -90,11 +106,11 @@ class TestWeightedTraceChoice(unittest.TestCase):
             f"All traces should be selectable. Got {results}")
 
     def test_moderate_length_difference(self):
-        """Test with traces of moderate length difference (more realistic)."""
+        """Test with traces of moderate step count difference (more realistic)."""
         traces = [
-            "cycle{!a | b}",  # len 13
-            "a & !b; b; cycle{!a | b}",  # len 24
-            "!a | b; a & !b; b; cycle{!a | b}",  # len 32
+            "cycle{!a | b}",  # 1 step
+            "a & !b; b; cycle{!a | b}",  # 3 steps
+            "!a | b; a & !b; b; cycle{!a | b}",  # 4 steps
         ]
         
         # Run many trials
@@ -115,9 +131,10 @@ class TestWeightedTraceChoice(unittest.TestCase):
         self.assertGreater(counts[medium], counts[longest],
             f"Medium should be more common than longest. Got {counts[medium]} vs {counts[longest]}")
 
-    def test_identical_lengths_equal_probability(self):
-        """Traces with identical lengths should have roughly equal probability."""
-        traces = ["abc", "def", "ghi"]  # All length 3
+    def test_identical_step_counts_equal_probability(self):
+        """Traces with identical step counts should have roughly equal probability."""
+        # All traces have 1 step (no semicolons)
+        traces = ["abc", "def", "ghi"]
         
         counts = {t: 0 for t in traces}
         trials = 1000
