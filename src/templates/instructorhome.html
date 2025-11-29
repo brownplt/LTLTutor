@@ -82,34 +82,17 @@
                                 {% endif %}
                             </p>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Top misconceptions</h6>
-                                    {% if course.top_misconceptions %}
-                                    <ul class="mb-2">
-                                        {% for misconception, count in course.top_misconceptions %}
-                                        <li><strong>{{ misconception }}</strong>: {{ count }} time(s)</li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% else %}
-                                    <p class="text-muted">No misconception data yet.</p>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Hardest questions</h6>
-                                    {% if course.hardest_questions %}
-                                    <ul class="mb-2">
-                                        {% for q in course.hardest_questions %}
-                                        <li>
-                                            {{ q.question }}<br>
-                                            <small class="text-muted">{{ (q.incorrect_rate * 100) | round(0) }}% incorrect over {{ q.attempts }} attempt(s)</small>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% else %}
-                                    <p class="text-muted">No difficult questions identified yet.</p>
-                                    {% endif %}
-                                </div>
+                            <div>
+                                <h6>Top misconceptions</h6>
+                                {% if course.top_misconceptions %}
+                                <ul class="mb-2">
+                                    {% for misconception, count in course.top_misconceptions %}
+                                    <li><strong>{{ misconception }}</strong>: {{ count }} time(s)</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p class="text-muted">No misconception data yet.</p>
+                                {% endif %}
                             </div>
 
                             <h6 class="mt-3">Exercise completion</h6>

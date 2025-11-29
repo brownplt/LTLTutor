@@ -288,27 +288,6 @@ def instructorhome():
         ])
         top_misconceptions = misconception_counter.most_common(3)
 
-        question_stats = defaultdict(lambda: {'correct': 0, 'total': 0})
-        for resp in responses:
-            if resp.question_text:
-                question_stats[resp.question_text]['total'] += 1
-                if str(resp.correct_answer).lower() == 'true':
-                    question_stats[resp.question_text]['correct'] += 1
-
-        hardest_questions = []
-        for question_text, stats in question_stats.items():
-            incorrect = stats['total'] - stats['correct']
-            if stats['total'] > 0:
-                hardest_questions.append({
-                    'question': question_text,
-                    'incorrect_rate': incorrect / stats['total'],
-                    'attempts': stats['total']
-                })
-
-        hardest_questions = sorted(
-            hardest_questions, key=lambda q: q['incorrect_rate'], reverse=True
-        )[:3]
-
         responses_by_exercise_user = defaultdict(lambda: defaultdict(int))
         for resp in responses:
             if resp.exercise:
@@ -341,7 +320,6 @@ def instructorhome():
             'response_count': len(responses),
             'students': student_usernames,
             'top_misconceptions': top_misconceptions,
-            'hardest_questions': hardest_questions,
             'exercise_completion': exercise_completion
         })
 
