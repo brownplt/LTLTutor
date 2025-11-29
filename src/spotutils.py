@@ -1,4 +1,5 @@
 import spot
+import random
 
 
 DEFAULT_WEIGHT = 5
@@ -29,6 +30,39 @@ DEFAULT_LTL_PRIORITIES = {
     # "UConcat":0,
     # "Closure":0, ## ?
 }
+
+
+def _count_trace_steps(trace):
+    """
+    Count the number of steps in a trace string.
+    Traces use ';' as a step delimiter (e.g., 'a; b; cycle{c}' has 3 steps).
+    """
+    return len(trace.split(';'))
+
+
+def weighted_trace_choice(traces):
+    """
+    Select a trace from a list of traces, with shorter traces slightly preferred.
+    Uses inverse step count weighting: weight = 1 / (1 + num_steps).
+    This gives shorter traces higher selection probability while still allowing
+    longer traces to be selected.
+    
+    Args:
+        traces: A list of trace strings to choose from
+        
+    Returns:
+        A randomly selected trace string, with shorter traces more likely to be chosen
+    """
+    if not traces:
+        raise ValueError("Cannot choose from empty list of traces")
+    if len(traces) == 1:
+        return traces[0]
+    
+    # Calculate weights based on inverse step count
+    # Using 1 / (1 + num_steps) to slightly prefer shorter traces
+    weights = [1.0 / (1.0 + _count_trace_steps(t)) for t in traces]
+    
+    return random.choices(traces, weights=weights, k=1)[0]
 
 
 def areEquivalent(formula1, formula2):
