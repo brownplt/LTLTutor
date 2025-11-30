@@ -223,7 +223,7 @@ class UntilNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return ltltoeng.capitalize_sentence(f"{lhs} until {rhs}")
+        return f"{lhs} until {rhs}"
     
     def __forge__(self):
         return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
@@ -242,7 +242,7 @@ class NextNode(UnaryOperatorNode):
         if x is not None:
             return x
         op = self.operand.__to_english__().rstrip('.')
-        return ltltoeng.capitalize_sentence(f"in the next step, {op}")
+        return f"in the next step, {op}"
     
     def __forge__(self):
         return f"(NEXT_STATE {self.operand.__forge__()})"
@@ -268,8 +268,8 @@ class GloballyNode(UnaryOperatorNode):
             f"{op} is always true"
         ]
 
-        english = random.choice(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        english = ltltoeng.choose_best_sentence(patterns)
+        return english
     
     def __forge__(self):
         return f"(ALWAYS {self.operand.__forge__()})"
@@ -290,7 +290,7 @@ class FinallyNode(UnaryOperatorNode):
         op = self.operand.__to_english__().rstrip('.')
 
         english = f"eventually, {op}"
-        return ltltoeng.capitalize_sentence(english)
+        return english
     
     def __forge__(self):
         return f"(EVENTUALLY {self.operand.__forge__()})"
@@ -312,7 +312,7 @@ class OrNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return ltltoeng.capitalize_sentence(f"either {lhs} or {rhs}")
+        return f"either {lhs} or {rhs}"
     
 
 
@@ -328,7 +328,7 @@ class AndNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return ltltoeng.capitalize_sentence(f"both {lhs} and {rhs}")
+        return f"both {lhs} and {rhs}"
 
 
 class NotNode(UnaryOperatorNode):
@@ -345,9 +345,9 @@ class NotNode(UnaryOperatorNode):
 
         ## If the operand is a literal, we can just negate it
         if isinstance(self.operand, LiteralNode):
-            return ltltoeng.capitalize_sentence(f"not {op}")
+            return f"not {op}"
         else:
-            return ltltoeng.capitalize_sentence(f"it is not the case that {op}")
+            return f"it is not the case that {op}"
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -362,6 +362,9 @@ class ImpliesNode(BinaryOperatorNode):
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
 
+        lhs = ltltoeng.normalize_embedded_clause(lhs)
+        rhs = ltltoeng.normalize_embedded_clause(rhs)
+
         # Potential patterns:
         patterns = [
             f"if {lhs}, then {rhs}",
@@ -369,9 +372,9 @@ class ImpliesNode(BinaryOperatorNode):
             f"whenever {lhs}, then {rhs}"
         ]
 
-        # Choose a pattern randomly, and then return the corrected sentence
-        english = random.choice(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        # Choose the most fluent pattern rather than picking randomly
+        english = ltltoeng.choose_best_sentence(patterns)
+        return english
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -386,6 +389,9 @@ class EquivalenceNode(BinaryOperatorNode):
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
 
+        lhs = ltltoeng.normalize_embedded_clause(lhs)
+        rhs = ltltoeng.normalize_embedded_clause(rhs)
+
         # Potential patterns:
         patterns = [
             f"{lhs} if and only if {rhs}",
@@ -393,9 +399,9 @@ class EquivalenceNode(BinaryOperatorNode):
             f"{lhs} is equivalent to {rhs}"
         ]
 
-        # Choose a pattern randomly, and then return the corrected sentence
-        english = random.choice(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        # Choose the most fluent pattern rather than picking randomly
+        english = ltltoeng.choose_best_sentence(patterns)
+        return english
 
 
 

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Blueprint
+from flask import Flask, render_template, request, Blueprint, jsonify
 from flask_login import login_required, current_user
 
 
@@ -19,6 +19,7 @@ from collections import Counter, defaultdict
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep
+import ltltoeng
 from authroutes import (
     authroutes,
     init_app,
@@ -172,6 +173,48 @@ def ltl():
 @app.route('/loadfromjson')
 def loadfromjson():
     return render_template('loadfromjson.html', uid = getUserName())
+
+@app.route('/ltltoeng', methods=['GET'])
+def ltl_to_english():
+    """Lightweight endpoint to translate an LTL formula to English for testing."""
+    formula = request.args.get('formula', '').strip()
+    if not formula:
+        return jsonify({"error": "Missing required query parameter 'formula'."}), 400
+    try:
+        node = parse_ltl_string(formula)
+        english = ltltoeng.finalize_sentence(node.__to_english__())
+    except Exception as e:
+        return jsonify({"error": "Failed to translate formula.", "details": str(e)}), 400
+
+    return jsonify({"formula": formula, "english": english})
+
+
+@app.route('/ltltoeng/ui', methods=['GET', 'POST'])
+@login_required
+def ltl_to_english_ui():
+    """Simple HTML interface to translate an LTL formula to English."""
+    translation = None
+    error = None
+    input_formula = ""
+
+    if request.method == 'POST':
+        input_formula = request.form.get('formula', '').strip()
+        if not input_formula:
+            error = "Please enter an LTL formula."
+        else:
+            try:
+                node = parse_ltl_string(input_formula)
+                translation = ltltoeng.finalize_sentence(node.__to_english__())
+            except Exception as e:
+                error = f"Failed to translate formula: {e}"
+
+    return render_template(
+        'ltltoengui.html',
+        uid=getUserName(),
+        translation=translation,
+        error=error,
+        input_formula=input_formula,
+    )
 
 @app.route('/authorquestion/', methods=['POST'])
 @login_required

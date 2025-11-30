@@ -436,8 +436,8 @@ class ExerciseBuilder:
         
         formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
         ### If there are multiple '.' in a row, replace with a single '.'
-        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng)
-        return formula_eng_corrected
+        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
+        return ltltoeng.finalize_sentence(formula_eng_corrected)
 
 
     def get_options_with_misconceptions_as_formula(self, answer):

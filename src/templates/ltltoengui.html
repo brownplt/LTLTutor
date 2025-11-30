@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL → English</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include 'navbar.html' %}
+
+        <div class="card shadow-sm mt-4 mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">LTL to English Translator</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('ltl_to_english_ui') }}">
+                    <div class="form-group">
+                        <label for="formula">Enter an LTL formula</label>
+                        <textarea class="form-control" id="formula" name="formula" rows="3" placeholder="e.g., G(p -> F q)">{{ input_formula }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Translate</button>
+                </form>
+
+                {% if error %}
+                <div class="alert alert-danger mt-3" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                {% if translation %}
+                <div class="alert alert-success mt-3" role="alert">
+                    <strong>English:</strong> {{ translation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

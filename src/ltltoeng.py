@@ -2,11 +2,10 @@ import ltlnode
 import random
 import re
 
-try:
-    import inflect
-    _inflect_engine = inflect.engine()
-except ImportError:
-    _inflect_engine = None
+import inflect
+from wordfreq import zipf_frequency
+
+_inflect_engine = inflect.engine()
 
 ## We should list the various patterns of LTL formulae that we can handle
 
@@ -123,6 +122,93 @@ def smooth_grammar(text):
     text = ' '.join(text.split())
     
     return text
+
+
+def normalize_embedded_clause(text):
+    """Make a composed clause read naturally inside a larger sentence.
+    
+    - Lowercase the leading word when it is embedded mid-sentence.
+    - Append 'holds' after bare literals that lack a verb.
+    """
+    if not text:
+        return text
+
+    t = text.strip()
+
+    # Append 'holds' if this looks like a bare literal and doesn't already have a verb
+    if t.startswith("'") and "hold" not in t:
+        t = f"{t} holds"
+
+    # Lowercase initial letter when not quoted (embedded clause)
+    if t and not t.startswith("'") and t[0].isupper():
+        t = t[0].lower() + t[1:]
+
+    return t
+
+
+def finalize_sentence(text):
+    """Apply smoothing and capitalization once, at the top level."""
+    if text is None:
+        return ""
+    smoothed = smooth_grammar(text.strip())
+    return capitalize_sentence(smoothed)
+
+
+def _ngram_fluency_score(text):
+    """Lightweight fluency score using token and bi-gram heuristics.
+    
+    The goal is to pick the most natural-sounding option from a small
+    candidate set, not to be a full language model.
+    """
+    if not text:
+        return float("-inf")
+
+    normalized = text.lower()
+    tokens = re.findall(r"[a-z']+", normalized)
+    if not tokens:
+        return float("-inf")
+
+    # Encourage concise phrasing; small penalty per token
+    score = -0.05 * len(tokens)
+
+    # Penalize repeated consecutive words (kept minimal for clarity)
+    for i in range(1, len(tokens)):
+        if tokens[i] == tokens[i - 1]:
+            score -= 0.5
+
+    bigrams = list(zip(tokens, tokens[1:]))
+
+    # Mild penalty for overusing "holds"
+    score -= 0.1 * normalized.count("holds")
+
+    # Frequency-based fluency cues using pre-built Zipf estimates
+    token_freq_score = sum(zipf_frequency(tok, 'en') for tok in tokens) / len(tokens)
+    score += 0.2 * token_freq_score
+
+    if bigrams:
+        bigram_scores = [zipf_frequency(' '.join(bg), 'en') for bg in bigrams]
+        score += 0.15 * (sum(bigram_scores) / len(bigram_scores))
+
+    return score
+
+
+def choose_best_sentence(candidates):
+    """Pick the most natural-sounding candidate using the fluency score.
+    
+    Returns a smoothed, lower-case sentence fragment (no capitalization),
+    so callers can embed it and decide when to capitalize.
+    """
+    best = None
+    best_score = float("-inf")
+    for cand in candidates:
+        if not cand:
+            continue
+        smoothed = smooth_grammar(cand)
+        score = _ngram_fluency_score(smoothed)
+        if score > best_score:
+            best_score = score
+            best = smoothed
+    return best or ""
 
 
 #### Globally special cases ####
@@ -829,9 +915,9 @@ def apply_special_pattern_if_possible(node):
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
-            # Apply grammar smoothing and capitalization
+            # Apply grammar smoothing (leave capitalization to callers)
             result = smooth_grammar(result)
-            return capitalize_sentence(result)
+            return result
     return None
 
 
