@@ -83,6 +83,34 @@ class NodeRepr:
         self.vars = self.vars.replace('&', self.VAR_SEPARATOR)
         self.id = ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
 
+    @staticmethod
+    def _canonicalize_state(state_str: str) -> str:
+        """Return a stable, alphabetically ordered representation of literals in a state."""
+        cleaned = state_str.replace('{', '').replace('}', '').strip()
+        if cleaned in ("", "unsat"):
+            return cleaned
+
+        tokens = [t.strip() for t in re.split(rf'\s*{re.escape(NodeRepr.VAR_SEPARATOR)}\s*', cleaned) if t.strip() != ""]
+        normalized = [t.replace('(', '').replace(')', '') for t in tokens]
+
+        def sort_key(token: str):
+            is_negated = token.startswith('!')
+            name = token[1:] if is_negated else token
+            # Sort by name, then place positive before negative for the same name
+            return (name, 1 if is_negated else 0)
+
+        ordered = sorted(normalized, key=sort_key)
+
+        # Drop duplicates while preserving the new sorted order
+        seen = set()
+        deduped = []
+        for tok in ordered:
+            if tok not in seen:
+                seen.add(tok)
+                deduped.append(tok)
+
+        return f" {NodeRepr.VAR_SEPARATOR} ".join(deduped)
+
 
     def __mermaid_str__(self):
         asStr = self.__str__()
@@ -95,16 +123,17 @@ class NodeRepr:
         asStr = asStr.replace('!', '¬')
 
         return f'{self.id}["{asStr}"]'
-    
+
     def __str__(self):
         asStr = self.vars
         if '{' in asStr or '}' in asStr:
             asStr = asStr.replace('{', '').replace('}', '')
-        # Now remove all the parens
-        asStr = asStr.replace('(', '').replace(')', '')
+        # Now remove all the parens and order literals alphabetically for stability
+        asStr = self._canonicalize_state(asStr)
         return asStr
 
     def __add_missing_literals__(self, missing_literals):
+        missing_literals = sorted(missing_literals)
         s = self.vars
         for literal in missing_literals:
             x = literal if random.random() < 0.5 else f'!{literal}'
