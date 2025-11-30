@@ -31,14 +31,213 @@
                 {% endif %}
 
                 {% if translation %}
-                <div class="alert alert-success mt-3" role="alert">
-                    <strong>English:</strong> {{ translation }}
+                <div class="alert alert-light border mt-3 d-flex align-items-start justify-content-between" role="alert">
+                    <div>
+                        <strong>English:</strong>
+                        <span id="ltl-translation-text">{{ translation }}</span>
+                    </div>
+                    <div class="ml-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="copy-translation-btn">Copy</button>
+                    </div>
+                </div>
+                <div id="copy-translation-status" class="small text-muted mb-2"></div>
+                <div class="card border-secondary mt-3">
+                    <div class="card-body">
+                        <h6 class="card-title mb-2">Was this translation clear?</h6>
+                        <p class="text-muted small mb-3">Flag anything that feels off so we can improve future translations.</p>
+                        <form id="ltl-to-eng-feedback-form">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="issue-ambiguous" name="issues" value="Ambiguity in meaning">
+                                <label class="form-check-label" for="issue-ambiguous">Ambiguity in meaning</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="issue-unnatural" name="issues" value="Unnatural word">
+                                <label class="form-check-label" for="issue-unnatural">Unnatural word</label>
+                                <input type="text" class="form-control form-control-sm mt-2 ml-4 d-none" id="issue-unnatural-text" name="unnaturalWordText" placeholder="Please specify the word or phrase...">
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="issue-grammar" name="issues" value="Bad grammar">
+                                <label class="form-check-label" for="issue-grammar">Bad grammar</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="issue-phrasing" name="issues" value="Awkward or repetitive phrasing">
+                                <label class="form-check-label" for="issue-phrasing">Awkward or repetitive phrasing</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="issue-temporal" name="issues" value="Temporal scope unclear">
+                                <label class="form-check-label" for="issue-temporal">Temporal scope unclear</label>
+                            </div>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="issue-other" name="issues" value="Other">
+                                <label class="form-check-label" for="issue-other">Other</label>
+                                <textarea id="issue-other-text" name="otherText" class="form-control form-control-sm mt-2 d-none" rows="2" placeholder="Please specify..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ltl-to-eng-suggestion" class="mb-1">Have a clearer translation to suggest? (optional)</label>
+                                <textarea class="form-control form-control-sm" id="ltl-to-eng-suggestion" rows="2" placeholder="Share your preferred wording..."></textarea>
+                            </div>
+
+                            <input type="hidden" id="feedback-english" value="{{ translation }}">
+                            <input type="hidden" id="feedback-ltl" value="{{ input_formula }}">
+                            <div class="d-flex flex-wrap align-items-center">
+                                <button type="button" class="btn btn-outline-primary mr-3" id="submit-ltl-to-eng-feedback">Submit feedback</button>
+                                <div id="ltl-to-eng-feedback-status" class="small text-muted"></div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('ltl-to-eng-feedback-form');
+            if (!form) {
+                return;
+            }
+
+            const unnaturalCheckbox = document.getElementById('issue-unnatural');
+            const unnaturalText = document.getElementById('issue-unnatural-text');
+            const otherCheckbox = document.getElementById('issue-other');
+            const otherText = document.getElementById('issue-other-text');
+            const statusEl = document.getElementById('ltl-to-eng-feedback-status');
+            const submitBtn = document.getElementById('submit-ltl-to-eng-feedback');
+            const englishInput = document.getElementById('feedback-english');
+            const ltlInput = document.getElementById('feedback-ltl');
+            const suggestionInput = document.getElementById('ltl-to-eng-suggestion');
+            const copyBtn = document.getElementById('copy-translation-btn');
+            const translationText = document.getElementById('ltl-translation-text');
+            const copyStatus = document.getElementById('copy-translation-status');
+
+            function toggleTarget(checkbox, target) {
+                if (!checkbox || !target) return;
+                const shouldShow = checkbox.checked;
+                target.classList.toggle('d-none', !shouldShow);
+                if (!shouldShow) {
+                    target.value = '';
+                }
+            }
+
+            if (unnaturalCheckbox) {
+                unnaturalCheckbox.addEventListener('change', function () {
+                    toggleTarget(unnaturalCheckbox, unnaturalText);
+                });
+            }
+            if (otherCheckbox) {
+                otherCheckbox.addEventListener('change', function () {
+                    toggleTarget(otherCheckbox, otherText);
+                });
+            }
+
+            async function submitFeedback() {
+                if (statusEl) {
+                    statusEl.textContent = '';
+                    statusEl.classList.remove('text-success', 'text-danger');
+                }
+
+                const selectedIssues = Array.from(form.querySelectorAll('input[name="issues"]:checked'))
+                    .map(input => {
+                        if (input.value === 'Unnatural word') {
+                            const detail = ((unnaturalText && unnaturalText.value) ? unnaturalText.value : '').trim();
+                            return detail ? `${input.value}: ${detail}` : input.value;
+                        }
+                        if (input.value === 'Other') {
+                            const detail = ((otherText && otherText.value) ? otherText.value : '').trim();
+                            return detail ? `${input.value}: ${detail}` : input.value;
+                        }
+                        return input.value;
+                    });
+
+                const suggestedTranslation = suggestionInput ? (suggestionInput.value || '').trim() : '';
+
+                if (selectedIssues.length === 0 && suggestedTranslation.length === 0) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Select at least one issue or propose a translation before submitting.';
+                        statusEl.classList.add('text-danger');
+                    }
+                    return;
+                }
+
+                const payload = {
+                    issues: selectedIssues.join(', '),
+                    english: englishInput ? englishInput.value : '',
+                    ltl: ltlInput ? ltlInput.value : '',
+                    suggested_translation: suggestedTranslation
+                };
+
+                try {
+                    const response = await fetch('/logenglishltlrating', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        form.reset();
+                        toggleTarget(unnaturalCheckbox, unnaturalText);
+                        toggleTarget(otherCheckbox, otherText);
+                        if (statusEl) {
+                            statusEl.textContent = 'Thanks for the feedback!';
+                            statusEl.classList.add('text-success');
+                        }
+                    } else {
+                        throw new Error('Request failed');
+                    }
+                } catch (error) {
+                    console.error('Error submitting feedback:', error);
+                    if (statusEl) {
+                        statusEl.textContent = 'Could not submit feedback right now. Please try again.';
+                        statusEl.classList.add('text-danger');
+                    }
+                }
+            }
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', submitFeedback);
+            }
+
+            function copyTranslation() {
+                if (!translationText || !copyStatus) {
+                    return;
+                }
+                copyStatus.textContent = '';
+                copyStatus.classList.remove('text-success', 'text-danger');
+                const text = translationText.textContent || '';
+
+                // Fallback copy mechanism for wider browser support
+                const temp = document.createElement('textarea');
+                temp.value = text;
+                temp.setAttribute('readonly', '');
+                temp.style.position = 'absolute';
+                temp.style.left = '-9999px';
+                document.body.appendChild(temp);
+                temp.select();
+
+                let copied = false;
+                try {
+                    copied = document.execCommand('copy');
+                } catch (err) {
+                    copied = false;
+                }
+                document.body.removeChild(temp);
+
+                if (copied) {
+                    copyStatus.textContent = 'Copied to clipboard.';
+                    copyStatus.classList.add('text-success');
+                } else {
+                    copyStatus.textContent = 'Copy failed. You can manually select and copy the text.';
+                    copyStatus.classList.add('text-danger');
+                }
+            }
+
+            if (copyBtn) {
+                copyBtn.addEventListener('click', copyTranslation);
+            }
+        });
+    </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

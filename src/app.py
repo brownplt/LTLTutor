@@ -651,9 +651,16 @@ def ltlstepper():
 def logenglishltlrating():
     data = request.json
     userId = getUserName()
-    english = data['english']
-    ltl = data['ltl']
-    comments = data['issues']
+    english = data.get('english', '')
+    ltl = data.get('ltl', '')
+    comments = data.get('issues', '') or ''
+    suggested_translation = data.get('suggested_translation', '').strip()
+
+    if suggested_translation:
+        if comments:
+            comments = f"{comments} | Suggested translation: {suggested_translation}"
+        else:
+            comments = f"Suggested translation: {suggested_translation}"
 
     e_ltl_pair = {
         "english": english,
