@@ -33,4 +33,4 @@ zipp
 psycopg2-binary
 flask-login
 inflect
-
+wordfreq>=3.0
