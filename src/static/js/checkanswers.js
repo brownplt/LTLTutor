@@ -47,6 +47,19 @@ function getGeneratedFromFormulaIfExists(radioButton) {
     return null;
 }
 
+// Prevent users from changing their answer after seeing feedback
+function lockQuestionInteractions(parent_node) {
+    let radios = parent_node.querySelectorAll('input[type=radio]');
+    Array.from(radios).forEach(radio => {
+        radio.disabled = true;
+    });
+
+    let checkButton = parent_node.querySelector('.checkanswer');
+    if (checkButton) {
+        checkButton.disabled = true;
+    }
+}
+
 
 function show_feedback(parent_node, question_type) {
 
@@ -205,6 +218,7 @@ async function tracesatisfaction_mc_getfeedback(button) {
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
     let correct = show_feedback(parent_node, QUESTION_TYPE);
+    lockQuestionInteractions(parent_node);
 
     let data = {
         selected_option: selected_radio.value,
@@ -234,6 +248,7 @@ async function tracesatisfaction_yn_getfeedback(button) {
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
     let correct = show_feedback(parent_node, QUESTION_TYPE);
+    lockQuestionInteractions(parent_node);
 
     let data = {
         selected_option: selected_radio.value,
@@ -263,6 +278,7 @@ async function englishtoltl_getfeedback(button) {
     let correct_option = getCorrectRadio(parent_node).value;
     let question_options = getQuestionOptions(parent_node);
     let correct = show_feedback(parent_node, QUESTION_TYPE);
+    lockQuestionInteractions(parent_node);
 
     let data = {
         selected_option: selected_radio.value,
