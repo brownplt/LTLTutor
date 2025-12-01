@@ -132,6 +132,7 @@ def init_app(app):
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        next_page = request.form.get('next') or request.args.get('next')
         user = None
         canLogin = False
 
@@ -201,14 +202,15 @@ def login():
             if canLogin:
                 print('Logging in user')
                 login_user(user)
-                return redirect(url_for('index'))
+                return redirect(next_page or url_for('index'))
             else:
                 flash('Login failed. Please try again.')
                 return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
         user_type = request.args.get('user_type', '')
         course_id = request.args.get('course_id', '')
-        return render_template('auth/login.html', user_type=user_type, course_id=course_id)
+        next_page = request.args.get('next', '')
+        return render_template('auth/login.html', user_type=user_type, course_id=course_id, next_page=next_page)
     else:
         return "Invalid request method.", 400
 

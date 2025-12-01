@@ -40,6 +40,7 @@
             <div>
                 <form action="/login" method="POST">
                     <input type="hidden" name="user_type" value="anonymous-student">
+                    <input type="hidden" name="next" value="{{ next_page }}">
                     <input type="submit" value="Quick Start" class="btn btn-primary btn-lg btn-block">
                     <p class="text-muted">
                         'Quick Start' lets you use the LTL tutor without creating an account.
@@ -75,6 +76,7 @@
                 <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using
                     your instructor-provided username and course code. </p>
                 <input type="hidden" name="user_type" value="course-student">
+                <input type="hidden" name="next" value="{{ next_page }}">
 
                 <div class="form-group row">
                     <label for="username-student" class="col-sm-2 col-form-label">Username:</label>
@@ -104,6 +106,7 @@
                     Don't have an instructor account? <a href="/signup" class="btn btn-outline-primary">Sign up here</a>
                 </p>
                 <input type="hidden" name="user_type" value="course-instructor">
+                <input type="hidden" name="next" value="{{ next_page }}">
 
                 <div class="form-group row">
                     <label for="instr-username" class="col-sm-2 col-form-label">Username:</label>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Blueprint, jsonify
+from flask import Flask, render_template, request, Blueprint, jsonify, redirect
 from flask_login import login_required, current_user
 
 
@@ -45,6 +45,19 @@ from modelroutes import modelroutes
 port = os.getenv('PORT', default='5000')
 
 app = Flask(__name__)
+
+
+@app.before_request
+def enforce_https_in_production():
+    """Redirect to HTTPS on Heroku deployments while allowing local development."""
+    host = request.host.split(":", 1)[0]
+    if host in {"localhost", "127.0.0.1"}:
+        return
+
+    forwarded_proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+    if forwarded_proto != "https":
+        secure_url = request.url.replace("http://", "https://", 1)
+        return redirect(secure_url, code=301)
 
 answer_logger = Logger()
 
