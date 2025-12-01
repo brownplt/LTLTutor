@@ -31,14 +31,20 @@
 
     <style>
         #statecontainer {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            display: block;
+            text-align: center;
+        }
+
+        .stepper-container {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .formula-tree-container,
         .trace-container {
-            justify-content: center;
+            display: block;
+            text-align: center;
         }
 
         /* Center align .mermaid divs */
@@ -47,6 +53,7 @@
             /* Centers the div within its flex container */
             display: block;
             /* Ensures the div is treated as a block-level element */
+            overflow-x: auto;
         }
 
         .cycle-state-col {
