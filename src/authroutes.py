@@ -11,6 +11,7 @@ import os
 import random
 import string
 from functools import wraps
+from urllib.parse import urlparse
 
 authroutes = Blueprint('authroutes', __name__)
 
@@ -129,9 +130,31 @@ def init_app(app):
             return user
 
 
+def _is_safe_next(next_page: str) -> bool:
+    """Ensure the post-login redirect target stays on this site."""
+    if not next_page:
+        return False
+
+    parsed = urlparse(next_page)
+
+    # Disallow external hosts and schemes
+    if parsed.netloc or parsed.scheme:
+        return False
+
+    # Only allow absolute paths within this application
+    return parsed.path.startswith('/')
+
+
+def _get_safe_next_param():
+    """Return a sanitized `next` parameter or an empty string."""
+    candidate = request.form.get('next') or request.args.get('next')
+    return candidate if _is_safe_next(candidate) else ''
+
+
 @authroutes.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        next_page = _get_safe_next_param()
         user = None
         canLogin = False
 
@@ -201,14 +224,15 @@ def login():
             if canLogin:
                 print('Logging in user')
                 login_user(user)
-                return redirect(url_for('index'))
+                return redirect(next_page or url_for('index'))
             else:
                 flash('Login failed. Please try again.')
                 return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
         user_type = request.args.get('user_type', '')
         course_id = request.args.get('course_id', '')
-        return render_template('auth/login.html', user_type=user_type, course_id=course_id)
+        next_page = _get_safe_next_param()
+        return render_template('auth/login.html', user_type=user_type, course_id=course_id, next_page=next_page)
     else:
         return "Invalid request method.", 400
 
