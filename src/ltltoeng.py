@@ -761,6 +761,23 @@ def aligned_next_implication_pattern_to_english(node):
     return None
 
 
+@pattern
+def aligned_next_boolean_pattern_to_english(node):
+    if type(node) in (ltlnode.AndNode, ltlnode.OrNode):
+        left_steps, left_core = _count_next_chain(node.left)
+        right_steps, right_core = _count_next_chain(node.right)
+
+        if left_steps >= 1 and right_steps == left_steps:
+            shared_clause = "in the next step" if left_steps == 1 else f"in {_steps_phrase(left_steps)}"
+            left_eng = clean_for_composition(left_core.__to_english__())
+            right_eng = clean_for_composition(right_core.__to_english__())
+
+            if type(node) is ltlnode.AndNode:
+                return f"{shared_clause}, both {left_eng} and {right_eng}"
+            return f"{shared_clause}, either {left_eng} or {right_eng}"
+    return None
+
+
 #### neXt special cases ####
 
 # X X X X r
