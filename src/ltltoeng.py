@@ -62,6 +62,24 @@ def use_article(word):
     return f'a {word}' if word else word
 
 
+def _steps_phrase(count):
+    """Return a human-friendly description like 'two steps'."""
+    if count == 1:
+        return "1 step"
+    if _inflect_engine:
+        return f"{_inflect_engine.number_to_words(count)} steps"
+    return f"{count} steps"
+
+
+def _count_next_chain(node):
+    """Count consecutive Next nodes and return (count, innermost operand)."""
+    steps = 0
+    while type(node) is ltlnode.NextNode:
+        steps += 1
+        node = node.operand
+    return steps, node
+
+
 def capitalize_sentence(text):
     """Capitalize the first letter of a sentence.
     
@@ -712,6 +730,34 @@ def globally_until_implies_finally_pattern_to_english(node):
                 q_eng = clean_for_composition(left.right.__to_english__())
                 r_eng = clean_for_composition(right.operand.__to_english__())
                 return f"whenever {p_eng} until {q_eng}, eventually {r_eng} will occur"
+    return None
+
+
+@pattern
+def aligned_next_implication_pattern_to_english(node):
+    if type(node) is ltlnode.ImpliesNode:
+        left_steps, left_core = _count_next_chain(node.left)
+        right_steps, right_core = _count_next_chain(node.right)
+
+        if left_steps >= 1 and right_steps >= left_steps and right_steps > 0:
+            left_eng = clean_for_composition(left_core.__to_english__())
+            right_eng = clean_for_composition(right_core.__to_english__())
+
+            gap = right_steps - left_steps
+            if left_steps == 1:
+                left_clause = "in the next step"
+            else:
+                left_clause = f"in {_steps_phrase(left_steps)}"
+
+            if gap == 0:
+                timing = "in that same step"
+            elif gap == 1:
+                timing = "in the following step"
+            else:
+                timing = f"{_steps_phrase(gap)} after that"
+
+            absolute = f"in {_steps_phrase(right_steps)} from now"
+            return f"if {left_clause}, {left_eng}, then {timing} ({absolute}), {right_eng}"
     return None
 
 
