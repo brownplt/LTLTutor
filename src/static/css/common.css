@@ -2,6 +2,27 @@
     background-color: rgba(0, 0, 0, 0.05); /* Change this color as needed */
 }
 
+/* Ensure list group items display correctly and don't overlap
+   Using high specificity to override Bootstrap's flexbox styles */
+ul.list-group > li.list-group-item {
+    display: block;
+    position: relative;
+    clear: both;
+}
+
+/* Ensure labels take full width in list items */
+ul.list-group > li.list-group-item .form-check-label {
+    display: block;
+    width: 100%;
+}
+
+/* Ensure form-check elements don't use problematic flexbox */
+ul.list-group > li.list-group-item .form-check {
+    display: block;
+    position: relative;
+    padding-left: 1.25rem;
+}
+
 .footer {
     background-color: white;
 }
