@@ -241,7 +241,31 @@ class TestContextAwareTranslations(unittest.TestCase):
         self.assertIn("whenever", english.lower())
         self.assertIn("until", english.lower())
         self.assertIn("eventually", english.lower())
-    
+
+    def test_aligned_next_implication_context(self):
+        """(X p) -> (X X X q) should align the shared temporal shift"""
+        node = parse_ltl_string("(X p) -> (X X X q)")
+        english = node.__to_english__()
+        lower = english.lower()
+
+        # Should talk about the next step for the antecedent
+        self.assertIn("next step", lower)
+        # Should express the relative offset and absolute horizon
+        self.assertTrue("after that" in lower or "following step" in lower)
+        self.assertIn("from now", lower)
+
+    def test_aligned_next_boolean_context(self):
+        """(X(F a)) | X((F b)) should share the next-step framing"""
+        node = parse_ltl_string("(X(F a)) | X((F b))")
+        english = node.__to_english__()
+        lower = english.lower()
+
+        self.assertIn("next step", lower)
+        # The shared framing should avoid repeating the next-step phrase twice
+        self.assertEqual(lower.count("next step"), 1)
+        self.assertIn("either", lower)
+        self.assertIn("or", lower)
+
     def test_nested_until_clarity(self):
         """(p U q) U r should clarify nested until relationships"""
         node = parse_ltl_string("(p U q) U r")
