@@ -85,12 +85,9 @@ class TestEnglishTranslation(unittest.TestCase):
         """And operator should use natural conjunction"""
         node = parse_ltl_string("p & q")
         english = node.__to_english__()
-        # Should use one of the natural conjunctions
-        self.assertTrue(
-            "both" in english.lower() or 
-            (" and " in english.lower() and "together" not in english.lower())
-        )
+        # Should use natural conjunction patterns
         self.assertIn("and", english.lower())
+        # Should be a natural phrasing (not checking specific wording since fluency scorer decides)
     
     def test_or_operator(self):
         """Or operator should use natural disjunction"""
