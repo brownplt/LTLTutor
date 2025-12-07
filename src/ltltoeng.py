@@ -710,23 +710,43 @@ def not_finally_pattern_to_english(node):
 # eventually p & X p will happen, indicating p holds in consecutive steps
 @pattern  
 def recovery_pattern_to_english(node):
-    if type(node) is ltlnode.NotNode:
-        op = node.operand
-        if type(op) is ltlnode.GloballyNode:
-            inner = op.operand
-            if type(inner) is ltlnode.NotNode:
-                innermost = inner.operand
-                if type(innermost) is ltlnode.AndNode:
-                    left = innermost.left
-                    right = innermost.right
-                    # Check for pattern p & X p
-                    if type(right) is ltlnode.NextNode:
-                        if (type(left) is ltlnode.LiteralNode and 
-                            type(right.operand) is ltlnode.LiteralNode and
-                            left.value == right.operand.value):
-                            lit_eng = clean_for_composition(left.__to_english__())
-                            return f"{lit_eng} should eventually hold in consecutive steps, with a grace period for recovery"
-    return None
+    """Detect and translate the recovery pattern !G(!(p & X p))."""
+    # Early return if not a NotNode
+    if type(node) is not ltlnode.NotNode:
+        return None
+    
+    op = node.operand
+    if type(op) is not ltlnode.GloballyNode:
+        return None
+    
+    inner = op.operand
+    if type(inner) is not ltlnode.NotNode:
+        return None
+    
+    innermost = inner.operand
+    if type(innermost) is not ltlnode.AndNode:
+        return None
+    
+    # Check for pattern p & X p where both p's are the same literal
+    left = innermost.left
+    right = innermost.right
+    
+    if type(right) is not ltlnode.NextNode:
+        return None
+    
+    if not (type(left) is ltlnode.LiteralNode and 
+            type(right.operand) is ltlnode.LiteralNode and
+            left.value == right.operand.value):
+        return None
+    
+    # Pattern matched! Provide alternative phrasings
+    lit_eng = clean_for_composition(left.__to_english__())
+    patterns = [
+        f"{lit_eng} should eventually hold in consecutive steps, with a grace period for recovery",
+        f"{lit_eng} must eventually occur in back-to-back steps, allowing for recovery",
+        f"{lit_eng} will eventually happen consecutively, with recovery allowed"
+    ]
+    return choose_best_sentence(patterns)
 
 
 ### Until special cases ###
