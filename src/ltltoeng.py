@@ -284,6 +284,61 @@ def until_in_or_precedence_pattern(node):
 
 #### Globally special cases ####
 
+# G p (single literal)
+# English: p holds at all times / p always holds
+# More natural phrasings for simple globally of a literal
+@pattern
+def globally_literal_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.LiteralNode:
+            lit_eng = clean_for_composition(op.__to_english__())
+            patterns = [
+                f"{lit_eng} holds at all times",
+                f"{lit_eng} always holds",
+                f"{lit_eng} must always hold",
+                f"at all times, {lit_eng} holds"
+            ]
+            return choose_best_sentence(patterns)
+    return None
+
+
+# G (p & q) - globally conjunction
+# English: always maintain both p and q / both p and q hold at all times
+@pattern
+def globally_and_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.AndNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            patterns = [
+                f"always maintain both {left_eng} and {right_eng}",
+                f"both {left_eng} and {right_eng} must always hold",
+                f"at all times, both {left_eng} and {right_eng} hold"
+            ]
+            return choose_best_sentence(patterns)
+    return None
+
+
+# G (p | q) - globally disjunction
+# English: always have either p or q / either p or q holds at all times
+@pattern
+def globally_or_pattern_to_english(node):
+    if type(node) is ltlnode.GloballyNode:
+        op = node.operand
+        if type(op) is ltlnode.OrNode:
+            left_eng = clean_for_composition(op.left.__to_english__())
+            right_eng = clean_for_composition(op.right.__to_english__())
+            patterns = [
+                f"always have either {left_eng} or {right_eng}",
+                f"either {left_eng} or {right_eng} must always hold",
+                f"at all times, either {left_eng} or {right_eng} holds"
+            ]
+            return choose_best_sentence(patterns)
+    return None
+
+
 # G G ... G p (idempotent globally - G G = G)
 # English: Always p / At all times p
 # Source: G is idempotent: G G p ≡ G p
@@ -507,9 +562,15 @@ def never_globally_pattern_to_english(node):
         if type(op) is ltlnode.NotNode:
             negated = op.operand
             negated_eng = clean_for_composition(negated.__to_english__())
-            # For literals, use simpler phrasing
+            # For literals, use simpler phrasing with multiple alternatives
             if type(negated) is ltlnode.LiteralNode:
-                return f"{negated_eng} will never occur"
+                patterns = [
+                    f"{negated_eng} will never occur",
+                    f"always avoid {negated_eng}",
+                    f"never {negated_eng}",
+                    f"{negated_eng} must never happen"
+                ]
+                return choose_best_sentence(patterns)
             return f"it is never the case that {negated_eng}"
 
 
@@ -688,8 +749,58 @@ def not_finally_pattern_to_english(node):
         op = node.operand
         if type(op) is ltlnode.FinallyNode:
             inner_eng = clean_for_composition(op.operand.__to_english__())
-            return f"{inner_eng} will never occur"
+            patterns = [
+                f"{inner_eng} will never occur",
+                f"never {inner_eng}",
+                f"{inner_eng} is impossible"
+            ]
+            return choose_best_sentence(patterns)
     return None
+
+
+# !G( !( p & X p ) ) - Recovery pattern with grace period
+# This means: it's not always the case that !(p & X p), which means
+# eventually p & X p will happen, indicating p holds in consecutive steps
+@pattern  
+def recovery_pattern_to_english(node):
+    """Detect and translate the recovery pattern !G(!(p & X p))."""
+    # Early return if not a NotNode
+    if type(node) is not ltlnode.NotNode:
+        return None
+    
+    op = node.operand
+    if type(op) is not ltlnode.GloballyNode:
+        return None
+    
+    inner = op.operand
+    if type(inner) is not ltlnode.NotNode:
+        return None
+    
+    innermost = inner.operand
+    if type(innermost) is not ltlnode.AndNode:
+        return None
+    
+    # Check for pattern p & X p where both p's are the same literal
+    left = innermost.left
+    right = innermost.right
+    
+    if type(right) is not ltlnode.NextNode:
+        return None
+    
+    if not (type(left) is ltlnode.LiteralNode and 
+            type(right.operand) is ltlnode.LiteralNode and
+            left.value == right.operand.value):
+        return None
+    
+    # Pattern matched! Provide alternative phrasings
+    lit_eng = clean_for_composition(left.__to_english__())
+    patterns = [
+        f"{lit_eng} should eventually hold in consecutive steps, with a grace period for recovery",
+        f"{lit_eng} must eventually occur in back-to-back steps, allowing for recovery",
+        f"{lit_eng} will eventually happen consecutively, with recovery allowed"
+    ]
+    return choose_best_sentence(patterns)
+
 
 ### Until special cases ###
 
@@ -1031,8 +1142,9 @@ def apply_special_pattern_if_possible(node):
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
-            # Apply grammar smoothing (leave capitalization to callers)
+            # Apply grammar smoothing and capitalization
             result = smooth_grammar(result)
+            result = capitalize_sentence(result)
             return result
     return None
 
