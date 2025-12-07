@@ -223,7 +223,17 @@ class UntilNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return f"{lhs} until {rhs}"
+        
+        # For simple literals, provide more natural alternatives
+        if type(self.left) is LiteralNode and type(self.right) is LiteralNode:
+            patterns = [
+                f"{lhs} until {rhs}",
+                f"{lhs} holds until {rhs} occurs",
+                f"maintain {lhs} until {rhs}"
+            ]
+            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+        
+        return ltltoeng.capitalize_sentence(f"{lhs} until {rhs}")
     
     def __forge__(self):
         return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
@@ -242,7 +252,7 @@ class NextNode(UnaryOperatorNode):
         if x is not None:
             return x
         op = self.operand.__to_english__().rstrip('.')
-        return f"in the next step, {op}"
+        return ltltoeng.capitalize_sentence(f"in the next step, {op}")
     
     def __forge__(self):
         return f"(NEXT_STATE {self.operand.__forge__()})"
@@ -262,14 +272,17 @@ class GloballyNode(UnaryOperatorNode):
             return x
 
         op = self.operand.__to_english__().rstrip('.')
+        
+        # Provide more natural alternatives
         patterns = [
-            f"it is always the case that {op}",
             f"at all times, {op}",
-            f"{op} is always true"
+            f"{op} is always true",
+            f"{op} holds at all times",
+            f"it is always the case that {op}"
         ]
 
         english = ltltoeng.choose_best_sentence(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
     
     def __forge__(self):
         return f"(ALWAYS {self.operand.__forge__()})"
@@ -289,8 +302,16 @@ class FinallyNode(UnaryOperatorNode):
             return x
         op = self.operand.__to_english__().rstrip('.')
 
-        english = f"eventually, {op}"
-        return english
+        # Provide more natural alternatives
+        if type(self.operand) is LiteralNode:
+            patterns = [
+                f"eventually, {op}",
+                f"{op} will eventually occur",
+                f"at some point, {op} will hold"
+            ]
+            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+        
+        return ltltoeng.capitalize_sentence(f"eventually, {op}")
     
     def __forge__(self):
         return f"(EVENTUALLY {self.operand.__forge__()})"
@@ -312,7 +333,17 @@ class OrNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return f"either {lhs} or {rhs}"
+        
+        # Provide alternatives for simple literals
+        if type(self.left) is LiteralNode and type(self.right) is LiteralNode:
+            patterns = [
+                f"either {lhs} or {rhs}",
+                f"{lhs} or {rhs}",
+                f"at least one of {lhs} or {rhs}"
+            ]
+            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+        
+        return ltltoeng.capitalize_sentence(f"either {lhs} or {rhs}")
     
 
 
@@ -328,7 +359,17 @@ class AndNode(BinaryOperatorNode):
             return x
         lhs = self.left.__to_english__().rstrip('.')
         rhs = self.right.__to_english__().rstrip('.')
-        return f"both {lhs} and {rhs}"
+        
+        # Provide alternatives for simple literals
+        if type(self.left) is LiteralNode and type(self.right) is LiteralNode:
+            patterns = [
+                f"both {lhs} and {rhs}",
+                f"{lhs} and {rhs}",
+                f"{lhs} together with {rhs}"
+            ]
+            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+        
+        return ltltoeng.capitalize_sentence(f"both {lhs} and {rhs}")
 
 
 class NotNode(UnaryOperatorNode):
@@ -343,11 +384,16 @@ class NotNode(UnaryOperatorNode):
 
         op = self.operand.__to_english__().rstrip('.')
 
-        ## If the operand is a literal, we can just negate it
+        ## If the operand is a literal, we can just negate it with alternatives
         if isinstance(self.operand, LiteralNode):
-            return f"not {op}"
+            patterns = [
+                f"not {op}",
+                f"{op} does not hold",
+                f"{op} is false"
+            ]
+            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
         else:
-            return f"it is not the case that {op}"
+            return ltltoeng.capitalize_sentence(f"it is not the case that {op}")
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -374,7 +420,7 @@ class ImpliesNode(BinaryOperatorNode):
 
         # Choose the most fluent pattern rather than picking randomly
         english = ltltoeng.choose_best_sentence(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -401,7 +447,7 @@ class EquivalenceNode(BinaryOperatorNode):
 
         # Choose the most fluent pattern rather than picking randomly
         english = ltltoeng.choose_best_sentence(patterns)
-        return english
+        return ltltoeng.capitalize_sentence(english)
 
 
 
