@@ -32,6 +32,18 @@ GLOBALLY_SYMBOL = 'G'
 FINALLY_SYMBOL = 'F'
 UNTIL_SYMBOL = 'U'
 
+# Operator precedence (higher number = binds tighter)
+OPERATOR_PRECEDENCE = {
+    'Until': 1,
+    'Or': 2,
+    'And': 3,
+    'Not': 4,
+    'Next': 5,
+    'Globally': 5,
+    'Finally': 5,
+    'Literal': 10
+}
+
 
 class LTLNode(ABC):
     def __init__(self, type):
