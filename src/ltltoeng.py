@@ -229,6 +229,59 @@ def choose_best_sentence(candidates):
     return best or ""
 
 
+#### Precedence clarification patterns ####
+# These patterns handle cases where operator precedence needs to be made explicit in English
+
+# Pattern: (p & q) U r or (p | q) U r
+# When And/Or is the left operand of Until, clarify with "the state that ... holds"
+@pattern
+def and_or_until_precedence_pattern(node):
+    if type(node) is ltlnode.UntilNode:
+        if type(node.left) in (ltlnode.AndNode, ltlnode.OrNode):
+            left_eng = clean_for_composition(node.left.__to_english__())
+            right_eng = clean_for_composition(node.right.__to_english__())
+            return f"the state that {left_eng} holds until {right_eng}"
+    return None
+
+
+# Pattern: p & (q U r) or p | (q U r)
+# When Until is an operand of And/Or, clarify with "the case where"
+@pattern  
+def until_in_and_precedence_pattern(node):
+    if type(node) is ltlnode.AndNode:
+        left_eng = clean_for_composition(node.left.__to_english__())
+        right_eng = clean_for_composition(node.right.__to_english__())
+        
+        # Check if either operand is Until
+        if type(node.left) is ltlnode.UntilNode:
+            left_eng = f"the case where {left_eng}"
+        if type(node.right) is ltlnode.UntilNode:
+            right_eng = f"the case where {right_eng}"
+            
+        # Only return if we modified something (avoid infinite loop)
+        if type(node.left) is ltlnode.UntilNode or type(node.right) is ltlnode.UntilNode:
+            return f"both {left_eng} and {right_eng}"
+    return None
+
+
+@pattern
+def until_in_or_precedence_pattern(node):
+    if type(node) is ltlnode.OrNode:
+        left_eng = clean_for_composition(node.left.__to_english__())
+        right_eng = clean_for_composition(node.right.__to_english__())
+        
+        # Check if either operand is Until
+        if type(node.left) is ltlnode.UntilNode:
+            left_eng = f"the case where {left_eng}"
+        if type(node.right) is ltlnode.UntilNode:
+            right_eng = f"the case where {right_eng}"
+            
+        # Only return if we modified something (avoid infinite loop)
+        if type(node.left) is ltlnode.UntilNode or type(node.right) is ltlnode.UntilNode:
+            return f"either {left_eng} or {right_eng}"
+    return None
+
+
 #### Globally special cases ####
 
 # G p (single literal)
