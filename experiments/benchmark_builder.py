@@ -438,6 +438,12 @@ def build_tiered_benchmark(n_formulas_per_tier,
                                     max_distance = max(distances)
                                     avg_distance = np.mean(distances)
                                     
+                                    # Skip templates where the closest mutant is too similar (nearly identical English)
+                                    if min_distance < min_similarity_threshold:
+                                        if verbose:
+                                            print(f"    Skipping template '{template_formula}' due to too-similar mutant (distance {min_distance:.6f})")
+                                        continue
+                                    
                                     record = {
                                         'ltl_formula': template_formula,
                                         'english_translation': candidate_english,
