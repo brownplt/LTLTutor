@@ -182,6 +182,63 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
     return [str(next(f)) for _ in range(num_formulae)]
 
 
+def is_trivial(formula_str):
+    """
+    Check if a formula is a tautology or contradiction using SPOT.
+    
+    Args:
+        formula_str: String representation of an LTL formula
+        
+    Returns:
+        True if the formula simplifies to constant true (1) or false (0)
+    """
+    try:
+        f = spot.formula(formula_str)
+        # Simplify and check if it's constant true (1) or false (0)
+        simplified = spot.simplify(f)
+        simplified_str = str(simplified)
+        return simplified_str in ['1', '0', 'true', 'false']
+    except:
+        return False
+
+
+def gen_small_rand_ltl(atoms, tree_size=3, max_attempts=10):
+    """
+    Generate a single small non-trivial random LTL formula using SPOT.
+    Prioritizes atomic propositions and simple operators to avoid complexity.
+    
+    Args:
+        atoms: List of atomic proposition strings
+        tree_size: Maximum tree size for the formula (default 3)
+        max_attempts: Maximum number of attempts to find a non-trivial formula
+        
+    Returns:
+        String representation of a non-trivial LTL formula, or a random atom as fallback
+    """
+    # Prioritize simple operators, keep tree size small
+    priorities = {
+        'ap': 5,
+        'G': 2, 'F': 2, 'X': 2, 'U': 3,
+        'and': 4, 'or': 4, 'implies': 3, 'not': 3,
+        'equiv': 1, 'xor': 0, 'R': 0, 'W': 0, 'M': 0,
+        'true': 0, 'false': 0
+    }
+    
+    for _ in range(max_attempts):
+        try:
+            formulas = gen_rand_ltl(atoms, tree_size, priorities, num_formulae=1)
+            formula_str = formulas[0]
+            
+            # Reject trivial formulas
+            if not is_trivial(formula_str):
+                return formula_str
+        except:
+            continue
+    
+    # Fallback to a simple literal if all attempts fail
+    return random.choice(atoms)
+
+
 ## Returns the Mana Pneulli classification of the formula
 def get_mana_pneulli_class(formula):
 

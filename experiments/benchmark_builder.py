@@ -686,6 +686,7 @@ def main():
     parser.add_argument("--max-candidates", type=int, default=5000, help="Max candidates to try")
     parser.add_argument("--output-prefix", default="ltl_benchmark", help="Output file prefix")
     parser.add_argument("--quiet", action="store_true", help="Suppress progress output")
+    parser.add_argument("--max-atomic-props", type=int, default=3, help="Maximum number of atomic propositions")
     
     args = parser.parse_args()
     
@@ -695,6 +696,7 @@ def main():
         far_eng_threshold=args.far_eng_threshold,
         min_similarity_threshold=args.min_similarity_threshold,
         seed=args.seed,
+        max_atomic_props=args.max_atomic_props,
         max_candidates=args.max_candidates,
         verbose=not args.quiet,
         misconception_weights=DEFAULT_MISCONCEPTION_WEIGHTS
