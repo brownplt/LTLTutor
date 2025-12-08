@@ -57,15 +57,30 @@ class MisconceptionCode(Enum):
         # Helper to get random distinct props
         def get_props(n):
             return random.sample(atomic_props, min(n, len(atomic_props)))
-        
 
-        ## TODO: THis could be smarter, Instead of operating purely upon literals,
-        ## we could build slightly more complex subformulas to increase variety.
+        def build_subformula():
+            """
+            Build a small subformula to increase structural variety beyond literals.
+            Combines a randomly chosen atom with a light unary or binary decoration.
+            """
+            chosen = get_props(2)
+            base = parse_ltl_string(chosen[0])
+
+            if random.random() < 0.55:
+                unary_ctor = random.choice([NotNode, FinallyNode, GloballyNode, NextNode])
+                base = unary_ctor(base)
+
+            if len(chosen) > 1 and random.random() < 0.55:
+                rhs = parse_ltl_string(chosen[1])
+                bin_ctor = random.choice([AndNode, OrNode, ImpliesNode])
+                base = bin_ctor(base, rhs)
+
+            return base
+
         if self == MisconceptionCode.ExclusiveU:
             # Generate patterns that ExclusiveU can mutate
-            x_str, y_str = get_props(2)
-            x = parse_ltl_string(x_str)
-            y = parse_ltl_string(y_str)
+            x = build_subformula()
+            y = build_subformula()
             
             patterns = [
                 # x U (!x & y) - explicit disjointness
@@ -83,10 +98,9 @@ class MisconceptionCode(Enum):
         
         elif self == MisconceptionCode.BadStateIndex:
             # Generate Until/Next patterns with complex RHS
-            x_str, y_str, z_str = get_props(3)
-            x = parse_ltl_string(x_str)
-            y = parse_ltl_string(y_str)
-            z = parse_ltl_string(z_str)
+            x = build_subformula()
+            y = build_subformula()
+            z = build_subformula()
             
             patterns = [
                 # x U (y & Fz) - Until with conjunction including Finally
