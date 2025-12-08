@@ -30,6 +30,89 @@ class MisconceptionCode(Enum):
         except ValueError:
             return None
 
+    def needsTemplateGeneration(self):
+        """
+        Returns True if this misconception benefits from template-based formula generation
+        rather than purely random generation, because it requires specific structural patterns.
+        """
+        return self in [
+            MisconceptionCode.ExclusiveU,
+            MisconceptionCode.BadStateIndex
+        ]
+
+    def generateTemplateFormula(self, atomic_props=None):
+        """
+        Generate a formula from a template that guarantees this misconception can be applied.
+        Returns an LTLNode, or None if template generation is not applicable.
+        
+        Args:
+            atomic_props: List of atomic proposition strings to use. If None, uses ['p', 'q', 'r']
+        """
+        if atomic_props is None:
+            atomic_props = ['p', 'q', 'r']
+        
+        if not self.needsTemplateGeneration():
+            return None
+        
+        # Helper to get random distinct props
+        def get_props(n):
+            return random.sample(atomic_props, min(n, len(atomic_props)))
+
+        def build_subformula():
+            """
+            Build a small subformula to increase structural variety beyond literals.
+            Combines a randomly chosen atom with a light unary or binary decoration.
+            """
+            chosen = get_props(2)
+            base = parse_ltl_string(chosen[0])
+
+            if random.random() < 0.55:
+                unary_ctor = random.choice([NotNode, FinallyNode, GloballyNode, NextNode])
+                base = unary_ctor(base)
+
+            if len(chosen) > 1 and random.random() < 0.55:
+                rhs = parse_ltl_string(chosen[1])
+                bin_ctor = random.choice([AndNode, OrNode, ImpliesNode])
+                base = bin_ctor(base, rhs)
+
+            return base
+
+        if self == MisconceptionCode.ExclusiveU:
+            # Generate patterns that ExclusiveU can mutate
+            x = build_subformula()
+            y = build_subformula()
+            
+            patterns = [
+                # x U (!x & y) - explicit disjointness
+                UntilNode(x, AndNode(NotNode(x), y)),
+                # x U (x -> y) - implication pattern
+                UntilNode(x, ImpliesNode(x, y)),
+                # x U (!x | y) - or pattern with negation
+                UntilNode(x, OrNode(NotNode(x), y)),
+                # (x U y) & G(x -> !y) - global exclusivity constraint
+                AndNode(UntilNode(x, y), GloballyNode(ImpliesNode(x, NotNode(y)))),
+                # (x U y) & G!(x & y) - globally not both
+                AndNode(UntilNode(x, y), GloballyNode(NotNode(AndNode(x, y)))),
+            ]
+            return random.choice(patterns)
+        
+        elif self == MisconceptionCode.BadStateIndex:
+            # Generate Until/Next patterns with complex RHS
+            x = build_subformula()
+            y = build_subformula()
+            z = build_subformula()
+            
+            patterns = [
+                # x U (y & Fz) - Until with conjunction including Finally
+                UntilNode(x, AndNode(y, FinallyNode(z))),
+                # x U (y & Gz) - Until with conjunction including Globally
+                UntilNode(x, AndNode(y, GloballyNode(z))),
+                # X(y & z) - Next with conjunction
+                NextNode(AndNode(y, z)),
+            ]
+            return random.choice(patterns)
+        
+        return None
 
     def associatedOperators(self):
 
@@ -47,7 +130,9 @@ class MisconceptionCode(Enum):
             # Applies to responses that mis-use or swap a fan-out operator (F, G, U).
             return [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol]
         elif self == MisconceptionCode.ExclusiveU:
-            return [UntilNode.symbol]
+            # Boost Until AND the boolean operators that create the patterns we need
+            # (e.g., x U (!x & y), x U (x -> y), etc.)
+            return [UntilNode.symbol, AndNode.symbol, OrNode.symbol, ImpliesNode.symbol, NotNode.symbol]
         elif self == MisconceptionCode.ImplicitF:
             return [FinallyNode.symbol]
         elif self == MisconceptionCode.ImplicitG:
@@ -253,15 +338,96 @@ def applyPrecedence(node):
 
 
 def applyExclusiveU(node):
+    """
+    Detect patterns where Until is used with explicit disjointness/exclusivity.
+    ExclusiveU misconception: treating "x U y" as if x and y cannot both be true.
+    """
     if isinstance(node, BinaryOperatorNode) and node.operator == UntilNode.symbol:
         x = node.left
         rhs = node.right
 
+        # Pattern 1: x U (!x & y) → x U y
+        # Student explicitly enforces disjointness
         if isinstance(rhs, BinaryOperatorNode) and rhs.operator == AndNode.symbol:
             y = rhs.right
 
             if isinstance(rhs.left, UnaryOperatorNode) and rhs.left.operator == NotNode.symbol and LTLNode.equiv(rhs.left.operand, x):
                 return MutationResult(UntilNode(x, y), MisconceptionCode.ExclusiveU)
+            
+            # Pattern 1b: x U (y & !x) → x U y (order swapped)
+            if isinstance(rhs.right, UnaryOperatorNode) and rhs.right.operator == NotNode.symbol and LTLNode.equiv(rhs.right.operand, x):
+                return MutationResult(UntilNode(x, rhs.left), MisconceptionCode.ExclusiveU)
+
+        # Pattern 2: x U (x -> y) → x U y
+        # Student thinks "x U (x implies y)" enforces that y happens after x stops
+        if isinstance(rhs, ImpliesNode) and LTLNode.equiv(rhs.left, x):
+            return MutationResult(UntilNode(x, rhs.right), MisconceptionCode.ExclusiveU)
+        
+        # Pattern 3: x U (!x | y) → x U y
+        # Student thinks "x U (!x or y)" ensures exclusivity
+        if isinstance(rhs, OrNode):
+            if isinstance(rhs.left, NotNode) and LTLNode.equiv(rhs.left.operand, x):
+                return MutationResult(UntilNode(x, rhs.right), MisconceptionCode.ExclusiveU)
+            if isinstance(rhs.right, NotNode) and LTLNode.equiv(rhs.right.operand, x):
+                return MutationResult(UntilNode(x, rhs.left), MisconceptionCode.ExclusiveU)
+
+    # Pattern 4: (x U y) & G(x -> !y) → x U y
+    # Student adds a global constraint that x and y are mutually exclusive
+    if isinstance(node, AndNode):
+        left = node.left
+        right = node.right
+        
+        # Check if one side is Until and other is G(x -> !y)
+        until_node = None
+        constraint_node = None
+        
+        if isinstance(left, UntilNode) and isinstance(right, GloballyNode):
+            until_node = left
+            constraint_node = right.operand
+        elif isinstance(right, UntilNode) and isinstance(left, GloballyNode):
+            until_node = right
+            constraint_node = left.operand
+        
+        if until_node and constraint_node and isinstance(constraint_node, ImpliesNode):
+            x = until_node.left
+            y = until_node.right
+            
+            # Check if constraint is x -> !y
+            if LTLNode.equiv(constraint_node.left, x):
+                if isinstance(constraint_node.right, NotNode) and LTLNode.equiv(constraint_node.right.operand, y):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
+            
+            # Check if constraint is y -> !x
+            if LTLNode.equiv(constraint_node.left, y):
+                if isinstance(constraint_node.right, NotNode) and LTLNode.equiv(constraint_node.right.operand, x):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
+
+    # Pattern 5: (x U y) & G!(x & y) → x U y
+    # Student adds "globally not both" constraint
+    if isinstance(node, AndNode):
+        left = node.left
+        right = node.right
+        
+        until_node = None
+        constraint_node = None
+        
+        if isinstance(left, UntilNode) and isinstance(right, GloballyNode):
+            until_node = left
+            constraint_node = right.operand
+        elif isinstance(right, UntilNode) and isinstance(left, GloballyNode):
+            until_node = right
+            constraint_node = left.operand
+        
+        if until_node and constraint_node:
+            if isinstance(constraint_node, NotNode) and isinstance(constraint_node.operand, AndNode):
+                and_node = constraint_node.operand
+                x = until_node.left
+                y = until_node.right
+                
+                # Check if it's !(x & y)
+                if (LTLNode.equiv(and_node.left, x) and LTLNode.equiv(and_node.right, y)) or \
+                   (LTLNode.equiv(and_node.right, x) and LTLNode.equiv(and_node.left, y)):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
 
     return MutationResult(node)
 
@@ -325,8 +491,9 @@ def applyUnderconstraint(node):
 
 def applyWeakU(node):
     if isinstance(node, UntilNode):
-        rhs = node.right
-        new_node = AndNode(node, FinallyNode(rhs))
+        lhs = node.left
+        # Interpret until as weak-until: RHS may never happen if LHS stays true
+        new_node = OrNode(node, GloballyNode(lhs))
         return MutationResult(new_node, MisconceptionCode.WeakU)
 
     return MutationResult(node)
@@ -394,10 +561,30 @@ def applyBadStateIndex(node):
             return MutationResult(new_node, MisconceptionCode.BadStateIndex)
 
         if isinstance(op, NextNode):
-            x = op.operand
+            # Count the chain of Nexts
+            x = op
+            next_count = 1  # Already have one Next from node
             while isinstance(x, NextNode):
+                next_count += 1
                 x = x.operand
-
-            return MutationResult(NextNode(x), MisconceptionCode.BadStateIndex)
+            
+            # Randomly add or remove 1-2 Nexts, but ensure we stay within reasonable bounds
+            change = random.choice([-2, -1, 1, 2])
+            new_count = next_count + change
+            
+            # Ensure new_count is at least 1 and different from original
+            if new_count < 1:
+                new_count = 1
+            if new_count == next_count:
+                # If change resulted in same count, adjust
+                new_count = next_count + (1 if change > 0 else -1)
+                new_count = max(1, new_count)
+            
+            # Build new chain with new_count Nexts
+            result = x
+            for _ in range(new_count):
+                result = NextNode(result)
+            
+            return MutationResult(result, MisconceptionCode.BadStateIndex)
 
     return MutationResult(node)

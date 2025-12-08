@@ -288,6 +288,63 @@ class ExerciseBuilder:
         else:
             return operator
 
+    def generate_template_formulas(self, literals, num_templates=5, weight_threshold=0.5):
+        """
+        Generate formulas from templates for misconceptions that need specific structural patterns.
+        This complements spot's random generation with formulas we know can be mutated.
+        Only generates templates for misconceptions where students are struggling (weight > threshold).
+        
+        Args:
+            literals: List of atomic propositions to use in templates
+            num_templates: Number of template formulas to generate
+            weight_threshold: Only generate templates for misconceptions with weight above this
+            
+        Returns:
+            List of formula strings in spot syntax
+        """
+        template_formulas = []
+        
+        # Get misconceptions that need template generation, weighted by their current weights
+        concept_history = self.aggregateLogs()
+        misconception_weights = self.calculate_misconception_weights(concept_history)
+        
+        # Filter to only misconceptions that benefit from templates AND have high weight
+        template_misconceptions = []
+        for m, weight in misconception_weights.items():
+            misconception = MisconceptionCode.from_string(m)
+            if misconception and misconception.needsTemplateGeneration() and weight > weight_threshold:
+                template_misconceptions.append((misconception, weight))
+        
+        # If no misconceptions are above threshold, don't generate any templates
+        if not template_misconceptions:
+            return []
+        
+        # Generate templates, sampling misconceptions by weight
+        for _ in range(num_templates):
+            # Weighted random choice
+            total_weight = sum(w for _, w in template_misconceptions)
+            if total_weight == 0:
+                continue
+                
+            r = random.uniform(0, total_weight)
+            cumulative = 0
+            chosen_misconception = template_misconceptions[0][0]
+            
+            for misconception, weight in template_misconceptions:
+                cumulative += weight
+                if r <= cumulative:
+                    chosen_misconception = misconception
+                    break
+            
+            # Generate a formula from this misconception's template
+            node = chosen_misconception.generateTemplateFormula(atomic_props=literals)
+            if node:
+                # Convert to spot syntax string
+                formula_str = self.toSpotSyntax(str(node))
+                template_formulas.append(formula_str)
+        
+        return template_formulas
+
     def set_ltl_priorities(self):
 
         def scale(weight):
@@ -352,12 +409,17 @@ class ExerciseBuilder:
         ## TODO: Find a better mapping between complexity and tree size
         tree_size = self.get_tree_size()
 
-        ## First generate a large pool
+        ## First generate a large pool from spot randltl
         pool_size = 2*num_questions
         question_answers = spotutils.gen_rand_ltl(atoms = literals, 
                                                   tree_size = tree_size, 
                                                   ltl_priorities = self.ltl_priorities, 
                                                   num_formulae = pool_size)
+        
+        ## Augment with template-generated formulas for pattern-specific misconceptions
+        ## This helps ensure we get formulas that can actually be mutated with these misconceptions
+        template_formulas = self.generate_template_formulas(literals, num_templates=max(1, num_questions // 4))
+        question_answers.extend(template_formulas)
         
 
         def formula_choice_metric(formula):
