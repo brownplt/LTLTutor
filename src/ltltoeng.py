@@ -154,7 +154,7 @@ def smooth_grammar(text):
     def _lowercase_mid_sentence(match):
         return match.group(1).lower()
 
-    text = re.sub(r"(?<!^)(?<![.!?]\s)(\b(?:If|Then|When|Whenever|Where|Unless|Until)\b)",
+    text = re.sub(r"(?<!^)(?<![.!?]\s)(\b(?:If|Then|When|Whenever|Where|Unless|Until|Not|Neither|Either|Both|Always|Eventually|At)\b)",
                   _lowercase_mid_sentence,
                   text)
 
@@ -1180,9 +1180,8 @@ def apply_special_pattern_if_possible(node):
     for pattern in patterns:
         result = pattern(node)
         if result is not None:
-            # Apply grammar smoothing and capitalization
+            # Apply grammar smoothing but NOT capitalization (defer to finalize_sentence)
             result = smooth_grammar(result)
-            result = capitalize_sentence(result)
             return result
     return None
 
