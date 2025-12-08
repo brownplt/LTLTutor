@@ -127,6 +127,10 @@ def smooth_grammar(text):
     # Fix "then then" -> "then"
     text = text.replace("then then", "then")
     
+    # Fix "hold hold" or "holds holds" -> "hold" or "holds"
+    text = text.replace("hold hold", "hold")
+    text = text.replace("holds holds", "holds")
+    
     # Fix awkward "it is the case that it is the case that"
     text = text.replace("it is the case that it is the case that", "it is the case that")
     
@@ -135,6 +139,16 @@ def smooth_grammar(text):
     
     # Fix ", ," -> ","
     text = text.replace(", ,", ",")
+
+    # Remove redundant "the case where" before "until" (e.g., "or the case where p until q" -> "or p until q")
+    # This handles patterns like "!p1 | (p0 U p2)" -> "either p1 is false or p0 until p2"
+    text = re.sub(r'\b(either|or|and|both)\s+the case where\s+(\S.*?\s+until\s+)', r'\1 \2', text, flags=re.IGNORECASE)
+    
+    # Remove redundant "the state that" before "until" 
+    text = re.sub(r'\b(either|or|and|both)\s+the state that\s+(\S.*?\s+holds\s+until\s+)', r'\1 \2', text, flags=re.IGNORECASE)
+    
+    # Simplify "either X or the case where Y" -> "either X or Y" when Y is already a clause
+    text = re.sub(r'\b(either\s+[^,]+)\s+or\s+the case where\s+', r'\1 or ', text, flags=re.IGNORECASE)
 
     # Normalize mid-sentence capitalization of connectives like "If" or "Then"
     def _lowercase_mid_sentence(match):
@@ -241,14 +255,15 @@ def choose_best_sentence(candidates):
 # These patterns handle cases where operator precedence needs to be made explicit in English
 
 # Pattern: (p & q) U r or (p | q) U r
-# When And/Or is the left operand of Until, clarify with "the state that ... holds"
+# When And/Or is the left operand of Until, use natural phrasing without "the state that"
 @pattern
 def and_or_until_precedence_pattern(node):
     if type(node) is ltlnode.UntilNode:
         if type(node.left) in (ltlnode.AndNode, ltlnode.OrNode):
             left_eng = clean_for_composition(node.left.__to_english__())
             right_eng = clean_for_composition(node.right.__to_english__())
-            return f"the state that {left_eng} holds until {right_eng}"
+            # Change "holds" to "hold" for grammatical agreement with compound subjects
+            return f"{left_eng} hold until {right_eng}"
     return None
 
 
@@ -257,17 +272,11 @@ def and_or_until_precedence_pattern(node):
 @pattern  
 def until_in_and_precedence_pattern(node):
     if type(node) is ltlnode.AndNode:
-        left_eng = clean_for_composition(node.left.__to_english__())
-        right_eng = clean_for_composition(node.right.__to_english__())
-        
-        # Check if either operand is Until
-        if type(node.left) is ltlnode.UntilNode:
-            left_eng = f"the case where {left_eng}"
-        if type(node.right) is ltlnode.UntilNode:
-            right_eng = f"the case where {right_eng}"
-            
-        # Only return if we modified something (avoid infinite loop)
+        # Until expressions are naturally clausal and don't need "the case where" wrapper
+        # Only intervene if we have an Until operand to ensure consistency
         if type(node.left) is ltlnode.UntilNode or type(node.right) is ltlnode.UntilNode:
+            left_eng = clean_for_composition(node.left.__to_english__())
+            right_eng = clean_for_composition(node.right.__to_english__())
             return f"both {left_eng} and {right_eng}"
     return None
 
@@ -275,17 +284,11 @@ def until_in_and_precedence_pattern(node):
 @pattern
 def until_in_or_precedence_pattern(node):
     if type(node) is ltlnode.OrNode:
-        left_eng = clean_for_composition(node.left.__to_english__())
-        right_eng = clean_for_composition(node.right.__to_english__())
-        
-        # Check if either operand is Until
-        if type(node.left) is ltlnode.UntilNode:
-            left_eng = f"the case where {left_eng}"
-        if type(node.right) is ltlnode.UntilNode:
-            right_eng = f"the case where {right_eng}"
-            
-        # Only return if we modified something (avoid infinite loop)
+        # Until expressions are naturally clausal and don't need "the case where" wrapper
+        # Only intervene if we have an Until operand to ensure consistency
         if type(node.left) is ltlnode.UntilNode or type(node.right) is ltlnode.UntilNode:
+            left_eng = clean_for_composition(node.left.__to_english__())
+            right_eng = clean_for_composition(node.right.__to_english__())
             return f"either {left_eng} or {right_eng}"
     return None
 
