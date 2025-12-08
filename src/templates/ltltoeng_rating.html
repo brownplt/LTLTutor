@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rate English Paraphrases</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        mark {
+            padding: 0.2rem;
+            background: #ffe69c;
+        }
+        .sentence-card {
+            min-height: 160px;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container my-4">
+        <div class="d-flex align-items-center mb-3">
+            <h3 class="mb-0">LTL → English Rating</h3>
+            {% if dataset %}
+            <span class="badge badge-info ml-3 text-uppercase">Next: {{ dataset }}</span>
+            {% endif %}
+        </div>
+        <p class="text-muted">Rate how similar the two English sentences sound (1 = not at all similar, 5 = identical meaning). You can also flag awkward English.</p>
+
+        <div class="mb-3">
+            <span class="badge badge-light border mr-2">Near: {{ progress.near.done }}/{{ progress.near.total }}</span>
+            <span class="badge badge-light border">Far: {{ progress.far.done }}/{{ progress.far.total }}</span>
+        </div>
+
+        {% if done %}
+            <div class="alert alert-success">
+                All benchmark pairs are rated. Thank you!
+            </div>
+        {% else %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="small text-muted mb-2">Misconception: {{ pair.closest_mutant_misconception }} | SBERT dist: {{ '%.3f'|format(pair.closest_distance) }} (max {{ '%.3f'|format(pair.max_distance) }})</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card sentence-card">
+                                <div class="card-header bg-light py-2">Sentence A</div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ highlighted_base|safe }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card sentence-card">
+                                <div class="card-header bg-light py-2">Sentence B</div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ highlighted_mutant|safe }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary small">
+                        <div><strong>LTL:</strong> <code>{{ pair.ltl_formula }}</code></div>
+                        <div><strong>Mutant LTL:</strong> <code>{{ pair.closest_mutant_formula }}</code></div>
+                    </div>
+
+                    <form method="POST" class="mt-3">
+                        <input type="hidden" name="dataset" value="{{ dataset }}">
+                        <input type="hidden" name="row_index" value="{{ row_index }}">
+
+                        <div class="form-group">
+                            <label class="font-weight-bold d-block">Similarity (1–5)</label>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                {% for i in range(1,6) %}
+                                <label class="btn btn-outline-dark {% if i == 3 %}active{% endif %}">
+                                    <input type="radio" name="likert" id="likert-{{ i }}" value="{{ i }}" autocomplete="off" {% if i == 3 %}checked{% endif %}> {{ i }}
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="awkwardFlag" name="awkward_flag">
+                            <label class="form-check-label" for="awkwardFlag">Flag awkward or unclear English</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="awkwardNotes" class="font-weight-bold">Notes (optional)</label>
+                            <textarea id="awkwardNotes" name="awkward_notes" rows="3" class="form-control" placeholder="Call out anything confusing, awkward, or mismatched."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save &amp; Next</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
