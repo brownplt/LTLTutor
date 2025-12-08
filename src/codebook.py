@@ -325,8 +325,9 @@ def applyUnderconstraint(node):
 
 def applyWeakU(node):
     if isinstance(node, UntilNode):
-        rhs = node.right
-        new_node = AndNode(node, FinallyNode(rhs))
+        lhs = node.left
+        # Interpret until as weak-until: RHS may never happen if LHS stays true
+        new_node = OrNode(node, GloballyNode(lhs))
         return MutationResult(new_node, MisconceptionCode.WeakU)
 
     return MutationResult(node)

@@ -210,9 +210,9 @@ class TestConceptualMutator(unittest.TestCase):
 
     def test_weak_u(self):
         test_cases = [
-            ("a U b", "((a U b) & (F b))"),
-            ("a U (G b)", "((a U (G b)) & (F (G b)))"),
-            ("a U (b -> c)", "((a U (b -> c)) & (F (b -> c)))"),
+            ("a U b", "((a U b) | (G a))"),
+            ("a U (G b)", "((a U (G b)) | (G a))"),
+            ("a U (b -> c)", "((a U (b -> c)) | (G a))"),
         ]
         self.apply_and_check_misconception(codebook.MisconceptionCode.WeakU, test_cases)
 
