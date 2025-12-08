@@ -2,6 +2,7 @@ from enum import Enum
 import random
 from ltlnode import *
 import copy
+import spotutils
 
 class MisconceptionCode(Enum):
     Precedence = "Precedence"
@@ -43,75 +44,68 @@ class MisconceptionCode(Enum):
     def generateTemplateFormula(self, atomic_props=None):
         """
         Generate a formula from a template that guarantees this misconception can be applied.
+        Uses SPOT's randltl for subformulae to avoid trivial tautologies/contradictions.
         Returns an LTLNode, or None if template generation is not applicable.
         
         Args:
-            atomic_props: List of atomic proposition strings to use. If None, uses ['p', 'q', 'r']
+            atomic_props: List of atomic proposition strings to use. If None, uses ['p0', 'p1', 'p2']
         """
         if atomic_props is None:
-            atomic_props = ['p', 'q', 'r']
+            atomic_props = ['p0', 'p1', 'p2']
         
         if not self.needsTemplateGeneration():
             return None
         
-        # Helper to get random distinct props
-        def get_props(n):
-            return random.sample(atomic_props, min(n, len(atomic_props)))
-
-        def build_subformula():
+        def build_subformula(tree_size=3):
             """
-            Build a small subformula to increase structural variety beyond literals.
-            Combines a randomly chosen atom with a light unary or binary decoration.
+            Build a non-trivial subformula using SPOT's randltl via spotutils.
+            Returns an LTLNode.
             """
-            chosen = get_props(2)
-            base = parse_ltl_string(chosen[0])
+            formula_str = spotutils.gen_small_rand_ltl(atomic_props, tree_size=tree_size)
+            return parse_ltl_string(formula_str)
 
-            if random.random() < 0.55:
-                unary_ctor = random.choice([NotNode, FinallyNode, GloballyNode, NextNode])
-                base = unary_ctor(base)
-
-            if len(chosen) > 1 and random.random() < 0.55:
-                rhs = parse_ltl_string(chosen[1])
-                bin_ctor = random.choice([AndNode, OrNode, ImpliesNode])
-                base = bin_ctor(base, rhs)
-
-            return base
-
-        if self == MisconceptionCode.ExclusiveU:
-            # Generate patterns that ExclusiveU can mutate
-            x = build_subformula()
-            y = build_subformula()
+        # Generate template and verify it's non-trivial
+        max_attempts = 20
+        for attempt in range(max_attempts):
+            template = None
             
-            patterns = [
-                # x U (!x & y) - explicit disjointness
-                UntilNode(x, AndNode(NotNode(x), y)),
-                # x U (x -> y) - implication pattern
-                UntilNode(x, ImpliesNode(x, y)),
-                # x U (!x | y) - or pattern with negation
-                UntilNode(x, OrNode(NotNode(x), y)),
-                # (x U y) & G(x -> !y) - global exclusivity constraint
-                AndNode(UntilNode(x, y), GloballyNode(ImpliesNode(x, NotNode(y)))),
-                # (x U y) & G!(x & y) - globally not both
-                AndNode(UntilNode(x, y), GloballyNode(NotNode(AndNode(x, y)))),
-            ]
-            return random.choice(patterns)
-        
-        elif self == MisconceptionCode.BadStateIndex:
-            # Generate Until/Next patterns with complex RHS
-            x = build_subformula()
-            y = build_subformula()
-            z = build_subformula()
+            if self == MisconceptionCode.ExclusiveU:
+                # Generate patterns that ExclusiveU can mutate
+                x = build_subformula(tree_size=2)
+                y = build_subformula(tree_size=3)
+                
+                patterns = [
+                    # x U (!x & y) - explicit disjointness
+                    UntilNode(x, AndNode(NotNode(x), y)),
+                    # x U (x -> y) - implication pattern
+                    UntilNode(x, ImpliesNode(x, y)),
+                    # x U (!x | y) - or pattern with negation
+                    UntilNode(x, OrNode(NotNode(x), y)),
+                ]
+                template = random.choice(patterns)
             
-            patterns = [
-                # x U (y & Fz) - Until with conjunction including Finally
-                UntilNode(x, AndNode(y, FinallyNode(z))),
-                # x U (y & Gz) - Until with conjunction including Globally
-                UntilNode(x, AndNode(y, GloballyNode(z))),
-                # X(y & z) - Next with conjunction
-                NextNode(AndNode(y, z)),
-            ]
-            return random.choice(patterns)
+            elif self == MisconceptionCode.BadStateIndex:
+                # Generate Until/Next patterns with complex RHS
+                x = build_subformula(tree_size=2)
+                y = build_subformula(tree_size=2)
+                z = build_subformula(tree_size=2)
+                
+                patterns = [
+                    # x U (y & Fz) - Until with conjunction including Finally
+                    UntilNode(x, AndNode(y, FinallyNode(z))),
+                    # x U (y & Gz) - Until with conjunction including Globally
+                    UntilNode(x, AndNode(y, GloballyNode(z))),
+                    # x U X(y & z) - Until with Next of conjunction
+                    UntilNode(x, NextNode(AndNode(y, z))),
+                    # X(y & z) - Next with conjunction
+                    NextNode(AndNode(y, z)),
+                ]
+                template = random.choice(patterns)
+            
+            if template is not None and not spotutils.is_trivial(str(template)):
+                return template
         
+        # If all attempts failed, return None
         return None
 
     def associatedOperators(self):
