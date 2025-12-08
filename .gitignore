@@ -62,4 +62,5 @@ myenv
 .DS_Store
 
 # Ignore everything in the experiments directory
-experiments/
+experiments/*.csv
+experiments/*.ipynb

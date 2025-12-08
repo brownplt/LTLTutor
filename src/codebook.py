@@ -61,8 +61,8 @@ class MisconceptionCode(Enum):
         if self == MisconceptionCode.ExclusiveU:
             # Generate patterns that ExclusiveU can mutate
             x_str, y_str = get_props(2)
-            x = LTLNode.parse(x_str)
-            y = LTLNode.parse(y_str)
+            x = parse_ltl_string(x_str)
+            y = parse_ltl_string(y_str)
             
             patterns = [
                 # x U (!x & y) - explicit disjointness
@@ -81,9 +81,9 @@ class MisconceptionCode(Enum):
         elif self == MisconceptionCode.BadStateIndex:
             # Generate Until/Next patterns with complex RHS
             x_str, y_str, z_str = get_props(3)
-            x = LTLNode.parse(x_str)
-            y = LTLNode.parse(y_str)
-            z = LTLNode.parse(z_str)
+            x = parse_ltl_string(x_str)
+            y = parse_ltl_string(y_str)
+            z = parse_ltl_string(z_str)
             
             patterns = [
                 # x U (y & Fz) - Until with conjunction including Finally
