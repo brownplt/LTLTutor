@@ -106,7 +106,7 @@ def capitalize_sentence(text):
 
 def smooth_grammar(text):
     """Apply grammar smoothing rules to improve readability.
-    
+
     Fixes common awkward phrasings that arise from composition.
     """
     if not text:
@@ -135,10 +135,18 @@ def smooth_grammar(text):
     
     # Fix ", ," -> ","
     text = text.replace(", ,", ",")
-    
+
+    # Normalize mid-sentence capitalization of connectives like "If" or "Then"
+    def _lowercase_mid_sentence(match):
+        return match.group(1).lower()
+
+    text = re.sub(r"(?<!^)(?<![.!?]\s)(\b(?:If|Then|When|Whenever|Where|Unless|Until)\b)",
+                  _lowercase_mid_sentence,
+                  text)
+
     # Fix double spaces
     text = ' '.join(text.split())
-    
+
     return text
 
 
