@@ -58,6 +58,9 @@ class MisconceptionCode(Enum):
         def get_props(n):
             return random.sample(atomic_props, min(n, len(atomic_props)))
         
+
+        ## TODO: THis could be smarter, Instead of operating purely upon literals,
+        ## we could build slightly more complex subformulas to increase variety.
         if self == MisconceptionCode.ExclusiveU:
             # Generate patterns that ExclusiveU can mutate
             x_str, y_str = get_props(2)

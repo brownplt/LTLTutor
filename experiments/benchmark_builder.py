@@ -429,19 +429,29 @@ def build_tiered_benchmark(n_formulas_per_tier,
                                     # Find closest mutant
                                     closest = min(mutant_data, key=lambda x: x['distance'])
                                     
+                                    # Calculate distances like regular candidates
+                                    distances = [m['distance'] for m in mutant_data]
+                                    min_distance = min(distances)
+                                    max_distance = max(distances)
+                                    avg_distance = np.mean(distances)
+                                    
                                     record = {
-                                        'formula': template_formula,
-                                        'english': candidate_english,
+                                        'ltl_formula': template_formula,
+                                        'english_translation': candidate_english,
                                         'closest_mutant_formula': closest['formula'],
                                         'closest_mutant_english': closest['english'],
                                         'closest_mutant_misconception': closest['misconception'],
-                                        'closest_mutant_distance': closest['distance']
+                                        'closest_distance': min_distance,
+                                        'max_distance': max_distance,
+                                        'avg_distance': avg_distance,
+                                        'num_mutants': len(mutant_data),
+                                        'all_mutants': mutant_data
                                     }
                                     
                                     # Assign to appropriate tier
-                                    if closest['distance'] < near_eng_threshold:
+                                    if min_distance < near_eng_threshold:
                                         near_eng_pool.append(record)
-                                    elif closest['distance'] > far_eng_threshold:
+                                    elif min_distance > far_eng_threshold:
                                         far_eng_pool.append(record)
                 
                 # Also adjust priorities for random generation
