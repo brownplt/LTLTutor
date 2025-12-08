@@ -880,6 +880,33 @@ def next_until_pattern_to_english(node):
     return None
 
 
+# Pattern: (p U q) | G p  -- weak until phrasing
+@pattern
+def weak_until_disjunction_pattern_to_english(node):
+    if type(node) is ltlnode.OrNode:
+        left, right = node.left, node.right
+
+        def match(until, glob):
+            if type(until) is ltlnode.UntilNode and type(glob) is ltlnode.GloballyNode:
+                p, q = until.left, until.right
+                if ltlnode.LTLNode.equiv(str(p), str(glob.operand)):
+                    p_eng = clean_for_composition(p.__to_english__())
+                    q_eng = clean_for_composition(q.__to_english__())
+                    return choose_best_sentence([
+                        # Canonical: explicit case split
+                        f"{p_eng} holds until {q_eng} happens, or {p_eng} holds forever if {q_eng} never happens",
+                        # Template B: conditional termination
+                        f"{p_eng} keeps holding and stops only if {q_eng} happens",
+                    ])
+            return None
+
+        # Handle (p U q) ∨ G p and G p ∨ (p U q)
+        return match(left, right) or match(right, left)
+
+    return None
+
+
+
 # Pattern: G((p U q) -> F r)
 # English: whenever p until q, eventually r will occur
 @pattern
