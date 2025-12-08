@@ -253,15 +253,96 @@ def applyPrecedence(node):
 
 
 def applyExclusiveU(node):
+    """
+    Detect patterns where Until is used with explicit disjointness/exclusivity.
+    ExclusiveU misconception: treating "x U y" as if x and y cannot both be true.
+    """
     if isinstance(node, BinaryOperatorNode) and node.operator == UntilNode.symbol:
         x = node.left
         rhs = node.right
 
+        # Pattern 1: x U (!x & y) → x U y
+        # Student explicitly enforces disjointness
         if isinstance(rhs, BinaryOperatorNode) and rhs.operator == AndNode.symbol:
             y = rhs.right
 
             if isinstance(rhs.left, UnaryOperatorNode) and rhs.left.operator == NotNode.symbol and LTLNode.equiv(rhs.left.operand, x):
                 return MutationResult(UntilNode(x, y), MisconceptionCode.ExclusiveU)
+            
+            # Pattern 1b: x U (y & !x) → x U y (order swapped)
+            if isinstance(rhs.right, UnaryOperatorNode) and rhs.right.operator == NotNode.symbol and LTLNode.equiv(rhs.right.operand, x):
+                return MutationResult(UntilNode(x, rhs.left), MisconceptionCode.ExclusiveU)
+
+        # Pattern 2: x U (x -> y) → x U y
+        # Student thinks "x U (x implies y)" enforces that y happens after x stops
+        if isinstance(rhs, ImpliesNode) and LTLNode.equiv(rhs.left, x):
+            return MutationResult(UntilNode(x, rhs.right), MisconceptionCode.ExclusiveU)
+        
+        # Pattern 3: x U (!x | y) → x U y
+        # Student thinks "x U (!x or y)" ensures exclusivity
+        if isinstance(rhs, OrNode):
+            if isinstance(rhs.left, NotNode) and LTLNode.equiv(rhs.left.operand, x):
+                return MutationResult(UntilNode(x, rhs.right), MisconceptionCode.ExclusiveU)
+            if isinstance(rhs.right, NotNode) and LTLNode.equiv(rhs.right.operand, x):
+                return MutationResult(UntilNode(x, rhs.left), MisconceptionCode.ExclusiveU)
+
+    # Pattern 4: (x U y) & G(x -> !y) → x U y
+    # Student adds a global constraint that x and y are mutually exclusive
+    if isinstance(node, AndNode):
+        left = node.left
+        right = node.right
+        
+        # Check if one side is Until and other is G(x -> !y)
+        until_node = None
+        constraint_node = None
+        
+        if isinstance(left, UntilNode) and isinstance(right, GloballyNode):
+            until_node = left
+            constraint_node = right.operand
+        elif isinstance(right, UntilNode) and isinstance(left, GloballyNode):
+            until_node = right
+            constraint_node = left.operand
+        
+        if until_node and constraint_node and isinstance(constraint_node, ImpliesNode):
+            x = until_node.left
+            y = until_node.right
+            
+            # Check if constraint is x -> !y
+            if LTLNode.equiv(constraint_node.left, x):
+                if isinstance(constraint_node.right, NotNode) and LTLNode.equiv(constraint_node.right.operand, y):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
+            
+            # Check if constraint is y -> !x
+            if LTLNode.equiv(constraint_node.left, y):
+                if isinstance(constraint_node.right, NotNode) and LTLNode.equiv(constraint_node.right.operand, x):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
+
+    # Pattern 5: (x U y) & G!(x & y) → x U y
+    # Student adds "globally not both" constraint
+    if isinstance(node, AndNode):
+        left = node.left
+        right = node.right
+        
+        until_node = None
+        constraint_node = None
+        
+        if isinstance(left, UntilNode) and isinstance(right, GloballyNode):
+            until_node = left
+            constraint_node = right.operand
+        elif isinstance(right, UntilNode) and isinstance(left, GloballyNode):
+            until_node = right
+            constraint_node = left.operand
+        
+        if until_node and constraint_node:
+            if isinstance(constraint_node, NotNode) and isinstance(constraint_node.operand, AndNode):
+                and_node = constraint_node.operand
+                x = until_node.left
+                y = until_node.right
+                
+                # Check if it's !(x & y)
+                if (LTLNode.equiv(and_node.left, x) and LTLNode.equiv(and_node.right, y)) or \
+                   (LTLNode.equiv(and_node.right, x) and LTLNode.equiv(and_node.left, y)):
+                    return MutationResult(until_node, MisconceptionCode.ExclusiveU)
 
     return MutationResult(node)
 
