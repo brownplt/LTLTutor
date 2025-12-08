@@ -205,6 +205,10 @@ class Logger:
             if key not in rating_data:
                 raise ValueError(f"rating_data missing required key '{key}'")
 
+        likert = rating_data['likert_rating']
+        if not isinstance(likert, int) or likert < 1 or likert > 7:
+            raise ValueError("likert_rating must be an int between 1 and 7 for 7-point scale")
+
         with self.Session() as session:
             existing = session.query(SentencePairRating).filter(
                 SentencePairRating.user_id == rating_data['user_id'],

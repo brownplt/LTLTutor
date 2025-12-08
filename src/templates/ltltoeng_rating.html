@@ -15,6 +15,26 @@
         .sentence-card {
             min-height: 160px;
         }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+        .custom-range {
+            background: linear-gradient(90deg, #d9534f 0%, #f0ad4e 50%, #5cb85c 100%);
+        }
+        .range-ticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+            margin-top: -6px;
+        }
+        .range-ticks span {
+            width: 2px;
+            height: 8px;
+            background: #6c757d;
+            display: block;
+        }
     </style>
 </head>
 
@@ -23,16 +43,13 @@
 
     <div class="container my-4">
         <div class="d-flex align-items-center mb-3">
-            <h3 class="mb-0">LTL → English Rating</h3>
-            {% if dataset %}
-            <span class="badge badge-info ml-3 text-uppercase">Next: {{ dataset }}</span>
-            {% endif %}
+            <h3 class="mb-0">English Rating</h3>
         </div>
-        <p class="text-muted">Rate how similar the two English sentences sound (1 = not at all similar, 5 = identical meaning). You can also flag awkward English.</p>
+        <p class="text-muted">Your ratings help with our research, including improving the translation quality of LTL sentences into readable English. Thank you for contributing.</p>
+        <p class="text-muted">Rate how similar the two English sentences are (1 = not at all similar, 7 = identical meaning). You can also flag awkward English.</p>
 
         <div class="mb-3">
-            <span class="badge badge-light border mr-2">Near: {{ progress.near.done }}/{{ progress.near.total }}</span>
-            <span class="badge badge-light border">Far: {{ progress.far.done }}/{{ progress.far.total }}</span>
+            <span class="badge badge-light border">Rated: {{ progress.done }}/{{ progress.total }}</span>
         </div>
 
         {% if done %}
@@ -42,7 +59,6 @@
         {% else %}
             <div class="card mb-3">
                 <div class="card-body">
-                    <div class="small text-muted mb-2">Misconception: {{ pair.closest_mutant_misconception }} | SBERT dist: {{ '%.3f'|format(pair.closest_distance) }} (max {{ '%.3f'|format(pair.max_distance) }})</div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="card sentence-card">
@@ -62,23 +78,26 @@
                         </div>
                     </div>
 
-                    <div class="alert alert-secondary small">
-                        <div><strong>LTL:</strong> <code>{{ pair.ltl_formula }}</code></div>
-                        <div><strong>Mutant LTL:</strong> <code>{{ pair.closest_mutant_formula }}</code></div>
-                    </div>
-
                     <form method="POST" class="mt-3">
                         <input type="hidden" name="dataset" value="{{ dataset }}">
                         <input type="hidden" name="row_index" value="{{ row_index }}">
 
                         <div class="form-group">
-                            <label class="font-weight-bold d-block">Similarity (1–5)</label>
-                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                {% for i in range(1,6) %}
-                                <label class="btn btn-outline-dark {% if i == 3 %}active{% endif %}">
-                                    <input type="radio" name="likert" id="likert-{{ i }}" value="{{ i }}" autocomplete="off" {% if i == 3 %}checked{% endif %}> {{ i }}
-                                </label>
-                                {% endfor %}
+                            <label class="font-weight-bold d-block">Similarity (1–7)</label>
+                            <input type="range" class="custom-range" id="likertRange" name="likert" min="1" max="7" step="1" value="4" oninput="updateLikert(this.value);">
+                            <div class="range-ticks">{% for i in range(7) %}<span></span>{% endfor %}</div>
+                            <div class="range-labels text-muted">
+                                <span>1</span>
+                                <span>2</span>
+                                <span>3</span>
+                                <span id="likertValue" class="font-weight-bold text-dark">4</span>
+                                <span>5</span>
+                                <span>6</span>
+                                <span>7</span>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small mt-1">
+                                <span>Not at all similar</span>
+                                <span>Identical meaning</span>
                             </div>
                         </div>
 
@@ -99,4 +118,11 @@
         {% endif %}
     </div>
 </body>
+<script>
+    function updateLikert(val) {
+        document.getElementById('likertValue').innerText = val;
+        const slider = document.getElementById('likertRange');
+        slider.style.background = 'linear-gradient(90deg, #d9534f 0%, #f0ad4e 50%, #5cb85c 100%)';
+    }
+</script>
 </html>

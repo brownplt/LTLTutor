@@ -301,10 +301,9 @@ def ltltoeng_rating():
     rated_near = answer_logger.getRatedSentencePairIndices(user_id, "near")
     rated_far = answer_logger.getRatedSentencePairIndices(user_id, "far")
 
-    progress = {
-        "near": {"done": len(rated_near), "total": len(BENCHMARK_ROWS.get("near", []))},
-        "far": {"done": len(rated_far), "total": len(BENCHMARK_ROWS.get("far", []))}
-    }
+    total_count = len(BENCHMARK_ROWS.get("near", [])) + len(BENCHMARK_ROWS.get("far", []))
+    done_count = len(rated_near) + len(rated_far)
+    progress = {"done": done_count, "total": total_count}
 
     if request.method == 'POST':
         dataset = request.form.get('dataset', '')

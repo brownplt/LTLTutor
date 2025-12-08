@@ -18,9 +18,6 @@
             <li class="nav-item">
                 <a class="nav-link" href="/ltl" target="_blank">LTL Syntax</a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/ltltoeng/rating">Rate English Pairs</a>
-            </li>
 
 
             <!-- Combined Dropdown for Generate Exercise and Syntax Choice -->
@@ -61,6 +58,11 @@
             {% else %}
             <li class="nav-item">
                 <a class="nav-link" href="/login">Log In</a>
+            </li>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.type == 'course-instructor' %}
+            <li class="nav-item">
+                <a class="nav-link" href="/ltltoeng/rating">Rate English Pairs</a>
             </li>
             {% endif %}
         </ul>
@@ -116,4 +118,3 @@
         </div>
     </div>
 </div>
-
