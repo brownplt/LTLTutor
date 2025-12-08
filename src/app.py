@@ -309,8 +309,7 @@ def ltltoeng_rating():
         dataset = request.form.get('dataset', '')
         row_index = request.form.get('row_index', '')
         likert_value = request.form.get('likert')
-        awkward_flag = request.form.get('awkward_flag') == 'on'
-        awkward_notes = request.form.get('awkward_notes', '').strip()
+        notes = request.form.get('notes', '').strip()
         unsure_flag = request.form.get('unsure') in ['1', 'on', 'true', 'True']
 
         try:
@@ -343,8 +342,7 @@ def ltltoeng_rating():
             "mutant_ltl": pair["closest_mutant_formula"],
             "misconception": pair["closest_mutant_misconception"],
             "likert_rating": likert_rating,
-            "awkward_flag": awkward_flag,
-            "awkward_notes": awkward_notes,
+            "notes": notes,
             "unsure": unsure_flag,
             "closest_distance": pair["closest_distance"],
             "max_distance": pair["max_distance"],

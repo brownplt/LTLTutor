@@ -86,8 +86,8 @@ class SentencePairRating(Base):
     mutant_ltl = Column(String)
     misconception = Column(String)
     likert_rating = Column(Integer)
-    awkward_flag = Column(Boolean, default=False)
-    awkward_notes = Column(String)
+    notes = Column(String)
+    unsure = Column(Boolean, default=False)
     closest_distance = Column(Float)
     max_distance = Column(Float)
     avg_distance = Column(Float)
@@ -222,8 +222,8 @@ class Logger:
 
             if existing:
                 existing.likert_rating = likert
-                existing.awkward_flag = rating_data.get('awkward_flag', False)
-                existing.awkward_notes = rating_data.get('awkward_notes', '')
+                existing.notes = rating_data.get('notes', '')
+                existing.unsure = unsure
                 existing.base_english = rating_data.get('base_english', existing.base_english)
                 existing.mutant_english = rating_data.get('mutant_english', existing.mutant_english)
                 existing.base_ltl = rating_data.get('base_ltl', existing.base_ltl)
@@ -244,8 +244,8 @@ class Logger:
                     mutant_ltl=rating_data.get('mutant_ltl', ''),
                     misconception=rating_data.get('misconception', ''),
                     likert_rating=likert,
-                    awkward_flag=rating_data.get('awkward_flag', False),
-                    awkward_notes=rating_data.get('awkward_notes', ''),
+                    notes=rating_data.get('notes', ''),
+                    unsure=unsure,
                     closest_distance=rating_data.get('closest_distance'),
                     max_distance=rating_data.get('max_distance'),
                     avg_distance=rating_data.get('avg_distance'),
