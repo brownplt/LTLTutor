@@ -30,6 +30,72 @@ class MisconceptionCode(Enum):
         except ValueError:
             return None
 
+    def needsTemplateGeneration(self):
+        """
+        Returns True if this misconception benefits from template-based formula generation
+        rather than purely random generation, because it requires specific structural patterns.
+        """
+        return self in [
+            MisconceptionCode.ExclusiveU,
+            MisconceptionCode.BadStateIndex
+        ]
+
+    def generateTemplateFormula(self, atomic_props=None):
+        """
+        Generate a formula from a template that guarantees this misconception can be applied.
+        Returns an LTLNode, or None if template generation is not applicable.
+        
+        Args:
+            atomic_props: List of atomic proposition strings to use. If None, uses ['p', 'q', 'r']
+        """
+        if atomic_props is None:
+            atomic_props = ['p', 'q', 'r']
+        
+        if not self.needsTemplateGeneration():
+            return None
+        
+        # Helper to get random distinct props
+        def get_props(n):
+            return random.sample(atomic_props, min(n, len(atomic_props)))
+        
+        if self == MisconceptionCode.ExclusiveU:
+            # Generate patterns that ExclusiveU can mutate
+            x_str, y_str = get_props(2)
+            x = LTLNode.parse(x_str)
+            y = LTLNode.parse(y_str)
+            
+            patterns = [
+                # x U (!x & y) - explicit disjointness
+                UntilNode(x, AndNode(NotNode(x), y)),
+                # x U (x -> y) - implication pattern
+                UntilNode(x, ImpliesNode(x, y)),
+                # x U (!x | y) - or pattern with negation
+                UntilNode(x, OrNode(NotNode(x), y)),
+                # (x U y) & G(x -> !y) - global exclusivity constraint
+                AndNode(UntilNode(x, y), GloballyNode(ImpliesNode(x, NotNode(y)))),
+                # (x U y) & G!(x & y) - globally not both
+                AndNode(UntilNode(x, y), GloballyNode(NotNode(AndNode(x, y)))),
+            ]
+            return random.choice(patterns)
+        
+        elif self == MisconceptionCode.BadStateIndex:
+            # Generate Until/Next patterns with complex RHS
+            x_str, y_str, z_str = get_props(3)
+            x = LTLNode.parse(x_str)
+            y = LTLNode.parse(y_str)
+            z = LTLNode.parse(z_str)
+            
+            patterns = [
+                # x U (y & Fz) - Until with conjunction including Finally
+                UntilNode(x, AndNode(y, FinallyNode(z))),
+                # x U (y & Gz) - Until with conjunction including Globally
+                UntilNode(x, AndNode(y, GloballyNode(z))),
+                # X(y & z) - Next with conjunction
+                NextNode(AndNode(y, z)),
+            ]
+            return random.choice(patterns)
+        
+        return None
 
     def associatedOperators(self):
 
@@ -47,7 +113,9 @@ class MisconceptionCode(Enum):
             # Applies to responses that mis-use or swap a fan-out operator (F, G, U).
             return [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol]
         elif self == MisconceptionCode.ExclusiveU:
-            return [UntilNode.symbol]
+            # Boost Until AND the boolean operators that create the patterns we need
+            # (e.g., x U (!x & y), x U (x -> y), etc.)
+            return [UntilNode.symbol, AndNode.symbol, OrNode.symbol, ImpliesNode.symbol, NotNode.symbol]
         elif self == MisconceptionCode.ImplicitF:
             return [FinallyNode.symbol]
         elif self == MisconceptionCode.ImplicitG:
