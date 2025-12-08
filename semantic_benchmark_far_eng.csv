@@ -1,21 +1,21 @@
 ltl_formula,english_translation,closest_mutant_formula,closest_mutant_english,closest_mutant_misconception,closest_distance,max_distance,avg_distance,num_mutants
 p3 | Gp1,Either 'p3' or 'p1' must always hold,(p3 | (F p1)),"Either 'p3' or at some point, 'p1' will hold",BadStateQuantification,0.45043107867240906,0.5518139600753784,0.4953062931696574,3
-(p0 U ((! p0) | (! p3))),'p0' until Not both 'p0' and 'p3',((p0 U ((! p0) | (! p3))) | (G p0)),Either 'p0' until Not both 'p0' and 'p3' or 'p0' must always hold,WeakU,0.45751529932022095,0.781352698802948,0.5453808307647705,4
+(p0 U ((! p0) | (! p3))),'p0' until not both 'p0' and 'p3',((p0 U ((! p0) | (! p3))) | (G p0)),Either 'p0' until not both 'p0' and 'p3' or 'p0' must always hold,WeakU,0.45751529932022095,0.781352698802948,0.5453808307647705,4
 !p3 | Xp0,"Either 'p3' is false or in the next step, 'p0'",((! p3) | (F p0)),"Either 'p3' is false or at some point, 'p0' will hold",OtherImplicit,0.46314603090286255,0.46314603090286255,0.46314603090286255,1
 (p2 U ((! p2) | p2)),'p2' until either 'p2' is false or 'p2',(p2 U p2),'p2' until 'p2',ExclusiveU,0.46673595905303955,0.46673595905303955,0.46673595905303955,1
-X(p3 & FGp2),"In the next step, both 'p3' and Eventually, 'p2' will always be true",(X (p3 & (F p2))),"In the next step, both 'p3' and at some point, 'p2' will hold",ImplicitG,0.46724972128868103,0.5417690873146057,0.487897090613842,4
-X((p1 & p2) | (!p1 & !p2)),"In the next step, either both 'p1' and 'p2' or Neither 'p1' nor 'p2'",(X (((p1 & p2) | (! p1)) & (! p2))),"In the next step, both either both 'p1' and 'p2' or 'p1' is false and 'p2' is false",Precedence,0.49869200587272644,0.5975241661071777,0.5481080859899521,2
+X(p3 & FGp2),"In the next step, both 'p3' and eventually, 'p2' will always be true",(X (p3 & (F p2))),"In the next step, both 'p3' and at some point, 'p2' will hold",ImplicitG,0.46724972128868103,0.5417690873146057,0.487897090613842,4
+X((p1 & p2) | (!p1 & !p2)),"In the next step, either both 'p1' and 'p2' or neither 'p1' nor 'p2'",(X (((p1 & p2) | (! p1)) & (! p2))),"In the next step, both either both 'p1' and 'p2' or 'p1' is false and 'p2' is false",Precedence,0.49869200587272644,0.5975241661071777,0.5481080859899521,2
 F(p2 & p3),"Eventually, both 'p2' and 'p3' will be true simultaneously",(p2 & p3),Both 'p2' and 'p3',ImplicitF,0.6440837979316711,0.7360519766807556,0.6747398575146993,3
-p1 | G!p0,Either 'p1' or 'p0' will never occur,(p1 | (F (! p0))),"Either 'p1' or Eventually, not 'p0'",BadStateQuantification,0.4521879255771637,0.7287090420722961,0.6086266140143076,3
+p1 | G!p0,Either 'p1' or 'p0' will never occur,(p1 | (F (! p0))),"Either 'p1' or eventually, not 'p0'",BadStateQuantification,0.4521879255771637,0.7287090420722961,0.6086266140143076,3
 p3 U p2,'p3' until 'p2',((p3 U p2) | (G p3)),Either 'p3' until 'p2' or 'p3' must always hold,WeakU,0.4602723717689514,0.616101861000061,0.5230183998743693,3
 ((G p2) U ((G p2) -> (F p2))),"'p2' must always hold until if 'p2' must always hold, then at some point, 'p2' will hold",(G p2),'p2' must always hold,OtherImplicit,0.46611276268959045,0.6317513585090637,0.5489320605993271,2
-XG(p0 & p3),"In the next step, At all times, both 'p0' and 'p3' hold",(X (p0 & p3)),"In the next step, both 'p0' and 'p3'",ImplicitG,0.49857398867607117,0.5757542252540588,0.5293595294157664,3
+XG(p0 & p3),"In the next step, at all times, both 'p0' and 'p3' hold",(X (p0 & p3)),"In the next step, both 'p0' and 'p3'",ImplicitG,0.49857398867607117,0.5757542252540588,0.5293595294157664,3
 (p3 U (p3 -> p3)),"'p3' until if 'p3' holds, then 'p3' holds",(p3 U p3),'p3' until 'p3',ExclusiveU,0.5209833383560181,0.5209833383560181,0.5209833383560181,1
 F(p0 & p3),"Eventually, both 'p0' and 'p3' will be true simultaneously",(p0 & p3),Both 'p0' and 'p3',ImplicitF,0.6623632311820984,0.7488532662391663,0.6911932428677877,3
 p2 | Gp3,Either 'p2' or 'p3' must always hold,(p2 | (F p3)),"Either 'p2' or at some point, 'p3' will hold",BadStateQuantification,0.4526665508747101,0.741706132888794,0.588632196187973,3
 p1 U p0,'p1' until 'p0',((p1 U p0) | (G p1)),Either 'p1' until 'p0' or 'p1' must always hold,WeakU,0.46299681067466736,0.6431487202644348,0.5307719111442566,3
 !p0 & Xp3,"Both 'p0' is false and in the next step, 'p3'",((! p0) & (F p3)),"Both 'p0' is false and at some point, 'p3' will hold",OtherImplicit,0.4761523902416229,0.4761523902416229,0.4761523902416229,1
-XG(p2 & p3),"In the next step, At all times, both 'p2' and 'p3' hold",(X (p2 & p3)),"In the next step, both 'p2' and 'p3'",ImplicitG,0.5027826428413391,0.5630331635475159,0.533862849076589,3
+XG(p2 & p3),"In the next step, at all times, both 'p2' and 'p3' hold",(X (p2 & p3)),"In the next step, both 'p2' and 'p3'",ImplicitG,0.5027826428413391,0.5630331635475159,0.533862849076589,3
 (p1 U (p1 -> p1)),"'p1' until if 'p1' holds, then 'p1' holds",(p1 U p1),'p1' until 'p1',ExclusiveU,0.5512495636940002,0.8403921127319336,0.6958208382129669,2
 FGp2,"Eventually, 'p2' will always be true",(G p2),'p2' must always hold,ImplicitF,0.6659942865371704,0.7746404409408569,0.6934536993503571,4
 p1 | (p1 U p2),Either 'p1' or 'p1' until 'p2',(p1 | (p1 U (F p2))),"Either 'p1' or 'p1' until at some point, 'p2' will hold",BadStateQuantification,0.4548565745353699,0.7249919772148132,0.5574564039707184,3
@@ -24,21 +24,21 @@ p1 U p2,'p1' until 'p2',((p1 U p2) | (G p1)),Either 'p1' until 'p2' or 'p1' must
 G(p1 | p2),Always have either 'p1' or 'p2',(p1 | p2),At least one of 'p1' or 'p2',ImplicitG,0.5046390295028687,0.6220009326934814,0.5437596638997396,3
 (p0 U (p0 -> p0)),"'p0' until if 'p0' holds, then 'p0' holds",(p0 U p0),'p0' until 'p0',ExclusiveU,0.5660205483436584,0.5660205483436584,0.5660205483436584,1
 F(p0 & p2),"Eventually, both 'p0' and 'p2' will be true simultaneously",(p0 & p2),Both 'p0' and 'p2',ImplicitF,0.6757736802101135,0.7607364654541016,0.7040946086247762,3
-!p2 | p3 | GFp1,Either 'p2' is false or 'p3' or 'p1' will happen infinitely often,(((! p2) | p3) | (F (F p1))),"Either 'p2' is false or 'p3' or Eventually, 'p1'",BadStateQuantification,0.45498692989349365,0.5934218168258667,0.542361855506897,4
+!p2 | p3 | GFp1,Either 'p2' is false or 'p3' or 'p1' will happen infinitely often,(((! p2) | p3) | (F (F p1))),"Either 'p2' is false or 'p3' or eventually, 'p1'",BadStateQuantification,0.45498692989349365,0.5934218168258667,0.542361855506897,4
 !p1 | p3,Either 'p1' is false or 'p3',(! p1),'p1' is false,OtherImplicit,0.4804563522338867,0.4804563522338867,0.4804563522338867,1
 p0 U p1,'p0' until 'p1',((p0 U p1) | (G p0)),Either 'p0' until 'p1' or 'p0' must always hold,WeakU,0.49506258964538574,0.7117910385131836,0.5696965654691061,3
-XG(p1 & p2),"In the next step, At all times, both 'p1' and 'p2' hold",(X (p1 & p2)),"In the next step, both 'p1' and 'p2'",ImplicitG,0.5117736458778381,0.5819584727287292,0.5519059896469116,3
+XG(p1 & p2),"In the next step, at all times, both 'p1' and 'p2' hold",(X (p1 & p2)),"In the next step, both 'p1' and 'p2'",ImplicitG,0.5117736458778381,0.5819584727287292,0.5519059896469116,3
 F(p0 & p1),"Eventually, both 'p0' and 'p1' will be true simultaneously",(p0 & p1),Both 'p0' and 'p1',ImplicitF,0.6860395073890686,0.7655901908874512,0.7125564018885294,3
-p3 | G!p3,Either 'p3' or 'p3' will never occur,(p3 | (F (! p3))),"Either 'p3' or Eventually, not 'p3'",BadStateQuantification,0.4570067822933197,0.6578147411346436,0.571741650501887,3
+p3 | G!p3,Either 'p3' or 'p3' will never occur,(p3 | (F (! p3))),"Either 'p3' or eventually, not 'p3'",BadStateQuantification,0.4570067822933197,0.6578147411346436,0.571741650501887,3
 X(p0 | !p1 | !p2 | p3),"In the next step, either either 'p0' or 'p1' is false or 'p2' is false or 'p3'",(F (((p0 | (! p1)) | (! p2)) | p3)),"Eventually, either either 'p0' or 'p1' is false or 'p2' is false or 'p3'",OtherImplicit,0.5055903196334839,0.5055903196334839,0.5055903196334839,1
 G(p1 & p3),"At all times, both 'p1' and 'p3' hold",(p1 & p3),Both 'p1' and 'p3',ImplicitG,0.6503925323486328,0.7537016868591309,0.6848289171854655,3
-p3 & G!p2,Both 'p3' and 'p2' will never occur,(p3 & (F (! p2))),"Both 'p3' and Eventually, not 'p2'",BadStateQuantification,0.46759116649627686,0.5926995873451233,0.5327227910359701,3
+p3 & G!p2,Both 'p3' and 'p2' will never occur,(p3 & (F (! p2))),"Both 'p3' and eventually, not 'p2'",BadStateQuantification,0.46759116649627686,0.5926995873451233,0.5327227910359701,3
 ((G p3) U (p3 & (G ((! p3) -> p2)))),'p3' must always hold until both 'p3' and it is always the case that 'p2' unless 'p3',(G p3),'p3' must always hold,OtherImplicit,0.5538555383682251,0.5538555383682251,0.5538555383682251,1
 FGp1,"Eventually, 'p1' will always be true",(F p1),"At some point, 'p1' will hold",ImplicitG,0.6717284917831421,0.8013848066329956,0.7046237289905548,4
-!p3 | GFp1,Either 'p3' is false or 'p1' will happen infinitely often,((! p3) | (F (F p1))),"Either 'p3' is false or Eventually, 'p1'",BadStateQuantification,0.47198814153671265,0.632379949092865,0.5645895153284073,4
+!p3 | GFp1,Either 'p3' is false or 'p1' will happen infinitely often,((! p3) | (F (F p1))),"Either 'p3' is false or eventually, 'p1'",BadStateQuantification,0.47198814153671265,0.632379949092865,0.5645895153284073,4
 p1 & p2,Both 'p1' and 'p2',p1,'p1',OtherImplicit,0.5831860303878784,0.5831860303878784,0.5831860303878784,1
 FGp3,"Eventually, 'p3' will always be true",(F p3),"At some point, 'p3' will hold",ImplicitG,0.6736251711845398,0.7966910004615784,0.7063409090042114,4
-p1 & F!p2,"Both 'p1' and Eventually, not 'p2'",(p1 & (G (! p2))),Both 'p1' and 'p2' will never occur,BadStateQuantification,0.47616830468177795,0.685285747051239,0.6001089910666147,3
+p1 & F!p2,"Both 'p1' and eventually, not 'p2'",(p1 & (G (! p2))),Both 'p1' and 'p2' will never occur,BadStateQuantification,0.47616830468177795,0.685285747051239,0.6001089910666147,3
 X(p0 | !p1),"In the next step, either 'p0' or 'p1' is false",(F (p0 | (! p1))),"Eventually, either 'p0' or 'p1' is false",OtherImplicit,0.595894992351532,0.595894992351532,0.595894992351532,1
 G(p1 & p2),"At all times, both 'p1' and 'p2' hold",(p1 & p2),Both 'p1' and 'p2',ImplicitG,0.6804438829421997,0.7751515507698059,0.7120131055514017,3
 F!p3,"Eventually, not 'p3'",(G (! p3)),'p3' will never occur,BadStateQuantification,0.49604660272598267,0.6771801710128784,0.6168023149172465,3
@@ -59,7 +59,7 @@ Gp2,'p2' must always hold,(F p2),"At some point, 'p2' will hold",BadStateQuantif
 G!p2,'p2' will never occur,(F (! p2)),"Eventually, not 'p2'",BadStateQuantification,0.5071642994880676,0.6483583450317383,0.601293663183848,3
 p0 | p2 | Xp2,"Either at least one of 'p0' or 'p2' or in the next step, 'p2'",((p0 | p2) | (F p2)),"Either at least one of 'p0' or 'p2' or at some point, 'p2' will hold",OtherImplicit,0.6449719667434692,0.6449719667434692,0.6449719667434692,1
 F!p2,"Eventually, not 'p2'",(G (! p2)),'p2' will never occur,BadStateQuantification,0.5071642994880676,0.6714813709259033,0.6167090137799581,3
-p3 | X!p3,"Either 'p3' or in the next step, 'p3' is false",(p3 | (F (! p3))),"Either 'p3' or Eventually, not 'p3'",OtherImplicit,0.6540914177894592,0.6540914177894592,0.6540914177894592,1
+p3 | X!p3,"Either 'p3' or in the next step, 'p3' is false",(p3 | (F (! p3))),"Either 'p3' or eventually, not 'p3'",OtherImplicit,0.6540914177894592,0.6540914177894592,0.6540914177894592,1
 F!p0,"Eventually, not 'p0'",(G (! p0)),'p0' will never occur,BadStateQuantification,0.5171661376953125,0.6988669633865356,0.6383000214894613,3
 !p1,'p1' is false,p1,'p1',OtherImplicit,0.6591484546661377,0.6591484546661377,0.6591484546661377,1
 G!p0,'p0' will never occur,(F (! p0)),"Eventually, not 'p0'",BadStateQuantification,0.5171661376953125,0.701252281665802,0.6398902336756388,3
@@ -68,7 +68,7 @@ Fp1,"At some point, 'p1' will hold",(G p1),'p1' must always hold,BadStateQuantif
 Gp1,'p1' must always hold,(F p1),"At some point, 'p1' will hold",BadStateQuantification,0.5173208117485046,0.6117421984672546,0.580268402894338,3
 !p0,'p0' is false,p0,'p0',OtherImplicit,0.6832073926925659,0.6832073926925659,0.6832073926925659,1
 F!p1,"Eventually, not 'p1'",(G (! p1)),'p1' will never occur,BadStateQuantification,0.518254280090332,0.6831350326538086,0.6281747817993164,3
-p2 | X!p2,"Either 'p2' or in the next step, 'p2' is false",(p2 | (F (! p2))),"Either 'p2' or Eventually, not 'p2'",OtherImplicit,0.6898571848869324,0.6898571848869324,0.6898571848869324,1
+p2 | X!p2,"Either 'p2' or in the next step, 'p2' is false",(p2 | (F (! p2))),"Either 'p2' or eventually, not 'p2'",OtherImplicit,0.6898571848869324,0.6898571848869324,0.6898571848869324,1
 G!p1,'p1' will never occur,(F (! p1)),"Eventually, not 'p1'",BadStateQuantification,0.518254280090332,0.6784943342208862,0.6250809828440348,3
 p2 & Xp3,"Both 'p2' and in the next step, 'p3'",(p2 & (F p3)),"Both 'p2' and at some point, 'p3' will hold",OtherImplicit,0.6917235851287842,0.6917235851287842,0.6917235851287842,1
 Fp0,"At some point, 'p0' will hold",(G p0),'p0' must always hold,BadStateQuantification,0.5208287835121155,0.7393346428871155,0.6664993564287821,3
@@ -78,11 +78,11 @@ p3 | Xp3,"Either 'p3' or in the next step, 'p3'",(p3 | (F p3)),"Either 'p3' or a
 F(p3 & Fp1),"Eventually, both 'p3' and at some point, 'p1' will hold will be true simultaneously",(G (p3 & (F p1))),"At all times, both 'p3' and at some point, 'p1' will hold",BadStateQuantification,0.5369850397109985,0.5416533350944519,0.5400972366333008,3
 p0 | Xp1,"Either 'p0' or in the next step, 'p1'",(p0 | (F p1)),"Either 'p0' or at some point, 'p1' will hold",OtherImplicit,0.716743528842926,0.716743528842926,0.716743528842926,1
 p0 | Xp2,"Either 'p0' or in the next step, 'p2'",(p0 | (F p2)),"Either 'p0' or at some point, 'p2' will hold",OtherImplicit,0.7250054478645325,0.7250054478645325,0.7250054478645325,1
-p2 & FGp3,"Both 'p2' and Eventually, 'p3' will always be true",(p2 & (G (G p3))),"Both 'p2' and At all times, 'p3'",BadStateQuantification,0.5996398329734802,0.7897274494171143,0.6651566028594971,4
+p2 & FGp3,"Both 'p2' and eventually, 'p3' will always be true",(p2 & (G (G p3))),"Both 'p2' and at all times, 'p3'",BadStateQuantification,0.5996398329734802,0.7897274494171143,0.6651566028594971,4
 !p0 | p3,Either 'p0' is false or 'p3',p3,'p3',OtherImplicit,0.7462073564529419,0.7462073564529419,0.7462073564529419,1
-p2 | FGp3,"Either 'p2' or Eventually, 'p3' will always be true",(p2 | (G (G p3))),"Either 'p2' or At all times, 'p3'",BadStateQuantification,0.6310169696807861,0.7770109176635742,0.6712877005338669,4
+p2 | FGp3,"Either 'p2' or eventually, 'p3' will always be true",(p2 | (G (G p3))),"Either 'p2' or at all times, 'p3'",BadStateQuantification,0.6310169696807861,0.7770109176635742,0.6712877005338669,4
 p0 | Xp0,"Either 'p0' or in the next step, 'p0'",(p0 | (F p0)),"Either 'p0' or at some point, 'p0' will hold",OtherImplicit,0.7491868138313293,0.7491868138313293,0.7491868138313293,1
-p0 | FGp2,"Either 'p0' or Eventually, 'p2' will always be true",(p0 | (G (G p2))),"Either 'p0' or At all times, 'p2'",BadStateQuantification,0.6483875513076782,0.8493967056274414,0.7040949761867523,4
+p0 | FGp2,"Either 'p0' or eventually, 'p2' will always be true",(p0 | (G (G p2))),"Either 'p0' or at all times, 'p2'",BadStateQuantification,0.6483875513076782,0.8493967056274414,0.7040949761867523,4
 X!p3,"In the next step, 'p3' is false",(F (! p3)),"Eventually, not 'p3'",OtherImplicit,0.7590113878250122,0.7590113878250122,0.7590113878250122,1
 GFp3,'p3' will happen infinitely often,(F (F p3)),"Eventually, 'p3'",BadStateQuantification,0.6577970385551453,0.738743245601654,0.7151447683572769,4
 p2 | Xp2,"Either 'p2' or in the next step, 'p2'",(p2 | (F p2)),"Either 'p2' or at some point, 'p2' will hold",OtherImplicit,0.7597582340240479,0.7597582340240479,0.7597582340240479,1

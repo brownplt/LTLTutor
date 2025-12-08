@@ -308,18 +308,24 @@ def ltltoeng_rating():
     if request.method == 'POST':
         dataset = request.form.get('dataset', '')
         row_index = request.form.get('row_index', '')
-        likert_value = request.form.get('likert', '')
+        likert_value = request.form.get('likert')
         awkward_flag = request.form.get('awkward_flag') == 'on'
         awkward_notes = request.form.get('awkward_notes', '').strip()
+        unsure_flag = request.form.get('unsure') in ['1', 'on', 'true', 'True']
 
         try:
             row_index = int(row_index)
-            likert_rating = int(likert_value)
         except ValueError:
             return jsonify({"error": "Invalid rating payload"}), 400
 
-        if likert_rating < 1 or likert_rating > 5:
-            return jsonify({"error": "Likert rating must be between 1 and 5"}), 400
+        likert_rating = None
+        if not unsure_flag:
+            try:
+                likert_rating = int(likert_value)
+            except (TypeError, ValueError):
+                return jsonify({"error": "Likert rating missing or invalid"}), 400
+            if likert_rating < 1 or likert_rating > 7:
+                return jsonify({"error": "Likert rating must be between 1 and 7"}), 400
 
         rows = BENCHMARK_ROWS.get(dataset)
         if rows is None or row_index < 0 or row_index >= len(rows):
@@ -339,6 +345,7 @@ def ltltoeng_rating():
             "likert_rating": likert_rating,
             "awkward_flag": awkward_flag,
             "awkward_notes": awkward_notes,
+            "unsure": unsure_flag,
             "closest_distance": pair["closest_distance"],
             "max_distance": pair["max_distance"],
             "avg_distance": pair["avg_distance"],

@@ -19,9 +19,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 0.85rem;
-        }
-        .custom-range {
-            background: linear-gradient(90deg, #d9534f 0%, #f0ad4e 50%, #5cb85c 100%);
+            font-weight: 600;
         }
         .range-ticks {
             display: flex;
@@ -35,6 +33,30 @@
             background: #6c757d;
             display: block;
         }
+        .custom-range {
+            height: 1.15rem;
+        }
+        .custom-range::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            background: #0056b3;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cce0ff;
+        }
+        .custom-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #0056b3;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cce0ff;
+        }
+        .range-descriptors {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-top: 2px;
+            color: #6c757d;
+        }
     </style>
 </head>
 
@@ -46,7 +68,7 @@
             <h3 class="mb-0">How Similar Are These English Sentences?</h3>
         </div>
         <p class="text-muted">Your ratings help with our research, including improving the translation quality of LTL sentences into readable English. Thank you for contributing.</p>
-        <p class="text-muted">Rate how similar the two English sentences are (1 = not at all similar, 7 = identical meaning). You can also flag awkward English.</p>
+        <p class="text-muted">Tell us whether these two sentences differ in meaning (1 = completely different meaning, 7 = essentially the same meaning). You can also flag awkward English.</p>
 
         <div class="mb-3">
             <span class="badge badge-light border">Rated: {{ progress.done }}/{{ progress.total }}</span>
@@ -83,27 +105,27 @@
                         <input type="hidden" name="row_index" value="{{ row_index }}">
 
                         <div class="form-group">
-                            <label class="font-weight-bold d-block">Similarity (1–7)</label>
-                            <input type="range" class="custom-range" id="likertRange" name="likert" min="1" max="7" step="1" value="4" oninput="updateLikert(this.value);">
+                            <label class="font-weight-bold d-block">Are these meaningfully different? (1–7)</label>
+                            <input type="range" class="custom-range" id="likertRange" name="likert" min="1" max="7" step="1" value="4">
                             <div class="range-ticks">{% for i in range(7) %}<span></span>{% endfor %}</div>
                             <div class="range-labels text-muted">
-                                <span>1</span>
-                                <span>2</span>
-                                <span>3</span>
-                                <span id="likertValue" class="font-weight-bold text-dark">4</span>
-                                <span>5</span>
-                                <span>6</span>
-                                <span>7</span>
+                                <span>1<br><small>Completely different meaning</small></span>
+                                <span>2<br><small>Mostly different</small></span>
+                                <span>3<br><small>Somewhat different</small></span>
+                                <span>4<br><small>Mixed / unclear overlap</small></span>
+                                <span>5<br><small>Mostly similar</small></span>
+                                <span>6<br><small>Very similar</small></span>
+                                <span>7<br><small>Essentially same meaning</small></span>
                             </div>
                             <div class="d-flex justify-content-between text-muted small mt-1">
-                                <span>Not at all similar</span>
-                                <span>Identical meaning</span>
+                                <span>Different meaning</span>
+                                <span>Same meaning</span>
                             </div>
-                        </div>
-
-                        <div class="form-group form-check">
-                            <input type="checkbox" class="form-check-input" id="awkwardFlag" name="awkward_flag">
-                            <label class="form-check-label" for="awkwardFlag">Flag awkward or unclear English</label>
+                            <div class="alert alert-warning mt-3 mb-1 d-flex align-items-center">
+                                <input type="hidden" name="unsure" id="unsureHidden" value="0">
+                                <input type="checkbox" class="form-check-input mr-2" id="unsureCheck" onchange="toggleUnsure(this.checked);">
+                                <label class="form-check-label mb-0 font-weight-bold" for="unsureCheck">I'm unsure / can't judge this pair</label>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -119,10 +141,16 @@
     </div>
 </body>
 <script>
-    function updateLikert(val) {
-        document.getElementById('likertValue').innerText = val;
+    function toggleUnsure(isChecked) {
         const slider = document.getElementById('likertRange');
-        slider.style.background = 'linear-gradient(90deg, #d9534f 0%, #f0ad4e 50%, #5cb85c 100%)';
+        const hidden = document.getElementById('unsureHidden');
+        if (isChecked) {
+            slider.disabled = true;
+            hidden.value = "1";
+        } else {
+            slider.disabled = false;
+            hidden.value = "0";
+        }
     }
 </script>
 </html>

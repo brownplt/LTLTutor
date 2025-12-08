@@ -200,14 +200,18 @@ class Logger:
 
     def logSentencePairRating(self, rating_data):
         """Insert or update a user's rating for a specific benchmark row."""
-        required = ['user_id', 'dataset', 'row_index', 'likert_rating']
+        required = ['user_id', 'dataset', 'row_index']
         for key in required:
             if key not in rating_data:
                 raise ValueError(f"rating_data missing required key '{key}'")
 
-        likert = rating_data['likert_rating']
-        if not isinstance(likert, int) or likert < 1 or likert > 7:
-            raise ValueError("likert_rating must be an int between 1 and 7 for 7-point scale")
+        unsure = bool(rating_data.get('unsure'))
+        likert = rating_data.get('likert_rating')
+        if not unsure:
+            if not isinstance(likert, int) or likert < 1 or likert > 7:
+                raise ValueError("likert_rating must be an int between 1 and 7 for 7-point scale")
+        else:
+            likert = None
 
         with self.Session() as session:
             existing = session.query(SentencePairRating).filter(
@@ -217,7 +221,7 @@ class Logger:
             ).one_or_none()
 
             if existing:
-                existing.likert_rating = rating_data['likert_rating']
+                existing.likert_rating = likert
                 existing.awkward_flag = rating_data.get('awkward_flag', False)
                 existing.awkward_notes = rating_data.get('awkward_notes', '')
                 existing.base_english = rating_data.get('base_english', existing.base_english)
@@ -239,7 +243,7 @@ class Logger:
                     base_ltl=rating_data.get('base_ltl', ''),
                     mutant_ltl=rating_data.get('mutant_ltl', ''),
                     misconception=rating_data.get('misconception', ''),
-                    likert_rating=rating_data['likert_rating'],
+                    likert_rating=likert,
                     awkward_flag=rating_data.get('awkward_flag', False),
                     awkward_notes=rating_data.get('awkward_notes', ''),
                     closest_distance=rating_data.get('closest_distance'),
