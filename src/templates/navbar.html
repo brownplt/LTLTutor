@@ -44,6 +44,25 @@
                 </a>
             </li>
 
+            {% if uid %}
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="experimentsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Experiments
+                </a>
+                <div class="dropdown-menu" aria-labelledby="experimentsDropdown">
+                    <a class="dropdown-item" href="/ltltoeng/ui">
+                        <div class="font-weight-bold">Translate LTL to English (UI)</div>
+                        <small class="text-muted d-block">Try your own formulas and give open-ended feedback to improve translations.</small>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/ltltoeng/rating">
+                        <div class="font-weight-bold">Rate English Pairs</div>
+                        <small class="text-muted d-block">Quickly rate provided sentence pairs to gauge meaning similarity.</small>
+                    </a>
+                </div>
+            </li>
+            {% endif %}
+
             <li>
                 <a class="nav-link" href="/profile" aria-expanded="false">
                     Profile
@@ -58,11 +77,6 @@
             {% else %}
             <li class="nav-item">
                 <a class="nav-link" href="/login">Log In</a>
-            </li>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.type == 'course-instructor' %}
-            <li class="nav-item">
-                <a class="nav-link" href="/ltltoeng/rating">Rate English Pairs</a>
             </li>
             {% endif %}
         </ul>

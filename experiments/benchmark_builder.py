@@ -529,6 +529,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
         
         # Skip formulas where the closest mutant is too similar (nearly identical English)
         if min_distance < min_similarity_threshold:
+            print(f"    Skipping formula '{candidate_formula}' due to too-similar mutant (distance {min_distance:.6f})")
             continue
         
         # Determine tier based on closest mutant distance
