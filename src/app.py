@@ -7,6 +7,9 @@ from codebook import getAllApplicableMisconceptions
 import os
 import json
 import sys
+import csv
+from difflib import SequenceMatcher
+from markupsafe import Markup, escape
 from feedbackgenerator import FeedbackGenerator
 from logger import Logger
 import ast
@@ -60,6 +63,97 @@ def enforce_https_in_production():
         return redirect(secure_url, code=301)
 
 answer_logger = Logger()
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+
+BENCHMARK_FILES = {
+    "near": os.path.join(PROJECT_ROOT, "semantic_benchmark_near_eng.csv"),
+    "far": os.path.join(PROJECT_ROOT, "semantic_benchmark_far_eng.csv"),
+}
+
+
+def _load_benchmark_rows():
+    data = {}
+    for label, path in BENCHMARK_FILES.items():
+        if not os.path.exists(path):
+            data[label] = []
+            continue
+
+        with open(path, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            rows = []
+            for idx, row in enumerate(reader):
+                rows.append({
+                    "row_index": idx,
+                    "ltl_formula": row.get("ltl_formula", ""),
+                    "english_translation": row.get("english_translation", ""),
+                    "closest_mutant_formula": row.get("closest_mutant_formula", ""),
+                    "closest_mutant_english": row.get("closest_mutant_english", ""),
+                    "closest_mutant_misconception": row.get("closest_mutant_misconception", ""),
+                    "closest_distance": float(row.get("closest_distance", 0) or 0),
+                    "max_distance": float(row.get("max_distance", 0) or 0),
+                    "avg_distance": float(row.get("avg_distance", 0) or 0),
+                    "num_mutants": int(float(row.get("num_mutants", 0) or 0)),
+                    "dataset": label
+                })
+            data[label] = rows
+    return data
+
+
+BENCHMARK_ROWS = _load_benchmark_rows()
+
+
+def _highlight_differences(text_a, text_b):
+    tokens_a = text_a.split()
+    tokens_b = text_b.split()
+    matcher = SequenceMatcher(None, tokens_a, tokens_b)
+    opcodes = matcher.get_opcodes()
+
+    def build(tokens, use_a):
+        parts = []
+        for tag, i1, i2, j1, j2 in opcodes:
+            segment = tokens[i1:i2] if use_a else tokens[j1:j2]
+            if not segment:
+                continue
+            escaped = " ".join(escape(token) for token in segment)
+            if tag == 'equal':
+                parts.append(escaped)
+            else:
+                parts.append(f"<mark>{escaped}</mark>")
+        return Markup(" ".join(parts))
+
+    return build(tokens_a, True), build(tokens_b, False)
+
+
+def _next_index_for_dataset(user_id, dataset):
+    rows = BENCHMARK_ROWS.get(dataset, [])
+    rated = answer_logger.getRatedSentencePairIndices(user_id, dataset)
+    for idx in range(len(rows)):
+        if idx not in rated:
+            return idx
+    return None
+
+
+def _pick_next_pair(user_id):
+    options = []
+    next_near = _next_index_for_dataset(user_id, "near")
+    next_far = _next_index_for_dataset(user_id, "far")
+
+    if next_near is not None:
+        options.append(("near", next_near))
+    if next_far is not None:
+        options.append(("far", next_far))
+
+    if not options:
+        return None, None, None
+
+    if len(options) == 2:
+        dataset = random.choice(["near", "far"])
+        index = next_near if dataset == "near" else next_far
+    else:
+        dataset, index = options[0]
+
+    row = BENCHMARK_ROWS[dataset][index]
+    return dataset, index, row
 
 
 def getUserName():
@@ -198,6 +292,90 @@ def ltl_to_english():
         english = ltltoeng.finalize_sentence(node.__to_english__())
     except Exception as e:
         return jsonify({"error": "Failed to translate formula.", "details": str(e)}), 400
+
+
+@app.route('/ltltoeng/rating', methods=['GET', 'POST'])
+@login_required
+def ltltoeng_rating():
+    user_id = getUserName()
+    rated_near = answer_logger.getRatedSentencePairIndices(user_id, "near")
+    rated_far = answer_logger.getRatedSentencePairIndices(user_id, "far")
+
+    total_count = len(BENCHMARK_ROWS.get("near", [])) + len(BENCHMARK_ROWS.get("far", []))
+    done_count = len(rated_near) + len(rated_far)
+    progress = {"done": done_count, "total": total_count}
+
+    if request.method == 'POST':
+        dataset = request.form.get('dataset', '')
+        row_index = request.form.get('row_index', '')
+        likert_value = request.form.get('likert')
+        awkward_flag = request.form.get('awkward_flag') == 'on'
+        awkward_notes = request.form.get('awkward_notes', '').strip()
+        unsure_flag = request.form.get('unsure') in ['1', 'on', 'true', 'True']
+
+        try:
+            row_index = int(row_index)
+        except ValueError:
+            return jsonify({"error": "Invalid rating payload"}), 400
+
+        likert_rating = None
+        if not unsure_flag:
+            try:
+                likert_rating = int(likert_value)
+            except (TypeError, ValueError):
+                return jsonify({"error": "Likert rating missing or invalid"}), 400
+            if likert_rating < 1 or likert_rating > 7:
+                return jsonify({"error": "Likert rating must be between 1 and 7"}), 400
+
+        rows = BENCHMARK_ROWS.get(dataset)
+        if rows is None or row_index < 0 or row_index >= len(rows):
+            return jsonify({"error": "Unknown benchmark item"}), 400
+
+        pair = rows[row_index]
+
+        answer_logger.logSentencePairRating({
+            "user_id": user_id,
+            "dataset": dataset,
+            "row_index": row_index,
+            "base_english": pair["english_translation"],
+            "mutant_english": pair["closest_mutant_english"],
+            "base_ltl": pair["ltl_formula"],
+            "mutant_ltl": pair["closest_mutant_formula"],
+            "misconception": pair["closest_mutant_misconception"],
+            "likert_rating": likert_rating,
+            "awkward_flag": awkward_flag,
+            "awkward_notes": awkward_notes,
+            "unsure": unsure_flag,
+            "closest_distance": pair["closest_distance"],
+            "max_distance": pair["max_distance"],
+            "avg_distance": pair["avg_distance"],
+            "num_mutants": pair["num_mutants"],
+        })
+
+        return redirect('/ltltoeng/rating')
+
+    dataset, row_index, pair = _pick_next_pair(user_id)
+    if pair is None:
+        return render_template(
+            'ltltoeng_rating.html',
+            uid=user_id,
+            done=True,
+            progress=progress
+        )
+
+    highlighted_base, highlighted_mutant = _highlight_differences(pair["english_translation"], pair["closest_mutant_english"])
+
+    return render_template(
+        'ltltoeng_rating.html',
+        uid=user_id,
+        done=False,
+        pair=pair,
+        dataset=dataset,
+        row_index=row_index,
+        highlighted_base=highlighted_base,
+        highlighted_mutant=highlighted_mutant,
+        progress=progress
+    )
 
     return jsonify({"formula": formula, "english": english})
 

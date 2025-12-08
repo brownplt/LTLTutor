@@ -185,6 +185,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
                            max_mutants_per_formula=15,
                            near_eng_threshold=0.2,
                            far_eng_threshold=0.45,
+                           min_similarity_threshold=1e-4,
                            misconception_weights=None,
                            seed=42,
                            max_candidates=10000,
@@ -205,6 +206,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
         max_mutants_per_formula: Maximum mutants per formula
         near_eng_threshold: Max distance for closest mutant (paraphrases)
         far_eng_threshold: Min distance for closest mutant (very different)
+        min_similarity_threshold: Min distance for closest mutant (reject if below, default 1e-4)
         misconception_weights: Dict mapping misconception names to weights (0-1).
                               Default is uniform distribution. Higher weight = more samples.
                               Set to None to disable distribution control.
@@ -231,6 +233,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
         print(f"  Target per tier: {n_formulas_per_tier} formulas")
         print(f"  Near-English: closest mutant distance < {near_eng_threshold}")
         print(f"  Far-English: closest mutant distance > {far_eng_threshold}")
+        print(f"  Min similarity: closest mutant distance >= {min_similarity_threshold}")
         print(f"  Misconception distribution: {'uniform' if misconception_weights == DEFAULT_MISCONCEPTION_WEIGHTS else 'custom'}")
         print(f"  Max candidates to try: {max_candidates}\n")
     
@@ -435,6 +438,12 @@ def build_tiered_benchmark(n_formulas_per_tier,
                                     max_distance = max(distances)
                                     avg_distance = np.mean(distances)
                                     
+                                    # Skip templates where the closest mutant is too similar (nearly identical English)
+                                    if min_distance < min_similarity_threshold:
+                                        if verbose:
+                                            print(f"    Skipping template '{template_formula}' due to too-similar mutant (distance {min_distance:.6f})")
+                                        continue
+                                    
                                     record = {
                                         'ltl_formula': template_formula,
                                         'english_translation': candidate_english,
@@ -524,8 +533,9 @@ def build_tiered_benchmark(n_formulas_per_tier,
         max_distance = max(distances)
         avg_distance = np.mean(distances)
         
-        # Skip formulas where the closest mutant has distance 0 (identical English)
-        if min_distance == 0:
+        # Skip formulas where the closest mutant is too similar (nearly identical English)
+        if min_distance < min_similarity_threshold:
+            print(f"    Skipping formula '{candidate_formula}' due to too-similar mutant (distance {min_distance:.6f})")
             continue
         
         # Determine tier based on closest mutant distance
@@ -671,6 +681,7 @@ def main():
     parser.add_argument("--n-per-tier", type=int, default=100, help="Target formulas per tier")
     parser.add_argument("--near-eng-threshold", type=float, default=0.2, help="Near-English distance threshold")
     parser.add_argument("--far-eng-threshold", type=float, default=0.45, help="Far-English distance threshold")
+    parser.add_argument("--min-similarity-threshold", type=float, default=1e-4, help="Minimum similarity threshold (reject if below)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--max-candidates", type=int, default=5000, help="Max candidates to try")
     parser.add_argument("--output-prefix", default="ltl_benchmark", help="Output file prefix")
@@ -682,6 +693,7 @@ def main():
         n_formulas_per_tier=args.n_per_tier,
         near_eng_threshold=args.near_eng_threshold,
         far_eng_threshold=args.far_eng_threshold,
+        min_similarity_threshold=args.min_similarity_threshold,
         seed=args.seed,
         max_candidates=args.max_candidates,
         verbose=not args.quiet,

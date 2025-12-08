@@ -243,9 +243,9 @@ class UntilNode(BinaryOperatorNode):
                 f"{lhs} holds until {rhs} occurs",
                 f"maintain {lhs} until {rhs}"
             ]
-            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+            return ltltoeng.choose_best_sentence(patterns)
         
-        return ltltoeng.capitalize_sentence(f"{lhs} until {rhs}")
+        return f"{lhs} until {rhs}"
     
     def __forge__(self):
         return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
@@ -264,7 +264,7 @@ class NextNode(UnaryOperatorNode):
         if x is not None:
             return x
         op = self.operand.__to_english__().rstrip('.')
-        return ltltoeng.capitalize_sentence(f"in the next step, {op}")
+        return f"in the next step, {op}"
     
     def __forge__(self):
         return f"(NEXT_STATE {self.operand.__forge__()})"
@@ -294,7 +294,7 @@ class GloballyNode(UnaryOperatorNode):
         ]
 
         english = ltltoeng.choose_best_sentence(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        return english
     
     def __forge__(self):
         return f"(ALWAYS {self.operand.__forge__()})"
@@ -321,9 +321,9 @@ class FinallyNode(UnaryOperatorNode):
                 f"{op} will eventually occur",
                 f"at some point, {op} will hold"
             ]
-            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+            return ltltoeng.choose_best_sentence(patterns)
         
-        return ltltoeng.capitalize_sentence(f"eventually, {op}")
+        return f"eventually, {op}"
     
     def __forge__(self):
         return f"(EVENTUALLY {self.operand.__forge__()})"
@@ -353,9 +353,9 @@ class OrNode(BinaryOperatorNode):
                 f"{lhs} or {rhs}",
                 f"at least one of {lhs} or {rhs}"
             ]
-            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+            return ltltoeng.choose_best_sentence(patterns)
         
-        return ltltoeng.capitalize_sentence(f"either {lhs} or {rhs}")
+        return f"either {lhs} or {rhs}"
     
 
 
@@ -379,9 +379,9 @@ class AndNode(BinaryOperatorNode):
                 f"{lhs} and {rhs}",
                 f"{lhs} together with {rhs}"
             ]
-            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+            return ltltoeng.choose_best_sentence(patterns)
         
-        return ltltoeng.capitalize_sentence(f"both {lhs} and {rhs}")
+        return f"both {lhs} and {rhs}"
 
 
 class NotNode(UnaryOperatorNode):
@@ -403,9 +403,9 @@ class NotNode(UnaryOperatorNode):
                 f"{op} does not hold",
                 f"{op} is false"
             ]
-            return ltltoeng.capitalize_sentence(ltltoeng.choose_best_sentence(patterns))
+            return ltltoeng.choose_best_sentence(patterns)
         else:
-            return ltltoeng.capitalize_sentence(f"it is not the case that {op}")
+            return f"it is not the case that {op}"
 
 class ImpliesNode(BinaryOperatorNode):
     symbol = IMPLIES_SYMBOL
@@ -432,7 +432,7 @@ class ImpliesNode(BinaryOperatorNode):
 
         # Choose the most fluent pattern rather than picking randomly
         english = ltltoeng.choose_best_sentence(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        return english
 
 
 class EquivalenceNode(BinaryOperatorNode):
@@ -459,7 +459,7 @@ class EquivalenceNode(BinaryOperatorNode):
 
         # Choose the most fluent pattern rather than picking randomly
         english = ltltoeng.choose_best_sentence(patterns)
-        return ltltoeng.capitalize_sentence(english)
+        return english
 
 
 

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rate English Paraphrases</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        mark {
+            padding: 0.2rem;
+            background: #ffe69c;
+        }
+        .sentence-card {
+            min-height: 160px;
+        }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .range-ticks {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2px;
+            margin-top: -6px;
+        }
+        .range-ticks span {
+            width: 2px;
+            height: 8px;
+            background: #6c757d;
+            display: block;
+        }
+        .custom-range {
+            height: 1.15rem;
+        }
+        .custom-range::-webkit-slider-thumb {
+            width: 18px;
+            height: 18px;
+            background: #0056b3;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cce0ff;
+        }
+        .custom-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #0056b3;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #cce0ff;
+        }
+        .range-descriptors {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            margin-top: 2px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container my-4">
+        <div class="d-flex align-items-center mb-3">
+            <h3 class="mb-0">How Similar Are These English Sentences?</h3>
+        </div>
+        <p class="text-muted">Your ratings help with our research, including improving the translation quality of LTL sentences into readable English. Thank you for contributing.</p>
+        <p class="text-muted">Tell us whether these two sentences differ in meaning (1 = completely different meaning, 7 = essentially the same meaning). You can also flag awkward English.</p>
+
+        <div class="mb-3">
+            <span class="badge badge-light border">Rated: {{ progress.done }}/{{ progress.total }}</span>
+        </div>
+
+        {% if done %}
+            <div class="alert alert-success">
+                All benchmark pairs are rated. Thank you!
+            </div>
+        {% else %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card sentence-card">
+                                <div class="card-header bg-light py-2">Sentence A</div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ highlighted_base|safe }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card sentence-card">
+                                <div class="card-header bg-light py-2">Sentence B</div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ highlighted_mutant|safe }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="mt-3">
+                        <input type="hidden" name="dataset" value="{{ dataset }}">
+                        <input type="hidden" name="row_index" value="{{ row_index }}">
+
+                        <div class="form-group">
+                            <label class="font-weight-bold d-block">Are these meaningfully different? (1–7)</label>
+                            <input type="range" class="custom-range" id="likertRange" name="likert" min="1" max="7" step="1" value="4">
+                            <div class="range-ticks">{% for i in range(7) %}<span></span>{% endfor %}</div>
+                            <div class="range-labels text-muted">
+                                <span>1<br><small>Completely different meaning</small></span>
+                                <span>2<br><small>Mostly different</small></span>
+                                <span>3<br><small>Somewhat different</small></span>
+                                <span>4<br><small>Mixed / unclear overlap</small></span>
+                                <span>5<br><small>Mostly similar</small></span>
+                                <span>6<br><small>Very similar</small></span>
+                                <span>7<br><small>Essentially same meaning</small></span>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small mt-1">
+                                <span>Different meaning</span>
+                                <span>Same meaning</span>
+                            </div>
+                            <div class="alert alert-warning mt-3 mb-1 d-flex align-items-center">
+                                <input type="hidden" name="unsure" id="unsureHidden" value="0">
+                                <input type="checkbox" class="form-check-input mr-2" id="unsureCheck" onchange="toggleUnsure(this.checked);">
+                                <label class="form-check-label mb-0 font-weight-bold" for="unsureCheck">I'm unsure / can't judge this pair</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="awkwardNotes" class="font-weight-bold">Notes (optional)</label>
+                            <textarea id="awkwardNotes" name="awkward_notes" rows="3" class="form-control" placeholder="Call out anything confusing, awkward, or mismatched."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save &amp; Next</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+<script>
+    function toggleUnsure(isChecked) {
+        const slider = document.getElementById('likertRange');
+        const hidden = document.getElementById('unsureHidden');
+        if (isChecked) {
+            slider.disabled = true;
+            hidden.value = "1";
+        } else {
+            slider.disabled = false;
+            hidden.value = "0";
+        }
+    }
+</script>
+</html>

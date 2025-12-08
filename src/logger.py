@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 STUDENT_RESPONSE_TABLE = 'student_responses'
 GENERATED_EXERCISE_TABLE = 'generated_exercise'
 ENGLISH_LTL_TABLE = 'english_ltl_pairs'
+SENTENCE_PAIR_RATING_TABLE = 'sentence_pair_ratings'
 
 
 def get_db_uri():
@@ -73,6 +74,27 @@ class EnglishLTLRating(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class SentencePairRating(Base):
+    __tablename__ = SENTENCE_PAIR_RATING_TABLE
+    id = Column(Integer, primary_key=True)
+    user_id = Column(String, index=True)
+    dataset = Column(String, index=True)  # "near" or "far"
+    row_index = Column(Integer, index=True)
+    base_english = Column(String)
+    mutant_english = Column(String)
+    base_ltl = Column(String)
+    mutant_ltl = Column(String)
+    misconception = Column(String)
+    likert_rating = Column(Integer)
+    awkward_flag = Column(Boolean, default=False)
+    awkward_notes = Column(String)
+    closest_distance = Column(Float)
+    max_distance = Column(Float)
+    avg_distance = Column(Float)
+    num_mutants = Column(Integer)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
 class Logger:
     def __init__(self):
 
@@ -88,6 +110,9 @@ class Logger:
 
         if GENERATED_EXERCISE_TABLE not in self.inspector.get_table_names():
             Base.metadata.tables[GENERATED_EXERCISE_TABLE].create(self.engine)
+
+        if SENTENCE_PAIR_RATING_TABLE not in self.inspector.get_table_names():
+            Base.metadata.tables[SENTENCE_PAIR_RATING_TABLE].create(self.engine)
 
     def record(self, log):
         with self.Session() as session:
@@ -172,6 +197,77 @@ class Logger:
 
         log = EnglishLTLRating(english=english, ltl=ltl, comments=comments, user_id=userId)
         self.record(log)
+
+    def logSentencePairRating(self, rating_data):
+        """Insert or update a user's rating for a specific benchmark row."""
+        required = ['user_id', 'dataset', 'row_index']
+        for key in required:
+            if key not in rating_data:
+                raise ValueError(f"rating_data missing required key '{key}'")
+
+        unsure = bool(rating_data.get('unsure'))
+        likert = rating_data.get('likert_rating')
+        if not unsure:
+            if not isinstance(likert, int) or likert < 1 or likert > 7:
+                raise ValueError("likert_rating must be an int between 1 and 7 for 7-point scale")
+        else:
+            likert = None
+
+        with self.Session() as session:
+            existing = session.query(SentencePairRating).filter(
+                SentencePairRating.user_id == rating_data['user_id'],
+                SentencePairRating.dataset == rating_data['dataset'],
+                SentencePairRating.row_index == rating_data['row_index']
+            ).one_or_none()
+
+            if existing:
+                existing.likert_rating = likert
+                existing.awkward_flag = rating_data.get('awkward_flag', False)
+                existing.awkward_notes = rating_data.get('awkward_notes', '')
+                existing.base_english = rating_data.get('base_english', existing.base_english)
+                existing.mutant_english = rating_data.get('mutant_english', existing.mutant_english)
+                existing.base_ltl = rating_data.get('base_ltl', existing.base_ltl)
+                existing.mutant_ltl = rating_data.get('mutant_ltl', existing.mutant_ltl)
+                existing.misconception = rating_data.get('misconception', existing.misconception)
+                existing.closest_distance = rating_data.get('closest_distance', existing.closest_distance)
+                existing.max_distance = rating_data.get('max_distance', existing.max_distance)
+                existing.avg_distance = rating_data.get('avg_distance', existing.avg_distance)
+                existing.num_mutants = rating_data.get('num_mutants', existing.num_mutants)
+            else:
+                log = SentencePairRating(
+                    user_id=rating_data['user_id'],
+                    dataset=rating_data['dataset'],
+                    row_index=rating_data['row_index'],
+                    base_english=rating_data.get('base_english', ''),
+                    mutant_english=rating_data.get('mutant_english', ''),
+                    base_ltl=rating_data.get('base_ltl', ''),
+                    mutant_ltl=rating_data.get('mutant_ltl', ''),
+                    misconception=rating_data.get('misconception', ''),
+                    likert_rating=likert,
+                    awkward_flag=rating_data.get('awkward_flag', False),
+                    awkward_notes=rating_data.get('awkward_notes', ''),
+                    closest_distance=rating_data.get('closest_distance'),
+                    max_distance=rating_data.get('max_distance'),
+                    avg_distance=rating_data.get('avg_distance'),
+                    num_mutants=rating_data.get('num_mutants')
+                )
+                session.add(log)
+
+            session.commit()
+
+    def getRatedSentencePairIndices(self, user_id, dataset):
+        """Return a set of row indices already rated by the user for the dataset."""
+        if not isinstance(user_id, str):
+            raise ValueError("user_id should be a string")
+        if not isinstance(dataset, str):
+            raise ValueError("dataset should be a string")
+
+        with self.Session() as session:
+            rows = session.query(SentencePairRating.row_index).filter(
+                SentencePairRating.user_id == user_id,
+                SentencePairRating.dataset == dataset
+            ).all()
+            return {row[0] for row in rows}
 
 
     def getComplexity(self, userId):
