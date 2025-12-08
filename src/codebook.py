@@ -561,10 +561,30 @@ def applyBadStateIndex(node):
             return MutationResult(new_node, MisconceptionCode.BadStateIndex)
 
         if isinstance(op, NextNode):
-            x = op.operand
+            # Count the chain of Nexts
+            x = op
+            next_count = 1  # Already have one Next from node
             while isinstance(x, NextNode):
+                next_count += 1
                 x = x.operand
-
-            return MutationResult(NextNode(x), MisconceptionCode.BadStateIndex)
+            
+            # Randomly add or remove 1-2 Nexts, but ensure we stay within reasonable bounds
+            change = random.choice([-2, -1, 1, 2])
+            new_count = next_count + change
+            
+            # Ensure new_count is at least 1 and different from original
+            if new_count < 1:
+                new_count = 1
+            if new_count == next_count:
+                # If change resulted in same count, adjust
+                new_count = next_count + (1 if change > 0 else -1)
+                new_count = max(1, new_count)
+            
+            # Build new chain with new_count Nexts
+            result = x
+            for _ in range(new_count):
+                result = NextNode(result)
+            
+            return MutationResult(result, MisconceptionCode.BadStateIndex)
 
     return MutationResult(node)
