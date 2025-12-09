@@ -69,6 +69,7 @@ BENCHMARK_FILES = {
     "near": os.path.join(PROJECT_ROOT, "semantic_benchmark_near_eng.csv"),
     "far": os.path.join(PROJECT_ROOT, "semantic_benchmark_far_eng.csv"),
 }
+SUGGESTED_FORMULAS_PATH = os.path.join(os.path.dirname(__file__), "static", "ltl_formula_suggestions.json")
 
 
 def _load_benchmark_rows():
@@ -100,6 +101,29 @@ def _load_benchmark_rows():
 
 
 BENCHMARK_ROWS = _load_benchmark_rows()
+
+
+def _load_suggested_formulas():
+    if not os.path.exists(SUGGESTED_FORMULAS_PATH):
+        return []
+
+    try:
+        with open(SUGGESTED_FORMULAS_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        return [
+            {
+                "formula": entry.get("formula", ""),
+                "description": entry.get("description", ""),
+                "source": entry.get("source", ""),
+            }
+            for entry in data
+            if entry.get("formula")
+        ]
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+SUGGESTED_FORMULAS = _load_suggested_formulas()
 
 
 def _highlight_differences(text_a, text_b):
@@ -404,6 +428,16 @@ def ltl_to_english_ui():
         error=error,
         input_formula=input_formula,
     )
+
+
+@app.route('/ltltoeng/suggestion', methods=['GET'])
+@login_required
+def ltl_suggestion():
+    if not SUGGESTED_FORMULAS:
+        return jsonify({"error": "No suggestions available."}), 503
+
+    suggestion = random.choice(SUGGESTED_FORMULAS)
+    return jsonify(suggestion)
 
 @app.route('/authorquestion/', methods=['POST'])
 @login_required
