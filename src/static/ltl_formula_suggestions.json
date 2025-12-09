@@ -1,0 +1,42 @@
+[
+  {
+    "formula": "G(p -> F q)",
+    "description": "Response pattern: whenever p holds, q eventually follows",
+    "source": "Dwyer patterns"
+  },
+  {
+    "formula": "G((p) -> X(q))",
+    "description": "Immediate response pattern: if p is true then q must hold in the next state",
+    "source": "Dwyer patterns"
+  },
+  {
+    "formula": "F G p",
+    "description": "Stability: p will eventually hold forever",
+    "source": "VLTL Bench"
+  },
+  {
+    "formula": "G F p",
+    "description": "Recurrence: p happens infinitely often",
+    "source": "VLTL Bench"
+  },
+  {
+    "formula": "G(a -> F(b & X c))",
+    "description": "If a occurs, eventually b occurs and is immediately followed by c",
+    "source": "Dwyer patterns"
+  },
+  {
+    "formula": "G((req) -> (F grant & (!grant) U grant))",
+    "description": "A request must eventually be granted and grant stays false until then",
+    "source": "VLTL Bench"
+  },
+  {
+    "formula": "G(!(critical1 & critical2))",
+    "description": "Mutual exclusion between two critical sections",
+    "source": "VLTL Bench"
+  },
+  {
+    "formula": "G(trigger -> (trigger U response))",
+    "description": "Response within until: response eventually follows trigger and holds until then",
+    "source": "Dwyer patterns"
+  }
+]
