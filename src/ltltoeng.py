@@ -459,7 +459,11 @@ def _check_final_state_pattern(node, right_node_type):
                     type(right.operand) is ltlnode.LiteralNode and
                     left.value == right.operand.value):
                     left_eng = clean_for_composition(left.__to_english__())
-                    return f"once {left_eng}, it will always hold"
+                    return choose_best_sentence([
+                        f"once {left_eng} is true, it stays true",
+                        f"once {left_eng} becomes true, it remains true",
+                        f"after {left_eng} holds, it continues to hold forever"
+                    ])
     return None
 
 
