@@ -20,9 +20,9 @@
                     <div class="form-group">
                         <div class="d-flex justify-content-between align-items-center">
                             <label for="formula" class="mb-0">Enter an LTL formula</label>
-                            <button type="button" class="btn btn-sm font-weight-bold shadow suggestion-btn" id="suggest-ltl-btn">Get a Suggested Formula</button>
+                            <button type="button" class="btn btn-sm font-weight-bold shadow suggestion-btn" id="suggest-ltl-btn">Suggested a Formula</button>
                         </div>
-                        <div id="ltl-suggestion-status" class="small text-muted mt-1"></div>
+                        <div id="ltl-suggestion-status" class="small text-muted mt-1" hidden></div>
                         <textarea class="form-control mt-2" id="formula" name="formula" rows="3" placeholder="e.g., G(p -> F q)">{{ input_formula }}</textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Translate</button>
