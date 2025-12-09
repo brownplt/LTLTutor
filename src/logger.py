@@ -120,6 +120,17 @@ class Logger:
             session.add(log)
             session.commit()
 
+    def getRatedEnglishFormulas(self, user_id):
+        """Return a set of LTL formulas this user has already rated."""
+        if not isinstance(user_id, str):
+            raise ValueError("user_id should be a string")
+
+        with self.Session() as session:
+            rows = session.query(EnglishLTLRating.ltl).filter(
+                EnglishLTLRating.user_id == user_id
+            ).all()
+            return {row.ltl for row in rows if row.ltl}
+
     
     def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course):
 

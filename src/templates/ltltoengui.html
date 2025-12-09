@@ -260,10 +260,12 @@
 
                 try {
                     const response = await fetch('/ltltoeng/suggestion');
-                    if (!response.ok) {
-                        throw new Error('Request failed');
-                    }
                     const suggestion = await response.json();
+
+                    if (!response.ok) {
+                        const message = suggestion.error || 'Could not load a suggestion right now.';
+                        throw new Error(message);
+                    }
                     if (formulaInput) {
                         formulaInput.value = suggestion.formula || '';
                     }
@@ -277,7 +279,7 @@
                 } catch (error) {
                     console.error('Error fetching suggestion:', error);
                     if (suggestionStatus) {
-                        suggestionStatus.textContent = 'Could not load a suggestion right now.';
+                        suggestionStatus.textContent = error.message || 'Could not load a suggestion right now.';
                         suggestionStatus.classList.add('text-danger');
                         suggestionStatus.classList.remove('text-muted');
                     }

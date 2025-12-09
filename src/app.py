@@ -436,7 +436,17 @@ def ltl_suggestion():
     if not SUGGESTED_FORMULAS:
         return jsonify({"error": "No suggestions available."}), 503
 
-    suggestion = random.choice(SUGGESTED_FORMULAS)
+    user_id = getUserName()
+    rated_formulas = answer_logger.getRatedEnglishFormulas(user_id)
+    available_suggestions = [
+        s for s in SUGGESTED_FORMULAS
+        if s.get("formula") and s.get("formula") not in rated_formulas
+    ]
+
+    if not available_suggestions:
+        return jsonify({"error": "No new suggestions available."}), 404
+
+    suggestion = random.choice(available_suggestions)
     return jsonify(suggestion)
 
 @app.route('/authorquestion/', methods=['POST'])
