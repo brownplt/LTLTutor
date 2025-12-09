@@ -18,8 +18,12 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('ltl_to_english_ui') }}">
                     <div class="form-group">
-                        <label for="formula">Enter an LTL formula</label>
-                        <textarea class="form-control" id="formula" name="formula" rows="3" placeholder="e.g., G(p -> F q)">{{ input_formula }}</textarea>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="formula" class="mb-0">Enter an LTL formula</label>
+                            <button type="button" class="btn btn-primary btn-sm font-weight-bold shadow-sm" id="suggest-ltl-btn">💡 Suggest an LTL Formula</button>
+                        </div>
+                        <div id="ltl-suggestion-status" class="small text-muted mt-1"></div>
+                        <textarea class="form-control mt-2" id="formula" name="formula" rows="3" placeholder="e.g., G(p -> F q)">{{ input_formula }}</textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">Translate</button>
                 </form>
@@ -95,10 +99,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('ltl-to-eng-feedback-form');
-            if (!form) {
-                return;
-            }
-
             const unnaturalCheckbox = document.getElementById('issue-unnatural');
             const unnaturalText = document.getElementById('issue-unnatural-text');
             const otherCheckbox = document.getElementById('issue-other');
@@ -111,6 +111,10 @@
             const copyBtn = document.getElementById('copy-translation-btn');
             const translationText = document.getElementById('ltl-translation-text');
             const copyStatus = document.getElementById('copy-translation-status');
+            const suggestBtn = document.getElementById('suggest-ltl-btn');
+            const suggestionStatus = document.getElementById('ltl-suggestion-status');
+            const formulaInput = document.getElementById('formula');
+            const suggestBtnDefaultLabel = suggestBtn ? suggestBtn.innerHTML : '';
 
             function toggleTarget(checkbox, target) {
                 if (!checkbox || !target) return;
@@ -133,23 +137,29 @@
             }
 
             async function submitFeedback() {
+                if (!form) {
+                    return;
+                }
+
                 if (statusEl) {
                     statusEl.textContent = '';
                     statusEl.classList.remove('text-success', 'text-danger');
                 }
 
-                const selectedIssues = Array.from(form.querySelectorAll('input[name="issues"]:checked'))
-                    .map(input => {
-                        if (input.value === 'Unnatural word') {
-                            const detail = ((unnaturalText && unnaturalText.value) ? unnaturalText.value : '').trim();
-                            return detail ? `${input.value}: ${detail}` : input.value;
-                        }
-                        if (input.value === 'Other') {
-                            const detail = ((otherText && otherText.value) ? otherText.value : '').trim();
-                            return detail ? `${input.value}: ${detail}` : input.value;
-                        }
-                        return input.value;
-                    });
+                const selectedIssues = form
+                    ? Array.from(form.querySelectorAll('input[name="issues"]:checked'))
+                        .map(input => {
+                            if (input.value === 'Unnatural word') {
+                                const detail = ((unnaturalText && unnaturalText.value) ? unnaturalText.value : '').trim();
+                                return detail ? `${input.value}: ${detail}` : input.value;
+                            }
+                            if (input.value === 'Other') {
+                                const detail = ((otherText && otherText.value) ? otherText.value : '').trim();
+                                return detail ? `${input.value}: ${detail}` : input.value;
+                            }
+                            return input.value;
+                        })
+                    : [];
 
                 const suggestedTranslation = suggestionInput ? (suggestionInput.value || '').trim() : '';
 
@@ -235,6 +245,51 @@
 
             if (copyBtn) {
                 copyBtn.addEventListener('click', copyTranslation);
+            }
+
+            async function requestSuggestion() {
+                if (suggestBtn) {
+                    suggestBtn.disabled = true;
+                    suggestBtn.innerText = '⏳ Loading suggestion...';
+                }
+                if (suggestionStatus) {
+                    suggestionStatus.textContent = 'Fetching a suggested formula...';
+                    suggestionStatus.classList.remove('text-danger');
+                    suggestionStatus.classList.add('text-muted');
+                }
+
+                try {
+                    const response = await fetch('/ltltoeng/suggestion');
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+                    const suggestion = await response.json();
+                    if (formulaInput) {
+                        formulaInput.value = suggestion.formula || '';
+                    }
+                    if (suggestionStatus) {
+                        const sourceLabel = suggestion.source ? ` (${suggestion.source})` : '';
+                        const detail = suggestion.description || suggestion.formula || '';
+                        suggestionStatus.textContent = `Suggested${sourceLabel}: ${detail}`;
+                        suggestionStatus.classList.remove('text-muted');
+                    }
+                } catch (error) {
+                    console.error('Error fetching suggestion:', error);
+                    if (suggestionStatus) {
+                        suggestionStatus.textContent = 'Could not load a suggestion right now.';
+                        suggestionStatus.classList.add('text-danger');
+                        suggestionStatus.classList.remove('text-muted');
+                    }
+                } finally {
+                    if (suggestBtn) {
+                        suggestBtn.disabled = false;
+                        suggestBtn.innerHTML = suggestBtnDefaultLabel;
+                    }
+                }
+            }
+
+            if (suggestBtn) {
+                suggestBtn.addEventListener('click', requestSuggestion);
             }
         });
     </script>
