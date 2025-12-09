@@ -268,10 +268,9 @@
                         formulaInput.value = suggestion.formula || '';
                     }
                     if (suggestionStatus) {
-                        const sourceLabel = suggestion.source ? ` (${suggestion.source})` : '';
                         const detail = suggestion.formula || '';
                         suggestionStatus.textContent = detail
-                            ? `Suggested formula${sourceLabel}: ${detail}`
+                            ? `Suggested formula: ${detail}`
                             : 'Suggested formula ready to use.';
                         suggestionStatus.classList.remove('text-muted');
                     }
