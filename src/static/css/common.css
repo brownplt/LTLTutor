@@ -68,3 +68,27 @@
     top: 0;
     right: 0; /* Align to the right side of the container */
 }
+
+.suggestion-btn {
+    background: linear-gradient(120deg, #1b7fbd, #0fb08a);
+    color: #fff;
+    border: none;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    letter-spacing: 0.01em;
+    transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+}
+
+.suggestion-btn:hover,
+.suggestion-btn:focus {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-btn:disabled {
+    background: #9bbccd;
+    color: #f8f9fa;
+    transform: none;
+    box-shadow: none;
+}
