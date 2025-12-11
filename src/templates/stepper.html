@@ -88,6 +88,41 @@
             color: #dc3545 !important;
             font-weight: bold;
         }
+
+        .stepper-container {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            opacity: 0;
+            transform: translateY(8px);
+            display: none;
+        }
+
+        .stepper-container.active-step {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stepper-container.leaving-step {
+            display: block;
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        .tree-highlight {
+            box-shadow: 0 0 0 3px #ffe58f;
+            border-radius: 8px;
+            animation: flashHighlight 1s ease;
+        }
+
+        @keyframes flashHighlight {
+            0% {
+                box-shadow: 0 0 0 3px #ffe58f;
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 229, 143, 0);
+            }
+        }
     </style>
 
 </head>
@@ -148,10 +183,10 @@
                     View</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View<sup>Beta</sup></a>
+                <a class="nav-link" id="table-tab" data-toggle="tab" href="#table-view" role="tab">Table View</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="matrix-tab" data-toggle="tab" href="#matrix-view" role="tab">Matrix View<sup>Alpha</sup></a>
+                <a class="nav-link" id="matrix-tab" data-toggle="tab" href="#matrix-view" role="tab">Matrix View<sup>Beta</sup></a>
             </li>
         </ul>
 
@@ -161,6 +196,11 @@
             <!-- ================================ -->
             <div class="tab-pane fade show active" id="stepper-view" role="tabpanel">
                 <!-- Stepper view lets you see the entire trace at once, and each tree state one by one. -->
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                    <div id="stepperProgress" class="text-muted small" aria-live="polite"></div>
+                    <div class="text-muted small mt-1 mt-sm-0"><i class="fas fa-keyboard mr-1"></i>Use ← / → or the buttons to move between states.</div>
+                </div>
 
                 <div id="statecontainer">
                     {% for ps in prefixstates + cyclestates %}
@@ -350,60 +390,137 @@
             };
 
 
-            var stepperContainers = document.querySelectorAll('.stepper-container');
-            var currentIndex = 0;
+            const stepperContainers = Array.from(document.querySelectorAll('.stepper-container'));
+            const progressLabel = document.getElementById('stepperProgress');
+            const transitionDuration = 250;
+            let currentIndex = 0;
 
-            // Initially hide all stepper containers except the first one
-            for (var i = 0; i < stepperContainers.length; i++) {
-                stepperContainers[i].style.display = i === 0 ? 'block' : 'none';
+            if (!stepperContainers.length) {
+                return;
+            }
 
+            stepperContainers.forEach((container, index) => {
+                container.dataset.index = index;
+                container.style.display = 'none';
+            });
 
-                if (i == 0) {
-                    // Disable the previous button for the first container
-                    stepperContainers[i].querySelector('.prev').disabled = true;
+            function updateProgress() {
+                if (!progressLabel) {
+                    return;
                 }
-                if (i == stepperContainers.length - 1) {
-                    // Disable the next button for the last container
-                    stepperContainers[i].querySelector('.next').disabled = true;
-                }
+                progressLabel.textContent = `State ${currentIndex + 1} of ${stepperContainers.length}`;
+            }
+
+            function setButtonState() {
+                stepperContainers.forEach((container, index) => {
+                    const prevButton = container.querySelector('.prev');
+                    const nextButton = container.querySelector('.next');
+
+                    if (prevButton) {
+                        prevButton.disabled = index === 0;
+                    }
+                    if (nextButton) {
+                        nextButton.disabled = index === stepperContainers.length - 1;
+                    }
+                });
             }
 
             function renderDiagrams() {
-                let to_render = stepperContainers[currentIndex].querySelectorAll('.mermaid');
+                const activeContainer = stepperContainers[currentIndex];
+                if (!activeContainer) {
+                    return;
+                }
+                let to_render = activeContainer.querySelectorAll('.mermaid');
                 renderMermaidDiagram(to_render);
             }
 
+            function flashTree(container) {
+                const tree = container.querySelector('.formula-tree-container');
+                if (!tree) {
+                    return;
+                }
+                tree.classList.remove('tree-highlight');
+                // trigger reflow so animation can restart
+                void tree.offsetWidth;
+                tree.classList.add('tree-highlight');
+            }
+
+            function showContainer(newIndex) {
+                if (newIndex === currentIndex || newIndex < 0 || newIndex >= stepperContainers.length) {
+                    return;
+                }
+
+                const leavingContainer = stepperContainers[currentIndex];
+                const enteringContainer = stepperContainers[newIndex];
+
+                leavingContainer.classList.remove('active-step');
+                leavingContainer.classList.add('leaving-step');
+                enteringContainer.style.display = 'block';
+
+                requestAnimationFrame(() => {
+                    enteringContainer.classList.add('active-step');
+                    enteringContainer.classList.remove('leaving-step');
+                });
+
+                setTimeout(() => {
+                    leavingContainer.classList.remove('leaving-step');
+                    leavingContainer.style.display = 'none';
+                }, transitionDuration);
+
+                currentIndex = newIndex;
+                renderDiagrams();
+                setButtonState();
+                updateProgress();
+                flashTree(enteringContainer);
+            }
+
+            function goToPrevious() {
+                if (currentIndex > 0) {
+                    showContainer(currentIndex - 1);
+                }
+            }
+
+            function goToNext() {
+                if (currentIndex < stepperContainers.length - 1) {
+                    showContainer(currentIndex + 1);
+                }
+            }
+
+            // Initialize first view
+            stepperContainers[0].style.display = 'block';
+            stepperContainers[0].classList.add('active-step');
+            flashTree(stepperContainers[0]);
             renderDiagrams();
+            setButtonState();
+            updateProgress();
 
             document.querySelectorAll('.prev').forEach(function (element) {
-                element.addEventListener('click', function () {
-                    if (currentIndex > 0) {
-
-                        stepperContainers[currentIndex--].style.display = 'none';
-                        stepperContainers[currentIndex].style.display = 'block';
-                        renderDiagrams();
-
-                        stepperContainers[currentIndex].scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
-                        
-
-                    }
+                element.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    goToPrevious();
                 })
             });
 
             document.querySelectorAll('.next').forEach(function (element) {
-                element.addEventListener('click', function () {
-                    if (currentIndex < stepperContainers.length - 1) {
-                        stepperContainers[currentIndex++].style.display = 'none';
-                        stepperContainers[currentIndex].style.display = 'block';
-                        renderDiagrams();
-                    }
+                element.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    goToNext();
                 })
             });
 
-           
+            document.addEventListener('keydown', function (event) {
+                const tag = event.target.tagName.toLowerCase();
+                if (tag === 'input' || tag === 'textarea') {
+                    return;
+                }
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    goToPrevious();
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    goToNext();
+                }
+            });
         });
     </script>
 
