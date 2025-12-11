@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or 'Exercise unavailable' }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+        <div class="alert alert-warning mt-4" role="alert">
+            <h4 class="alert-heading">{{ title or 'Exercise unavailable' }}</h4>
+            <p class="mb-2">{{ message }}</p>
+            <hr>
+            <p class="mb-0">
+                If you believe this is a mistake, contact your instructor for help.
+            </p>
+        </div>
+
+        <a href="/" class="btn btn-primary">Return to dashboard</a>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

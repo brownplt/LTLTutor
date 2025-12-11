@@ -98,6 +98,27 @@
                                     Assign to a course to make it available to students.
                                 </small>
                             </div>
+                            <div class="form-group">
+                                <label for="expires_at">Expiry (optional)</label>
+                                <input type="datetime-local" class="form-control" id="expires_at" name="expires_at"
+                                       value="{{ exercise.expires_at[:16] if exercise and exercise.expires_at else '' }}">
+                                <small class="form-text text-muted">
+                                    After this date/time the exercise will be closed for students.
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label>Submission Policy</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="submission_limit" id="sub_multi"
+                                           value="multiple" {% if not exercise or exercise.allow_multiple_submissions %}checked{% endif %}>
+                                    <label class="form-check-label" for="sub_multi">Allow multiple submissions</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="submission_limit" id="sub_single"
+                                           value="single" {% if exercise and not exercise.allow_multiple_submissions %}checked{% endif %}>
+                                    <label class="form-check-label" for="sub_single">Only one submission per student</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -115,7 +136,8 @@
                         </div>
                     </div>
 
-                    <input type="hidden" id="exercise_json" name="exercise_json" value="[]">
+                    <input type="hidden" id="exercise_json" name="exercise_json"
+                           value="{{ exercise.exercise_json | tojson | safe if exercise and exercise.exercise_json else '[]' }}">
                     
                     <div class="btn-group btn-block mb-3">
                         <button type="submit" class="btn btn-success">
@@ -303,7 +325,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         {% if exercise and exercise.exercise_json %}
         try {
-            questions = JSON.parse('{{ exercise.exercise_json | safe }}');
+            questions = JSON.parse({{ exercise.exercise_json | tojson | safe }});
+            if (!Array.isArray(questions)) {
+                console.warn('Exercise JSON was not an array; resetting to empty list.');
+                questions = [];
+            }
         } catch (e) {
             console.error('Failed to parse exercise JSON:', e);
             questions = [];

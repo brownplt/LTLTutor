@@ -42,6 +42,8 @@
                         <th>Name</th>
                         <th>Course</th>
                         <th>Questions</th>
+                        <th>Availability</th>
+                        <th>Submission Policy</th>
                         <th>Last Updated</th>
                         <th>Actions</th>
                     </tr>
@@ -64,6 +66,20 @@
                         <td>
                             {% set questions = exercise.exercise_json | fromjson if exercise.exercise_json else [] %}
                             {{ questions | length }} question(s)
+                        </td>
+                        <td>
+                            {% if exercise.expires_at %}
+                            <span class="badge badge-warning">Closes {{ exercise.expires_at }}</span>
+                            {% else %}
+                            <span class="text-muted">No expiry</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exercise.allow_multiple_submissions %}
+                            <span class="badge badge-success">Multiple</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Single</span>
+                            {% endif %}
                         </td>
                         <td>
                             <small>{{ exercise.updated_at[:10] if exercise.updated_at else 'N/A' }}</small>
