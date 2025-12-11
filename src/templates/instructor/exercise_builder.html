@@ -136,7 +136,8 @@
                         </div>
                     </div>
 
-                    <input type="hidden" id="exercise_json" name="exercise_json" value="[]">
+                    <input type="hidden" id="exercise_json" name="exercise_json"
+                           value="{{ exercise.exercise_json | tojson | safe if exercise and exercise.exercise_json else '[]' }}">
                     
                     <div class="btn-group btn-block mb-3">
                         <button type="submit" class="btn btn-success">
@@ -324,7 +325,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         {% if exercise and exercise.exercise_json %}
         try {
-            questions = JSON.parse('{{ exercise.exercise_json | safe }}');
+            questions = JSON.parse({{ exercise.exercise_json | tojson | safe }});
+            if (!Array.isArray(questions)) {
+                console.warn('Exercise JSON was not an array; resetting to empty list.');
+                questions = [];
+            }
         } catch (e) {
             console.error('Failed to parse exercise JSON:', e);
             questions = [];
