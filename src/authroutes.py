@@ -53,6 +53,7 @@ class InstructorExercise(Base):
     updated_at = Column(String)  # ISO timestamp
     expires_at = Column(String, nullable=True)  # ISO timestamp when the exercise closes
     allow_multiple_submissions = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False)  # Soft-delete flag to hide from students
 
 
 
@@ -134,6 +135,20 @@ def _ensure_instructor_exercise_schema():
                 text(
                     f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
                     "ADD COLUMN allow_multiple_submissions BOOLEAN DEFAULT 1"
+                )
+            )
+
+        if 'is_deleted' not in existing_columns:
+            connection.execute(
+                text(
+                    f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
+                    "ADD COLUMN is_deleted BOOLEAN DEFAULT 0"
+                )
+            )
+            connection.execute(
+                text(
+                    f"UPDATE {INSTRUCTOR_EXERCISE_TABLE} "
+                    "SET is_deleted = 0 WHERE is_deleted IS NULL"
                 )
             )
 
@@ -362,7 +377,11 @@ def getUserCourse(username):
 def get_instructor_exercises(username):
     """Get all exercises created by an instructor"""
     with Session() as session:
-        exercises = session.query(InstructorExercise).filter_by(owner=username).all()
+        exercises = (
+            session.query(InstructorExercise)
+            .filter_by(owner=username, is_deleted=False)
+            .all()
+        )
         return exercises
 
 
@@ -376,20 +395,32 @@ def get_instructor_exercise_by_id(exercise_id):
 def get_exercises_for_course(course_name):
     """Get all exercises assigned to a specific course"""
     with Session() as session:
-        exercises = session.query(InstructorExercise).filter_by(course=course_name).all()
+        exercises = (
+            session.query(InstructorExercise)
+            .filter_by(course=course_name, is_deleted=False)
+            .all()
+        )
         return exercises
 
 
 def get_course_exercise_by_name(course_name, exercise_name):
     """Get a single exercise for a course by its display name."""
     with Session() as session:
-        return session.query(InstructorExercise).filter_by(course=course_name, name=exercise_name).first()
+        return (
+            session.query(InstructorExercise)
+            .filter_by(course=course_name, name=exercise_name, is_deleted=False)
+            .first()
+        )
 
 
 def get_instructor_exercise_by_name(exercise_name):
     """Get the first exercise matching a given name (regardless of course)."""
     with Session() as session:
-        return session.query(InstructorExercise).filter_by(name=exercise_name).first()
+        return (
+            session.query(InstructorExercise)
+            .filter_by(name=exercise_name, is_deleted=False)
+            .first()
+        )
 
 
 def parse_expires_at(expires_at_str):
@@ -575,10 +606,10 @@ def edit_instructor_exercise(exercise_id):
 @authroutes.route('/instructor/exercises/<int:exercise_id>/delete', methods=['POST'])
 @login_required_as_courseinstructor
 def delete_instructor_exercise(exercise_id):
-    """Delete an exercise"""
+    """Soft-delete an exercise so it is hidden from students."""
     with Session() as session:
         exercise = session.query(InstructorExercise).filter_by(id=exercise_id).first()
-        
+
         if not exercise:
             flash('Exercise not found.')
             return redirect(url_for('authroutes.list_instructor_exercises'))
@@ -586,12 +617,13 @@ def delete_instructor_exercise(exercise_id):
         if exercise.owner != current_user.username:
             flash('You do not have permission to delete this exercise.')
             return redirect(url_for('authroutes.list_instructor_exercises'))
-        
+
         exercise_name = exercise.name
-        session.delete(exercise)
+        exercise.is_deleted = True
+        exercise.updated_at = datetime.utcnow().isoformat()
         session.commit()
-        
-        flash(f'Exercise "{exercise_name}" deleted.')
+
+        flash(f'Exercise "{exercise_name}" deleted for students.')
     
     return redirect(url_for('authroutes.list_instructor_exercises'))
 
