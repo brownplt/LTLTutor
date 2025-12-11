@@ -114,6 +114,16 @@
             animation: flashHighlight 1s ease;
         }
 
+        @media (prefers-reduced-motion: reduce) {
+            .stepper-container {
+                transition: none;
+            }
+
+            .tree-highlight {
+                animation: none;
+            }
+        }
+
         @keyframes flashHighlight {
             0% {
                 box-shadow: 0 0 0 3px #ffe58f;
@@ -393,7 +403,11 @@
             const stepperContainers = Array.from(document.querySelectorAll('.stepper-container'));
             const progressLabel = document.getElementById('stepperProgress');
             const transitionDuration = 250;
+            const modal = document.getElementById('exampleModal');
+            const stepperTab = document.getElementById('stepper-tab');
             let currentIndex = 0;
+            let isTransitioning = false;
+            let isStepperActive = true;
 
             if (!stepperContainers.length) {
                 return;
@@ -446,10 +460,11 @@
             }
 
             function showContainer(newIndex) {
-                if (newIndex === currentIndex || newIndex < 0 || newIndex >= stepperContainers.length) {
+                if (isTransitioning || newIndex === currentIndex || newIndex < 0 || newIndex >= stepperContainers.length) {
                     return;
                 }
 
+                isTransitioning = true;
                 const leavingContainer = stepperContainers[currentIndex];
                 const enteringContainer = stepperContainers[newIndex];
 
@@ -465,6 +480,7 @@
                 setTimeout(() => {
                     leavingContainer.classList.remove('leaving-step');
                     leavingContainer.style.display = 'none';
+                    isTransitioning = false;
                 }, transitionDuration);
 
                 currentIndex = newIndex;
@@ -509,6 +525,9 @@
             });
 
             document.addEventListener('keydown', function (event) {
+                if (!isStepperActive || (modal && $(modal).is(':visible'))) {
+                    return;
+                }
                 const tag = event.target.tagName.toLowerCase();
                 if (tag === 'input' || tag === 'textarea') {
                     return;
@@ -519,6 +538,13 @@
                 } else if (event.key === 'ArrowRight') {
                     event.preventDefault();
                     goToNext();
+                }
+            });
+
+            $('#stepperTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+                isStepperActive = event.target === stepperTab;
+                if (isStepperActive) {
+                    renderDiagrams();
                 }
             });
         });
