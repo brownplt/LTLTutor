@@ -32,6 +32,10 @@ from authroutes import (
     getUserCourse,
     get_course_students,
     get_exercises_for_course,
+    get_course_exercise_by_name,
+    get_instructor_exercise_by_name,
+    get_instructor_exercise_by_id,
+    is_exercise_expired,
 )
 from modelroutes import modelroutes
 
@@ -275,9 +279,14 @@ def index():
     user_course = getUserCourse(userId)
     if user_course:
         course_exercises = get_exercises_for_course(user_course)
-        
+
         # Check which exercises the user has completed
         if course_exercises:
+            for ex in course_exercises:
+                if ex.allow_multiple_submissions is None:
+                    ex.allow_multiple_submissions = True
+                ex.is_expired = is_exercise_expired(ex)
+
             exercise_counts = []
             for ex in course_exercises:
                 questions = json.loads(ex.exercise_json) if ex.exercise_json else []
@@ -622,6 +631,32 @@ def exercise(exercise_name):
         exercise_obj = exercises[0]
         try:
             data = json.loads(exercise_obj.exercise_json)
+            question_count = len(data)
+
+            allow_multiple = (
+                exercise_obj.allow_multiple_submissions
+                if exercise_obj.allow_multiple_submissions is not None
+                else True
+            )
+
+            if is_exercise_expired(exercise_obj):
+                return render_template(
+                    'exercise_closed.html',
+                    uid=getUserName(),
+                    message="This exercise is no longer available.",
+                    title="Exercise closed"
+                ), 403
+
+            if (not allow_multiple) and question_count:
+                answered = answer_logger.getUserExerciseResponses(getUserName(), exercise_obj.name)
+                if answered >= question_count:
+                    return render_template(
+                        'exercise_closed.html',
+                        uid=getUserName(),
+                        message="This exercise only allows one submission per student, and you've already submitted.",
+                        title="Submission limit reached"
+                    ), 403
+
             data = exerciseprocessor.randomize_questions(data)
             
             # Extract literals for trace expansion
@@ -681,9 +716,34 @@ def loganswer(questiontype):
     if EXERCISE_KEY in data:
         exercise = data[EXERCISE_KEY]
 
+    exercise_obj = None
+    if exercise:
+        course_for_user = courseId
+        if course_for_user:
+            exercise_obj = get_course_exercise_by_name(course_for_user, exercise)
+        if exercise_obj is None:
+            exercise_obj = get_instructor_exercise_by_name(exercise)
+
+    if exercise_obj:
+        if exercise_obj.allow_multiple_submissions is None:
+            exercise_obj.allow_multiple_submissions = True
+
+        if is_exercise_expired(exercise_obj):
+            return {"error": "exercise_closed", "message": "This exercise is closed."}, 403
+
+        try:
+            question_count = len(json.loads(exercise_obj.exercise_json) if exercise_obj.exercise_json else [])
+        except Exception:
+            question_count = 0
+
+        if not exercise_obj.allow_multiple_submissions and question_count:
+            answered = answer_logger.getUserExerciseResponses(userId, exercise_obj.name)
+            if answered >= question_count:
+                return {"error": "submission_limit", "message": "This exercise only allows one submission."}, 403
+
 
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
-                                      question_options = question_options, correct_answer = isCorrect, 
+                                      question_options = question_options, correct_answer = isCorrect,
                                       questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
     
 
@@ -726,9 +786,44 @@ def exercise_predefined_get():
         return redirect('/loadfromjson')
     
     try:
+        exercise_obj = None
+        if sourceuri.startswith('instructor:'):
+            try:
+                exercise_id = int(sourceuri.split(':', 1)[1])
+            except (IndexError, ValueError):
+                return "Invalid instructor exercise reference.", 400
+            exercise_obj = get_instructor_exercise_by_id(exercise_id)
+            if exercise_obj is None:
+                return f"Exercise '{sourceuri}' not found.", 404
+
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+        question_count = len(data) if data else 0
+
+        if exercise_obj:
+            if exercise_obj.allow_multiple_submissions is None:
+                exercise_obj.allow_multiple_submissions = True
+
+            if is_exercise_expired(exercise_obj):
+                expired_msg = "This exercise closed on {}.".format(exercise_obj.expires_at)
+                return render_template(
+                    'exercise_closed.html',
+                    uid=getUserName(),
+                    message=expired_msg,
+                    title="Exercise closed"
+                ), 403
+
+            if not exercise_obj.allow_multiple_submissions:
+                answered = answer_logger.getUserExerciseResponses(getUserName(), exercise_obj.name)
+                if question_count and answered >= question_count:
+                    return render_template(
+                        'exercise_closed.html',
+                        uid=getUserName(),
+                        message="This exercise only allows one submission per student, and you've already submitted.",
+                        title="Submission limit reached"
+                    ), 403
+
         data = exerciseprocessor.randomize_questions(data)
-        
+
         # Try to extract literals from questions for trace expansion
         literals = set()
         for q in data:
@@ -746,16 +841,19 @@ def exercise_predefined_get():
                     literals.update(exerciseprocessor.getFormulaLiterals(q['question']))
                 except:
                     pass
-        
+
         data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals) if literals else [])
-        
+
         # Generate exercise name from sourceuri
-        exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
-        
+        if exercise_obj:
+            exercise_name = exercise_obj.name
+        else:
+            exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
+
     except Exception as e:
         print(f"Error loading exercise from {sourceuri}: {e}")
         return f"Error loading exercise: {str(e)}"
-    
+
     return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_name)
 
 

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, cur
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Session, sessionmaker, Mapped, mapped_column
-from sqlalchemy import Column, Integer, String, create_engine, inspect
+from sqlalchemy import Column, Integer, String, create_engine, inspect, Boolean, text
 from sqlalchemy.ext.declarative import declarative_base
 from logger import get_db_uri
 
@@ -12,6 +12,7 @@ import random
 import string
 from functools import wraps
 from urllib.parse import urlparse
+from datetime import datetime, timezone
 
 authroutes = Blueprint('authroutes', __name__)
 
@@ -50,6 +51,8 @@ class InstructorExercise(Base):
     exercise_json = Column(String)  # JSON string of the exercise questions
     created_at = Column(String)  # ISO timestamp
     updated_at = Column(String)  # ISO timestamp
+    expires_at = Column(String, nullable=True)  # ISO timestamp when the exercise closes
+    allow_multiple_submissions = Column(Boolean, default=True)
 
 
 
@@ -116,6 +119,26 @@ if COURSE_TABLE not in inspector.get_table_names():
 
 if INSTRUCTOR_EXERCISE_TABLE not in inspector.get_table_names():
     Base.metadata.tables[INSTRUCTOR_EXERCISE_TABLE].create(engine)
+
+
+def _ensure_instructor_exercise_schema():
+    """Add newly introduced columns to the instructor exercises table if they are missing."""
+    existing_columns = {col['name'] for col in inspector.get_columns(INSTRUCTOR_EXERCISE_TABLE)}
+
+    with engine.begin() as connection:
+        if 'expires_at' not in existing_columns:
+            connection.execute(text(f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} ADD COLUMN expires_at VARCHAR"))
+
+        if 'allow_multiple_submissions' not in existing_columns:
+            connection.execute(
+                text(
+                    f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
+                    "ADD COLUMN allow_multiple_submissions BOOLEAN DEFAULT 1"
+                )
+            )
+
+
+_ensure_instructor_exercise_schema()
 
 def init_app(app):
     login_manager = LoginManager()
@@ -357,6 +380,42 @@ def get_exercises_for_course(course_name):
         return exercises
 
 
+def get_course_exercise_by_name(course_name, exercise_name):
+    """Get a single exercise for a course by its display name."""
+    with Session() as session:
+        return session.query(InstructorExercise).filter_by(course=course_name, name=exercise_name).first()
+
+
+def get_instructor_exercise_by_name(exercise_name):
+    """Get the first exercise matching a given name (regardless of course)."""
+    with Session() as session:
+        return session.query(InstructorExercise).filter_by(name=exercise_name).first()
+
+
+def parse_expires_at(expires_at_str):
+    if not expires_at_str:
+        return None
+    try:
+        return datetime.fromisoformat(expires_at_str)
+    except ValueError:
+        return None
+
+
+def is_exercise_expired(exercise, now=None):
+    """Return True if the exercise has an expiry and it is in the past."""
+    expires_at = parse_expires_at(exercise.expires_at)
+    if not expires_at:
+        return False
+
+    now = now or datetime.utcnow()
+    # Treat naive datetimes as UTC
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return now > expires_at
+
+
 @authroutes.route('/instructor/exercises', methods=['GET'])
 @login_required_as_courseinstructor
 def list_instructor_exercises():
@@ -381,6 +440,8 @@ def create_instructor_exercise():
         exercise_name = request.form.get('exercise_name', '').strip()
         exercise_json = request.form.get('exercise_json', '[]')
         course = request.form.get('course', None)
+        expires_at_raw = request.form.get('expires_at', '').strip()
+        allow_multiple_submissions = request.form.get('submission_limit', 'multiple') == 'multiple'
         
         if not exercise_name:
             flash('Exercise name is required.')
@@ -394,6 +455,15 @@ def create_instructor_exercise():
         except (json.JSONDecodeError, ValueError) as e:
             flash(f'Invalid exercise JSON: {str(e)}')
             return redirect(url_for('authroutes.create_instructor_exercise'))
+
+        expires_at_value = None
+        if expires_at_raw:
+            try:
+                expires_at_dt = datetime.fromisoformat(expires_at_raw)
+                expires_at_value = expires_at_dt.isoformat()
+            except ValueError:
+                flash('Invalid expiry date/time.')
+                return redirect(url_for('authroutes.create_instructor_exercise'))
         
         now = datetime.utcnow().isoformat()
         
@@ -404,7 +474,9 @@ def create_instructor_exercise():
                 course=course if course else None,
                 exercise_json=exercise_json,
                 created_at=now,
-                updated_at=now
+                updated_at=now,
+                expires_at=expires_at_value,
+                allow_multiple_submissions=allow_multiple_submissions
             )
             session.add(exercise)
             session.commit()
@@ -443,6 +515,8 @@ def edit_instructor_exercise(exercise_id):
             exercise_name = request.form.get('exercise_name', '').strip()
             exercise_json = request.form.get('exercise_json', '[]')
             course = request.form.get('course', None)
+            expires_at_raw = request.form.get('expires_at', '').strip()
+            allow_multiple_submissions = request.form.get('submission_limit', 'multiple') == 'multiple'
             
             if not exercise_name:
                 flash('Exercise name is required.')
@@ -456,11 +530,22 @@ def edit_instructor_exercise(exercise_id):
             except (json.JSONDecodeError, ValueError) as e:
                 flash(f'Invalid exercise JSON: {str(e)}')
                 return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
+
+            expires_at_value = None
+            if expires_at_raw:
+                try:
+                    expires_at_dt = datetime.fromisoformat(expires_at_raw)
+                    expires_at_value = expires_at_dt.isoformat()
+                except ValueError:
+                    flash('Invalid expiry date/time.')
+                    return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
             
             exercise.name = exercise_name
             exercise.exercise_json = exercise_json
             exercise.course = course if course else None
             exercise.updated_at = datetime.utcnow().isoformat()
+            exercise.expires_at = expires_at_value
+            exercise.allow_multiple_submissions = allow_multiple_submissions
             session.commit()
             
             flash(f'Exercise "{exercise_name}" updated successfully!')
@@ -477,7 +562,9 @@ def edit_instructor_exercise(exercise_id):
             'course': exercise.course,
             'exercise_json': exercise.exercise_json,
             'created_at': exercise.created_at,
-            'updated_at': exercise.updated_at
+            'updated_at': exercise.updated_at,
+            'expires_at': exercise.expires_at,
+            'allow_multiple_submissions': exercise.allow_multiple_submissions
         }
         
     return render_template('instructor/exercise_builder.html', 

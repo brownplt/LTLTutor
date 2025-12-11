@@ -98,6 +98,27 @@
                                     Assign to a course to make it available to students.
                                 </small>
                             </div>
+                            <div class="form-group">
+                                <label for="expires_at">Expiry (optional)</label>
+                                <input type="datetime-local" class="form-control" id="expires_at" name="expires_at"
+                                       value="{{ exercise.expires_at[:16] if exercise and exercise.expires_at else '' }}">
+                                <small class="form-text text-muted">
+                                    After this date/time the exercise will be closed for students.
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label>Submission Policy</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="submission_limit" id="sub_multi"
+                                           value="multiple" {% if not exercise or exercise.allow_multiple_submissions %}checked{% endif %}>
+                                    <label class="form-check-label" for="sub_multi">Allow multiple submissions</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="submission_limit" id="sub_single"
+                                           value="single" {% if exercise and not exercise.allow_multiple_submissions %}checked{% endif %}>
+                                    <label class="form-check-label" for="sub_single">Only one submission per student</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
