@@ -134,7 +134,7 @@ def _ensure_instructor_exercise_schema():
             connection.execute(
                 text(
                     f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
-                    "ADD COLUMN allow_multiple_submissions BOOLEAN DEFAULT 1"
+                    "ADD COLUMN allow_multiple_submissions BOOLEAN DEFAULT TRUE"
                 )
             )
 
@@ -142,13 +142,13 @@ def _ensure_instructor_exercise_schema():
             connection.execute(
                 text(
                     f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
-                    "ADD COLUMN is_deleted BOOLEAN DEFAULT 0"
+                    "ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE"
                 )
             )
             connection.execute(
                 text(
                     f"UPDATE {INSTRUCTOR_EXERCISE_TABLE} "
-                    "SET is_deleted = 0 WHERE is_deleted IS NULL"
+                    "SET is_deleted = FALSE WHERE is_deleted IS NULL"
                 )
             )
 
