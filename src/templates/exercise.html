@@ -120,9 +120,9 @@
 
                     <ul class="list-group">
                         {% for option in q.options %}
-                        <li class="list-group-item mb-2 d-flex">
-                            <label class="form-check-label" for="{{ qindex }}option{{ loop.index }}">
-                                <div class="form-check flex-grow-1">
+                        <li class="list-group-item mb-2">
+                            <label class="form-check-label w-100 d-block" for="{{ qindex }}option{{ loop.index }}">
+                                <div class="form-check">
                                     <input class="form-check-input" type="radio" name="{{ qindex }}option"
                                         id="{{ qindex }}option{{ loop.index }}" class="option"
                                         value="{{ option.option }}" data-misconceptions="{{ option.misconceptions }}"
