@@ -147,10 +147,13 @@ class TestForgeClassicSyntaxCorrespondence(unittest.TestCase):
             ("NEXT_STATE a", "(X a)"),
             # Eventually
             ("EVENTUALLY a", "(F a)"),
+            ("eventually a", "(F a)"),
             # Globally
             ("ALWAYS a", "(G a)"),
+            ("always a", "(G a)"),
             # Until
             ("a UNTIL b", "(a U b)"),
+            ("a until b", "(a U b)"),
         ]
 
         for forge, classic in test_cases:
@@ -177,17 +180,47 @@ class TestElectrumClassicSyntaxCorrespondence(unittest.TestCase):
             ("a <-> b", "(a <-> b)"),
             # Next
             ("AFTER a", "(X a)"),
+            ("after a", "(X a)"),
             # Eventually
             ("EVENTUALLY a", "(F a)"),
+            ("eventually a", "(F a)"),
             # Globally
             ("ALWAYS a", "(G a)"),
+            ("always a", "(G a)"),
             # Until
             ("a UNTIL b", "(a U b)"),
+            ("a until b", "(a U b)"),
         ]
 
         for forge, classic in test_cases:
             with self.subTest(input=forge, expected=classic):
                 self.assertEqual(str(parse_ltl_string(forge)), str(parse_ltl_string(classic)))
+
+
+class TestForgeElectrumRendering(unittest.TestCase):
+    def test_forge_outputs_lowercase_keywords(self):
+        test_cases = [
+            ("X a", "(next_state a)"),
+            ("F a", "(eventually a)"),
+            ("G a", "(always a)"),
+            ("a U b", "(a until b)"),
+        ]
+
+        for classic, forge in test_cases:
+            with self.subTest(input=classic, expected=forge):
+                self.assertEqual(parse_ltl_string(classic).__forge__(), forge)
+
+    def test_electrum_outputs_lowercase_keywords(self):
+        test_cases = [
+            ("X a", "(after a)"),
+            ("F a", "(eventually a)"),
+            ("G a", "(always a)"),
+            ("a U b", "(a until b)"),
+        ]
+
+        for classic, electrum in test_cases:
+            with self.subTest(input=classic, expected=electrum):
+                self.assertEqual(parse_ltl_string(classic).__electrum__(), electrum)
 
 
 

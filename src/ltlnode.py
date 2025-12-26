@@ -248,10 +248,10 @@ class UntilNode(BinaryOperatorNode):
         return f"{lhs} until {rhs}"
     
     def __forge__(self):
-        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
-    
+        return f"({self.left.__forge__()} until {self.right.__forge__()})"
+
     def __electrum__(self):
-        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
+        return f"({self.left.__electrum__()} until {self.right.__electrum__()})"
 
 
 class NextNode(UnaryOperatorNode):
@@ -267,10 +267,10 @@ class NextNode(UnaryOperatorNode):
         return f"in the next step, {op}"
     
     def __forge__(self):
-        return f"(NEXT_STATE {self.operand.__forge__()})"
-    
+        return f"(next_state {self.operand.__forge__()})"
+
     def __electrum__(self):
-        return f"(AFTER {self.operand.__electrum__()})"
+        return f"(after {self.operand.__electrum__()})"
 
 
 class GloballyNode(UnaryOperatorNode):
@@ -297,10 +297,10 @@ class GloballyNode(UnaryOperatorNode):
         return english
     
     def __forge__(self):
-        return f"(ALWAYS {self.operand.__forge__()})"
-    
+        return f"(always {self.operand.__forge__()})"
+
     def __electrum__(self):
-        return f"(ALWAYS {self.operand.__electrum__()})"
+        return f"(always {self.operand.__electrum__()})"
 
 
 class FinallyNode(UnaryOperatorNode):
@@ -326,10 +326,10 @@ class FinallyNode(UnaryOperatorNode):
         return f"eventually, {op}"
     
     def __forge__(self):
-        return f"(EVENTUALLY {self.operand.__forge__()})"
-    
+        return f"(eventually {self.operand.__forge__()})"
+
     def __electrum__(self):
-        return f"(EVENTUALLY {self.operand.__electrum__()})"
+        return f"(eventually {self.operand.__electrum__()})"
 
 
 class OrNode(BinaryOperatorNode):
