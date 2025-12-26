@@ -147,10 +147,13 @@ class TestForgeClassicSyntaxCorrespondence(unittest.TestCase):
             ("NEXT_STATE a", "(X a)"),
             # Eventually
             ("EVENTUALLY a", "(F a)"),
+            ("eventually a", "(F a)"),
             # Globally
             ("ALWAYS a", "(G a)"),
+            ("always a", "(G a)"),
             # Until
             ("a UNTIL b", "(a U b)"),
+            ("a until b", "(a U b)"),
         ]
 
         for forge, classic in test_cases:
@@ -177,12 +180,16 @@ class TestElectrumClassicSyntaxCorrespondence(unittest.TestCase):
             ("a <-> b", "(a <-> b)"),
             # Next
             ("AFTER a", "(X a)"),
+            ("after a", "(X a)"),
             # Eventually
             ("EVENTUALLY a", "(F a)"),
+            ("eventually a", "(F a)"),
             # Globally
             ("ALWAYS a", "(G a)"),
+            ("always a", "(G a)"),
             # Until
             ("a UNTIL b", "(a U b)"),
+            ("a until b", "(a U b)"),
         ]
 
         for forge, classic in test_cases:

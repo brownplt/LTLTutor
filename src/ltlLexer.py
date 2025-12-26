@@ -1,6 +1,7 @@
 # Generated from ltl.g4 by ANTLR 4.13.2
 from antlr4 import *
 from io import StringIO
+import re
 import sys
 if sys.version_info[1] > 5:
     from typing import TextIO
@@ -92,7 +93,26 @@ class ltlLexer(Lexer):
 
     grammarFileName = "ltl.g4"
 
+    _keyword_map = {
+        "after": "AFTER",
+        "next_state": "NEXT_STATE",
+        "eventually": "EVENTUALLY",
+        "always": "ALWAYS",
+        "until": "UNTIL",
+    }
+
+    _keyword_pattern = re.compile(r"\b(" + "|".join(_keyword_map.keys()) + r")\b", re.IGNORECASE)
+
+    @classmethod
+    def _normalize_keywords(cls, text: str) -> str:
+        return cls._keyword_pattern.sub(lambda m: cls._keyword_map[m.group(1).lower()], text)
+
     def __init__(self, input=None, output:TextIO = sys.stdout):
+        if isinstance(input, str):
+            input = InputStream(self._normalize_keywords(input))
+        elif input is not None and hasattr(input, "strdata"):
+            input = InputStream(self._normalize_keywords(input.strdata))
+
         super().__init__(input, output)
         self.checkVersion("4.13.2")
         self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
