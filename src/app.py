@@ -322,7 +322,7 @@ def ltl_to_english():
         return jsonify({"error": "Missing required query parameter 'formula'."}), 400
     try:
         node = parse_ltl_string(formula)
-        english = ltltoeng.finalize_sentence(node.__to_english__())
+        english = ltltoeng.translate(node, discourse=True)
     except Exception as e:
         return jsonify({"error": "Failed to translate formula.", "details": str(e)}), 400
 
@@ -426,7 +426,7 @@ def ltl_to_english_ui():
         else:
             try:
                 node = parse_ltl_string(input_formula)
-                translation = ltltoeng.finalize_sentence(node.__to_english__())
+                translation = ltltoeng.translate(node, discourse=True)
             except Exception as e:
                 error = f"Failed to translate formula: {e}"
 

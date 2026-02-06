@@ -1,4 +1,5 @@
 import ltlnode
+import ltlir
 import random
 import re
 
@@ -192,6 +193,109 @@ def finalize_sentence(text):
         return ""
     smoothed = smooth_grammar(text.strip())
     return capitalize_sentence(smoothed)
+
+
+def _embedded_clause(node):
+    """Return a clause suitable for embedding after a discourse prefix."""
+    text = clean_for_composition(node.__to_english__())
+    return normalize_embedded_clause(text)
+
+
+def _node_size(node):
+    if isinstance(node, ltlnode.UnaryOperatorNode):
+        return 1 + _node_size(node.operand)
+    if isinstance(node, ltlnode.BinaryOperatorNode):
+        return 1 + _node_size(node.left) + _node_size(node.right)
+    return 1
+
+
+def _temporal_op_count(node):
+    count = 0
+    if isinstance(node, (ltlnode.NextNode, ltlnode.FinallyNode, ltlnode.GloballyNode, ltlnode.UntilNode)):
+        count += 1
+    if isinstance(node, ltlnode.UnaryOperatorNode):
+        return count + _temporal_op_count(node.operand)
+    if isinstance(node, ltlnode.BinaryOperatorNode):
+        return count + _temporal_op_count(node.left) + _temporal_op_count(node.right)
+    return count
+
+
+def _should_split_conjunction(node):
+    if not isinstance(node, (ltlnode.AndNode, ltlnode.OrNode)):
+        return False
+    left_ops = _temporal_op_count(node.left)
+    right_ops = _temporal_op_count(node.right)
+    total_ops = left_ops + right_ops
+    total_size = _node_size(node)
+    return total_ops >= 2 or total_size >= 8
+
+
+def _eventual_anchor_phrasing():
+    return (
+        choose_best_sentence([
+            "eventually we reach a point in time",
+            "eventually there is a point in time",
+            "eventually a point is reached"
+        ]),
+        "from then on"
+    )
+
+
+def build_discourse_plan(node):
+    """Compile select LTL forms into a discourse-oriented plan."""
+    # Eventual permanence: F(G φ) -> anchor + "from then on" clause
+    if isinstance(node, ltlnode.FinallyNode) and isinstance(node.operand, ltlnode.GloballyNode):
+        anchor_sentence, prefix = _eventual_anchor_phrasing()
+        inner = node.operand.operand
+        plan = ltlir.TemporalPlan()
+        plan.add_anchor(anchor_sentence)
+        plan.add_clause(_embedded_clause(inner), prefix=prefix)
+        return plan
+
+    # Split large conjunctions into two sentences
+    if isinstance(node, ltlnode.AndNode) and _should_split_conjunction(node):
+        plan = ltlir.TemporalPlan()
+        plan.add_lead("both of the following must hold")
+        plan.add_clause(_embedded_clause(node.left), prefix="first")
+        plan.add_clause(_embedded_clause(node.right), prefix="second")
+        return plan
+
+    # Split large disjunctions into two sentences
+    if isinstance(node, ltlnode.OrNode) and _should_split_conjunction(node):
+        plan = ltlir.TemporalPlan()
+        plan.add_lead("at least one of the following must hold")
+        left_clause = _embedded_clause(node.left)
+        right_clause = _embedded_clause(node.right)
+        plan.add_clause(f"either {left_clause} or {right_clause}")
+        return plan
+
+    return None
+
+
+def render_discourse_plan(plan):
+    sentences = []
+    for step in plan.steps:
+        text = step.text
+        if step.prefix:
+            text = f"{step.prefix}, {text}"
+        sentence = finalize_sentence(text)
+        if sentence:
+            sentences.append(sentence)
+    return ". ".join(sentences)
+
+
+def to_english_discourse(node):
+    plan = build_discourse_plan(node)
+    if plan:
+        return render_discourse_plan(plan)
+    return finalize_sentence(node.__to_english__())
+
+
+def translate(node, discourse=False):
+    """Top-level translation entrypoint with optional discourse planning."""
+    if discourse:
+        return to_english_discourse(node)
+    return finalize_sentence(node.__to_english__())
 
 
 def _ngram_fluency_score(text):
