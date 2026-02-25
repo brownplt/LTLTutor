@@ -64,3 +64,4 @@ myenv
 # Ignore everything in the experiments directory
 experiments/*.csv
 experiments/*.ipynb
+!experiments/preprocess_responses.ipynb
