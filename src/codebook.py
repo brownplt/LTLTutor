@@ -365,6 +365,16 @@ def applyExclusiveU(node):
             if isinstance(rhs.right, NotNode) and LTLNode.equiv(rhs.right.operand, x):
                 return MutationResult(UntilNode(x, rhs.left), MisconceptionCode.ExclusiveU)
 
+        # Reverse: x U y → one of the ExclusiveU misconception variants
+        # The correct formula is x U y, but a student with the ExclusiveU
+        # misconception might write any of these, so we randomly choose one.
+        variant = random.choice([
+            UntilNode(x, AndNode(NotNode(x), rhs)),   # x U (!x & y)
+            UntilNode(x, ImpliesNode(x, rhs)),         # x U (x -> y)
+            UntilNode(x, OrNode(NotNode(x), rhs)),     # x U (!x | y)
+        ])
+        return MutationResult(variant, MisconceptionCode.ExclusiveU)
+
     # Pattern 4: (x U y) & G(x -> !y) → x U y
     # Student adds a global constraint that x and y are mutually exclusive
     if isinstance(node, AndNode):
