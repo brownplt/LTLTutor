@@ -16,9 +16,11 @@ from codebook import MisconceptionCode
 
 class MockStudentLog:
     """Mock class to simulate student response logs."""
-    def __init__(self, misconception, timestamp):
+    def __init__(self, misconception, timestamp, correct_answer=False, question_options=None):
         self.misconception = misconception
         self.timestamp = timestamp
+        self.correct_answer = correct_answer
+        self.question_options = question_options
 
 
 class TestRegressionModel(unittest.TestCase):
@@ -249,6 +251,58 @@ class TestRegressionModel(unittest.TestCase):
             weights_24h[str(MisconceptionCode.ImplicitG)],
             weights_48h[str(MisconceptionCode.ImplicitG)]
         )
+
+    def test_correct_answers_reduce_candidate_misconception_weight(self):
+        """Correct answers should lower weights for misconceptions in candidate distractors."""
+        now = datetime.datetime.now()
+
+        options_payload = [
+            {"option": "A", "isCorrect": True, "misconceptions": []},
+            {"option": "B", "isCorrect": False, "misconceptions": [str(MisconceptionCode.WeakU)]}
+        ]
+
+        logs = [
+            MockStudentLog(
+                "",
+                now - datetime.timedelta(hours=2),
+                correct_answer=True,
+                question_options=str(options_payload)
+            ),
+            MockStudentLog(
+                "",
+                now - datetime.timedelta(hours=1),
+                correct_answer=True,
+                question_options=str(options_payload)
+            ),
+        ]
+
+        builder = ExerciseBuilder(logs)
+        concept_history = builder.aggregateLogs()
+        weights = builder.calculate_misconception_weights(concept_history)
+
+        self.assertLess(weights[str(MisconceptionCode.WeakU)], 0.5)
+
+    def test_stale_misconception_gets_reactivation_boost(self):
+        """Stale misconceptions should receive a small reactivation boost."""
+        now = datetime.datetime.now()
+
+        stale_logs = [MockStudentLog(
+            str(MisconceptionCode.ImplicitG),
+            now - datetime.timedelta(hours=180)
+        )]
+        recent_logs = [MockStudentLog(
+            str(MisconceptionCode.ImplicitG),
+            now - datetime.timedelta(hours=24)
+        )]
+
+        stale_builder = ExerciseBuilder(stale_logs)
+        recent_builder = ExerciseBuilder(recent_logs)
+
+        stale_weight = stale_builder.calculate_misconception_weights(stale_builder.aggregateLogs())[str(MisconceptionCode.ImplicitG)]
+        recent_weight = recent_builder.calculate_misconception_weights(recent_builder.aggregateLogs())[str(MisconceptionCode.ImplicitG)]
+
+        self.assertGreater(stale_weight, 0.5)
+        self.assertGreater(recent_weight, stale_weight)
 
 
 class TestAggregateLogsIntegration(unittest.TestCase):
