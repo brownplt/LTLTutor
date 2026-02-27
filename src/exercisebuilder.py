@@ -7,6 +7,8 @@ import ltlnode
 import random
 import re
 import math
+import json
+import ast
 import ltltoeng
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
@@ -75,8 +77,17 @@ class ExerciseBuilder:
             bucket += datetime.timedelta(hours=(timestamp.hour % bucketsizeinhours))
 
             # Add the log entry to the corresponding bucket
-            misconception = log.misconception
-            buckets[bucket][misconception] += 1
+            misconception = getattr(log, 'misconception', '')
+            if misconception:
+                buckets[bucket][misconception] += 1
+
+            # Successful answers are negative evidence for candidate misconceptions
+            # that were available among distractors but not selected.
+            # This lets the model reduce misconception weights when students
+            # repeatedly avoid those misconceptions.
+            if self._is_correct_answer(log):
+                for candidate in self._extract_candidate_misconceptions(log):
+                    buckets[bucket][candidate] -= 1.0
 
         # Organize misconceptions by bucket and sort by date
         for bucket, misconceptions in buckets.items():
@@ -97,6 +108,41 @@ class ExerciseBuilder:
         to_return = { k : v for k, v in concept_history.items() if k in all_misconceptions}
 
         return to_return
+
+    def _is_correct_answer(self, log):
+        correct_value = getattr(log, 'correct_answer', False)
+        return str(correct_value).lower() == 'true'
+
+    def _extract_candidate_misconceptions(self, log):
+        raw_options = getattr(log, 'question_options', None)
+        if not raw_options:
+            return []
+
+        parsed_options = None
+        if isinstance(raw_options, list):
+            parsed_options = raw_options
+        elif isinstance(raw_options, str):
+            try:
+                parsed_options = json.loads(raw_options)
+            except (TypeError, json.JSONDecodeError):
+                try:
+                    parsed_options = ast.literal_eval(raw_options)
+                except (ValueError, SyntaxError):
+                    return []
+
+        if not isinstance(parsed_options, list):
+            return []
+
+        misconceptions = set()
+        for option in parsed_options:
+            if not isinstance(option, dict):
+                continue
+
+            for misconception in option.get('misconceptions', []):
+                if isinstance(misconception, str) and misconception:
+                    misconceptions.add(misconception)
+
+        return list(misconceptions)
 
 
    
@@ -142,6 +188,10 @@ class ExerciseBuilder:
         bkt_weight_factor = 0.4
         # Frequency weight factor - how much the frequency-based estimate contributes
         frequency_weight_factor = 0.6
+        # Reactivate stale misconceptions by gently increasing priority when
+        # they have not appeared for a while (prevents starvation).
+        stale_reactivation_start_hours = 72
+        stale_reactivation_max = 0.2
         
         # Pre-calculate decay constant: ln(2) / half-life
         decay_constant = -math.log(2) / recency_half_life_hours
@@ -160,28 +210,35 @@ class ExerciseBuilder:
             recency_weighted_sum = 0
             recent_count = 0
             total_count = 0
+            last_seen_hours_ago = None
             
             for date, frequency in entries:
                 hours_ago = (now - date).total_seconds() / 3600
+                last_seen_hours_ago = hours_ago
                 
                 # Exponential decay factor (Ebbinghaus forgetting curve inspired)
                 decay_factor = math.exp(decay_constant * hours_ago)
-                recency_weighted_sum += frequency * decay_factor
-                total_count += frequency
+                positive_frequency = max(0, frequency)
+                recency_weighted_sum += positive_frequency * decay_factor
+                total_count += positive_frequency
                 
                 # Adapted BKT update: evidence of misconception increases belief
                 # Standard BKT: P(L_n) = P(L_{n-1}) + (1 - P(L_{n-1})) * P(T)
                 # We scale by evidence strength (frequency * recency)
-                evidence_strength = min(1.0, frequency * decay_factor)
+                evidence_strength = min(1.0, positive_frequency * decay_factor)
                 p_misconception = p_misconception + (1 - p_misconception) * transition_rate * evidence_strength
                 p_misconception = min(0.95, p_misconception)  # Cap to avoid certainty
                 
                 # Track recent occurrences for drilling
                 if hours_ago <= recent_window_hours:
-                    recent_count += frequency
+                    recent_count += positive_frequency
             
             # Calculate trend using comparative analysis
-            trend_score, _ = self._calculate_trend(entries, now)
+            has_positive_evidence = any(frequency > 0 for _, frequency in entries)
+            if not has_positive_evidence:
+                trend_score = -0.25
+            else:
+                trend_score, _ = self._calculate_trend(entries, now)
             
             # Combine BKT probability with frequency-based weight
             base_weight = math.log1p(recency_weighted_sum) / log_scale_divisor
@@ -195,12 +252,17 @@ class ExerciseBuilder:
             if recent_count >= drilling_threshold:
                 # Boost proportional to recent frequency, capped at 0.3
                 drilling_boost = min(0.3, recent_count * 0.05)
+
+            stale_reactivation_boost = 0
+            if last_seen_hours_ago is not None and last_seen_hours_ago > stale_reactivation_start_hours:
+                staleness = (last_seen_hours_ago - stale_reactivation_start_hours) / stale_reactivation_start_hours
+                stale_reactivation_boost = min(stale_reactivation_max, staleness * 0.05)
             
             # Final weight combines BKT probability with frequency-based estimate
             # bkt_weight_factor controls probabilistic contribution
             # frequency_weight_factor controls frequency-based contribution
             weight = (p_misconception * bkt_weight_factor) + (default_weight + base_weight) * frequency_weight_factor
-            weight += trend_adjustment + drilling_boost
+            weight += trend_adjustment + drilling_boost + stale_reactivation_boost
             
             # Sigmoid squashing to bound output between 0 and 1
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
