@@ -27,7 +27,7 @@ def getLTLFormulaAsString(node, syntax):
     elif syntax == "English":
         ## We should hopefully never get here. However, 
         ## I'm adding it here to suggest a way forward.
-        return ltltoeng.finalize_sentence(node.__to_english__())
+        return ltltoeng.translate(node, discourse=True)
 
     ## Default to classic syntax
     return str(node)
