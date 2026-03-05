@@ -43,6 +43,33 @@
         .misconception-badge {
             font-size: 0.75rem;
         }
+        .builder-feedback {
+            position: sticky;
+            top: 0.5rem;
+            z-index: 1020;
+        }
+        .question-save-pill {
+            min-width: 115px;
+            text-align: center;
+        }
+        .distractor-suggestion .suggestion-action {
+            display: block;
+            margin-top: 0.15rem;
+            font-size: 0.78rem;
+        }
+        .distractor-suggestion.added {
+            background-color: #e7f4ea;
+            border-left: 3px solid #28a745;
+        }
+        .option-card {
+            border-left: 3px solid #d6d9dc;
+        }
+        .option-card.correct-option {
+            border-left-color: #28a745;
+        }
+        #exerciseSaveState {
+            min-height: 1.3rem;
+        }
     </style>
 </head>
 
@@ -51,7 +78,12 @@
         {% include 'navbar.html' %}
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>{{ 'Edit' if exercise else 'Create' }} Exercise</h1>
+            <div>
+                <h1 class="mb-1">{{ 'Edit' if exercise else 'Create' }} Exercise</h1>
+                {% if exercise and exercise.updated_at %}
+                <small class="text-muted">Last saved: <span id="lastSavedServer">{{ exercise.updated_at }}</span></small>
+                {% endif %}
+            </div>
             <a href="{{ url_for('authroutes.list_instructor_exercises') }}" class="btn btn-outline-secondary">
                 ← Back to Exercises
             </a>
@@ -67,6 +99,8 @@
         </div>
         {% endif %}
         {% endwith %}
+
+        <div id="builderFeedback" class="alert d-none py-2 mb-3 builder-feedback" role="status" aria-live="polite"></div>
 
         <form id="exerciseForm" method="POST">
             <div class="row">
@@ -146,6 +180,9 @@
                                 + Add
                             </button>
                         </div>
+                        <div class="px-3 pt-2 pb-0">
+                            <small class="text-muted">New or edited questions show an <strong>Unsaved</strong> badge until you click <strong>Save Question</strong>.</small>
+                        </div>
                         <div class="card-body p-0">
                             <div id="questionsList" class="list-group list-group-flush">
                                 <!-- Questions will be rendered here -->
@@ -157,7 +194,7 @@
                            value="{{ exercise.exercise_json | tojson | safe if exercise and exercise.exercise_json else '[]' }}">
                     
                     <div class="btn-group btn-block mb-3">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" id="saveExerciseBtn" class="btn btn-success">
                             {{ 'Update' if exercise else 'Create' }} Exercise
                         </button>
                         {% if exercise %}
@@ -167,6 +204,7 @@
                         </a>
                         {% endif %}
                     </div>
+                    <div id="exerciseSaveState" class="small text-muted mt-2"></div>
                 </div>
 
                 <!-- Right Column: Question Editor -->
@@ -176,6 +214,9 @@
                             <strong>Question Editor</strong>
                             <span id="editingIndicator" class="badge badge-secondary ml-2" style="display:none;">
                                 Editing Question #<span id="editingQuestionNum"></span>
+                            </span>
+                            <span id="questionSaveState" class="badge badge-warning ml-2 question-save-pill" style="display:none;">
+                                Unsaved
                             </span>
                         </div>
                         <div class="card-body">
@@ -261,6 +302,9 @@
                                         </button>
                                     </div>
                                 </div>
+                                <small class="text-muted d-block mb-2">
+                                    Click a suggested trace/formula to add it. In the list below, use <strong>Set Correct</strong> to choose the right option quickly.
+                                </small>
 
                                 <!-- Suggested Distractors -->
                                 <div id="suggestedDistractors" class="mb-3" style="display:none;">
@@ -312,7 +356,7 @@
                                 <hr>
 
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-primary" onclick="saveCurrentQuestion()">
+                                    <button type="button" class="btn btn-primary" id="saveQuestionBtn" onclick="saveCurrentQuestion(event)">
                                         Save Question
                                     </button>
                                     <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentQuestion()">
@@ -335,10 +379,12 @@
     <script>
     // State
     let questions = [];
+    let questionSavedStates = [];
     let currentQuestionIndex = -1;
     let currentOptions = [];
+    let suppressDirtyTracking = false;
+    let feedbackTimer = null;
 
-    // Initialize from existing exercise
     document.addEventListener('DOMContentLoaded', function() {
         {% if exercise and exercise.exercise_json %}
         try {
@@ -352,17 +398,36 @@
             questions = [];
         }
         {% endif %}
+
+        questionSavedStates = questions.map(() => true);
+        initializeEventHandlers();
         renderQuestionsList();
+        updateSaveIndicators();
+        formatLastSavedTimestamp();
     });
 
-    // Update question kind hint and show/hide appropriate buttons
-    document.getElementById('questionKind').addEventListener('change', function() {
-        const kind = this.value;
+    function initializeEventHandlers() {
+        document.getElementById('questionKind').addEventListener('change', function() {
+            updateQuestionKindUI();
+            handleQuestionFieldEdit();
+        });
+
+        ['questionText', 'traceText', 'correctAnswer'].forEach((id) => {
+            document.getElementById(id).addEventListener('input', handleQuestionFieldEdit);
+        });
+
+        document.getElementById('exerciseForm').addEventListener('submit', handleExerciseSubmit);
+
+        updateQuestionKindUI();
+    }
+
+    function updateQuestionKindUI() {
+        const kind = document.getElementById('questionKind').value;
         const hint = document.getElementById('questionHint');
         const traceGroup = document.getElementById('traceGroup');
         const suggestDistractorsBtn = document.getElementById('suggestDistractorsBtn');
         const suggestTracesBtn = document.getElementById('suggestTracesBtn');
-        
+
         if (kind === 'englishtoltl') {
             hint.textContent = 'For English to LTL: Enter the English description of the LTL formula.';
             traceGroup.style.display = 'none';
@@ -379,113 +444,254 @@
             suggestDistractorsBtn.style.display = 'none';
             suggestTracesBtn.style.display = 'none';
         }
-    });
+    }
+
+    function handleQuestionFieldEdit() {
+        if (currentQuestionIndex < 0 || suppressDirtyTracking) {
+            return;
+        }
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
+        renderQuestionsList();
+    }
+
+    function buildQuestionFromEditor(config = {}) {
+        const requireQuestionText = !!config.requireQuestionText;
+        const requireCorrectAnswer = !!config.requireCorrectAnswer;
+        const questionText = document.getElementById('questionText').value.trim();
+        const correctAnswer = document.getElementById('correctAnswer').value.trim();
+        const kind = document.getElementById('questionKind').value;
+        const trace = document.getElementById('traceText').value.trim();
+
+        if (requireQuestionText && !questionText) {
+            return { ok: false, error: 'Question text is required.' };
+        }
+        if (requireCorrectAnswer && !correctAnswer) {
+            return { ok: false, error: 'Correct answer is required.' };
+        }
+
+        const normalizedOptions = currentOptions.map((opt) => ({
+            option: (opt.option || '').trim(),
+            isCorrect: !!opt.isCorrect,
+            misconceptions: Array.isArray(opt.misconceptions) ? opt.misconceptions : []
+        })).filter((opt) => opt.option);
+
+        const optionsWithCorrect = applyCorrectAnswer(normalizedOptions, correctAnswer);
+        const question = {
+            question: questionText,
+            type: kind,
+            options: optionsWithCorrect
+        };
+
+        if (kind === 'tracesatisfaction_yn' && trace) {
+            question.trace = trace;
+        }
+
+        return { ok: true, question: question };
+    }
+
+    function applyCorrectAnswer(options, correctAnswer) {
+        const normalized = options.map((opt) => ({
+            option: opt.option,
+            isCorrect: !!opt.isCorrect,
+            misconceptions: Array.isArray(opt.misconceptions) ? opt.misconceptions : []
+        }));
+
+        if (!correctAnswer) {
+            return normalized.map((opt) => ({ ...opt, isCorrect: false }));
+        }
+
+        let correctIndex = normalized.findIndex((opt) => opt.isCorrect);
+        if (correctIndex >= 0) {
+            normalized[correctIndex].option = correctAnswer;
+        } else {
+            normalized.unshift({
+                option: correctAnswer,
+                isCorrect: true,
+                misconceptions: []
+            });
+            correctIndex = 0;
+        }
+
+        return normalized.map((opt, idx) => ({
+            ...opt,
+            isCorrect: idx === correctIndex
+        }));
+    }
+
+    function persistCurrentQuestionDraft() {
+        if (currentQuestionIndex < 0 || suppressDirtyTracking) {
+            return;
+        }
+        const built = buildQuestionFromEditor();
+        if (!built.ok) {
+            return;
+        }
+        questions[currentQuestionIndex] = built.question;
+        document.getElementById('exercise_json').value = JSON.stringify(questions);
+    }
 
     function renderQuestionsList() {
         const list = document.getElementById('questionsList');
         const count = document.getElementById('questionCount');
         count.textContent = questions.length;
-        
+
         if (questions.length === 0) {
             list.innerHTML = '<div class="list-group-item text-muted text-center">No questions yet</div>';
+            document.getElementById('exercise_json').value = JSON.stringify(questions);
+            updateSaveIndicators();
             return;
         }
-        
+
         list.innerHTML = questions.map((q, i) => {
             const isSelected = i === currentQuestionIndex;
+            const isSaved = questionSavedStates[i] !== false;
             const typeLabel = {
-                'englishtoltl': 'E→LTL',
-                'tracesatisfaction_mc': 'Trace MC',
-                'tracesatisfaction_yn': 'Trace Y/N'
-            }[q.type] || q.type;
-            
+                englishtoltl: 'E→LTL',
+                tracesatisfaction_mc: 'Trace MC',
+                tracesatisfaction_yn: 'Trace Y/N'
+            }[q.type] || (q.type || 'Question');
+            const preview = (q.question || '').trim() || '(untitled question)';
+
             return `
                 <a href="#" class="list-group-item list-group-item-action ${isSelected ? 'active' : ''}"
                    onclick="selectQuestion(${i}); return false;">
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center">
                         <small class="font-weight-bold">#${i + 1}</small>
-                        <small class="badge badge-${isSelected ? 'light' : 'secondary'}">${typeLabel}</small>
+                        <div>
+                            <small class="badge badge-${isSelected ? 'light' : 'secondary'} mr-1">${typeLabel}</small>
+                            <small class="badge badge-${isSaved ? 'success' : 'warning'}">${isSaved ? 'Saved' : 'Unsaved'}</small>
+                        </div>
                     </div>
                     <small class="text-truncate d-block" style="max-width: 100%;">
-                        ${escapeHtml(q.question.substring(0, 50))}${q.question.length > 50 ? '...' : ''}
+                        ${escapeHtml(preview.substring(0, 60))}${preview.length > 60 ? '...' : ''}
                     </small>
                 </a>
             `;
         }).join('');
-        
-        // Update hidden field
+
         document.getElementById('exercise_json').value = JSON.stringify(questions);
+        updateSaveIndicators();
     }
 
     function selectQuestion(index) {
+        if (index < 0 || index >= questions.length) {
+            return;
+        }
+
+        if (currentQuestionIndex >= 0 && currentQuestionIndex !== index) {
+            persistCurrentQuestionDraft();
+        }
+
         currentQuestionIndex = index;
-        const q = questions[index];
-        
+        if (typeof questionSavedStates[index] === 'undefined') {
+            questionSavedStates[index] = true;
+        }
+
+        const q = questions[index] || {};
+        const qOptions = Array.isArray(q.options) ? q.options : [];
+
         document.getElementById('noQuestionSelected').style.display = 'none';
         document.getElementById('questionEditor').style.display = 'block';
         document.getElementById('editingIndicator').style.display = 'inline';
         document.getElementById('editingQuestionNum').textContent = index + 1;
-        
-        // Populate form
+
+        suppressDirtyTracking = true;
         document.getElementById('questionKind').value = q.type || 'englishtoltl';
         document.getElementById('questionKind').dispatchEvent(new Event('change'));
         document.getElementById('questionText').value = q.question || '';
         document.getElementById('traceText').value = q.trace || '';
-        
-        // Find correct answer
-        const correctOption = q.options.find(o => o.isCorrect);
+        const correctOption = qOptions.find((o) => o.isCorrect);
         document.getElementById('correctAnswer').value = correctOption ? correctOption.option : '';
-        
-        // Load options
-        currentOptions = q.options.map(o => ({...o}));
+        currentOptions = qOptions.map((o) => ({
+            option: o.option || '',
+            isCorrect: !!o.isCorrect,
+            misconceptions: Array.isArray(o.misconceptions) ? o.misconceptions : []
+        }));
+        suppressDirtyTracking = false;
+
         renderOptions();
-        
         renderQuestionsList();
     }
 
     function addNewQuestion() {
-        const newQuestion = {
+        if (currentQuestionIndex >= 0) {
+            persistCurrentQuestionDraft();
+        }
+
+        questions.push({
             question: '',
             type: 'englishtoltl',
             options: []
-        };
-        questions.push(newQuestion);
+        });
+        questionSavedStates.push(false);
         selectQuestion(questions.length - 1);
+        showFeedback(`Question #${questions.length} added. Fill it in and click Save Question.`, 'info');
     }
 
     function renderOptions() {
         const list = document.getElementById('optionsList');
-        
+
         if (currentOptions.length === 0) {
             list.innerHTML = '<p class="text-muted">No options yet. Add the correct answer and suggest distractors.</p>';
             return;
         }
-        
+
         list.innerHTML = currentOptions.map((opt, i) => `
-            <div class="card mb-2 ${opt.isCorrect ? 'option-correct' : 'option-incorrect'}">
+            <div class="card mb-2 option-card ${opt.isCorrect ? 'option-correct correct-option' : 'option-incorrect'}">
                 <div class="card-body py-2 px-3">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
-                            <div class="d-flex align-items-center">
-                                ${opt.isCorrect ? '<span class="badge badge-success mr-2">✓ Correct</span>' : ''}
-                                <code>${escapeHtml(opt.option)}</code>
+                            <div class="d-flex align-items-center flex-wrap">
+                                ${opt.isCorrect
+                                    ? '<span class="badge badge-success mr-2 mb-1">Correct</span>'
+                                    : `<button type="button" class="btn btn-sm btn-outline-success mr-2 mb-1" onclick="setCorrectOption(${i})">Set Correct</button>`
+                                }
+                                <code class="mb-1">${escapeHtml(opt.option || '')}</code>
                             </div>
                             ${opt.misconceptions && opt.misconceptions.length > 0 ? `
                                 <div class="mt-1">
-                                    ${opt.misconceptions.map(m => `<span class="badge badge-warning misconception-badge">${escapeHtml(m.replace('MisconceptionCode.', ''))}</span>`).join(' ')}
+                                    ${opt.misconceptions.map((m) => `<span class="badge badge-warning misconception-badge">${escapeHtml((m || '').replace('MisconceptionCode.', ''))}</span>`).join(' ')}
                                 </div>
                             ` : ''}
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="removeOption(${i})">×</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="removeOption(${i})">Remove</button>
                     </div>
                 </div>
             </div>
         `).join('');
     }
 
-    function removeOption(index) {
-        currentOptions.splice(index, 1);
+    function setCorrectOption(index) {
+        if (index < 0 || index >= currentOptions.length) {
+            return;
+        }
+
+        currentOptions = currentOptions.map((opt, i) => ({
+            ...opt,
+            isCorrect: i === index
+        }));
+        document.getElementById('correctAnswer').value = currentOptions[index].option || '';
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
         renderOptions();
+        renderQuestionsList();
+        showFeedback('Correct option selected.', 'success', 1400);
+    }
+
+    function removeOption(index) {
+        if (index < 0 || index >= currentOptions.length) {
+            return;
+        }
+        const removedWasCorrect = !!currentOptions[index].isCorrect;
+        currentOptions.splice(index, 1);
+        if (removedWasCorrect) {
+            document.getElementById('correctAnswer').value = '';
+        }
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
+        renderOptions();
+        renderQuestionsList();
     }
 
     function showManualOptionForm() {
@@ -493,6 +699,7 @@
         document.getElementById('addManualOptionBtn').style.display = 'none';
         document.getElementById('manualOptionText').value = '';
         document.getElementById('manualOptionMisconceptions').value = '';
+        document.getElementById('manualOptionText').classList.remove('is-invalid');
         document.getElementById('manualOptionText').focus();
     }
 
@@ -504,66 +711,71 @@
     function submitManualOption() {
         const optionText = document.getElementById('manualOptionText').value.trim();
         const misconceptionsText = document.getElementById('manualOptionMisconceptions').value.trim();
-        
+
         if (!optionText) {
             document.getElementById('manualOptionText').classList.add('is-invalid');
             return;
         }
         document.getElementById('manualOptionText').classList.remove('is-invalid');
-        
-        const misconceptions = misconceptionsText 
-            ? misconceptionsText.split(',').map(m => m.trim()).filter(m => m)
+
+        if (currentOptions.some((o) => o.option === optionText)) {
+            showFeedback('That option is already in the list.', 'warning');
+            return;
+        }
+
+        const misconceptions = misconceptionsText
+            ? misconceptionsText.split(',').map((m) => m.trim()).filter((m) => m)
             : [];
-        
+
         currentOptions.push({
             option: optionText,
             isCorrect: false,
             misconceptions: misconceptions
         });
-        
+
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
         renderOptions();
+        renderQuestionsList();
         hideManualOptionForm();
+        showFeedback('Option added to this question.', 'success', 1400);
     }
 
     function suggestDistractors() {
-        const answer = document.getElementById('correctAnswer').value;
-        const question = document.getElementById('questionText').value;
+        const answer = document.getElementById('correctAnswer').value.trim();
         const kind = document.getElementById('questionKind').value;
-        
+
         if (!answer) {
-            alert('Please enter a correct answer first.');
+            showFeedback('Enter a correct answer first, then request distractors.', 'warning');
             return;
         }
-        
-        // Show loading state
+
         const container = document.getElementById('suggestedDistractors');
         const list = document.getElementById('distractorsList');
         container.style.display = 'block';
         list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating suggestions...</div>';
-        
-        // Make AJAX request to the generic suggest endpoint
+
         $.post('{{ url_for("authroutes.suggest_distractors") }}', {
             answer: answer,
             kind: kind
         }, function(data) {
-            // data is already parsed by jQuery since response is application/json
-            
             if (data.error) {
                 list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
                 return;
             }
-            
-            if (data.distractors.length === 0) {
+
+            if (!data.distractors || data.distractors.length === 0) {
                 list.innerHTML = '<div class="list-group-item text-muted">No suggestions available for this formula.</div>';
                 return;
             }
-            
-            list.innerHTML = data.distractors.map(d => `
-                <div class="list-group-item distractor-suggestion" onclick="addDistractor('${escapeJs(d.formula)}', '${escapeJs(d.code)}')">
-                    <div class="d-flex justify-content-between">
+
+            list.innerHTML = data.distractors.map((d) => `
+                <div class="list-group-item distractor-suggestion" onclick="addDistractor('${escapeJs(d.formula)}', '${escapeJs(d.code)}', this)">
+                    <div class="d-flex justify-content-between align-items-start">
                         <code>${escapeHtml(d.formula)}</code>
-                        <span class="badge badge-info">${escapeHtml(d.code)}</span>
+                        <span class="badge badge-info ml-2">${escapeHtml(d.code)}</span>
                     </div>
+                    <span class="suggestion-action text-primary">Click to add this option</span>
                 </div>
             `).join('');
         }).fail(function(xhr, status, error) {
@@ -571,23 +783,22 @@
         });
     }
 
-    // Suggest traces for Yes/No questions
     function suggestTraces() {
         const formula = document.getElementById('questionText').value.trim();
-        
+
         if (!formula) {
-            alert('Please enter an LTL formula in the Question field first.');
+            showFeedback('Enter an LTL formula in Question Text first.', 'warning');
             return;
         }
-        
+
         const container = document.getElementById('suggestedTraces');
         const satList = document.getElementById('satisfyingTracesList');
         const rejList = document.getElementById('rejectingTracesList');
-        
+
         container.style.display = 'block';
         satList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
         rejList.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
-        
+
         $.post('{{ url_for("authroutes.suggest_traces") }}', {
             formula: formula
         }, function(data) {
@@ -596,25 +807,27 @@
                 rejList.innerHTML = '';
                 return;
             }
-            
-            if (data.satisfying.length === 0) {
+
+            if (!data.satisfying || data.satisfying.length === 0) {
                 satList.innerHTML = '<span class="text-muted">No satisfying traces found</span>';
             } else {
-                satList.innerHTML = data.satisfying.map(t => `
-                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;" 
-                         onclick="selectTrace('${escapeJs(t.trace)}', true)">
+                satList.innerHTML = data.satisfying.map((t) => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion distractor-suggestion" style="cursor:pointer;"
+                         onclick="selectTrace('${escapeJs(t.trace)}', true, this)">
                         <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="suggestion-action text-primary">Use this trace (sets answer to Yes)</span>
                     </div>
                 `).join('');
             }
-            
-            if (data.rejecting.length === 0) {
+
+            if (!data.rejecting || data.rejecting.length === 0) {
                 rejList.innerHTML = '<span class="text-muted">No rejecting traces found</span>';
             } else {
-                rejList.innerHTML = data.rejecting.map(t => `
-                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion" style="cursor:pointer;"
-                         onclick="selectTrace('${escapeJs(t.trace)}', false)">
+                rejList.innerHTML = data.rejecting.map((t) => `
+                    <div class="border rounded p-1 mb-1 bg-white trace-suggestion distractor-suggestion" style="cursor:pointer;"
+                         onclick="selectTrace('${escapeJs(t.trace)}', false, this)">
                         <code class="small">${escapeHtml(t.trace)}</code>
+                        <span class="suggestion-action text-primary">Use this trace (sets answer to No)</span>
                     </div>
                 `).join('');
             }
@@ -624,20 +837,19 @@
         });
     }
 
-    // Suggest traces for MC questions (adds as options)
     function suggestTracesForMC() {
         const formula = document.getElementById('questionText').value.trim();
-        
+
         if (!formula) {
-            alert('Please enter an LTL formula in the Question field first.');
+            showFeedback('Enter an LTL formula in Question Text first.', 'warning');
             return;
         }
-        
+
         const container = document.getElementById('suggestedDistractors');
         const list = document.getElementById('distractorsList');
         container.style.display = 'block';
         list.innerHTML = '<div class="list-group-item text-center"><span class="spinner-border spinner-border-sm"></span> Generating trace suggestions...</div>';
-        
+
         $.post('{{ url_for("authroutes.suggest_traces") }}', {
             formula: formula
         }, function(data) {
@@ -645,218 +857,310 @@
                 list.innerHTML = `<div class="list-group-item text-danger">Error: ${escapeHtml(data.error)}</div>`;
                 return;
             }
-            
+
             let html = '';
-            
-            if (data.satisfying.length > 0) {
+
+            if (data.satisfying && data.satisfying.length > 0) {
                 html += '<div class="list-group-item bg-light py-1"><small class="text-success font-weight-bold">✓ Satisfying Traces (correct answers)</small></div>';
-                html += data.satisfying.map(t => `
-                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', true)">
-                        <code class="small">${escapeHtml(t.trace)}</code>
-                        <span class="badge badge-success float-right">Satisfies</span>
+                html += data.satisfying.map((t) => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', true, this)">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <code class="small">${escapeHtml(t.trace)}</code>
+                            <span class="badge badge-success ml-2">Satisfies</span>
+                        </div>
+                        <span class="suggestion-action text-primary">Click to add this option</span>
                     </div>
                 `).join('');
             }
-            
-            if (data.rejecting.length > 0) {
+
+            if (data.rejecting && data.rejecting.length > 0) {
                 html += '<div class="list-group-item bg-light py-1"><small class="text-danger font-weight-bold">✗ Rejecting Traces (incorrect answers)</small></div>';
-                html += data.rejecting.map(t => `
-                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', false)">
-                        <code class="small">${escapeHtml(t.trace)}</code>
-                        <span class="badge badge-danger float-right">Rejects</span>
+                html += data.rejecting.map((t) => `
+                    <div class="list-group-item distractor-suggestion" onclick="addTraceOption('${escapeJs(t.trace)}', false, this)">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <code class="small">${escapeHtml(t.trace)}</code>
+                            <span class="badge badge-danger ml-2">Rejects</span>
+                        </div>
+                        <span class="suggestion-action text-primary">Click to add this option</span>
                     </div>
                 `).join('');
             }
-            
+
             if (!html) {
                 html = '<div class="list-group-item text-muted">No traces generated. Try a different formula.</div>';
             }
-            
+
             list.innerHTML = html;
         }).fail(function(xhr, status, error) {
             list.innerHTML = `<div class="list-group-item text-danger">Failed to get traces: ${escapeHtml(error)}</div>`;
         });
     }
 
-    function selectTrace(trace, satisfies) {
+    function selectTrace(trace, satisfies, element) {
         document.getElementById('traceText').value = trace;
-        // For Y/N, set the correct answer based on whether it satisfies
         document.getElementById('correctAnswer').value = satisfies ? 'Yes' : 'No';
-        
-        // Auto-populate the options for Y/N
+
         currentOptions = [
             { option: 'Yes', isCorrect: satisfies, misconceptions: [] },
             { option: 'No', isCorrect: !satisfies, misconceptions: [] }
         ];
+
+        if (element) {
+            markSuggestionAdded(element);
+        }
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
         renderOptions();
-        
+        renderQuestionsList();
         $('#suggestedTraces').hide();
+        showFeedback('Trace selected and Yes/No options auto-filled.', 'success');
     }
 
-    function addTraceOption(trace, isCorrect) {
-        // Check if already added
-        if (currentOptions.some(o => o.option === trace)) {
-            alert('This trace is already added.');
+    function addTraceOption(trace, isCorrect, element) {
+        if (currentOptions.some((o) => o.option === trace)) {
+            showFeedback('This trace is already added.', 'warning');
             return;
         }
-        
+
+        if (isCorrect) {
+            currentOptions = currentOptions.map((o) => ({ ...o, isCorrect: false }));
+            document.getElementById('correctAnswer').value = trace;
+        }
+
         currentOptions.push({
             option: trace,
             isCorrect: isCorrect,
             misconceptions: isCorrect ? [] : ['TraceEvaluation']
         });
+
+        if (element) {
+            markSuggestionAdded(element);
+        }
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
         renderOptions();
+        renderQuestionsList();
+        showFeedback('Trace option added.', 'success', 1400);
     }
 
-    function addDistractor(formula, code) {
-        // Check if already added
-        if (currentOptions.some(o => o.option === formula)) {
-            alert('This option is already added.');
+    function addDistractor(formula, code, element) {
+        if (currentOptions.some((o) => o.option === formula)) {
+            showFeedback('This option is already added.', 'warning');
             return;
         }
-        
+
         currentOptions.push({
             option: formula,
             isCorrect: false,
             misconceptions: [code]
         });
+
+        if (element) {
+            markSuggestionAdded(element);
+        }
+        markCurrentQuestionDirty();
+        persistCurrentQuestionDraft();
         renderOptions();
+        renderQuestionsList();
+        showFeedback('Distractor added.', 'success', 1400);
     }
 
-    function saveCurrentQuestion() {
-        if (currentQuestionIndex < 0) return;
-        
-        const questionText = document.getElementById('questionText').value.trim();
-        const correctAnswer = document.getElementById('correctAnswer').value.trim();
-        const kind = document.getElementById('questionKind').value;
-        const trace = document.getElementById('traceText').value.trim();
-        
-        if (!questionText) {
-            alert('Question text is required.');
+    function markSuggestionAdded(element) {
+        element.classList.add('selected', 'added');
+        const actionText = element.querySelector('.suggestion-action');
+        if (actionText) {
+            actionText.textContent = 'Added';
+            actionText.classList.remove('text-primary');
+            actionText.classList.add('text-success');
+        }
+    }
+
+    function saveCurrentQuestion(event) {
+        if (currentQuestionIndex < 0) {
+            showFeedback('Select a question first.', 'warning');
             return;
         }
-        
-        if (!correctAnswer) {
-            alert('Correct answer is required.');
+
+        const built = buildQuestionFromEditor({
+            requireQuestionText: true,
+            requireCorrectAnswer: true
+        });
+        if (!built.ok) {
+            showFeedback(built.error, 'danger');
             return;
         }
-        
-        // Update or add correct answer in options
-        const existingCorrectIndex = currentOptions.findIndex(o => o.isCorrect);
-        if (existingCorrectIndex >= 0) {
-            currentOptions[existingCorrectIndex].option = correctAnswer;
-        } else {
-            currentOptions.unshift({
-                option: correctAnswer,
-                isCorrect: true,
-                misconceptions: []
-            });
-        }
-        
-        // Build question object
-        const question = {
-            question: questionText,
-            type: kind,
-            options: currentOptions
-        };
-        
-        if (kind === 'tracesatisfaction_yn' && trace) {
-            question.trace = trace;
-        }
-        
-        questions[currentQuestionIndex] = question;
+
+        questions[currentQuestionIndex] = built.question;
+        currentOptions = built.question.options.map((opt) => ({ ...opt }));
+        questionSavedStates[currentQuestionIndex] = true;
+
+        renderOptions();
         renderQuestionsList();
-        
-        // Visual feedback
-        const btn = event.target;
-        const originalText = btn.textContent;
-        btn.textContent = 'Saved!';
-        btn.classList.add('btn-success');
-        btn.classList.remove('btn-primary');
+        updateSaveIndicators();
+        showFeedback(`Question #${currentQuestionIndex + 1} saved.`, 'success');
+        flashButton(event ? event.target : null, 'Saved!');
+    }
+
+    function flashButton(button, temporaryText) {
+        if (!button) {
+            return;
+        }
+        const originalText = button.textContent;
+        button.textContent = temporaryText;
+        button.classList.add('btn-success');
+        button.classList.remove('btn-primary');
         setTimeout(() => {
-            btn.textContent = originalText;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary');
+            button.textContent = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-primary');
         }, 1000);
     }
 
     function deleteCurrentQuestion() {
-        if (currentQuestionIndex < 0) return;
-        
-        if (!confirm('Are you sure you want to delete this question?')) return;
-        
+        if (currentQuestionIndex < 0) {
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this question?')) {
+            return;
+        }
+
         questions.splice(currentQuestionIndex, 1);
+        questionSavedStates.splice(currentQuestionIndex, 1);
         currentQuestionIndex = -1;
         currentOptions = [];
-        
+
         document.getElementById('noQuestionSelected').style.display = 'block';
         document.getElementById('questionEditor').style.display = 'none';
         document.getElementById('editingIndicator').style.display = 'none';
-        
+        document.getElementById('questionSaveState').style.display = 'none';
+
         renderQuestionsList();
+        updateSaveIndicators();
+        showFeedback('Question deleted.', 'warning');
     }
 
     function cancelEditing() {
+        if (currentQuestionIndex >= 0) {
+            persistCurrentQuestionDraft();
+        }
+
         currentQuestionIndex = -1;
         currentOptions = [];
-        
+
         document.getElementById('noQuestionSelected').style.display = 'block';
         document.getElementById('questionEditor').style.display = 'none';
         document.getElementById('editingIndicator').style.display = 'none';
-        
+        document.getElementById('questionSaveState').style.display = 'none';
+
         renderQuestionsList();
+        updateSaveIndicators();
     }
 
-    // Form submission
-    document.getElementById('exerciseForm').addEventListener('submit', function(e) {
-        // Save current question if editing
+    function handleExerciseSubmit(e) {
         if (currentQuestionIndex >= 0) {
-            // Auto-save current question
-            const questionText = document.getElementById('questionText').value.trim();
-            const correctAnswer = document.getElementById('correctAnswer').value.trim();
-            
-            if (questionText && correctAnswer) {
-                const kind = document.getElementById('questionKind').value;
-                const trace = document.getElementById('traceText').value.trim();
-                
-                const existingCorrectIndex = currentOptions.findIndex(o => o.isCorrect);
-                if (existingCorrectIndex >= 0) {
-                    currentOptions[existingCorrectIndex].option = correctAnswer;
-                } else {
-                    currentOptions.unshift({
-                        option: correctAnswer,
-                        isCorrect: true,
-                        misconceptions: []
-                    });
-                }
-                
-                const question = {
-                    question: questionText,
-                    type: kind,
-                    options: currentOptions
-                };
-                
-                if (kind === 'tracesatisfaction_yn' && trace) {
-                    question.trace = trace;
-                }
-                
-                questions[currentQuestionIndex] = question;
+            persistCurrentQuestionDraft();
+        }
+
+        const hasUnsaved = questionSavedStates.some((state) => state === false);
+        if (hasUnsaved) {
+            const shouldContinue = confirm(
+                'Some questions are marked Unsaved. Continue and save the exercise anyway?'
+            );
+            if (!shouldContinue) {
+                e.preventDefault();
+                showFeedback('Save canceled. Review unsaved questions first.', 'warning');
+                return;
             }
         }
-        
-        // Update hidden field
-        document.getElementById('exercise_json').value = JSON.stringify(questions);
-    });
 
-    // Utility functions
+        document.getElementById('exercise_json').value = JSON.stringify(questions);
+
+        const saveExerciseBtn = document.getElementById('saveExerciseBtn');
+        saveExerciseBtn.disabled = true;
+        saveExerciseBtn.textContent = 'Saving...';
+        showFeedback('Saving exercise...', 'info', 0);
+    }
+
+    function markCurrentQuestionDirty() {
+        if (suppressDirtyTracking || currentQuestionIndex < 0) {
+            return;
+        }
+        questionSavedStates[currentQuestionIndex] = false;
+        updateSaveIndicators();
+    }
+
+    function updateSaveIndicators() {
+        const questionState = document.getElementById('questionSaveState');
+        if (currentQuestionIndex >= 0) {
+            const isSaved = questionSavedStates[currentQuestionIndex] !== false;
+            questionState.style.display = 'inline';
+            questionState.textContent = isSaved ? 'Saved' : 'Unsaved changes';
+            questionState.classList.remove('badge-success', 'badge-warning', 'badge-secondary');
+            questionState.classList.add(isSaved ? 'badge-success' : 'badge-warning');
+        } else {
+            questionState.style.display = 'none';
+        }
+
+        const exerciseState = document.getElementById('exerciseSaveState');
+        if (questions.length === 0) {
+            exerciseState.className = 'small text-muted mt-2';
+            exerciseState.textContent = 'No questions added yet.';
+            return;
+        }
+
+        const hasUnsaved = questionSavedStates.some((state) => state === false);
+        if (hasUnsaved) {
+            exerciseState.className = 'small text-warning font-weight-bold mt-2';
+            exerciseState.textContent = 'Unsaved question edits detected. Save each question before updating the exercise.';
+        } else {
+            exerciseState.className = 'small text-success mt-2';
+            exerciseState.textContent = 'All question changes are saved in the editor.';
+        }
+    }
+
+    function formatLastSavedTimestamp() {
+        const timestamp = document.getElementById('lastSavedServer');
+        if (!timestamp) {
+            return;
+        }
+
+        const parsed = new Date(timestamp.textContent.trim());
+        if (!Number.isNaN(parsed.getTime())) {
+            timestamp.textContent = parsed.toLocaleString();
+        }
+    }
+
+    function showFeedback(message, type = 'info', durationMs = 2600) {
+        const banner = document.getElementById('builderFeedback');
+        banner.textContent = message;
+        banner.className = `alert alert-${type} py-2 mb-3 builder-feedback`;
+        banner.classList.remove('d-none');
+
+        if (feedbackTimer) {
+            clearTimeout(feedbackTimer);
+            feedbackTimer = null;
+        }
+        if (durationMs > 0) {
+            feedbackTimer = setTimeout(() => {
+                banner.classList.add('d-none');
+            }, durationMs);
+        }
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text == null ? '' : String(text);
         return div.innerHTML;
     }
 
     function escapeJs(text) {
-        return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        return String(text)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
     }
     </script>
 </body>
