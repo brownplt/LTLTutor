@@ -13,6 +13,7 @@ import string
 from functools import wraps
 from urllib.parse import urlparse
 from datetime import datetime, timezone
+from ltlnode import SUPPORTED_SYNTAXES
 
 authroutes = Blueprint('authroutes', __name__)
 
@@ -48,6 +49,7 @@ class InstructorExercise(Base):
     name = Column(String)  # Human-readable name
     owner = Column(String)  # Username of instructor who created it
     course = Column(String, nullable=True)  # Optional: assigned to a specific course
+    syntax = Column(String, nullable=True)  # Optional: fixed syntax for display
     exercise_json = Column(String)  # JSON string of the exercise questions
     created_at = Column(String)  # ISO timestamp
     updated_at = Column(String)  # ISO timestamp
@@ -149,6 +151,14 @@ def _ensure_instructor_exercise_schema():
                 text(
                     f"UPDATE {INSTRUCTOR_EXERCISE_TABLE} "
                     "SET is_deleted = FALSE WHERE is_deleted IS NULL"
+                )
+            )
+
+        if 'syntax' not in existing_columns:
+            connection.execute(
+                text(
+                    f"ALTER TABLE {INSTRUCTOR_EXERCISE_TABLE} "
+                    "ADD COLUMN syntax VARCHAR"
                 )
             )
 
@@ -423,6 +433,11 @@ def get_instructor_exercise_by_name(exercise_name):
         )
 
 
+def normalize_syntax_choice(raw_syntax):
+    syntax = (raw_syntax or '').strip()
+    return syntax if syntax in SUPPORTED_SYNTAXES else None
+
+
 def parse_expires_at(expires_at_str):
     if not expires_at_str:
         return None
@@ -471,6 +486,7 @@ def create_instructor_exercise():
         exercise_name = request.form.get('exercise_name', '').strip()
         exercise_json = request.form.get('exercise_json', '[]')
         course = request.form.get('course', None)
+        syntax_choice = normalize_syntax_choice(request.form.get('exercise_syntax', ''))
         expires_at_raw = request.form.get('expires_at', '').strip()
         allow_multiple_submissions = request.form.get('submission_limit', 'multiple') == 'multiple'
         
@@ -503,6 +519,7 @@ def create_instructor_exercise():
                 name=exercise_name,
                 owner=current_user.username,
                 course=course if course else None,
+                syntax=syntax_choice,
                 exercise_json=exercise_json,
                 created_at=now,
                 updated_at=now,
@@ -521,7 +538,8 @@ def create_instructor_exercise():
     course_names = [c.name for c in owned_courses]
     return render_template('instructor/exercise_builder.html', 
                            exercise=None,
-                           course_names=course_names)
+                           course_names=course_names,
+                           supported_syntaxes=SUPPORTED_SYNTAXES)
 
 
 @authroutes.route('/instructor/exercises/<int:exercise_id>', methods=['GET', 'POST'])
@@ -546,6 +564,7 @@ def edit_instructor_exercise(exercise_id):
             exercise_name = request.form.get('exercise_name', '').strip()
             exercise_json = request.form.get('exercise_json', '[]')
             course = request.form.get('course', None)
+            syntax_choice = normalize_syntax_choice(request.form.get('exercise_syntax', ''))
             expires_at_raw = request.form.get('expires_at', '').strip()
             allow_multiple_submissions = request.form.get('submission_limit', 'multiple') == 'multiple'
             
@@ -574,6 +593,7 @@ def edit_instructor_exercise(exercise_id):
             exercise.name = exercise_name
             exercise.exercise_json = exercise_json
             exercise.course = course if course else None
+            exercise.syntax = syntax_choice
             exercise.updated_at = datetime.utcnow().isoformat()
             exercise.expires_at = expires_at_value
             exercise.allow_multiple_submissions = allow_multiple_submissions
@@ -591,6 +611,7 @@ def edit_instructor_exercise(exercise_id):
             'id': exercise.id,
             'name': exercise.name,
             'course': exercise.course,
+            'syntax': exercise.syntax,
             'exercise_json': exercise.exercise_json,
             'created_at': exercise.created_at,
             'updated_at': exercise.updated_at,
@@ -600,7 +621,8 @@ def edit_instructor_exercise(exercise_id):
         
     return render_template('instructor/exercise_builder.html', 
                            exercise=exercise_data,
-                           course_names=course_names)
+                           course_names=course_names,
+                           supported_syntaxes=SUPPORTED_SYNTAXES)
 
 
 @authroutes.route('/instructor/exercises/<int:exercise_id>/delete', methods=['POST'])

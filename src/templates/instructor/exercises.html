@@ -41,6 +41,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Course</th>
+                        <th>Syntax</th>
                         <th>Questions</th>
                         <th>Availability</th>
                         <th>Submission Policy</th>
@@ -61,6 +62,13 @@
                             <span class="badge badge-info">{{ exercise.course }}</span>
                             {% else %}
                             <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if exercise.syntax %}
+                            <span class="badge badge-primary">{{ exercise.syntax }}</span>
+                            {% else %}
+                            <span class="text-muted">Ask student</span>
                             {% endif %}
                         </td>
                         <td>

@@ -99,6 +99,23 @@
                                 </small>
                             </div>
                             <div class="form-group">
+                                <label for="exercise_syntax">Exercise Syntax</label>
+                                <select class="form-control" id="exercise_syntax" name="exercise_syntax">
+                                    <option value="" {% if not exercise or not exercise.syntax %}selected{% endif %}>
+                                        Ask student at start
+                                    </option>
+                                    {% for syntax_name in supported_syntaxes %}
+                                    <option value="{{ syntax_name }}"
+                                            {% if exercise and exercise.syntax == syntax_name %}selected{% endif %}>
+                                        {{ syntax_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    Choose a fixed syntax for this exercise, or let each student choose when they start.
+                                </small>
+                            </div>
+                            <div class="form-group">
                                 <label for="expires_at">Expiry (optional)</label>
                                 <input type="datetime-local" class="form-control" id="expires_at" name="expires_at"
                                        value="{{ exercise.expires_at[:16] if exercise and exercise.expires_at else '' }}">

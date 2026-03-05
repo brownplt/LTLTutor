@@ -36,6 +36,11 @@
         {% include 'navbar.html' %}
 
         <h6 id="exerciseName">{{ exercise_name }}</h6>
+        {% if syntax_choice %}
+        <p class="text-muted mb-0">
+            <small>Syntax: <strong>{{ syntax_choice }}</strong></small>
+        </p>
+        {% endif %}
 
         <div id="questions">
             {% for q in questions %}

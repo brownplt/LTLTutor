@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, Blueprint, jsonify, redirect
+from flask import Flask, render_template, request, Blueprint, jsonify, redirect, make_response, url_for
 from flask_login import login_required, current_user
 
 
@@ -128,6 +128,96 @@ def _load_suggested_formulas():
 
 
 SUGGESTED_FORMULAS = _load_suggested_formulas()
+
+
+def _normalize_syntax_choice(syntax_choice):
+    return syntax_choice if syntax_choice in SUPPORTED_SYNTAXES else None
+
+
+def _render_formula_in_syntax(formula, syntax_choice):
+    try:
+        node = parse_ltl_string(formula)
+    except Exception:
+        return formula
+
+    if syntax_choice == "Forge":
+        return node.__forge__()
+    if syntax_choice == "Electrum":
+        return node.__electrum__()
+    return str(node)
+
+
+def _convert_questions_to_syntax(questions, syntax_choice):
+    if syntax_choice not in SUPPORTED_SYNTAXES:
+        return questions
+
+    converted_questions = []
+    for question in questions:
+        if not isinstance(question, dict):
+            converted_questions.append(question)
+            continue
+
+        converted_question = dict(question)
+        question_type = converted_question.get('type')
+
+        # Trace satisfaction questions display an LTL formula in question text.
+        if question_type in ("tracesatisfaction_mc", "tracesatisfaction_yn"):
+            question_text = converted_question.get('question')
+            if isinstance(question_text, str):
+                converted_question['question'] = _render_formula_in_syntax(question_text, syntax_choice)
+
+        options = converted_question.get('options')
+        if isinstance(options, list):
+            converted_options = []
+            for option in options:
+                if not isinstance(option, dict):
+                    converted_options.append(option)
+                    continue
+
+                converted_option = dict(option)
+
+                # English->LTL options are formulas that should follow the chosen syntax.
+                if question_type == "englishtoltl":
+                    option_text = converted_option.get('option')
+                    if isinstance(option_text, str):
+                        converted_option['option'] = _render_formula_in_syntax(option_text, syntax_choice)
+
+                generated_from_formula = converted_option.get('generatedFromFormula')
+                if isinstance(generated_from_formula, str):
+                    converted_option['generatedFromFormula'] = _render_formula_in_syntax(
+                        generated_from_formula,
+                        syntax_choice
+                    )
+
+                converted_options.append(converted_option)
+
+            converted_question['options'] = converted_options
+
+        converted_questions.append(converted_question)
+
+    return converted_questions
+
+
+def _resolve_instructor_exercise_syntax(exercise_obj):
+    configured_syntax = _normalize_syntax_choice(getattr(exercise_obj, 'syntax', None))
+    if configured_syntax:
+        return configured_syntax, False
+
+    requested_syntax = _normalize_syntax_choice(request.args.get('syntax'))
+    if requested_syntax:
+        return requested_syntax, False
+
+    return None, True
+
+
+def _build_syntax_picker_options(endpoint, **route_values):
+    return [
+        {
+            "name": syntax_name,
+            "url": url_for(endpoint, syntax=syntax_name, **route_values)
+        }
+        for syntax_name in SUPPORTED_SYNTAXES
+    ]
 
 
 def _highlight_differences(text_a, text_b):
@@ -657,6 +747,15 @@ def exercise(exercise_name):
                         title="Submission limit reached"
                     ), 403
 
+            syntax_choice, needs_syntax_choice = _resolve_instructor_exercise_syntax(exercise_obj)
+            if needs_syntax_choice:
+                return render_template(
+                    'exercise_syntax_picker.html',
+                    uid=getUserName(),
+                    exercise_name=exercise_obj.name,
+                    syntax_options=_build_syntax_picker_options('exercise', exercise_name=exercise_name)
+                )
+
             data = exerciseprocessor.randomize_questions(data)
             
             # Extract literals for trace expansion
@@ -669,7 +768,18 @@ def exercise(exercise_name):
                         pass
             
             data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals))
-            return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_obj.name)
+            data = _convert_questions_to_syntax(data, syntax_choice)
+            response = make_response(
+                render_template(
+                    'exercise.html',
+                    uid=getUserName(),
+                    questions=data,
+                    exercise_name=exercise_obj.name,
+                    syntax_choice=syntax_choice
+                )
+            )
+            response.set_cookie('ltlsyntax', syntax_choice, path='/')
+            return response
         except Exception as e:
             return f"Error loading exercise: {str(e)}"
     
@@ -787,6 +897,7 @@ def exercise_predefined_get():
     
     try:
         exercise_obj = None
+        syntax_choice = None
         if sourceuri.startswith('instructor:'):
             try:
                 exercise_id = int(sourceuri.split(':', 1)[1])
@@ -822,6 +933,18 @@ def exercise_predefined_get():
                         title="Submission limit reached"
                     ), 403
 
+            syntax_choice, needs_syntax_choice = _resolve_instructor_exercise_syntax(exercise_obj)
+            if needs_syntax_choice:
+                return render_template(
+                    'exercise_syntax_picker.html',
+                    uid=getUserName(),
+                    exercise_name=exercise_obj.name,
+                    syntax_options=_build_syntax_picker_options(
+                        'exercise_predefined_get',
+                        sourceuri=sourceuri
+                    )
+                )
+
         data = exerciseprocessor.randomize_questions(data)
 
         # Try to extract literals from questions for trace expansion
@@ -843,6 +966,8 @@ def exercise_predefined_get():
                     pass
 
         data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals) if literals else [])
+        if syntax_choice:
+            data = _convert_questions_to_syntax(data, syntax_choice)
 
         # Generate exercise name from sourceuri
         if exercise_obj:
@@ -854,7 +979,18 @@ def exercise_predefined_get():
         print(f"Error loading exercise from {sourceuri}: {e}")
         return f"Error loading exercise: {str(e)}"
 
-    return render_template('exercise.html', uid=getUserName(), questions=data, exercise_name=exercise_name)
+    response = make_response(
+        render_template(
+            'exercise.html',
+            uid=getUserName(),
+            questions=data,
+            exercise_name=exercise_name,
+            syntax_choice=syntax_choice
+        )
+    )
+    if syntax_choice:
+        response.set_cookie('ltlsyntax', syntax_choice, path='/')
+    return response
 
 
 @app.route('/exercise/generate', methods=['GET'])
@@ -906,7 +1042,13 @@ def newexercise():
 
     answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
 
-    return render_template('exercise.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
+    return render_template(
+        'exercise.html',
+        uid=getUserName(),
+        questions=data,
+        exercise_name=exercise_name,
+        syntax_choice=syntax_choice
+    )
 
 
 

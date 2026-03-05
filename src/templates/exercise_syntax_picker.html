@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTL Tutor: Choose Syntax</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+</head>
+
+<body>
+    <div class="container mt-4">
+        {% include 'navbar.html' %}
+
+        <div class="card mt-4 shadow-sm">
+            <div class="card-body text-center">
+                <h3 class="mb-3">Choose Exercise Syntax</h3>
+                <p class="text-muted">
+                    <strong>{{ exercise_name }}</strong> can be shown in different LTL syntaxes.
+                    Choose one for this attempt.
+                </p>
+
+                <div class="d-flex flex-column align-items-center mt-4">
+                    {% for option in syntax_options %}
+                    <a href="{{ option.url }}" class="btn btn-primary btn-lg mb-2" style="min-width: 240px;">
+                        {{ option.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+
+</html>
