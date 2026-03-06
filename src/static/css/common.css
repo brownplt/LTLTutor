@@ -92,3 +92,32 @@
     transform: none;
     box-shadow: none;
 }
+
+@keyframes view-feedback-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    40% {
+        transform: scale(1.06);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.view-feedback-prompt-pulse-once {
+    display: inline-block;
+    animation-name: view-feedback-pulse;
+    animation-duration: 500ms;
+    animation-timing-function: ease-out;
+    animation-iteration-count: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .view-feedback-prompt-pulse-once {
+        animation: none;
+    }
+}

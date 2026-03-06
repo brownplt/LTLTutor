@@ -22,7 +22,7 @@ function addFeedbackPrompt(triggerButton, feedbackElement) {
 
     const jumpButton = document.createElement('button');
     jumpButton.type = 'button';
-    jumpButton.className = 'btn btn-link btn-sm p-0 ml-2 align-baseline view-feedback-prompt';
+    jumpButton.className = 'btn btn-link btn-sm p-0 ml-2 align-baseline view-feedback-prompt view-feedback-prompt-pulse-once';
     jumpButton.textContent = 'View feedback ↓';
     jumpButton.setAttribute('aria-label', 'View updated feedback');
 
