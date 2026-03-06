@@ -2,43 +2,416 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generated Exercises</title>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <style>
+        .controls-card {
+            border: 1px solid #d9e2ec;
+        }
+
+        .exercise-card,
+        .question-card {
+            border: 1px solid #d9e2ec;
+        }
+
+        .exercise-header,
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .exercise-toggle,
+        .question-toggle {
+            color: #1d3557;
+            font-weight: 600;
+            text-decoration: none !important;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .exercise-title,
+        .question-title {
+            display: block;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .exercise-meta,
+        .question-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.4rem;
+        }
+
+        .question-card .card-header {
+            background: #f8fafc;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 0.35rem;
+        }
+
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .option-item {
+            border: 1px solid #e3e8ee;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            background: #ffffff;
+        }
+
+        .option-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-right: 0.75rem;
+        }
+
+        .payload-block {
+            background: #f8f9fa;
+            border: 1px solid #e3e8ee;
+            border-radius: 0.35rem;
+            padding: 0.7rem;
+            margin: 0;
+            max-height: 300px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .exercise-header,
+            .question-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .exercise-meta,
+            .question-meta {
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Generated Exercises</h1>
-    <button id="downloadJsonBtn">Download As JSON</button>
-    <table id="exercisesTable" class="display">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>User ID</th>
-                <th>Timestamp</th>
-                <th>Exercise Name</th>
-                <th>Exercise Data</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ex_id, ex in exercises.items() %}
-            <tr>
-                <td>{{ ex_id }}</td>
-                <td>{{ ex.user_id }}</td>
-                <td>{{ ex.timestamp }}</td>
-                <td>{{ ex.exercise_name }}</td>
-                <td><pre style="white-space: pre-wrap;">{{ ex.exercise_data }}</pre></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#exercisesTable').DataTable();
+    <div class="container py-3">
+        {% include 'navbar.html' %}
 
-            document.getElementById('downloadJsonBtn').addEventListener('click', function() {
-                const data = {{ exercises|tojson }};
-                const jsonStr = JSON.stringify(data, null, 2);
+        <div class="d-flex justify-content-between align-items-start flex-wrap mt-3 mb-3">
+            <div>
+                <h1 class="h3 mb-1">Generated Exercises</h1>
+                <p class="text-muted mb-0">
+                    {{ exercises|length }} exercise{% if exercises|length != 1 %}s{% endif %}
+                    · {{ total_questions }} question{% if total_questions != 1 %}s{% endif %}
+                </p>
+            </div>
+            <button id="downloadJsonBtn" class="btn btn-outline-secondary btn-sm mt-2 mt-sm-0">Download JSON</button>
+        </div>
+
+        <div class="card controls-card mb-3">
+            <div class="card-body py-3">
+                <div class="form-row align-items-end">
+                    <div class="form-group col-md-6 mb-2">
+                        <label for="exerciseSearch" class="mb-1">Search</label>
+                        <input
+                            id="exerciseSearch"
+                            type="text"
+                            class="form-control"
+                            placeholder="Search by formula, trace, misconception, option text..."
+                        >
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <label for="questionTypeFilter" class="mb-1">Question Type</label>
+                        <select id="questionTypeFilter" class="form-control">
+                            <option value="all">All types</option>
+                            {% for question_type in question_types %}
+                            <option value="{{ question_type }}">{{ question_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3 mb-2">
+                        <label for="sortMode" class="mb-1">Sort</label>
+                        <select id="sortMode" class="form-control">
+                            <option value="recent">Most recent</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="questions_desc">Most questions</option>
+                        </select>
+                    </div>
+                </div>
+                <small id="resultCount" class="text-muted"></small>
+            </div>
+        </div>
+
+        {% if exercises %}
+        <div id="exerciseList">
+            {% for exercise in exercises %}
+            <div
+                class="card exercise-card mb-3"
+                data-search="{{ exercise.search_blob|e }}"
+                data-name="{{ (exercise.exercise_name or '')|lower|e }}"
+                data-timestamp="{{ exercise.timestamp_epoch }}"
+                data-question-count="{{ exercise.question_count }}"
+                data-types="{{ exercise.question_types|join('||')|e }}"
+            >
+                <div class="card-header py-3">
+                    <div class="exercise-header">
+                        <button
+                            class="btn btn-link exercise-toggle text-left p-0 {% if not loop.first %}collapsed{% endif %}"
+                            type="button"
+                            data-toggle="collapse"
+                            data-target="#exerciseBody{{ exercise.id }}"
+                            aria-expanded="{{ 'true' if loop.first else 'false' }}"
+                            aria-controls="exerciseBody{{ exercise.id }}"
+                        >
+                            <span class="exercise-title">{{ exercise.exercise_name }}</span>
+                        </button>
+
+                        <div class="exercise-meta small">
+                            <span class="badge badge-light">ID {{ exercise.id }}</span>
+                            <span class="badge badge-info">{{ exercise.question_count }} q</span>
+                            <span class="text-muted">{{ exercise.timestamp }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="exerciseBody{{ exercise.id }}" class="collapse {% if loop.first %}show{% endif %}">
+                    <div class="card-body">
+                        {% if exercise.parse_error %}
+                        <div class="alert alert-warning py-2 mb-3">{{ exercise.parse_error }}</div>
+                        {% endif %}
+
+                        {% if exercise.question_type_counts %}
+                        <div class="mb-3">
+                            {% for question_type, count in exercise.question_type_counts.items()|sort %}
+                            <span class="badge badge-secondary mr-1 mb-1">{{ question_type }}: {{ count }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        {% if exercise.questions %}
+                        <div class="accordion" id="questionAccordion{{ exercise.id }}">
+                            {% for question in exercise.questions %}
+                            <div class="card question-card mb-2">
+                                <div class="card-header py-2" id="questionHeading{{ exercise.id }}{{ question.index }}">
+                                    <div class="question-header">
+                                        <button
+                                            class="btn btn-link question-toggle text-left p-0 collapsed"
+                                            type="button"
+                                            data-toggle="collapse"
+                                            data-target="#questionBody{{ exercise.id }}{{ question.index }}"
+                                            aria-expanded="false"
+                                            aria-controls="questionBody{{ exercise.id }}{{ question.index }}"
+                                        >
+                                            <span class="question-title">Q{{ question.index }}. {{ question.question_text }}</span>
+                                        </button>
+
+                                        <div class="question-meta small">
+                                            <span class="badge badge-light">{{ question.question_type }}</span>
+                                            {% if question.score is not none %}
+                                            <span class="badge badge-primary">Score {{ question.score }}</span>
+                                            {% endif %}
+                                            {% if question.option_count > 0 %}
+                                            <span class="badge badge-info">{{ question.correct_option_count }}/{{ question.option_count }} correct</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    id="questionBody{{ exercise.id }}{{ question.index }}"
+                                    class="collapse"
+                                    data-parent="#questionAccordion{{ exercise.id }}"
+                                >
+                                    <div class="card-body py-3">
+                                        {% if question.trace %}
+                                        <div class="mb-3">
+                                            <div class="detail-label">Trace</div>
+                                            <pre class="payload-block">{{ question.trace }}</pre>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if question.feedback %}
+                                        <div class="mb-3">
+                                            <div class="detail-label">Feedback</div>
+                                            <div class="small">{{ question.feedback }}</div>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if question.options %}
+                                        <div class="mb-2">
+                                            <div class="detail-label">Options</div>
+                                            <div class="option-list">
+                                                {% for option in question.options %}
+                                                <div class="option-item">
+                                                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                                        <span class="option-text">{{ option.option_text }}</span>
+                                                        <span class="badge {% if option.is_correct %}badge-success{% else %}badge-danger{% endif %}">
+                                                            {% if option.is_correct %}Correct{% else %}Distractor{% endif %}
+                                                        </span>
+                                                    </div>
+
+                                                    {% if option.generated_from_formula %}
+                                                    <div class="small text-muted mt-2">
+                                                        Generated from: <code>{{ option.generated_from_formula }}</code>
+                                                    </div>
+                                                    {% endif %}
+
+                                                    {% if option.misconceptions %}
+                                                    <div class="small text-muted mt-2">
+                                                        Misconceptions:
+                                                        {% for misconception in option.misconceptions %}
+                                                        <span class="badge badge-warning text-dark mr-1 mb-1">{{ misconception }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+
+                                                    {% if option.mermaid %}
+                                                    <details class="mt-2">
+                                                        <summary class="small text-muted">Show option mermaid source</summary>
+                                                        <pre class="payload-block mt-2">{{ option.mermaid }}</pre>
+                                                    </details>
+                                                    {% endif %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if question.mermaid %}
+                                        <details class="mt-3">
+                                            <summary class="small text-muted">Show question mermaid source</summary>
+                                            <pre class="payload-block mt-2">{{ question.mermaid }}</pre>
+                                        </details>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">No parsed questions were found for this exercise.</p>
+                        {% endif %}
+
+                        <details class="mt-3">
+                            <summary class="small text-muted">Show raw JSON payload</summary>
+                            <pre class="payload-block mt-2">{{ exercise.exercise_data }}</pre>
+                        </details>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-light">No generated exercises found in the last 365 days.</div>
+        {% endif %}
+
+        <div id="noResults" class="alert alert-light d-none">No exercises match the current filters.</div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        (function () {
+            const rawData = {{ raw_exercises|tojson }};
+            const cards = Array.from(document.querySelectorAll('.exercise-card'));
+            const exerciseList = document.getElementById('exerciseList');
+            const searchInput = document.getElementById('exerciseSearch');
+            const questionTypeFilter = document.getElementById('questionTypeFilter');
+            const sortMode = document.getElementById('sortMode');
+            const resultCount = document.getElementById('resultCount');
+            const noResults = document.getElementById('noResults');
+
+            function normalized(text) {
+                return (text || '').toString().toLowerCase();
+            }
+
+            function toNumber(value) {
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : 0;
+            }
+
+            function compareCards(a, b, mode) {
+                const timestampA = toNumber(a.dataset.timestamp);
+                const timestampB = toNumber(b.dataset.timestamp);
+                const nameA = normalized(a.dataset.name);
+                const nameB = normalized(b.dataset.name);
+                const questionCountA = toNumber(a.dataset.questionCount);
+                const questionCountB = toNumber(b.dataset.questionCount);
+
+                if (mode === 'oldest') {
+                    return timestampA - timestampB;
+                }
+                if (mode === 'name_asc') {
+                    return nameA.localeCompare(nameB);
+                }
+                if (mode === 'name_desc') {
+                    return nameB.localeCompare(nameA);
+                }
+                if (mode === 'questions_desc') {
+                    return questionCountB - questionCountA || timestampB - timestampA;
+                }
+
+                return timestampB - timestampA;
+            }
+
+            function matchesCard(card, query, typeFilter) {
+                const haystack = card.dataset.search || '';
+                if (query && !haystack.includes(query)) {
+                    return false;
+                }
+
+                if (typeFilter !== 'all') {
+                    const types = (card.dataset.types || '').split('||').filter(Boolean);
+                    if (!types.includes(typeFilter)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function renderCards() {
+                const query = normalized(searchInput.value).trim();
+                const selectedType = questionTypeFilter.value;
+                const selectedSort = sortMode.value;
+
+                const sortedCards = cards.slice().sort((a, b) => compareCards(a, b, selectedSort));
+                let visibleCount = 0;
+
+                sortedCards.forEach((card) => {
+                    exerciseList.appendChild(card);
+                    const visible = matchesCard(card, query, selectedType);
+                    card.classList.toggle('d-none', !visible);
+                    if (visible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                resultCount.textContent = `${visibleCount} of ${cards.length} exercises shown`;
+                noResults.classList.toggle('d-none', visibleCount !== 0 || cards.length === 0);
+            }
+
+            document.getElementById('downloadJsonBtn').addEventListener('click', function () {
+                const jsonStr = JSON.stringify(rawData, null, 2);
                 const blob = new Blob([jsonStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -47,8 +420,15 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             });
-        });
+
+            searchInput.addEventListener('input', renderCards);
+            questionTypeFilter.addEventListener('change', renderCards);
+            sortMode.addEventListener('change', renderCards);
+
+            renderCards();
+        })();
     </script>
 </body>
 </html>
