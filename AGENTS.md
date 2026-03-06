@@ -135,6 +135,35 @@ Add a brief entry to `CHANGELOG.md` describing what changed and why. Group entri
 
 ---
 
+## Self-Hosting
+
+The LTL Tutor can be run locally or on your own server as a Docker image.
+
+**1. Clone the repository:**
+
+```bash
+git clone https://github.com/brownplt/LTLTutor
+cd LTLTutor
+```
+
+**2. Build the Docker image:**
+
+```bash
+docker build -t ltltutor:latest .
+```
+
+**3. Run the container:**
+
+```bash
+docker run --rm -it -p 5000:5000 -e SECRET_KEY=secret ltltutor
+```
+
+The tutor will be available at `http://localhost:5000`.
+
+> **Note:** LTL Tutor uses session-based authentication, so you must supply a `SECRET_KEY` environment variable. Replace `secret` above with a strong, unique value for any non-trivial deployment.
+
+---
+
 ## Key External Dependencies
 
 | Dependency | Purpose |

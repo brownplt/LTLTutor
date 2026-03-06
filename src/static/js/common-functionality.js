@@ -1,12 +1,56 @@
+function isElementVisibleInViewport(element, margin = 24) {
+    if (!element) {
+        return false;
+    }
 
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const topBoundary = margin;
+    const bottomBoundary = viewportHeight - margin;
 
+    return rect.bottom > topBoundary && rect.top < bottomBoundary;
+}
 
+function removeFeedbackPrompts() {
+    document.querySelectorAll('.view-feedback-prompt').forEach((prompt) => prompt.remove());
+}
 
-function scrollToFeedback() {
+function addFeedbackPrompt(triggerButton, feedbackElement) {
+    if (!triggerButton) {
+        return;
+    }
+
+    const jumpButton = document.createElement('button');
+    jumpButton.type = 'button';
+    jumpButton.className = 'btn btn-link btn-sm p-0 ml-2 align-baseline view-feedback-prompt';
+    jumpButton.textContent = 'View feedback ↓';
+    jumpButton.setAttribute('aria-label', 'View updated feedback');
+
+    jumpButton.addEventListener('click', () => {
+        feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        jumpButton.remove();
+    });
+
+    triggerButton.insertAdjacentElement('afterend', jumpButton);
+}
+
+function scrollToFeedback(triggerButton = null) {
 
     setTimeout(() => {
-        var element = document.getElementById("feedback");
-        element.scrollIntoView({behavior: "smooth", block: "start", inline: "start"});
+        const feedbackElement = document.getElementById('feedback');
+        if (!feedbackElement) {
+            return;
+        }
+
+        // Remove stale prompts from previous questions/checks.
+        removeFeedbackPrompts();
+
+        // Keep user control: only offer an explicit jump action if feedback is off-screen.
+        if (isElementVisibleInViewport(feedbackElement)) {
+            return;
+        }
+
+        addFeedbackPrompt(triggerButton, feedbackElement);
     }, 100);
 
 }
