@@ -717,9 +717,9 @@ def suggest_traces():
         # Generate satisfying traces
         sat_traces = spotutils.generate_accepted_traces(formula_str, max_traces=5)
         for trace in sat_traces:
-            trace_str = str(trace)
+            trace_str = exerciseprocessor.canonicalizeSpotTrace(str(trace))
             expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
-            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(trace_str)
+            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(expanded)
             satisfying_traces.append({
                 'trace': expanded,
                 'raw': trace_str,
@@ -731,9 +731,9 @@ def suggest_traces():
         negated = f"!({formula_str})"
         rej_traces = spotutils.generate_accepted_traces(negated, max_traces=5)
         for trace in rej_traces:
-            trace_str = str(trace)
+            trace_str = exerciseprocessor.canonicalizeSpotTrace(str(trace))
             expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
-            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(trace_str)
+            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(expanded)
             rejecting_traces.append({
                 'trace': expanded,
                 'raw': trace_str,

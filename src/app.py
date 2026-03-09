@@ -588,7 +588,7 @@ def authorquestion():
 
         distractors = mergedDistractors
         new_distractors = []
-        added_traces = set([answer])
+        added_traces = set([exerciseprocessor.canonicalizeSpotTrace(answer)])
         ## IF the kind is trace satisfaction_mc, we need to generate traces for each distractor:
         if kind == "tracesatisfaction_mc" or kind == "tracesatisfaction_yn":
             # This is only true for trace_satisaction questions
@@ -597,6 +597,8 @@ def authorquestion():
             for distractor in distractors:
                 f = distractor['formula']
                 potential_trace_choices = spotutils.generate_traces(f_accepted=f, f_rejected=answer_formula, max_traces=10)
+                potential_trace_choices = [exerciseprocessor.canonicalizeSpotTrace(t) for t in potential_trace_choices]
+                potential_trace_choices = list(dict.fromkeys(potential_trace_choices))
                 trace_choices = [t for t in potential_trace_choices if t not in added_traces]
                 if len(trace_choices) > 0:
                     c = spotutils.weighted_trace_choice(trace_choices)

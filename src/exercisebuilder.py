@@ -566,6 +566,8 @@ class ExerciseBuilder:
         }
 
     def build_tracesat_mc_question(self, answer):
+        import exerciseprocessor
+
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
@@ -589,6 +591,8 @@ class ExerciseBuilder:
                     potential_trace_choices = spotutils.generate_accepted_traces(formula, max_traces=max_choice_size)
                 else:
                     potential_trace_choices = spotutils.generate_traces(f_accepted=formula, f_rejected=parenthesized_answer, max_traces=max_choice_size)
+                potential_trace_choices = [exerciseprocessor.canonicalizeSpotTrace(t) for t in potential_trace_choices]
+                potential_trace_choices = list(dict.fromkeys(potential_trace_choices))
                 existing_trace_options = [option['option'] for option in trace_options]
                 trace_choices = [t for t in potential_trace_choices if t not in existing_trace_options]
                 attempt_number += 1
@@ -617,6 +621,8 @@ class ExerciseBuilder:
         }
 
     def build_tracesat_yn_question(self, answer):
+        import exerciseprocessor
+
         formulae = self.get_options_with_misconceptions_as_formula(answer)
         parenthesized_answer = self.toSpotSyntax(answer)
     
@@ -650,6 +656,9 @@ class ExerciseBuilder:
 
                 feedbackString = f"The trace is accepted by the formula <code>{option_in_correct_syntax}</code>, but not by the formula <code>{correct_option_in_correct_syntax}</code>."
             misconceptions = formula['misconceptions']
+
+        potential_trace_choices = [exerciseprocessor.canonicalizeSpotTrace(t) for t in potential_trace_choices]
+        potential_trace_choices = list(dict.fromkeys(potential_trace_choices))
         
         if len(potential_trace_choices) == 0:
             return None

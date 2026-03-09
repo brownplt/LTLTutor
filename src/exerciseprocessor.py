@@ -91,7 +91,7 @@ class NodeRepr:
             return cleaned
 
         tokens = [t.strip() for t in re.split(rf'\s*{re.escape(NodeRepr.VAR_SEPARATOR)}\s*', cleaned) if t.strip() != ""]
-        normalized = [t.replace('(', '').replace(')', '') for t in tokens]
+        normalized = [t.replace('(', '').replace(')', '').strip() for t in tokens]
 
         def sort_key(token: str):
             is_negated = token.startswith('!')
@@ -196,6 +196,36 @@ def nodeReprListsToSpotTrace(prefix_states, cycle_states) -> str:
         return prefix_string
 
     return prefix_string + ";" + cycle_string
+
+
+def canonicalizeSpotTrace(sr: str) -> str:
+    """
+    Return a trace string with each state's literals in canonical order.
+    This preserves the original prefix/cycle structure and only normalizes
+    literal ordering within states.
+    """
+    sr = sr.strip()
+    if sr == "":
+        return ""
+
+    prefix_split = sr.split('cycle', 1)
+    prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
+    canonical_prefix = [NodeRepr._canonicalize_state(part) for part in prefix_parts]
+
+    cycle_parts = []
+    if len(prefix_split) > 1:
+        cycled_content = getCycleContent(prefix_split[1])
+        cycle_parts = [x for x in cycled_content.split(';') if x.strip() != ""]
+        cycle_parts = [NodeRepr._canonicalize_state(part) for part in cycle_parts]
+
+    prefix_string = ';'.join(canonical_prefix)
+    if len(cycle_parts) > 0:
+        cycle_string = "cycle{" + ';'.join(cycle_parts) + "}"
+        if prefix_string == "":
+            return cycle_string
+        return prefix_string + ";" + cycle_string
+
+    return prefix_string
 
 
 
