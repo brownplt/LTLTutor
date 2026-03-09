@@ -91,7 +91,13 @@ class NodeRepr:
             return cleaned
 
         tokens = [t.strip() for t in re.split(rf'\s*{re.escape(NodeRepr.VAR_SEPARATOR)}\s*', cleaned) if t.strip() != ""]
-        normalized = [t.replace('(', '').replace(')', '').strip() for t in tokens]
+        normalized = []
+        for token in tokens:
+            cleaned_token = token.replace('(', '').replace(')', '').strip()
+            # Normalize negation markers so sorting is independent of display symbol.
+            if cleaned_token.startswith('!') or cleaned_token.startswith('¬'):
+                cleaned_token = '!' + cleaned_token[1:].strip()
+            normalized.append(cleaned_token)
 
         def sort_key(token: str):
             is_negated = token.startswith('!')

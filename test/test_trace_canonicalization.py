@@ -11,7 +11,7 @@ sys.modules['spot'] = MagicMock()
 sys.modules['inflect'] = MagicMock()
 sys.modules['wordfreq'] = MagicMock(zipf_frequency=lambda *args, **kwargs: 0)
 
-from exerciseprocessor import canonicalizeSpotTrace
+from exerciseprocessor import canonicalizeSpotTrace, NodeRepr
 
 
 class TestTraceCanonicalization(unittest.TestCase):
@@ -27,6 +27,21 @@ class TestTraceCanonicalization(unittest.TestCase):
 
     def test_empty_trace(self):
         self.assertEqual(canonicalizeSpotTrace("   "), "")
+
+    def test_unicode_negation_does_not_affect_order(self):
+        trace = "b & ¬a & c; cycle{¬b & a}"
+        expected = "!a & b & c;cycle{a & !b}"
+        self.assertEqual(canonicalizeSpotTrace(trace), expected)
+
+    def test_bang_negation_does_not_affect_lexicographic_order(self):
+        trace = "!z & a & !b & c"
+        expected = "a & !b & c & !z"
+        self.assertEqual(canonicalizeSpotTrace(trace), expected)
+
+    def test_mermaid_rendering_still_shows_negation_symbol(self):
+        node = NodeRepr("!b & a")
+        rendered = node.__mermaid_str__()
+        self.assertIn("¬b", rendered)
 
 
 if __name__ == "__main__":
