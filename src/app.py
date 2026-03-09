@@ -889,63 +889,82 @@ def exercise_predefined_get():
     """Load an exercise from a sourceuri (preload:, instructor:, or URL)"""
     if request.method == 'GET':
         sourceuri = request.args.get('sourceuri')
+        posted_exercise_json = None
+        preview_start_index = 0
     else:
         sourceuri = request.form.get('sourceuri')
-    
-    if not sourceuri:
+        posted_exercise_json = request.form.get('exercise_json')
+        preview_start_index = request.form.get('preview_start_index', default=0, type=int)
+
+    if preview_start_index is None or preview_start_index < 0:
+        preview_start_index = 0
+
+    if not sourceuri and not posted_exercise_json:
         return redirect('/loadfromjson')
-    
+
     try:
         exercise_obj = None
         syntax_choice = None
-        if sourceuri.startswith('instructor:'):
+        if posted_exercise_json:
             try:
-                exercise_id = int(sourceuri.split(':', 1)[1])
-            except (IndexError, ValueError):
-                return "Invalid instructor exercise reference.", 400
-            exercise_obj = get_instructor_exercise_by_id(exercise_id)
-            if exercise_obj is None:
-                return f"Exercise '{sourceuri}' not found.", 404
+                data = json.loads(posted_exercise_json)
+            except json.JSONDecodeError as e:
+                return f"Invalid preview data: {str(e)}", 400
 
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-        question_count = len(data) if data else 0
+            if not isinstance(data, list):
+                return "Invalid preview data: expected a list of questions.", 400
 
-        if exercise_obj:
-            if exercise_obj.allow_multiple_submissions is None:
-                exercise_obj.allow_multiple_submissions = True
+            syntax_choice = _normalize_syntax_choice(request.form.get('syntax_choice'))
+            exercise_name = (request.form.get('exercise_name') or '').strip() or 'Exercise Preview'
+        else:
+            if sourceuri.startswith('instructor:'):
+                try:
+                    exercise_id = int(sourceuri.split(':', 1)[1])
+                except (IndexError, ValueError):
+                    return "Invalid instructor exercise reference.", 400
+                exercise_obj = get_instructor_exercise_by_id(exercise_id)
+                if exercise_obj is None:
+                    return f"Exercise '{sourceuri}' not found.", 404
 
-            if is_exercise_expired(exercise_obj):
-                expired_msg = "This exercise closed on {}.".format(exercise_obj.expires_at)
-                return render_template(
-                    'exercise_closed.html',
-                    uid=getUserName(),
-                    message=expired_msg,
-                    title="Exercise closed"
-                ), 403
+            data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
+            question_count = len(data) if data else 0
 
-            if not exercise_obj.allow_multiple_submissions:
-                answered = answer_logger.getUserExerciseResponses(getUserName(), exercise_obj.name)
-                if question_count and answered >= question_count:
+            if exercise_obj:
+                if exercise_obj.allow_multiple_submissions is None:
+                    exercise_obj.allow_multiple_submissions = True
+
+                if is_exercise_expired(exercise_obj):
+                    expired_msg = "This exercise closed on {}.".format(exercise_obj.expires_at)
                     return render_template(
                         'exercise_closed.html',
                         uid=getUserName(),
-                        message="This exercise only allows one submission per student, and you've already submitted.",
-                        title="Submission limit reached"
+                        message=expired_msg,
+                        title="Exercise closed"
                     ), 403
 
-            syntax_choice, needs_syntax_choice = _resolve_instructor_exercise_syntax(exercise_obj)
-            if needs_syntax_choice:
-                return render_template(
-                    'exercise_syntax_picker.html',
-                    uid=getUserName(),
-                    exercise_name=exercise_obj.name,
-                    syntax_options=_build_syntax_picker_options(
-                        'exercise_predefined_get',
-                        sourceuri=sourceuri
-                    )
-                )
+                if not exercise_obj.allow_multiple_submissions:
+                    answered = answer_logger.getUserExerciseResponses(getUserName(), exercise_obj.name)
+                    if question_count and answered >= question_count:
+                        return render_template(
+                            'exercise_closed.html',
+                            uid=getUserName(),
+                            message="This exercise only allows one submission per student, and you've already submitted.",
+                            title="Submission limit reached"
+                        ), 403
 
-        data = exerciseprocessor.randomize_questions(data)
+                syntax_choice, needs_syntax_choice = _resolve_instructor_exercise_syntax(exercise_obj)
+                if needs_syntax_choice:
+                    return render_template(
+                        'exercise_syntax_picker.html',
+                        uid=getUserName(),
+                        exercise_name=exercise_obj.name,
+                        syntax_options=_build_syntax_picker_options(
+                            'exercise_predefined_get',
+                            sourceuri=sourceuri
+                        )
+                    )
+
+            data = exerciseprocessor.randomize_questions(data)
 
         # Try to extract literals from questions for trace expansion
         literals = set()
@@ -970,10 +989,11 @@ def exercise_predefined_get():
             data = _convert_questions_to_syntax(data, syntax_choice)
 
         # Generate exercise name from sourceuri
-        if exercise_obj:
-            exercise_name = exercise_obj.name
-        else:
-            exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
+        if not posted_exercise_json:
+            if exercise_obj:
+                exercise_name = exercise_obj.name
+            else:
+                exercise_name = sourceuri.split(':')[-1].replace('.json', '').replace('_', ' ').title()
 
     except Exception as e:
         print(f"Error loading exercise from {sourceuri}: {e}")
@@ -985,7 +1005,8 @@ def exercise_predefined_get():
             uid=getUserName(),
             questions=data,
             exercise_name=exercise_name,
-            syntax_choice=syntax_choice
+            syntax_choice=syntax_choice,
+            start_question_index=preview_start_index
         )
     )
     if syntax_choice:

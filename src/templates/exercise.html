@@ -234,13 +234,19 @@
             // Hide all questions at the start
             $('.question').hide();
 
-            // Show the first question
-            $('.question:first').show();
-            // Initialize mermaid for the first question
+            const totalQuestions = $('.question').length;
+            const requestedStartIndex = Number.parseInt('{{ start_question_index | default(0) | int }}', 10);
+            const startQuestionIndex = Number.isNaN(requestedStartIndex)
+                ? 0
+                : Math.min(Math.max(requestedStartIndex, 0), Math.max(totalQuestions - 1, 0));
 
-            let first_question_to_render = $('.question:first').find('.mermaid').get();
+            const startQuestion = $('.question').eq(startQuestionIndex);
+            startQuestion.show();
 
-            renderMermaidDiagram(first_question_to_render);
+            let first_question_to_render = startQuestion.find('.mermaid').get();
+            if (first_question_to_render.length) {
+                renderMermaidDiagram(first_question_to_render);
+            }
 
             // When the "Next" button is clicked, hide the current question and show the next one
             $('.next').click(function () {

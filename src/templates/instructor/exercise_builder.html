@@ -197,12 +197,9 @@
                         <button type="submit" id="saveExerciseBtn" class="btn btn-success">
                             {{ 'Update' if exercise else 'Create' }} Exercise
                         </button>
-                        {% if exercise %}
-                        <a href="{{ url_for('exercise_predefined_get') }}?sourceuri=instructor:{{ exercise.id }}" 
-                           class="btn btn-outline-primary" target="_blank">
+                        <button type="button" class="btn btn-outline-primary" onclick="previewCurrentDraft()">
                             Preview
-                        </a>
-                        {% endif %}
+                        </button>
                     </div>
                     <div id="exerciseSaveState" class="small text-muted mt-2"></div>
                 </div>
@@ -1080,6 +1077,43 @@
         saveExerciseBtn.disabled = true;
         saveExerciseBtn.textContent = 'Saving...';
         showFeedback('Saving exercise...', 'info', 0);
+    }
+
+    function previewCurrentDraft() {
+        if (currentQuestionIndex >= 0) {
+            persistCurrentQuestionDraft();
+        }
+
+        if (questions.length === 0) {
+            showFeedback('Add at least one question before previewing.', 'warning');
+            return;
+        }
+
+        const previewForm = document.createElement('form');
+        previewForm.method = 'POST';
+        previewForm.action = '{{ url_for("exercise_predefined_get") }}';
+        previewForm.target = '_blank';
+        previewForm.style.display = 'none';
+
+        const syntaxSelect = document.getElementById('exercise_syntax');
+        const payload = {
+            exercise_json: JSON.stringify(questions),
+            exercise_name: document.getElementById('exercise_name').value.trim() || 'Exercise Preview',
+            syntax_choice: syntaxSelect ? syntaxSelect.value : '',
+            preview_start_index: currentQuestionIndex >= 0 ? String(currentQuestionIndex) : '0'
+        };
+
+        Object.entries(payload).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            previewForm.appendChild(input);
+        });
+
+        document.body.appendChild(previewForm);
+        previewForm.submit();
+        document.body.removeChild(previewForm);
     }
 
     function markCurrentQuestionDirty() {
