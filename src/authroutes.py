@@ -499,6 +499,8 @@ def create_instructor_exercise():
             questions = json.loads(exercise_json)
             if not isinstance(questions, list):
                 raise ValueError("Exercise must be a list of questions")
+            exercise_json = json.dumps(questions)
+            question_count = len(questions)
         except (json.JSONDecodeError, ValueError) as e:
             flash(f'Invalid exercise JSON: {str(e)}')
             return redirect(url_for('authroutes.create_instructor_exercise'))
@@ -530,7 +532,7 @@ def create_instructor_exercise():
             session.commit()
             exercise_id = exercise.id
         
-        flash(f'Exercise "{exercise_name}" created successfully!')
+        flash(f'Exercise "{exercise_name}" created successfully with {question_count} question(s).')
         return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
     
     # GET request - show the exercise builder
@@ -577,6 +579,8 @@ def edit_instructor_exercise(exercise_id):
                 questions = json.loads(exercise_json)
                 if not isinstance(questions, list):
                     raise ValueError("Exercise must be a list of questions")
+                exercise_json = json.dumps(questions)
+                question_count = len(questions)
             except (json.JSONDecodeError, ValueError) as e:
                 flash(f'Invalid exercise JSON: {str(e)}')
                 return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
@@ -599,7 +603,7 @@ def edit_instructor_exercise(exercise_id):
             exercise.allow_multiple_submissions = allow_multiple_submissions
             session.commit()
             
-            flash(f'Exercise "{exercise_name}" updated successfully!')
+            flash(f'Exercise "{exercise_name}" updated successfully with {question_count} question(s).')
             return redirect(url_for('authroutes.edit_instructor_exercise', exercise_id=exercise_id))
         
         # GET request

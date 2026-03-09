@@ -1100,7 +1100,7 @@
             exercise_json: JSON.stringify(questions),
             exercise_name: document.getElementById('exercise_name').value.trim() || 'Exercise Preview',
             syntax_choice: syntaxSelect ? syntaxSelect.value : '',
-            preview_start_index: currentQuestionIndex >= 0 ? String(currentQuestionIndex) : '0'
+            preview_start_index: '0'
         };
 
         Object.entries(payload).forEach(([name, value]) => {

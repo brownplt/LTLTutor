@@ -3,7 +3,8 @@
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
 ## 2026-03
-- Fixed instructor exercise preview so it renders the current draft question set (including unsaved editor changes) instead of only the previously saved database state, and starts preview on the currently active question in the editor.
+- Fixed instructor exercise preview so it renders the current draft question set (including unsaved editor changes) instead of only the previously saved database state.
+- Added explicit save confirmation showing how many questions were persisted for instructor exercises, reducing ambiguity when validating multi-question saves.
 
 ## 2025-11
 - Improved LTL-to-English translations with grammar smoothing and capitalization applied to pattern-based phrases for more natural summaries.【F:src/ltltoeng.py†L90-L125】【F:src/ltltoeng.py†L827-L835】
