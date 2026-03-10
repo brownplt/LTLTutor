@@ -691,6 +691,56 @@ def suggest_distractors():
     return jsonify({'distractors': distractors, 'error': error})
 
 
+
+
+@authroutes.route('/instructor/trace-tool', methods=['POST'])
+@login_required_as_courseinstructor
+def instructor_trace_tool():
+    """Normalize and preview Spot traces for instructor-authored questions."""
+    from flask import jsonify
+    import exerciseprocessor
+    import spotutils
+
+    trace = request.form.get('trace', '')
+    formula = request.form.get('formula', '').strip()
+    literals_raw = request.form.get('literals', '')
+
+    literals = [lit.strip() for lit in literals_raw.split(',') if lit.strip()]
+
+    try:
+        normalized_trace = exerciseprocessor.normalizeSpotTraceSyntax(trace)
+
+        if not normalized_trace:
+            return jsonify({
+                'error': 'Trace is required.',
+                'normalized': '',
+                'expanded': '',
+                'mermaid': '',
+                'satisfies': None
+            })
+
+        expanded_trace = exerciseprocessor.expandSpotTrace(normalized_trace, literals)
+        mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(normalized_trace)
+
+        satisfies = None
+        if formula:
+            satisfies = bool(spotutils.is_trace_satisfied(normalized_trace, formula))
+
+        return jsonify({
+            'error': None,
+            'normalized': normalized_trace,
+            'expanded': expanded_trace,
+            'mermaid': mermaid,
+            'satisfies': satisfies
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'normalized': '',
+            'expanded': '',
+            'mermaid': '',
+            'satisfies': None
+        })
 @authroutes.route('/instructor/suggest-traces', methods=['POST'])
 @login_required_as_courseinstructor
 def suggest_traces():

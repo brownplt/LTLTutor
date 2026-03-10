@@ -163,7 +163,7 @@ class NodeRepr:
 
 ## Internal ##
 def spotTraceToNodeReprs(sr):
-    sr = sr.strip()
+    sr = normalizeSpotTraceSyntax(sr)
     if sr == "":
         return []
 
@@ -185,6 +185,33 @@ def spotTraceToNodeReprs(sr):
         "prefix_states": states,
         "cycle_states": cycle_states
     }
+
+
+def normalizeSpotTraceSyntax(trace):
+    """Normalize user-entered trace shorthand into Spot-compatible syntax.
+
+    Examples:
+        "a; !b; {a & b; !a}" -> "a;!b;cycle{a & b;!a}"
+        "{a}" -> "cycle{a}"
+    """
+    if trace is None:
+        return ""
+
+    normalized = str(trace).strip()
+    if normalized == "":
+        return ""
+
+    cycle_match = re.search(r'\{([^{}]*)\}\s*$', normalized)
+    if cycle_match:
+        cycle_body = cycle_match.group(1).strip()
+        prefix = normalized[:cycle_match.start()].rstrip().rstrip(';').strip()
+        prefix_parts = [part.strip() for part in prefix.split(';') if part.strip()] if prefix else []
+        normalized = ';'.join(prefix_parts + [f"cycle{{{cycle_body}}}"])
+    else:
+        parts = [part.strip() for part in normalized.split(';') if part.strip()]
+        normalized = ';'.join(parts)
+
+    return normalized
 
 def nodeReprListsToSpotTrace(prefix_states, cycle_states) -> str:
     prefix_string = ';'.join([str(state) for state in prefix_states])

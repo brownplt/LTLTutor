@@ -2,6 +2,11 @@
 
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
+
+## 2026-03
+- Added an instructor-only trace builder endpoint (`/instructor/trace-tool`) and UI controls in the exercise builder to normalize shorthand traces (e.g., `{...}` to `cycle{...}`), preview expanded traces, and render a mermaid graph before saving questions.
+- Added normalization tests for trace shorthand parsing used by the instructor trace builder workflow.
+
 ## 2025-11
 - Improved LTL-to-English translations with grammar smoothing and capitalization applied to pattern-based phrases for more natural summaries.【F:src/ltltoeng.py†L90-L125】【F:src/ltltoeng.py†L827-L835】
 - Enhanced instructor experience with dedicated entry points for authoring and managing custom exercises alongside course links.【F:src/templates/instructorhome.html†L76-L109】

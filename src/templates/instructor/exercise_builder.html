@@ -249,14 +249,32 @@
                                         <input type="text" class="form-control" id="traceText"
                                                placeholder="e.g., e & h; !e & h; cycle{e & h}">
                                         <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary" onclick="buildTracePreview()" title="Normalize and preview trace syntax">
+                                                Build Trace
+                                            </button>
                                             <button type="button" class="btn btn-outline-info" onclick="suggestTraces()" title="Suggest traces based on formula">
                                                 Suggest
                                             </button>
                                         </div>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Format: state1; state2; cycle{repeating_state}
+                                        Supports shorthand like <code>a; !b; {a &amp; b; !a}</code>; it is normalized to Spot syntax automatically.
                                     </small>
+                                </div>
+
+                                <div id="traceBuilderResult" class="mb-3" style="display:none;">
+                                    <div class="card border-secondary">
+                                        <div class="card-header py-2 bg-light">
+                                            <small class="font-weight-bold">Trace Builder Preview</small>
+                                        </div>
+                                        <div class="card-body p-2 small">
+                                            <div><strong>Normalized:</strong> <code id="traceBuilderNormalized"></code></div>
+                                            <div><strong>Expanded:</strong> <code id="traceBuilderExpanded"></code></div>
+                                            <div><strong>Satisfies formula:</strong> <span id="traceBuilderSatisfies">N/A</span></div>
+                                            <div class="mt-2"><strong>Graph:</strong></div>
+                                            <pre id="traceBuilderMermaid" class="mermaid mb-0"></pre>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Suggested Traces (for Y/N questions) -->
@@ -431,11 +449,13 @@
         if (kind === 'englishtoltl') {
             hint.textContent = 'For English to LTL: Enter the English description of the LTL formula.';
             traceGroup.style.display = 'none';
+            document.getElementById('traceBuilderResult').style.display = 'none';
             suggestDistractorsBtn.style.display = 'inline-block';
             suggestTracesBtn.style.display = 'none';
         } else if (kind === 'tracesatisfaction_mc') {
             hint.textContent = 'For Trace Satisfaction (MC): Enter the LTL formula in the Question field. Options will be traces.';
             traceGroup.style.display = 'none';
+            document.getElementById('traceBuilderResult').style.display = 'none';
             suggestDistractorsBtn.style.display = 'none';
             suggestTracesBtn.style.display = 'inline-block';
         } else {
@@ -780,6 +800,40 @@
             `).join('');
         }).fail(function(xhr, status, error) {
             list.innerHTML = `<div class="list-group-item text-danger">Failed to get suggestions: ${escapeHtml(error || 'Unknown error')}</div>`;
+        });
+    }
+
+    function buildTracePreview() {
+        const trace = document.getElementById('traceText').value.trim();
+        const formula = document.getElementById('questionText').value.trim();
+
+        if (!trace) {
+            showFeedback('Enter a trace to normalize/preview.', 'warning');
+            return;
+        }
+
+        $.post('{{ url_for("authroutes.instructor_trace_tool") }}', {
+            trace: trace,
+            formula: formula
+        }, function(data) {
+            if (data.error) {
+                showFeedback(`Trace tool error: ${data.error}`, 'danger');
+                return;
+            }
+
+            document.getElementById('traceText').value = data.normalized || trace;
+            document.getElementById('traceBuilderNormalized').textContent = data.normalized || '';
+            document.getElementById('traceBuilderExpanded').textContent = data.expanded || '';
+            document.getElementById('traceBuilderSatisfies').textContent = (data.satisfies === null) ? 'N/A' : (data.satisfies ? 'Yes' : 'No');
+            document.getElementById('traceBuilderMermaid').textContent = data.mermaid || '';
+            document.getElementById('traceBuilderResult').style.display = 'block';
+            if (window.mermaid) {
+                mermaid.init(undefined, document.getElementById('traceBuilderMermaid'));
+            }
+
+            showFeedback('Trace normalized and previewed.', 'success', 1200);
+        }).fail(function(xhr, status, error) {
+            showFeedback(`Trace tool request failed: ${error}`, 'danger');
         });
     }
 
