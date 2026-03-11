@@ -277,7 +277,9 @@
                 }
 
                 // Re-allow after a short delay to cover any queued touch events
-                setTimeout(function () { nextClickPending = false; }, 400);
+                // from the same physical tap. 50ms is sufficient — by then all
+                // queued touchend/click events from a double-tap have fired.
+                setTimeout(function () { nextClickPending = false; }, 50);
             });
 
             // Disable all "Check Answer" buttons initially

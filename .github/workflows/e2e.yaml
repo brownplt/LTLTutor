@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build and start the app
         run: docker compose up -d app
@@ -30,11 +30,18 @@ jobs:
           docker compose logs app
           exit 1
 
-      - name: Build E2E test image
-        run: docker compose build e2e
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install E2E dependencies
+        run: |
+          pip install -r e2e/requirements.txt
+          playwright install --with-deps chromium
 
       - name: Run Playwright E2E tests
-        run: docker compose run --rm e2e
+        run: BASE_URL=http://localhost:5000 pytest e2e/ -v
 
       - name: Upload test artifacts
         if: failure()

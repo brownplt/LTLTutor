@@ -15,7 +15,7 @@ from playwright.sync_api import expect
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_prebuilt_exercise(page, base_url, exercise_file="equivalent.json"):
+def _load_prebuilt_exercise(page, base_url, exercise_file="robotrain.json"):
     """Navigate to the predefined exercise page for a prebuilt JSON file."""
     page.goto(f"{base_url}/exercise/predefined?sourceuri=preload:{exercise_file}")
     page.wait_for_selector("#questions")
@@ -43,17 +43,40 @@ def _current_question_number(page):
 def _answer_and_advance(page):
     """Select the first radio option, check the answer, then click Next."""
     visible = page.locator(".question:visible")
+    # Remember the current question number so we can detect advance
+    text = visible.locator("small.text-muted").inner_text()
+    m = re.search(r"Question (\d+) of (\d+)", text)
+    current_q = int(m.group(1))
+    total_q = int(m.group(2))
+
     # Pick the first radio
     visible.locator("input[type=radio]").first.check()
     # Click "Check Answer"
     visible.locator("button.checkanswer").click()
-    # Wait for next button to become enabled
-    visible.locator("button.next").wait_for(state="attached")
+    # Wait for next button to become enabled (feedback POST may be in-flight)
     page.wait_for_function(
-        "document.querySelector('.question:not([style*=\"display: none\"]) button.next')?.disabled === false"
+        "document.querySelector('.question:not([style*=\"display: none\"]) button.next')?.disabled === false",
+        timeout=10000,
     )
     # Click "Next Question"
-    visible.locator("button.next").click()
+    page.locator(".question:visible button.next").click()
+    # Wait for the visible question to actually change (or #done to appear)
+    if current_q < total_q:
+        page.wait_for_function(
+            f"""(() => {{
+                const vis = document.querySelector('.question:not([style*="display: none"])');
+                if (!vis) return false;
+                const t = vis.querySelector('small.text-muted')?.textContent || '';
+                const m = t.match(/Question (\\d+) of/);
+                return m && parseInt(m[1]) > {current_q};
+            }})()""",
+            timeout=5000,
+        )
+    else:
+        page.wait_for_function(
+            "document.getElementById('done')?.style.display !== 'none'",
+            timeout=5000,
+        )
 
 
 # ---------------------------------------------------------------------------
