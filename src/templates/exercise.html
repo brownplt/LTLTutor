@@ -248,13 +248,23 @@
                 renderMermaidDiagram(first_question_to_render);
             }
 
-            // When the "Next" button is clicked, hide the current question and show the next one
+            // When the "Next" button is clicked, hide the current question and show the next one.
+            // Guard against rapid/double-taps (especially on mobile) which can skip
+            // multiple questions in a single gesture.
+            let nextClickPending = false;
             $('.next').click(function () {
+                if (nextClickPending) return;
+                nextClickPending = true;
+
+                // Disable the button immediately to give visual feedback
+                const btn = $(this);
+                btn.prop('disabled', true);
+
                 // Empty the feedback div
                 $('#feedback').empty();
                 $('#feedback').removeClass();
 
-                var nextQuestion = $(this).closest('.question').hide().next('.question');
+                var nextQuestion = btn.closest('.question').hide().next('.question');
                 if (nextQuestion.length) {
                     nextQuestion.show();
 
@@ -265,6 +275,9 @@
                     // If there are no more questions, show the "done" section
                     $('#done').show();
                 }
+
+                // Re-allow after a short delay to cover any queued touch events
+                setTimeout(function () { nextClickPending = false; }, 400);
             });
 
             // Disable all "Check Answer" buttons initially

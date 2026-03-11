@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - PORT=5000
+      - FLASK_ENV=development
+    volumes:
+      # Mount source for live editing (templates, static assets, python)
+      - ./src:/src
+    restart: unless-stopped
+
+  # Playwright test runner — only started on demand via `docker compose run e2e`
+  e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    depends_on:
+      - app
+    environment:
+      - BASE_URL=http://app:5000
+    volumes:
+      - ./e2e:/e2e
+      - ./playwright-report:/playwright-report
+    profiles:
+      - test

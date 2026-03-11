@@ -3,6 +3,13 @@
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
 ## 2026-03
+- **Bugfix:** Fixed rapid-click / double-tap regression on the "Next Question" button that caused students (especially on mobile) to skip directly to the last exercise question. Added debounce guard so each tap advances exactly one question.
+- **Bugfix:** Server-side `start_question_index` is now clamped to the valid question range, preventing stale or malicious values from jumping past the last question.
+- **New:** Added Playwright E2E test infrastructure (`e2e/`) with regression tests for exercise flow, including rapid-click and mobile-viewport scenarios.
+- **New:** Added `docker-compose.yml` and `Dockerfile.e2e` for easy local development and E2E test execution with SPOT pre-installed.
+- **New:** Added GitHub Actions E2E workflow (`.github/workflows/e2e.yaml`) so Playwright tests run on every PR.
+- **Docs:** Rewrote `AGENTS.md` with full architecture overview, exercise flow walkthrough, common pitfalls, and updated PR checklist.
+- **Docs:** Added `ENGINEERING-DEBT.md` cataloguing 14 known debt items with severity, root cause, and proposed fixes.
 - **Bugfix:** Fixed `canonicalizeSpotTrace` corrupting SPOT traces containing `|` (OR) in state formulas (e.g. `(s & v) | (!s & !v)`). The canonicalizer now resolves OR operators before reordering literals, preventing garbled traces that caused wrong correct-answer labels on trace satisfaction questions.
 - Fixed trace literal canonicalization to normalize both `!` and `¬` negation markers before lexicographic sorting, so variable ordering is stable regardless of glyph choice.
 - Fixed instructor exercise preview so it renders the current draft question set (including unsaved editor changes) instead of only the previously saved database state.

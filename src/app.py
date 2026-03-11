@@ -1001,6 +1001,11 @@ def exercise_predefined_get():
         print(f"Error loading exercise from {sourceuri}: {e}")
         return f"Error loading exercise: {str(e)}"
 
+    # Clamp start index to valid range so a stale or malicious value
+    # cannot jump past the last question.
+    max_start = max(len(data) - 1, 0)
+    preview_start_index = min(preview_start_index, max_start)
+
     response = make_response(
         render_template(
             'exercise.html',

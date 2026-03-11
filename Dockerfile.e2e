@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/playwright/python:v1.50.0-noble
+
+WORKDIR /e2e
+
+COPY e2e/requirements.txt .
+RUN pip install -r requirements.txt && \
+    playwright install --with-deps chromium
+
+COPY e2e/ .
+
+CMD ["pytest", "--tracing=retain-on-failure", "--output=/playwright-report"]
