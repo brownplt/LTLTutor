@@ -3,6 +3,7 @@
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
 ## 2026-03
+- **Bugfix:** Fixed `canonicalizeSpotTrace` corrupting SPOT traces containing `|` (OR) in state formulas (e.g. `(s & v) | (!s & !v)`). The canonicalizer now resolves OR operators before reordering literals, preventing garbled traces that caused wrong correct-answer labels on trace satisfaction questions.
 - Fixed trace literal canonicalization to normalize both `!` and `¬` negation markers before lexicographic sorting, so variable ordering is stable regardless of glyph choice.
 - Fixed instructor exercise preview so it renders the current draft question set (including unsaved editor changes) instead of only the previously saved database state.
 - Added explicit save confirmation showing how many questions were persisted for instructor exercises, reducing ambiguity when validating multi-question saves.

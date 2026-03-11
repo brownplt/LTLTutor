@@ -204,11 +204,27 @@ def nodeReprListsToSpotTrace(prefix_states, cycle_states) -> str:
     return prefix_string + ";" + cycle_string
 
 
+def _resolve_ors_in_state(state_str: str) -> str:
+    """Resolve any OR (|) operators in a SPOT state formula by choosing one branch.
+    SPOT traces may contain states like '(s & v) | (!s & !v)' which represent
+    multiple valid assignments. This picks one concrete assignment."""
+    state_str = state_str.strip()
+    if not state_str or state_str in ('1', '0'):
+        return state_str
+    if '|' not in state_str:
+        return state_str
+    try:
+        return choosePathFromWord(state_str)
+    except Exception:
+        return state_str
+
+
 def canonicalizeSpotTrace(sr: str) -> str:
     """
     Return a trace string with each state's literals in canonical order.
     This preserves the original prefix/cycle structure and only normalizes
-    literal ordering within states.
+    literal ordering within states. OR operators in SPOT state formulas are
+    resolved first by choosing one concrete assignment.
     """
     sr = sr.strip()
     if sr == "":
@@ -216,13 +232,13 @@ def canonicalizeSpotTrace(sr: str) -> str:
 
     prefix_split = sr.split('cycle', 1)
     prefix_parts = [x for x in prefix_split[0].strip().split(';') if x.strip() != ""]
-    canonical_prefix = [NodeRepr._canonicalize_state(part) for part in prefix_parts]
+    canonical_prefix = [NodeRepr._canonicalize_state(_resolve_ors_in_state(part)) for part in prefix_parts]
 
     cycle_parts = []
     if len(prefix_split) > 1:
         cycled_content = getCycleContent(prefix_split[1])
         cycle_parts = [x for x in cycled_content.split(';') if x.strip() != ""]
-        cycle_parts = [NodeRepr._canonicalize_state(part) for part in cycle_parts]
+        cycle_parts = [NodeRepr._canonicalize_state(_resolve_ors_in_state(part)) for part in cycle_parts]
 
     prefix_string = ';'.join(canonical_prefix)
     if len(cycle_parts) > 0:
