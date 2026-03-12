@@ -46,28 +46,112 @@
             margin: 0 auto;
         }
 
-        /* Formula tree (CSS-based, replaces Mermaid flowchart TD) */
-        .formula-tree, .formula-tree ul {
-            list-style: none;
-            padding-left: 0;
-            margin: 0;
+        .formula-tree-scroll {
+            max-height: 440px;
+            overflow: auto;
+            padding-right: 0.25rem;
         }
+
+        .formula-tree-stage {
+            width: max-content;
+            min-width: 100%;
+            padding: 0.35rem 0.5rem 0.2rem;
+        }
+
+        /* Formula tree as a standard top-down AST with connectors */
+        .formula-tree,
         .formula-tree ul {
-            padding-left: 20px;
-            border-left: 2px solid #dee2e6;
-            margin-left: 10px;
-            margin-top: 4px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
         }
-        .formula-tree li {
+
+        .formula-tree {
+            display: table;
+            margin: 0 auto;
+        }
+
+        .formula-tree ul {
+            display: table;
+            margin: 0 auto;
             position: relative;
-            padding: 3px 0;
+            padding-top: 20px;
         }
+
+        .formula-tree li {
+            display: table-cell;
+            text-align: center;
+            vertical-align: top;
+            position: relative;
+            padding: 20px 8px 0 8px;
+        }
+
+        .formula-tree li::before,
+        .formula-tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 20px;
+            border-top: 2px solid #cbd5e1;
+        }
+
+        .formula-tree li::before {
+            left: 0;
+        }
+
+        .formula-tree li::after {
+            right: 0;
+            border-left: 2px solid #cbd5e1;
+        }
+
+        .formula-tree li:only-child {
+            padding-top: 0;
+        }
+
+        .formula-tree li:only-child::before,
+        .formula-tree li:only-child::after {
+            display: none;
+        }
+
+        .formula-tree li:first-child::before,
+        .formula-tree li:last-child::after {
+            border: 0;
+        }
+
+        .formula-tree li:last-child::before {
+            border-right: 2px solid #cbd5e1;
+            border-radius: 0 6px 0 0;
+        }
+
+        .formula-tree li:first-child::after {
+            border-radius: 6px 0 0 0;
+        }
+
+        .formula-tree ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 0;
+            height: 20px;
+            border-left: 2px solid #cbd5e1;
+        }
+
         .formula-tree li > code {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.88em;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
         }
+
+        .formula-tree > li > code {
+            font-size: 0.95em;
+            font-weight: 700;
+        }
+
         .formula-tree .tree-sat > code {
             border: 2px solid #28a745;
             background-color: #f0fff0;
@@ -244,30 +328,21 @@
 
                 <div id="statecontainer">
                     {% for ps in prefixstates + cyclestates %}
+                    {% set step_idx = loop.index0 %}
                     <div class="container stepper-container">
 
                         <div class="formula-tree-container mt-2">
-                            <h4><span class="help float-right"> This tree represents the formula <code> {{formula}} </code>,
-                                    structuring its sub-formulae in a hierarchical manner. Each node in the tree is
-                                    represented
-                                    by a <span class="tree-sat"><code>green</code></span> box if it is satisfied,
-                                    and a <span class="tree-unsat"><code>red</code></span> box if it is not
-                                    satisfied.</span> </h4>
-
-                            <div>
-                                {{ ps.formulaTreeAsHTML | safe }}
+                            <div class="formula-tree-scroll">
+                                <div class="formula-tree-stage">
+                                    {{ ps.formulaTreeAsHTML | safe }}
+                                </div>
                             </div>
                         </div>
 
                         <hr>
 
                         <div class="trace-container mt-2">
-                            <h4><span class="help float-right"> By clicking the <code>Previous State</code> and <code>Next
-                                    State</code>
-                                    buttons, you can examine the formula's satisfaction at different points in this
-                                    trace.
-                                </span></h4>
-                            <div class="trace-svg-container" data-step-index="{{ loop.index0 }}"></div>
+                            <div class="trace-svg-container" data-step-index="{{ step_idx }}"></div>
                             <br>
                             <div class="btn-group d-flex justify-content-center" role="group">
                                 <button class="prev btn btn-primary" title="Previous State"><i
@@ -413,12 +488,6 @@
             // Trace data for SVG renderer (shared across all stepper steps)
             var traceData = {{ trace_render_data | safe }};
 
-            // Render all trace SVGs upfront
-            document.querySelectorAll('.trace-svg-container').forEach(function (container) {
-                var stepIndex = parseInt(container.dataset.stepIndex, 10);
-                TraceRenderer.render(container, traceData, { highlightIndex: stepIndex });
-            });
-
             const stepperContainers = Array.from(document.querySelectorAll('.stepper-container'));
             const progressLabel = document.getElementById('stepperProgress');
             const transitionDuration = 250;
@@ -430,6 +499,26 @@
 
             if (!stepperContainers.length) {
                 return;
+            }
+
+            function renderTraceForContainer(stepContainer) {
+                if (!stepContainer) {
+                    return;
+                }
+
+                const traceContainer = stepContainer.querySelector('.trace-svg-container');
+                if (!traceContainer) {
+                    return;
+                }
+
+                const stepIndex = parseInt(traceContainer.dataset.stepIndex, 10);
+                try {
+                    TraceRenderer.render(traceContainer, traceData, {
+                        highlightIndex: Number.isNaN(stepIndex) ? 0 : stepIndex
+                    });
+                } catch (error) {
+                    console.error('Failed to render stepper trace diagram', error);
+                }
             }
 
             stepperContainers.forEach((container, index) => {
@@ -485,6 +574,7 @@
                 requestAnimationFrame(() => {
                     enteringContainer.classList.add('active-step');
                     enteringContainer.classList.remove('leaving-step');
+                    renderTraceForContainer(enteringContainer);
                 });
 
                 setTimeout(() => {
@@ -514,6 +604,7 @@
             // Initialize first view
             stepperContainers[0].style.display = 'block';
             stepperContainers[0].classList.add('active-step');
+            renderTraceForContainer(stepperContainers[0]);
             flashTree(stepperContainers[0]);
             setButtonState();
             updateProgress();
@@ -551,6 +642,16 @@
 
             $('#stepperTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
                 isStepperActive = event.target === stepperTab;
+                if (isStepperActive) {
+                    renderTraceForContainer(stepperContainers[currentIndex]);
+                }
+            });
+
+            window.addEventListener('resize', function () {
+                if (!isStepperActive) {
+                    return;
+                }
+                renderTraceForContainer(stepperContainers[currentIndex]);
             });
         });
     </script>

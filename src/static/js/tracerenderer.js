@@ -103,14 +103,20 @@ var TraceRenderer = (function () {
         cycleFill: '#f0f4f8',
         stroke: '#aaa',
         strokeW: 1.5,
-        hlStroke: '#333',
-        hlWidth: 3,
+        hlStroke: '#d97706',
+        hlWidth: 4,
+        hlFill: '#fff8eb',
         arrowFill: '#666',
         tokenGap: 8,
         tokenLineGap: 5,
         tokenLineH: 18,
         tokenPosText: '#0b4ea2',
         tokenNegText: '#c05f0e',
+        indexFont: '11px SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+        indexTextFill: '#667085',
+        currentBadgeFill: '#d97706',
+        currentBadgeText: '#ffffff',
+        currentBadgeH: 16,
         arcMinD: 28,
         arcFactor: 0.06,
         arcMaxD: 56,
@@ -206,9 +212,12 @@ var TraceRenderer = (function () {
             gap = Math.max(CFG.gapMin, CFG.gap - Math.floor((totalW - availableWidth) / (states.length - 1)));
         }
 
+        var showStateIndices = (hlIdx >= 0);
+        var topBandH = showStateIndices ? (CFG.currentBadgeH + 10) : 0;
+
         // Horizontal layout
         var x = CFG.marginX;
-        var y = CFG.marginY;
+        var y = CFG.marginY + topBandH;
         for (i = 0; i < states.length; i++) {
             states[i].x = x;
             states[i].y = y;
@@ -284,15 +293,61 @@ var TraceRenderer = (function () {
             var s = states[i];
             var hl = (s.gi === hlIdx);
             var g = _el('g', {});
+            var stateFill = (hl ? CFG.hlFill : (s.isCycle ? CFG.cycleFill : CFG.prefixFill));
+
+            if (showStateIndices) {
+                var idxLabel = _el('text', {
+                    'x': s.x + s.w / 2,
+                    'y': s.y - 8,
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'central',
+                    'fill': hl ? CFG.hlStroke : CFG.indexTextFill,
+                    'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+                    'font-size': '11',
+                    'font-weight': hl ? '700' : '500'
+                });
+                idxLabel.textContent = 's' + s.gi;
+                g.appendChild(idxLabel);
+            }
 
             g.appendChild(_el('rect', {
                 'x': s.x, 'y': s.y,
                 'width': s.w, 'height': boxH,
                 'rx': CFG.radius, 'ry': CFG.radius,
-                'fill': s.isCycle ? CFG.cycleFill : CFG.prefixFill,
+                'fill': stateFill,
                 'stroke': hl ? CFG.hlStroke : CFG.stroke,
                 'stroke-width': hl ? CFG.hlWidth : CFG.strokeW
             }));
+
+            if (hl) {
+                var badgeText = 'CURRENT';
+                var badgeW = Math.max(52, Math.ceil(_textWidth(badgeText, CFG.indexFont)) + 12);
+                var badgeX = s.x + (s.w - badgeW) / 2;
+                var badgeY = s.y - CFG.currentBadgeH - 2;
+
+                g.appendChild(_el('rect', {
+                    'x': badgeX,
+                    'y': badgeY,
+                    'width': badgeW,
+                    'height': CFG.currentBadgeH,
+                    'rx': 8,
+                    'ry': 8,
+                    'fill': CFG.currentBadgeFill
+                }));
+
+                var badgeLabel = _el('text', {
+                    'x': badgeX + badgeW / 2,
+                    'y': badgeY + CFG.currentBadgeH / 2,
+                    'text-anchor': 'middle',
+                    'dominant-baseline': 'central',
+                    'fill': CFG.currentBadgeText,
+                    'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+                    'font-size': '10',
+                    'font-weight': '700'
+                });
+                badgeLabel.textContent = badgeText;
+                g.appendChild(badgeLabel);
+            }
 
             if (useVertical && s.tokens.length > 1) {
                 var totalTokenH = (s.tokens.length * CFG.tokenLineH) + (Math.max(0, s.tokens.length - 1) * CFG.tokenLineGap);
