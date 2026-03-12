@@ -34,7 +34,7 @@ def _count_visible_questions(page):
 def _current_question_number(page):
     """Parse 'Question X of Y' from the visible question card."""
     visible = page.locator(".question:visible")
-    text = visible.locator("small.text-muted").inner_text()
+    text = visible.locator(".question-counter").inner_text()
     m = re.search(r"Question (\d+) of (\d+)", text)
     assert m, f"Could not parse question number from: {text}"
     return int(m.group(1)), int(m.group(2))
