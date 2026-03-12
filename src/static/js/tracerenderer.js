@@ -252,7 +252,7 @@ var TraceRenderer = (function () {
         svg.style.display = 'block';
         svg.style.width = '100%';
         svg.style.height = 'auto';
-        svg.style.maxWidth = 'none';
+        svg.style.maxWidth = svgW + 'px';
 
         // Defs — arrowhead marker
         var defs = _el('defs', {});
