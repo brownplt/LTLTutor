@@ -43,6 +43,51 @@ var TraceRenderer = (function () {
         return ctx.measureText(text).width;
     }
 
+    function _getAvailableWidth(container) {
+        var width = 0;
+        if (container) {
+            width = container.clientWidth || 0;
+            if (!width && container.getBoundingClientRect) {
+                width = container.getBoundingClientRect().width || 0;
+            }
+            if (!width && container.parentElement) {
+                width = container.parentElement.clientWidth || 0;
+            }
+        }
+        if (!width || !isFinite(width)) {
+            return CFG.verticalThreshold;
+        }
+        return Math.max(320, Math.floor(width));
+    }
+
+    function _splitVars(label) {
+        var raw = (label || '').trim();
+        if (!raw) {
+            return [''];
+        }
+
+        var parts = raw.split('\u2003');
+        if (parts.length === 1) {
+            // Fall back to runs of spaces when the em-space separator is unavailable.
+            parts = raw.split(/\s{2,}/);
+        }
+
+        var vars = [];
+        for (var i = 0; i < parts.length; i++) {
+            var v = parts[i].trim();
+            if (v) {
+                vars.push(v);
+            }
+        }
+
+        return vars.length ? vars : [raw];
+    }
+
+    function _isNegatedVar(token) {
+        var t = (token || '').trim();
+        return t.charAt(0) === '¬' || t.charAt(0) === '!';
+    }
+
     var CFG = {
         font: '13px SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
         padX: 14,
@@ -61,12 +106,15 @@ var TraceRenderer = (function () {
         hlStroke: '#333',
         hlWidth: 3,
         arrowFill: '#666',
-        textFill: '#212529',
+        tokenGap: 8,
+        tokenLineGap: 5,
+        tokenLineH: 18,
+        tokenPosText: '#0b4ea2',
+        tokenNegText: '#c05f0e',
         arcMinD: 28,
         arcFactor: 0.06,
         arcMaxD: 56,
         minBoxW: 52,
-        lineH: 18,
         verticalThreshold: 800
     };
 
@@ -80,6 +128,7 @@ var TraceRenderer = (function () {
         var hlIdx = (options.highlightIndex != null) ? options.highlightIndex : -1;
         var prefix = traceData.prefix || [];
         var cycle = traceData.cycle || [];
+        var availableWidth = _getAvailableWidth(container);
 
         if (!prefix.length && !cycle.length) {
             container.innerHTML = '<p class="text-muted small">No trace data.</p>';
@@ -98,37 +147,51 @@ var TraceRenderer = (function () {
             states.push({ label: cycle[i].label, isCycle: true, gi: prefix.length + i });
         }
 
-        // Split labels into per-variable arrays
+        // Split labels into per-variable token metadata
         var maxVars = 1;
         for (i = 0; i < states.length; i++) {
-            states[i].vars = states[i].label.split('\u2003');
+            states[i].vars = _splitVars(states[i].label);
+            states[i].tokens = [];
+            states[i].inlineTokenW = 0;
+            states[i].maxTokenW = 0;
             if (states[i].vars.length > maxVars) maxVars = states[i].vars.length;
+
+            for (j = 0; j < states[i].vars.length; j++) {
+                var tokenText = states[i].vars[j];
+                var tokenTextW = Math.ceil(_textWidth(tokenText, CFG.font));
+                var tokenW = Math.max(tokenTextW, 6);
+                var token = {
+                    text: tokenText,
+                    negated: _isNegatedVar(tokenText),
+                    w: tokenW
+                };
+                states[i].tokens.push(token);
+                states[i].inlineTokenW += tokenW;
+                if (j < states[i].vars.length - 1) {
+                    states[i].inlineTokenW += CFG.tokenGap;
+                }
+                if (tokenW > states[i].maxTokenW) states[i].maxTokenW = tokenW;
+            }
         }
 
         // Measure inline widths (all vars on one line)
         var totalInlineW = CFG.marginX * 2 + Math.max(0, states.length - 1) * CFG.gap;
         for (i = 0; i < states.length; i++) {
-            var tw = _textWidth(states[i].label, CFG.font);
-            states[i].inlineW = Math.max(Math.ceil(tw) + CFG.padX * 2, CFG.minBoxW);
+            states[i].inlineW = Math.max(states[i].inlineTokenW + CFG.padX * 2, CFG.minBoxW);
             totalInlineW += states[i].inlineW;
         }
 
         // Decide layout: stack vars vertically if inline is too wide and multiple vars exist
-        var useVertical = (maxVars > 1) && (totalInlineW > CFG.verticalThreshold);
+        var useVertical = (maxVars > 1) && (totalInlineW > availableWidth);
 
         var boxH;
         if (useVertical) {
-            boxH = CFG.padY * 2 + CFG.lineH * maxVars;
+            boxH = CFG.padY * 2 + (CFG.tokenLineH * maxVars) + (Math.max(0, maxVars - 1) * CFG.tokenLineGap);
             for (i = 0; i < states.length; i++) {
-                var maxVarW = 0;
-                for (j = 0; j < states[i].vars.length; j++) {
-                    var vw = _textWidth(states[i].vars[j].trim(), CFG.font);
-                    if (vw > maxVarW) maxVarW = vw;
-                }
-                states[i].w = Math.max(Math.ceil(maxVarW) + CFG.padX * 2, CFG.minBoxW);
+                states[i].w = Math.max(states[i].maxTokenW + CFG.padX * 2, CFG.minBoxW);
             }
         } else {
-            boxH = CFG.boxH;
+            boxH = Math.max(CFG.boxH, CFG.padY * 2 + CFG.tokenLineH);
             for (i = 0; i < states.length; i++) {
                 states[i].w = states[i].inlineW;
             }
@@ -139,8 +202,8 @@ var TraceRenderer = (function () {
         for (i = 0; i < states.length; i++) totalW += states[i].w;
         totalW += Math.max(0, states.length - 1) * CFG.gap;
         var gap = CFG.gap;
-        if (totalW > CFG.verticalThreshold && states.length > 2) {
-            gap = Math.max(CFG.gapMin, CFG.gap - Math.floor((totalW - CFG.verticalThreshold) / (states.length - 1)));
+        if (totalW > availableWidth && states.length > 2) {
+            gap = Math.max(CFG.gapMin, CFG.gap - Math.floor((totalW - availableWidth) / (states.length - 1)));
         }
 
         // Horizontal layout
@@ -173,11 +236,14 @@ var TraceRenderer = (function () {
         var svg = _el('svg', {
             'viewBox': '0 0 ' + svgW + ' ' + svgH,
             'width': '100%',
+            'preserveAspectRatio': 'xMinYMin meet',
             'role': 'img',
             'aria-label': 'Trace diagram with ' + states.length + ' states'
         });
-        svg.style.maxWidth = svgW + 'px';
         svg.style.display = 'block';
+        svg.style.width = '100%';
+        svg.style.height = 'auto';
+        svg.style.maxWidth = 'none';
 
         // Defs — arrowhead marker
         var defs = _el('defs', {});
@@ -198,6 +264,21 @@ var TraceRenderer = (function () {
         defs.appendChild(mk);
         svg.appendChild(defs);
 
+        function appendVarToken(group, token, xPos, yPos, textAnchor) {
+            var txt = _el('text', {
+                'x': xPos,
+                'y': yPos + CFG.tokenLineH / 2,
+                'text-anchor': textAnchor || 'start',
+                'dominant-baseline': 'central',
+                'fill': token.negated ? CFG.tokenNegText : CFG.tokenPosText,
+                'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
+                'font-size': '13',
+                'font-weight': token.negated ? '700' : '500'
+            });
+            txt.textContent = token.text;
+            group.appendChild(txt);
+        }
+
         // --- State boxes ---
         for (i = 0; i < states.length; i++) {
             var s = states[i];
@@ -213,35 +294,22 @@ var TraceRenderer = (function () {
                 'stroke-width': hl ? CFG.hlWidth : CFG.strokeW
             }));
 
-            if (useVertical && s.vars.length > 1) {
-                // Vertical layout: one variable per line
-                var totalTextH = CFG.lineH * s.vars.length;
-                var startY = s.y + (boxH - totalTextH) / 2 + CFG.lineH / 2;
-                for (var vi = 0; vi < s.vars.length; vi++) {
-                    var varTxt = _el('text', {
-                        'x': s.x + s.w / 2,
-                        'y': startY + vi * CFG.lineH,
-                        'text-anchor': 'middle',
-                        'dominant-baseline': 'central',
-                        'fill': CFG.textFill,
-                        'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
-                        'font-size': '13'
-                    });
-                    varTxt.textContent = s.vars[vi].trim();
-                    g.appendChild(varTxt);
+            if (useVertical && s.tokens.length > 1) {
+                var totalTokenH = (s.tokens.length * CFG.tokenLineH) + (Math.max(0, s.tokens.length - 1) * CFG.tokenLineGap);
+                var tokenY = s.y + (boxH - totalTokenH) / 2;
+                for (var vi = 0; vi < s.tokens.length; vi++) {
+                    var vToken = s.tokens[vi];
+                    appendVarToken(g, vToken, s.x + s.w / 2, tokenY, 'middle');
+                    tokenY += CFG.tokenLineH + CFG.tokenLineGap;
                 }
             } else {
-                var txt = _el('text', {
-                    'x': s.x + s.w / 2,
-                    'y': s.y + boxH / 2,
-                    'text-anchor': 'middle',
-                    'dominant-baseline': 'central',
-                    'fill': CFG.textFill,
-                    'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
-                    'font-size': '13'
-                });
-                txt.textContent = s.label;
-                g.appendChild(txt);
+                var rowX = s.x + (s.w - s.inlineTokenW) / 2;
+                var rowY = s.y + (boxH - CFG.tokenLineH) / 2;
+                for (var ti = 0; ti < s.tokens.length; ti++) {
+                    var hToken = s.tokens[ti];
+                    appendVarToken(g, hToken, rowX, rowY, 'start');
+                    rowX += hToken.w + CFG.tokenGap;
+                }
             }
 
             svg.appendChild(g);

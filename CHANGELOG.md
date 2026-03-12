@@ -3,6 +3,9 @@
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
 ## 2026-03
+- **Bugfix:** Improved trace readability in trace-satisfaction multiple-choice questions by making option trace containers full-width and updating the SVG renderer to size/compress against actual container width instead of a fixed threshold.
+- **UX:** Added negation-aware variable coloring in trace diagrams (orange for negated literals, blue for non-negated) to make state labels easier to scan.
+- **Dependency:** Removed `openai` from core `requirements.txt`; added `experiments/requirements.txt` for benchmark-only dependencies.
 - **New:** Completed full Mermaid.js removal across the entire codebase. All exercise trace diagrams, counterexample traces in feedback, and misconception explainer illustrations now use the custom SVG trace renderer (`tracerenderer.js`) with structured JSON data instead of Mermaid DSL strings. Zero external CDN dependencies for diagram rendering.
 - **Cleanup:** Removed all dead Mermaid code from `exerciseprocessor.py` (`genMermaidGraphFromSpotTrace`, `mermaidFromSpotTrace`, `mermaidGraphFromEdgesList`, `expand_single_trace`, `NodeRepr.__mermaid_str__`), `stepper.py` (`treeAsMermaid`, `traceAsMermaid`, `__formula_to_mermaid__`, `__trace_to_mermaid__`), and Mermaid CDN script tags from all templates.
 - **Bugfix:** Fixed Stepper mode rendering blank for formulas containing `->` or `<->` (implication/equivalence operators conflicted with Mermaid's arrow syntax in diagram labels).

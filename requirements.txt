@@ -19,7 +19,6 @@ itsdangerous
 Jinja2 
 lark==1.1.9
 MarkupSafe 
-openai==1.12.0
 pydantic==2.7.1
 pydantic_core==2.18.2
 pylogics==0.2.1

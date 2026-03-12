@@ -2,6 +2,15 @@
     background-color: rgba(0, 0, 0, 0.05); /* Change this color as needed */
 }
 
+.trace-option-label {
+    cursor: pointer;
+}
+
+.trace-option-body .trace-diagram {
+    width: 100%;
+    max-width: 100%;
+}
+
 .footer {
     background-color: white;
 }
