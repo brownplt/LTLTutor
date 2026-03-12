@@ -160,6 +160,18 @@ function show_feedback(parent_node, question_type) {
             feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <pre class='language-ltl'><code>" + selectedAnswerFormula + "</code></pre> but not <pre class='language-ltl'><code>" +  correctAnswerFormula + "</code></pre></p>";
         }
 
+        // Render any trace diagrams in the feedback (e.g. misconception explainers)
+        if (typeof TraceRenderer !== 'undefined') {
+            feedback_div.querySelectorAll('.trace-diagram').forEach(function (el) {
+                if (el.dataset.trace && !el.dataset.rendered) {
+                    try {
+                        TraceRenderer.render(el, JSON.parse(el.dataset.trace));
+                        el.dataset.rendered = 'true';
+                    } catch (e) { /* ignore rendering errors in feedback diagrams */ }
+                }
+            });
+        }
+
         // Increment the incorrect count
         try {
             let incorrectCountElement = document.getElementById('incorrectCount');
@@ -322,15 +334,14 @@ function displayServerResponse(response) {
     // TODO: Switch on equivalent
 
     let cewords = response.cewords;
-    let wordsasmermaid = response.mermaid;
+    let traceDataList = response.trace_data;
 
     let r = (cewords.length > 0) ? Math.floor(Math.random() * cewords.length) : -1;
     let ce_trace = (cewords.length > 0) ? cewords[r] : null;
-    let ce_mermaid = (cewords.length > 0) ? wordsasmermaid[r] : null;
+    let ce_trace_data = (cewords.length > 0) ? traceDataList[r] : null;
 
 
-    // let ce_trace_img =  ce_trace ? get_mermaid_diagram(ce_trace) : "";
-    ce_trace_img = "<pre id='generated_ltl_trace' class='mermaid'>" + ce_mermaid + "</pre> <br> Alt Trace: " + ce_trace;
+    ce_trace_img = "<div id='generated_ltl_trace'></div> <br> Alt Trace: " + ce_trace;
 
     var feedback_string = "";
 
@@ -381,8 +392,8 @@ function displayServerResponse(response) {
     feedback_div.appendChild(responseAsHTMLElement);
 
     let traceElement = document.getElementById('generated_ltl_trace');
-    if (traceElement) {
-        mermaid.init(undefined, traceElement);
+    if (traceElement && ce_trace_data) {
+        TraceRenderer.render(traceElement, ce_trace_data);
     }
 
 }

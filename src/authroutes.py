@@ -723,11 +723,11 @@ def suggest_traces():
         for trace in sat_traces:
             trace_str = exerciseprocessor.canonicalizeSpotTrace(str(trace))
             expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
-            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(expanded)
+            trace_data = exerciseprocessor.traceToRenderData(expanded)
             satisfying_traces.append({
                 'trace': expanded,
                 'raw': trace_str,
-                'mermaid': mermaid,
+                'trace_data': trace_data,
                 'satisfies': True
             })
         
@@ -737,11 +737,11 @@ def suggest_traces():
         for trace in rej_traces:
             trace_str = exerciseprocessor.canonicalizeSpotTrace(str(trace))
             expanded = exerciseprocessor.expandSpotTrace(trace_str, literals)
-            mermaid = exerciseprocessor.genMermaidGraphFromSpotTrace(expanded)
+            trace_data = exerciseprocessor.traceToRenderData(expanded)
             rejecting_traces.append({
                 'trace': expanded,
                 'raw': trace_str,
-                'mermaid': mermaid,
+                'trace_data': trace_data,
                 'satisfies': False
             })
             

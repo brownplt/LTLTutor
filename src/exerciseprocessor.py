@@ -118,18 +118,6 @@ class NodeRepr:
         return f" {NodeRepr.VAR_SEPARATOR} ".join(deduped)
 
 
-    def __mermaid_str__(self):
-        asStr = self.__str__()
-
-        # And now, we replace the VAR_SEPARATOR with a space
-        asStr = asStr.replace(self.VAR_SEPARATOR, '\u2003')
-        # I also want to replace '! ' with '!'
-        asStr = asStr.replace('! ', '!')
-        #and replace '!' with '¬'
-        asStr = asStr.replace('!', '¬')
-
-        return f'{self.id}["{asStr}"]'
-
     def __str__(self):
         asStr = self.vars
         if '{' in asStr or '}' in asStr:
@@ -271,40 +259,38 @@ def getCycleContent(string):
     match = re.match(r'.*\{([^}]*)\}', string)
     return match.group(1) if match else ""
 
-def mermaidFromSpotTrace(sr):   
-    nodeRepr = spotTraceToNodeReprs(sr)
-    prefix_states = nodeRepr["prefix_states"]
-    cycle_states = nodeRepr["cycle_states"]
-    states = prefix_states + cycle_states
-
-    edges = []
-    for i in range(1, len(states)):
-        current = states[i - 1]
-        next = states[i]
-        edges.append((current, next))
-
-    return edges
-
-def mermaidGraphFromEdgesList(edges):
-    diagramText = 'flowchart LR;'
-
-    for edge in edges:
-        diagramText += f'{edge[0].__mermaid_str__()}-->{edge[1].__mermaid_str__()};'
-
-    return diagramText
+def _nodeReprDisplayLabel(node_repr):
+    """Format a NodeRepr state for display: em-space separator, ¬ negation."""
+    asStr = str(node_repr)
+    asStr = asStr.replace(NodeRepr.VAR_SEPARATOR, '\u2003')
+    asStr = asStr.replace('! ', '!')
+    asStr = asStr.replace('!', '\u00ac')
+    return asStr
 
 
-def genMermaidGraphFromSpotTrace(sr):
-    edges = mermaidFromSpotTrace(sr)
-    return mermaidGraphFromEdgesList(edges)
+def traceToRenderData(sr):
+    """Convert a SPOT trace string into structured data for the SVG trace renderer.
+    Returns {prefix: [{label: str}], cycle: [{label: str}]}."""
+    node_repr = spotTraceToNodeReprs(sr)
+    if not node_repr:
+        return {"prefix": [], "cycle": []}
+
+    prefix_states = node_repr["prefix_states"]
+    cycle_states = node_repr["cycle_states"]
+    # spotTraceToNodeReprs appends cycle_states[0] at the end for the back-edge;
+    # drop the duplicate for the render-data representation (the renderer draws
+    # the back-edge arc itself).
+    if cycle_states and len(cycle_states) > 1:
+        cycle_states = cycle_states[:-1]
+
+    return {
+        "prefix": [{"label": _nodeReprDisplayLabel(s)} for s in prefix_states],
+        "cycle":  [{"label": _nodeReprDisplayLabel(s)} for s in cycle_states]
+    }
 
 
-def expand_single_trace(sr, literals):
-    sr = expandSpotTrace(sr, literals)
-    return genMermaidGraphFromSpotTrace(sr)
-
-
-def change_traces_to_mermaid(data, literals):
+def change_traces_to_render_data(data, literals):
+    """Process exercise data: expand traces and attach structured trace_data for SVG rendering."""
 
     def remove_parens(s):
         return s.replace('(', '').replace(')', '')
@@ -313,8 +299,8 @@ def change_traces_to_mermaid(data, literals):
         if k['type'] == ExerciseBuilder.TRACESATMC:
             for option in k['options']:
                 sr = option['option']
-                sr = expandSpotTrace(sr, literals)                
-                option['mermaid'] = genMermaidGraphFromSpotTrace(sr)
+                sr = expandSpotTrace(sr, literals)
+                option['trace_data'] = traceToRenderData(sr)
 
                 option['option'] = remove_parens(sr)
 
@@ -323,7 +309,7 @@ def change_traces_to_mermaid(data, literals):
             sr = expandSpotTrace(sr, literals)
 
             k['trace'] = remove_parens(sr)
-            k['mermaid'] = genMermaidGraphFromSpotTrace(sr)
+            k['trace_data'] = traceToRenderData(sr)
     return data
 
 

@@ -38,9 +38,10 @@ class TestTraceCanonicalization(unittest.TestCase):
         expected = "a & !b & c & !z"
         self.assertEqual(canonicalizeSpotTrace(trace), expected)
 
-    def test_mermaid_rendering_still_shows_negation_symbol(self):
+    def test_display_label_still_shows_negation_symbol(self):
+        from exerciseprocessor import _nodeReprDisplayLabel
         node = NodeRepr("!b & a")
-        rendered = node.__mermaid_str__()
+        rendered = _nodeReprDisplayLabel(node)
         self.assertIn("¬b", rendered)
 
     def test_canonicalize_resolves_or_in_state(self):

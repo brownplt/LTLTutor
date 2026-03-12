@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tracerenderer.js') }}"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -41,12 +41,42 @@
             justify-content: center;
         }
 
-        /* Center align .mermaid divs */
-        #statecontainer .mermaid {
+        .trace-svg-container {
+            overflow-x: auto;
             margin: 0 auto;
-            /* Centers the div within its flex container */
-            display: block;
-            /* Ensures the div is treated as a block-level element */
+        }
+
+        /* Formula tree (CSS-based, replaces Mermaid flowchart TD) */
+        .formula-tree, .formula-tree ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .formula-tree ul {
+            padding-left: 20px;
+            border-left: 2px solid #dee2e6;
+            margin-left: 10px;
+            margin-top: 4px;
+        }
+        .formula-tree li {
+            position: relative;
+            padding: 3px 0;
+        }
+        .formula-tree li > code {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .formula-tree .tree-sat > code {
+            border: 2px solid #28a745;
+            background-color: #f0fff0;
+            color: #155724;
+        }
+        .formula-tree .tree-unsat > code {
+            border: 2px solid #dc3545;
+            background-color: #fff5f5;
+            color: #721c24;
         }
 
         .cycle-state-col {
@@ -220,11 +250,12 @@
                             <h4><span class="help float-right"> This tree represents the formula <code> {{formula}} </code>,
                                     structuring its sub-formulae in a hierarchical manner. Each node in the tree is
                                     represented
-                                    by a green box if it is satisfied, and an orange box with two lines if it is not
+                                    by a <span class="tree-sat"><code>green</code></span> box if it is satisfied,
+                                    and a <span class="tree-unsat"><code>red</code></span> box if it is not
                                     satisfied.</span> </h4>
 
                             <div>
-                                <pre class="mermaid" id="{{ps.id}}tree"> {{ ps.treeAsMermaid | safe}}  </pre>
+                                {{ ps.formulaTreeAsHTML | safe }}
                             </div>
                         </div>
 
@@ -236,7 +267,7 @@
                                     buttons, you can examine the formula's satisfaction at different points in this
                                     trace.
                                 </span></h4>
-                            <pre class="mermaid" id="{{ps.id}}trace">{{ ps.traceAsMermaid | safe }}</pre>
+                            <div class="trace-svg-container" data-step-index="{{ loop.index0 }}"></div>
                             <br>
                             <div class="btn-group d-flex justify-content-center" role="group">
                                 <button class="prev btn btn-primary" title="Previous State"><i
@@ -379,26 +410,14 @@
     <script>
         $(document).ready(function () {
 
-            //mermaid.initialize({ startOnLoad: true });
-            mermaid.initialize({ startOnLoad: false });
-            const ui_load_timeout_delay = 150;
-            function renderMermaidDiagram(graphElements) {
+            // Trace data for SVG renderer (shared across all stepper steps)
+            var traceData = {{ trace_render_data | safe }};
 
-                mermaid.run({
-                    nodes: graphElements
-                }).then((data) => {
-                    graphElements.forEach(function (element) {
-                        let $element = $(element);
-                        $element.width($element.find('svg').css('max-width'));
-                    });
-
-
-                }).catch((err) => {
-                    console.error("Error rendering mermaid diagram");
-                    console.error(err);
-                });
-            };
-
+            // Render all trace SVGs upfront
+            document.querySelectorAll('.trace-svg-container').forEach(function (container) {
+                var stepIndex = parseInt(container.dataset.stepIndex, 10);
+                TraceRenderer.render(container, traceData, { highlightIndex: stepIndex });
+            });
 
             const stepperContainers = Array.from(document.querySelectorAll('.stepper-container'));
             const progressLabel = document.getElementById('stepperProgress');
@@ -439,15 +458,6 @@
                 });
             }
 
-            function renderDiagrams() {
-                const activeContainer = stepperContainers[currentIndex];
-                if (!activeContainer) {
-                    return;
-                }
-                let to_render = activeContainer.querySelectorAll('.mermaid');
-                renderMermaidDiagram(to_render);
-            }
-
             function flashTree(container) {
                 const tree = container.querySelector('.formula-tree-container');
                 if (!tree) {
@@ -484,7 +494,6 @@
                 }, transitionDuration);
 
                 currentIndex = newIndex;
-                renderDiagrams();
                 setButtonState();
                 updateProgress();
                 flashTree(enteringContainer);
@@ -506,7 +515,6 @@
             stepperContainers[0].style.display = 'block';
             stepperContainers[0].classList.add('active-step');
             flashTree(stepperContainers[0]);
-            renderDiagrams();
             setButtonState();
             updateProgress();
 
@@ -543,9 +551,6 @@
 
             $('#stepperTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
                 isStepperActive = event.target === stepperTab;
-                if (isStepperActive) {
-                    renderDiagrams();
-                }
             });
         });
     </script>

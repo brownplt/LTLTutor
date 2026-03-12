@@ -21,7 +21,7 @@ from itertools import chain
 from collections import Counter, defaultdict
 import uuid
 import requests
-from stepper import traceSatisfactionPerStep
+from stepper import traceSatisfactionPerStep, getTraceRenderData
 import ltltoeng
 from authroutes import (
     authroutes,
@@ -769,7 +769,7 @@ def exercise(exercise_name):
                     except:
                         pass
             
-            data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals))
+            data = exerciseprocessor.change_traces_to_render_data(data, literals=list(literals))
             data = _convert_questions_to_syntax(data, syntax_choice)
             response = make_response(
                 render_template(
@@ -875,7 +875,7 @@ def loganswer(questiontype):
 
 
             to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
-            to_return['mermaid'] = [exerciseprocessor.genMermaidGraphFromSpotTrace(sr) for sr in to_return['cewords']]
+            to_return['trace_data'] = [exerciseprocessor.traceToRenderData(sr) for sr in to_return['cewords']]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
         if not isCorrect:
@@ -986,7 +986,7 @@ def exercise_predefined_get():
                 except:
                     pass
 
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals=list(literals) if literals else [])
+        data = exerciseprocessor.change_traces_to_render_data(data, literals=list(literals) if literals else [])
         if syntax_choice:
             data = _convert_questions_to_syntax(data, syntax_choice)
 
@@ -1066,7 +1066,7 @@ def newexercise():
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
-    data = exerciseprocessor.change_traces_to_mermaid(data, literals = LITERALS)
+    data = exerciseprocessor.change_traces_to_render_data(data, literals = LITERALS)
 
     answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
 
@@ -1105,7 +1105,7 @@ def robotrain(sourceuri, exercise_name):
     try:
         data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
         data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_mermaid(data, literals = ["e", "h"])
+        data = exerciseprocessor.change_traces_to_render_data(data, literals = ["e", "h"])
     except Exception as e:
         print(e)
         return "Error loading exercise"
@@ -1123,8 +1123,10 @@ def ltlstepper():
     if syntax_choice == None or syntax_choice not in SUPPORTED_SYNTAXES:
         syntax_choice = 'Classic'
 
+    empty_trace_data = json.dumps({"prefix": [], "cycle": []})
+
     if request.method == 'GET':
-        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
+        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
 
     if request.method == 'POST':
         ltl = request.form.get('formula')
@@ -1135,15 +1137,16 @@ def ltlstepper():
     try:
         node = parse_ltl_string(ltl)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
+        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
 
     try:
         result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []})
+        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
     
     matrix_data = result.getMatrixView()
-    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, matrix_data=matrix_data)
+    trace_render_data = json.dumps(getTraceRenderData(trace))
+    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, matrix_data=matrix_data, trace_render_data=trace_render_data)
 
 
 ##### Eng LTL Logging Routes ###

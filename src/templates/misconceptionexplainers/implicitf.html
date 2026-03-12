@@ -1,10 +1,5 @@
 <div class="card">
 
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true });
-    </script>
-
     <div class="card-body">
       <h4 class="card-title">Finally 
         <span class="badge badge-pill badge-primary float-right">Review</span>
@@ -24,20 +19,10 @@
         definitely become true. Thus both these traces satisfy <code>F p</code>:
 
 
-        <pre class="mermaid"> 
-            flowchart LR;
-            n1["!p"]-->n2["p"];
-            n2["p"]-->n2["p"];  
-        </pre>
+        <div class="trace-diagram" data-trace='{"prefix": [{"label": "\u00acp"}], "cycle": [{"label": "p"}]}'></div>
 
 
-        <pre class="mermaid"> 
-            flowchart LR;
-            n1["!p"]-->n2["!p"];
-            n2["!p"]-->n3["!p"];
-            n3["!p"]-->n4["p"];
-            n4["p"]-->n3["!p"];
-        </pre>
+        <div class="trace-diagram" data-trace='{"prefix": [{"label": "\u00acp"}, {"label": "\u00acp"}], "cycle": [{"label": "\u00acp"}, {"label": "p"}]}'></div>
 
       </p>
 

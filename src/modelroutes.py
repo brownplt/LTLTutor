@@ -75,7 +75,7 @@ def _build_exercise_view(exercise):
             trace = ''
             feedback = ''
             score = None
-            mermaid = ''
+            trace_data = ''
         else:
             question_text = str(question.get('question') or question.get('prompt') or '')
             question_type = str(question.get('type') or 'Unknown')
@@ -96,7 +96,7 @@ def _build_exercise_view(exercise):
                         'is_correct': _coerce_bool(option.get('isCorrect', False)),
                         'misconceptions': misconceptions,
                         'generated_from_formula': str(option.get('generatedFromFormula') or ''),
-                        'mermaid': str(option.get('mermaid') or '')
+                        'trace_data': option.get('trace_data') or ''
                     }
                 else:
                     option_view = {
@@ -104,7 +104,7 @@ def _build_exercise_view(exercise):
                         'is_correct': False,
                         'misconceptions': [],
                         'generated_from_formula': '',
-                        'mermaid': ''
+                        'trace_data': ''
                     }
 
                 options.append(option_view)
@@ -117,7 +117,7 @@ def _build_exercise_view(exercise):
             trace = str(question.get('trace') or '')
             feedback = str(question.get('feedback') or '')
             score = _format_score(question.get('score'))
-            mermaid = str(question.get('mermaid') or '')
+            trace_data = question.get('trace_data') or ''
 
         type_counts[question_type] += 1
 
@@ -128,7 +128,7 @@ def _build_exercise_view(exercise):
             'score': score,
             'trace': trace,
             'feedback': feedback,
-            'mermaid': mermaid,
+            'trace_data': trace_data,
             'options': options,
             'option_count': len(options),
             'correct_option_count': len([option for option in options if option['is_correct']])

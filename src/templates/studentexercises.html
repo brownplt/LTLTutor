@@ -284,10 +284,10 @@
                                                     </div>
                                                     {% endif %}
 
-                                                    {% if option.mermaid %}
+                                                    {% if option.trace_data %}
                                                     <details class="mt-2">
-                                                        <summary class="small text-muted">Show option mermaid source</summary>
-                                                        <pre class="payload-block mt-2">{{ option.mermaid }}</pre>
+                                                        <summary class="small text-muted">Show option trace data</summary>
+                                                        <pre class="payload-block mt-2">{{ option.trace_data }}</pre>
                                                     </details>
                                                     {% endif %}
                                                 </div>
@@ -296,10 +296,10 @@
                                         </div>
                                         {% endif %}
 
-                                        {% if question.mermaid %}
+                                        {% if question.trace_data %}
                                         <details class="mt-3">
-                                            <summary class="small text-muted">Show question mermaid source</summary>
-                                            <pre class="payload-block mt-2">{{ question.mermaid }}</pre>
+                                            <summary class="small text-muted">Show question trace data</summary>
+                                            <pre class="payload-block mt-2">{{ question.trace_data }}</pre>
                                         </details>
                                         {% endif %}
                                     </div>

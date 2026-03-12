@@ -3,7 +3,8 @@ import ltltoeng
 from spotutils import is_trace_satisfied
 import re
 import random
-from exerciseprocessor import mermaidFromSpotTrace, mermaidGraphFromEdgesList, NodeRepr
+import html as html_module
+from exerciseprocessor import NodeRepr
 
 def randid():
     return ''.join(random.choices('abcfghijklmopqrstuvwxyzABCFGHIJKLMOPQRSTUVWXYZ', k=6))
@@ -52,15 +53,6 @@ class StepperNode:
             self.traceAssignmentStr = ""
 
     @property
-    def treeAsMermaid(self):
-        return self.__formula_to_mermaid__()
-
-    @property
-    def traceAsMermaid(self):
-        return self.__trace_to_mermaid__()
-
-
-    @property
     def formulaAsHTML(self):
         return self.__formula_to_html__()
 
@@ -72,6 +64,19 @@ class StepperNode:
         asStr = asStr.replace('!', '¬')
         return asStr
 
+    @property
+    def formulaTreeAsHTML(self):
+        return f'<ul class="formula-tree">{self._build_tree_html()}</ul>'
+
+    def _build_tree_html(self):
+        sat_class = "tree-sat" if self.satisfied else "tree-unsat"
+        escaped = html_module.escape(self.formula)
+        children_html = ""
+        if self.children:
+            items = "".join(c._build_tree_html() for c in self.children)
+            children_html = f'<ul>{items}</ul>'
+        return f'<li class="{sat_class}"><code>{escaped}</code>{children_html}</li>'
+
     def getAllSubformulae(self):
         """Extract all subformulae from this node and its children recursively."""
         result = [(self.formula, self.satisfied)]
@@ -79,72 +84,6 @@ class StepperNode:
             result.extend(child.getAllSubformulae())
         return result
 
-    def __formula_to__mermaid_inner__(self):
-        edges = []
-        if self.satisfied:
-            noderepr = f'{self.id}["{self.formula}"]:::satclass'
-        else:
-            noderepr = f'{self.id}[["{self.formula}"]]:::unsatclass'
-        
-        for child in self.children:
-            child_repr = f'{child.id}["{child.formula}"]'
-            edges.append(f'{noderepr}-->{child_repr}')
-
-            child_edges = child.__formula_to__mermaid_inner__()
-            edges += child_edges
-        if len(edges) == 0:
-            edges.append(noderepr)
-        return edges
-
-    def __formula_to_mermaid__(self):
-        prefix = 'flowchart TD;\n'
-        edges = self.__formula_to__mermaid_inner__()
-        postfix = '\nclassDef unsatclass stroke:#f96,stroke-width:2px\nclassDef satclass stroke:#008000,stroke-width:2px;'
-        return prefix + ';'.join(edges) + postfix
-
-    def __trace_to_mermaid__(self):
-
-
-        def get_nth_node_in_graph(edges, n):
-            # Find the root node
-            source_nodes = set(edge[0] for edge in edges)
-            destination_nodes = set(edge[1] for edge in edges)
-            root_nodes = source_nodes - destination_nodes
-
-
-            # If there is no root node, the graph is cyclic
-            # then, the root node is the first node in the graph
-            if len(root_nodes) == 0:
-                current_node = edges[0][0]
-            else:
-                current_node = root_nodes.pop()
-
-            # Follow the edges from the root node
-            for _ in range(n):
-                for edge in edges:
-                    if edge[0] == current_node:
-                        current_node = edge[1]
-                        break
-                else:
-                    raise IndexError('Node index out of range')
-            
-            return current_node
-
-        graph_edges = mermaidFromSpotTrace(self.originaltrace)
-
-
-
-        g = mermaidGraphFromEdgesList(graph_edges)
-
-   
-        fn = get_nth_node_in_graph(graph_edges, self.traceindex)
-        fnid = fn.id
-
-        # Highlights the current state in the trace
-        postfix = f"style {fnid} stroke:#333,stroke-width:4px"
-
-        return g + postfix
-        
 
     # And hopefully satclass and unsatclass are things in the CSS
 
@@ -265,8 +204,6 @@ def buildNodeStep(node, subtrace, trace_index_of_subtrace, trace, syntax) -> Ste
     # Then we build the trace in the overall trace, and identify the current state in the overall trace
 
     ### TODO: This needs to change to a more general approach
-    # stepperNode.trace = trace
-    # stepperNode.traceAsMermaid = stepperNode.__trace_to_mermaid__()
 
     return stepperNode
 
@@ -333,3 +270,19 @@ def traceSatisfactionPerStep(node, trace, syntax):
 
     cycle_sat = [buildNodeStep(node=node, subtrace=buildTraceForStateInCycle(i), trace=trace, trace_index_of_subtrace= num_prefix_states + i, syntax=syntax) for i in range(len(cycle))]
     return TraceSatisfactionResult(prefix_sat, cycle_sat)
+
+
+def getTraceRenderData(trace):
+    """Build structured trace data for the client-side SVG trace renderer."""
+    prefix, cycle = splitTraceAtCycle(trace)
+
+    def fmt(s):
+        s = s.replace('&', '\u2003')
+        s = s.replace('! ', '!')
+        s = s.replace('!', '\u00ac')
+        return s.strip()
+
+    return {
+        "prefix": [{"label": fmt(s)} for s in prefix],
+        "cycle": [{"label": fmt(s)} for s in cycle]
+    }
