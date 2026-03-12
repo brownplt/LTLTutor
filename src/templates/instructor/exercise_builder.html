@@ -384,7 +384,12 @@
     let currentOptions = [];
     let suppressDirtyTracking = false;
     let feedbackTimer = null;
+    let publishedExerciseSnapshot = null;
+    let hasLocalDraftChanges = false;
+    let skipLeaveWarning = false;
     const assignmentApplyAction = '{{ "Update" if exercise else "Create" }} Exercise';
+    const leavePageDraftWarning =
+        `You have local draft changes that are not published to students. Click ${assignmentApplyAction} before leaving this page.`;
 
     document.addEventListener('DOMContentLoaded', function() {
         {% if exercise and exercise.exercise_json %}
@@ -403,6 +408,7 @@
         questionSavedStates = questions.map(() => true);
         initializeEventHandlers();
         renderQuestionsList();
+        publishedExerciseSnapshot = buildExerciseSnapshot();
         updateSaveIndicators();
         formatLastSavedTimestamp();
     });
@@ -418,8 +424,30 @@
         });
 
         document.getElementById('exerciseForm').addEventListener('submit', handleExerciseSubmit);
+        ['exercise_name', 'course', 'exercise_syntax', 'expires_at'].forEach((id) => {
+            const input = document.getElementById(id);
+            if (!input) {
+                return;
+            }
+            input.addEventListener('input', updateSaveIndicators);
+            input.addEventListener('change', updateSaveIndicators);
+        });
+        document.querySelectorAll('input[name="submission_limit"]').forEach((input) => {
+            input.addEventListener('change', updateSaveIndicators);
+        });
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
         updateQuestionKindUI();
+    }
+
+    function handleBeforeUnload(event) {
+        refreshDraftPublishState();
+        if (!hasLocalDraftChanges || skipLeaveWarning) {
+            return;
+        }
+        event.preventDefault();
+        event.returnValue = leavePageDraftWarning;
+        return leavePageDraftWarning;
     }
 
     function updateQuestionKindUI() {
@@ -530,6 +558,26 @@
         }
         questions[currentQuestionIndex] = built.question;
         document.getElementById('exercise_json').value = JSON.stringify(questions);
+    }
+
+    function buildExerciseSnapshot() {
+        const submissionLimit = document.querySelector('input[name="submission_limit"]:checked');
+        return JSON.stringify({
+            exercise_name: (document.getElementById('exercise_name').value || '').trim(),
+            course: document.getElementById('course').value || '',
+            exercise_syntax: document.getElementById('exercise_syntax').value || '',
+            expires_at: document.getElementById('expires_at').value || '',
+            submission_limit: submissionLimit ? submissionLimit.value : 'multiple',
+            questions: questions
+        });
+    }
+
+    function refreshDraftPublishState() {
+        if (publishedExerciseSnapshot === null) {
+            hasLocalDraftChanges = false;
+            return;
+        }
+        hasLocalDraftChanges = buildExerciseSnapshot() !== publishedExerciseSnapshot;
     }
 
     function renderQuestionsList() {
@@ -1082,6 +1130,7 @@
         document.getElementById('exercise_json').value = JSON.stringify(questions);
 
         const saveExerciseBtn = document.getElementById('saveExerciseBtn');
+        skipLeaveWarning = true;
         saveExerciseBtn.disabled = true;
         saveExerciseBtn.textContent = 'Saving...';
         showFeedback('Saving exercise...', 'info', 0);
@@ -1145,14 +1194,23 @@
         }
 
         const exerciseState = document.getElementById('exerciseSaveState');
+        refreshDraftPublishState();
         if (questions.length === 0) {
-            exerciseState.className = 'small text-muted mt-2';
-            exerciseState.textContent = 'No questions added yet.';
+            if (hasLocalDraftChanges) {
+                exerciseState.className = 'small text-warning font-weight-bold mt-2';
+                exerciseState.textContent = `Exercise settings are local draft changes. Click ${assignmentApplyAction} to publish them to students.`;
+            } else {
+                exerciseState.className = 'small text-muted mt-2';
+                exerciseState.textContent = 'No questions added yet.';
+            }
             return;
         }
 
         const hasUnsaved = questionSavedStates.some((state) => state === false);
-        if (hasUnsaved) {
+        if (!hasLocalDraftChanges) {
+            exerciseState.className = 'small text-success mt-2';
+            exerciseState.textContent = 'All exercise changes are published to students.';
+        } else if (hasUnsaved) {
             exerciseState.className = 'small text-warning font-weight-bold mt-2';
             exerciseState.textContent = `Unsaved question edits detected. Save each question, then click ${assignmentApplyAction} to publish changes for students.`;
         } else {
