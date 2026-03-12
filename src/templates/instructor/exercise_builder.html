@@ -181,7 +181,10 @@
                             </button>
                         </div>
                         <div class="px-3 pt-2 pb-0">
-                            <small class="text-muted">New or edited questions show an <strong>Unsaved</strong> badge until you click <strong>Save Question</strong>.</small>
+                            <small class="text-muted">
+                                New or edited questions show an <strong>Unsaved</strong> badge until you click <strong>Save Question</strong>.
+                                This saves your draft in the builder only; click <strong>{{ 'Update' if exercise else 'Create' }} Exercise</strong> to publish changes for students.
+                            </small>
                         </div>
                         <div class="card-body p-0">
                             <div id="questionsList" class="list-group list-group-flush">
@@ -381,6 +384,7 @@
     let currentOptions = [];
     let suppressDirtyTracking = false;
     let feedbackTimer = null;
+    const assignmentApplyAction = '{{ "Update" if exercise else "Create" }} Exercise';
 
     document.addEventListener('DOMContentLoaded', function() {
         {% if exercise and exercise.exercise_json %}
@@ -994,7 +998,11 @@
         renderOptions();
         renderQuestionsList();
         updateSaveIndicators();
-        showFeedback(`Question #${currentQuestionIndex + 1} saved.`, 'success');
+        showFeedback(
+            `Question #${currentQuestionIndex + 1} saved in the builder draft. Click ${assignmentApplyAction} to publish changes for students.`,
+            'warning',
+            4200
+        );
         flashButton(event ? event.target : null, 'Saved!');
     }
 
@@ -1146,10 +1154,10 @@
         const hasUnsaved = questionSavedStates.some((state) => state === false);
         if (hasUnsaved) {
             exerciseState.className = 'small text-warning font-weight-bold mt-2';
-            exerciseState.textContent = 'Unsaved question edits detected. Save each question before updating the exercise.';
+            exerciseState.textContent = `Unsaved question edits detected. Save each question, then click ${assignmentApplyAction} to publish changes for students.`;
         } else {
-            exerciseState.className = 'small text-success mt-2';
-            exerciseState.textContent = 'All question changes are saved in the editor.';
+            exerciseState.className = 'small text-warning font-weight-bold mt-2';
+            exerciseState.textContent = `All question changes are saved in the builder draft only. Click ${assignmentApplyAction} to publish them to students.`;
         }
     }
 
