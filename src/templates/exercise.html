@@ -35,53 +35,35 @@
     <div class="container-lg">
         {% include 'navbar.html' %}
 
-        <h6 id="exerciseName">{{ exercise_name }}</h6>
-        {% if syntax_choice %}
-        <p class="text-muted mb-0">
-            <small>Syntax: <strong>{{ syntax_choice }}</strong></small>
-        </p>
-        {% endif %}
-
         <div id="questions">
             {% for q in questions %}
             {%set qindex = loop.index %}
             <div class="card mt-4 question">
 
-
-
-
-                <div class="card-header mb-2">
-                    <div class="row">
-                        <div class="col-12">
-                            <p class="font-italic">
-                                {% if q.description %}
-                                    {{ q.description }}
-                                {% endif %}
-                            </p>
-                        </div>
+                <div class="card-header py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">
+                            <span id="exerciseName" class="font-weight-bold">{{ exercise_name }}</span>
+                            {% if syntax_choice %}<span class="mx-1">·</span><span>{{ syntax_choice }}</span>{% endif %}
+                        </small>
+                        <small class="text-muted">Question {{ qindex }} of {{ questions | length }}</small>
                     </div>
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <p class="lead">
-                                {% if q.type == "englishtoltl" %}
-                                    Which of the following LTL formulae best represents this English sentence?
-                                {% elif q.type == "tracesatisfaction_mc" %}
-                                    Which of the following traces satisfies the following LTL formula?
-                                {% elif q.type == "tracesatisfaction_yn" %}
-                                    Does this trace satisfy the following LTL formula?
-                                {% else %}
-                                    <div class="alert alert-danger" role="alert">
-                                        <strong>Unrecognized Question type! {{ q.type }}</strong>
-                                    </div>
-                                {% endif %}
-                            </p>
-                        </div>
-                        <div class="col text-right">
-                            <small class="text-muted"> Question {{ qindex }} of {{ questions | length}} </small>
-                            
-                        </div>
-                    </div>
-                    
+                    <p class="mb-0 font-weight-bold">
+                        {% if q.type == "englishtoltl" %}
+                            Which of the following LTL formulae best represents this English sentence?
+                        {% elif q.type == "tracesatisfaction_mc" %}
+                            Which of the following traces satisfies the following LTL formula?
+                        {% elif q.type == "tracesatisfaction_yn" %}
+                            Does this trace satisfy the following LTL formula?
+                        {% else %}
+                            <div class="alert alert-danger mb-0" role="alert">
+                                <strong>Unrecognized Question type! {{ q.type }}</strong>
+                            </div>
+                        {% endif %}
+                    </p>
+                    {% if q.description %}
+                    <p class="font-italic text-muted mb-0 mt-1"><small>{{ q.description }}</small></p>
+                    {% endif %}
                 </div>
 
 
@@ -125,7 +107,7 @@
 
                     <ul class="list-group">
                         {% for option in q.options %}
-                        <li class="list-group-item mb-2 trace-option-item">
+                        <li class="list-group-item trace-option-item">
                             <label class="form-check-label d-block w-100 mb-0 trace-option-label" for="{{ qindex }}option{{ loop.index }}">
                                 <div class="form-check w-100 mb-0 trace-option-body">
                                     <input class="form-check-input" type="radio" name="{{ qindex }}option"
