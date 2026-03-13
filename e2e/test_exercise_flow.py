@@ -15,7 +15,7 @@ from playwright.sync_api import expect
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _load_prebuilt_exercise(page, base_url, exercise_file="robotrain.json"):
+def _load_prebuilt_exercise(page, base_url, exercise_file="equivalent.json"):
     """Navigate to the predefined exercise page for a prebuilt JSON file."""
     page.goto(f"{base_url}/exercise/predefined?sourceuri=preload:{exercise_file}")
     page.wait_for_selector("#questions")
