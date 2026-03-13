@@ -46,7 +46,7 @@
                             <span id="exerciseName" class="font-weight-bold">{{ exercise_name }}</span>
                             {% if syntax_choice %}<span class="mx-1">·</span><span>{{ syntax_choice }}</span>{% endif %}
                         </small>
-                        <small class="text-muted">Question {{ qindex }} of {{ questions | length }}</small>
+                        <small class="text-muted question-counter">Question {{ qindex }} of {{ questions | length }}</small>
                     </div>
                     <p class="mb-0 font-weight-bold">
                         {% if q.type == "englishtoltl" %}

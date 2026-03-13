@@ -1081,37 +1081,6 @@ def newexercise():
 
 
 
-@app.route('/entryexitticket/<ticket>')
-@login_required
-def entryexitticket(ticket):
-    userId = getUserName()
-    if not userId:
-        return "USER ID IS NOT SET, PLEASE RELOAD THE PAGE."
-    
-    uidlen = len(userId)
-    choices = ["preload:robotrain-odd.json", "preload:robotrain-even.json"]
-
-    entry_index = uidlen % 2
-    exit_index = (uidlen + 1) % 2
-
-    if ticket == "entry":
-        return robotrain(choices[entry_index], exercise_name = "robotrain-entry")
-    elif ticket == "exit":
-        return robotrain(choices[exit_index], exercise_name = "robotrain-exit")
-    else:
-        return "Invalid ticket type."     
-
-def robotrain(sourceuri, exercise_name):
-    try:
-        data = exerciseprocessor.load_questions_from_sourceuri(sourceuri, app.static_folder)
-        data = exerciseprocessor.randomize_questions(data)
-        data = exerciseprocessor.change_traces_to_render_data(data, literals = ["e", "h"])
-    except Exception as e:
-        print(e)
-        return "Error loading exercise"
-    return render_template('/prebuiltexercises/robotrain.html', uid = getUserName(), questions=data, exercise_name=exercise_name)
-
-
 ###### Stepper routes ######
 
 @app.route('/stepper', methods=['GET', 'POST'])
