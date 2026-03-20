@@ -2,11 +2,13 @@
 FROM continuumio/miniconda3 AS build
 COPY requirements.txt .
 
+COPY ltlmutator/ /ltlmutator/
 RUN conda init bash && \
     . /opt/conda/etc/profile.d/conda.sh && \
     conda create --name myenv python=3.9 && \
     conda activate myenv && \
     conda install -c https://conda.anaconda.org/conda-forge spot && \
+    pip install /ltlmutator && \
     pip install -r requirements.txt
     # && \
     #conda pack -n myenv -o /tmp/myenv.tar.gz

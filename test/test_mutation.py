@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
-from ltlnode import parse_ltl_string
-import codebook
+from ltlmutator import parse_ltl_string
+from ltlmutator import codebook
 
 
 """

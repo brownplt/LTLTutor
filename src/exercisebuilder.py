@@ -1,14 +1,14 @@
-import spotutils
+from ltlmutator import spotutils
 import datetime
 from collections import defaultdict
-import codebook
-from codebook import MisconceptionCode
-import ltlnode
+from ltlmutator import codebook
+from ltlmutator import MisconceptionCode
+import ltlmutator.ltlnode as ltlnode
 import random
 import re
 import math
 import ltltoeng
-from syntacticmutator import applyRandomMutationNotEquivalentTo
+from ltlmutator import applyRandomMutationNotEquivalentTo
 
 
 class ExerciseBuilder:

@@ -6,8 +6,8 @@ Quick test to verify template generation and operator association changes work c
 import sys
 sys.path.insert(0, 'src')
 
-from codebook import MisconceptionCode, applyMisconception
-from ltlnode import LTLNode
+from ltlmutator import MisconceptionCode, applyMisconception
+from ltlmutator import LTLNode
 
 def test_exclusive_u_operators():
     """Test that ExclusiveU now returns boolean operators too"""

@@ -38,14 +38,14 @@ class ltlParser ( Parser ):
 
     sharedContextCache = PredictionContextCache()
 
-    literalNames = [ "<INVALID>", "'!'", "'X'", "'AFTER'", "'NEXT_STATE'", 
-                     "'F'", "'EVENTUALLY'", "'G'", "'ALWAYS'", "'&'", "'|'", 
+    literalNames = [ "<INVALID>", "'!'", "'X'", "'AFTER'", "'NEXT_STATE'",
+                     "'F'", "'EVENTUALLY'", "'G'", "'ALWAYS'", "'&'", "'|'",
                      "'U'", "'UNTIL'", "'->'", "'<->'", "'('", "')'" ]
 
-    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
-                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+    symbolicNames = [ "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
+                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>",
                       "<INVALID>", "ID", "WS" ]
 
     RULE_ltl = 0
@@ -141,7 +141,7 @@ class ltlParser ( Parser ):
         def getRuleIndex(self):
             return ltlParser.RULE_formula
 
-     
+
         def copyFrom(self, ctx:ParserRuleContext):
             super().copyFrom(ctx)
 
@@ -539,7 +539,7 @@ class ltlParser ( Parser ):
                         self.formula(4)
                         pass
 
-             
+
                 self.state = 44
                 self._errHandler.sync(self)
                 _alt = self._interp.adaptivePredict(self._input,2,self._ctx)
@@ -608,24 +608,19 @@ class ltlParser ( Parser ):
     def formula_sempred(self, localctx:FormulaContext, predIndex:int):
             if predIndex == 0:
                 return self.precpred(self._ctx, 7)
-         
+
 
             if predIndex == 1:
                 return self.precpred(self._ctx, 6)
-         
+
 
             if predIndex == 2:
                 return self.precpred(self._ctx, 5)
-         
+
 
             if predIndex == 3:
                 return self.precpred(self._ctx, 4)
-         
+
 
             if predIndex == 4:
                 return self.precpred(self._ctx, 3)
-         
-
-
-
-
