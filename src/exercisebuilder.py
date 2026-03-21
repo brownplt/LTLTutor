@@ -412,16 +412,28 @@ class ExerciseBuilder:
 
         ## First generate a large pool from spot randltl
         pool_size = 2*num_questions
-        question_answers = spotutils.gen_rand_ltl(atoms = literals, 
-                                                  tree_size = tree_size, 
-                                                  ltl_priorities = self.ltl_priorities, 
+        question_answers = spotutils.gen_rand_ltl(atoms = literals,
+                                                  tree_size = tree_size,
+                                                  ltl_priorities = self.ltl_priorities,
                                                   num_formulae = pool_size)
-        
+
         ## Augment with template-generated formulas for pattern-specific misconceptions
         ## This helps ensure we get formulas that can actually be mutated with these misconceptions
         template_formulas = self.generate_template_formulas(literals, num_templates=max(1, num_questions // 4))
         question_answers.extend(template_formulas)
-        
+
+        ## A/B test: generate a second pool with r,g,b literals for contextualized questions
+        CONTEXTUALIZED_LITERALS = list(ltltoeng_contextualized.THEMES["lights"].literals.keys())
+        ctx_answers = spotutils.gen_rand_ltl(atoms = CONTEXTUALIZED_LITERALS,
+                                             tree_size = tree_size,
+                                             ltl_priorities = self.ltl_priorities,
+                                             num_formulae = pool_size)
+        ctx_templates = self.generate_template_formulas(CONTEXTUALIZED_LITERALS, num_templates=max(1, num_questions // 4))
+        ctx_answers.extend(ctx_templates)
+        ctx_answers = [a for a in ctx_answers if not contains_undersirable_lit(a)]
+        random.shuffle(ctx_answers)
+        ctx_iter = iter(ctx_answers)
+
 
         def formula_choice_metric(formula):
 
@@ -448,7 +460,15 @@ class ExerciseBuilder:
             if kind == self.TRACESATMC:
                 question = self.build_tracesat_mc_question(answer)
             elif kind == self.ENGLISHTOLTL:
-                question = self.build_english_to_ltl_question(answer)
+                # A/B test: 50/50 abstract vs. contextualized
+                if random.random() < 0.5:
+                    ctx_answer = next(ctx_iter, None)
+                    if ctx_answer is not None:
+                        question = self.build_english_to_ltl_question(ctx_answer, contextualized=True)
+                    else:
+                        question = self.build_english_to_ltl_question(answer)
+                else:
+                    question = self.build_english_to_ltl_question(answer)
             elif kind == self.TRACESATYN:
                 question = self.build_tracesat_yn_question(answer)
 
@@ -503,53 +523,18 @@ class ExerciseBuilder:
         return ltltoeng.finalize_sentence(formula_eng_corrected)
 
 
-    # Mapping from standard formula literals to lights-theme literals
-    LIGHTS_LITERAL_MAP = {'p': 'r', 'q': 'g', 'r': 'b'}
-    LIGHTS_LITERAL_UNMAP = {v: k for k, v in LIGHTS_LITERAL_MAP.items()}
-
-    @staticmethod
-    def _remap_formula_literals(formula, mapping):
-        """Rewrite literal names in a formula string using the given mapping.
-
-        Uses word-boundary-aware replacement to avoid mangling operator names.
-        Applies replacements via intermediate placeholders to prevent collisions
-        (e.g., p->r and r->b would collide without this).
-        """
-        result = formula
-        # Phase 1: replace originals with unique placeholders
-        for orig, new in mapping.items():
-            placeholder = f"__REMAP_{orig}__"
-            result = re.sub(rf'\b{re.escape(orig)}\b', placeholder, result)
-        # Phase 2: replace placeholders with final values
-        for orig, new in mapping.items():
-            placeholder = f"__REMAP_{orig}__"
-            result = result.replace(placeholder, new)
-        return result
-
     def gen_nl_question_contextualized(self, formula):
         """Generate a contextualized English question using the lights theme.
 
-        Remaps formula literals (p->r, q->g, r->b) so they match the theme.
-        Returns (question_text, remapped_formula) or (None, None) if the formula
-        uses literals not covered by the mapping.
+        Expects the formula to already use r,g,b literals (matching the theme).
+        Returns None if translation fails.
         """
         LIGHTS_THEME = ltltoeng_contextualized.THEMES["lights"]
-
-        # Check that all literals in the formula are in our mapping
-        literals_in_formula = set(re.findall(r'\b([a-z][a-z0-9]*)\b', formula))
-        # LTL operators are uppercase (G, F, X, U) so won't match [a-z], but
-        # just in case, filter out any known operators
-        covered = set(self.LIGHTS_LITERAL_MAP.keys())
-        if not literals_in_formula.issubset(covered):
-            return None, None
-
-        remapped_formula = self._remap_formula_literals(formula, self.LIGHTS_LITERAL_MAP)
-        as_node = ltlnode.parse_ltl_string(remapped_formula)
-
+        as_node = ltlnode.parse_ltl_string(formula)
         result = ltltoeng_contextualized.translate(as_node, LIGHTS_THEME)
         if not result or result.strip() == "":
-            return None, None
-        return result, remapped_formula
+            return None
+        return result
 
 
     def get_options_with_misconceptions_as_formula(self, answer):
@@ -597,29 +582,22 @@ class ExerciseBuilder:
 
         return merged_options
 
-    def build_english_to_ltl_question(self, answer):
+    def build_english_to_ltl_question(self, answer, contextualized=False):
 
-        # A/B test: randomly assign abstract vs. contextualized (lights)
-        translation_mode = random.choice(["abstract", "contextualized"])
-
-        if translation_mode == "contextualized":
-            question, remapped_formula = self.gen_nl_question_contextualized(answer)
-            if question is not None and remapped_formula is not None:
-                # Build options using the remapped (r,g,b) formula
-                options = self.get_options_with_misconceptions_as_formula(remapped_formula)
-                if options is None:
-                    # Fall back to abstract
-                    translation_mode = "abstract"
-            else:
-                # Fall back to abstract if contextualized fails
-                translation_mode = "abstract"
-
-        if translation_mode == "abstract":
-            question = self.gen_nl_question(answer)
-            options = self.get_options_with_misconceptions_as_formula(answer)
-
+        options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
+
+        if contextualized:
+            question = self.gen_nl_question_contextualized(answer)
+            translation_mode = "contextualized"
+            # Fall back to abstract if contextualized translation fails
+            if question is None or question == "":
+                question = self.gen_nl_question(answer)
+                translation_mode = "abstract"
+        else:
+            question = self.gen_nl_question(answer)
+            translation_mode = "abstract"
 
         if question is None or question == "":
             print("Question generation failed unexpectedly.")
