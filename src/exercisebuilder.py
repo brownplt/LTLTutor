@@ -8,6 +8,7 @@ import random
 import re
 import math
 import ltltoeng
+import ltltoeng_prose
 import ltltoeng_contextualized
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
@@ -516,16 +517,11 @@ class ExerciseBuilder:
 
     
     def gen_nl_question(self, formula):
-
         as_node = ltlnode.parse_ltl_string(formula)
-        formula_eng = as_node.__to_english__()
-        if formula_eng is None or formula_eng == "":
+        result = ltltoeng_prose.translate(as_node)
+        if not result or result.strip() == "":
             return None
-
-        formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
-        ### If there are multiple '.' in a row, replace with a single '.'
-        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
-        return ltltoeng.finalize_sentence(formula_eng_corrected)
+        return result
 
 
     def gen_nl_question_contextualized(self, formula):
