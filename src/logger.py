@@ -52,6 +52,7 @@ class StudentResponse(Base):
     mp_class = Column(String)
     exercise = Column(String)
     course = Column(String, default="")
+    translation_mode = Column(String, default="")
 
 
 class GeneratedExercise(Base):
@@ -132,7 +133,7 @@ class Logger:
             return {row.ltl for row in rows if row.ltl}
 
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course, translation_mode=""):
 
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
@@ -154,9 +155,9 @@ class Logger:
 
         ## We still want to log the response if there are no misconceptions
         if misconceptions == None or len(misconceptions) == 0:
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
                                   misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
             self.record(log)
 
 
@@ -165,9 +166,9 @@ class Logger:
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
 
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
             self.record(log)
 
     

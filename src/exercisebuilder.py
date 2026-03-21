@@ -8,6 +8,7 @@ import random
 import re
 import math
 import ltltoeng
+import ltltoeng_contextualized
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
 
@@ -495,11 +496,36 @@ class ExerciseBuilder:
         formula_eng = as_node.__to_english__()
         if formula_eng is None or formula_eng == "":
             return None
-        
+
         formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
         ### If there are multiple '.' in a row, replace with a single '.'
         formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
         return ltltoeng.finalize_sentence(formula_eng_corrected)
+
+
+    def gen_nl_question_contextualized(self, formula):
+        """Generate a contextualized English question using the lights theme.
+
+        Returns None if the formula uses literals not covered by the lights
+        theme (only p, q, r are mapped), to avoid mixing abstract and concrete.
+        """
+        LIGHTS_THEME = ltltoeng_contextualized.THEMES["lights"]
+
+        as_node = ltlnode.parse_ltl_string(formula)
+
+        # Check that all literals in the formula are covered by the theme
+        literals_in_formula = set(re.findall(r'\b([a-z][a-z0-9]*)\b', formula))
+        # Remove LTL operators from the set
+        ltl_operators = {'G', 'F', 'X', 'U', 'W', 'R'}
+        literals_in_formula -= ltl_operators
+        covered_literals = set(LIGHTS_THEME.literals.keys())
+        if not literals_in_formula.issubset(covered_literals):
+            return None
+
+        result = ltltoeng_contextualized.translate(as_node, LIGHTS_THEME)
+        if not result or result.strip() == "":
+            return None
+        return result
 
 
     def get_options_with_misconceptions_as_formula(self, answer):
@@ -548,12 +574,22 @@ class ExerciseBuilder:
         return merged_options
 
     def build_english_to_ltl_question(self, answer):
-        
+
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
 
-        question = self.gen_nl_question(answer)
+        # A/B test: randomly assign abstract vs. contextualized (lights)
+        translation_mode = random.choice(["abstract", "contextualized"])
+
+        if translation_mode == "contextualized":
+            question = self.gen_nl_question_contextualized(answer)
+            # Fall back to abstract if contextualized fails (e.g., unsupported literals)
+            if question is None or question == "":
+                question = self.gen_nl_question(answer)
+                translation_mode = "abstract"
+        else:
+            question = self.gen_nl_question(answer)
 
         if question is None or question == "":
             print("Question generation failed unexpectedly.")
@@ -562,7 +598,8 @@ class ExerciseBuilder:
         return {
             "question": question,
             "type": self.ENGLISHTOLTL,
-            "options": options
+            "options": options,
+            "translation_mode": translation_mode
         }
 
     def build_tracesat_mc_question(self, answer):

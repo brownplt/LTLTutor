@@ -854,9 +854,11 @@ def loganswer(questiontype):
                 return {"error": "submission_limit", "message": "This exercise only allows one submission."}, 403
 
 
+    translation_mode = data.get('translation_mode', '')
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect,
-                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId)
+                                      questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId,
+                                      translation_mode = translation_mode)
     
 
     if questiontype == "english_to_ltl":
