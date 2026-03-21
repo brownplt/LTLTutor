@@ -503,29 +503,53 @@ class ExerciseBuilder:
         return ltltoeng.finalize_sentence(formula_eng_corrected)
 
 
+    # Mapping from standard formula literals to lights-theme literals
+    LIGHTS_LITERAL_MAP = {'p': 'r', 'q': 'g', 'r': 'b'}
+    LIGHTS_LITERAL_UNMAP = {v: k for k, v in LIGHTS_LITERAL_MAP.items()}
+
+    @staticmethod
+    def _remap_formula_literals(formula, mapping):
+        """Rewrite literal names in a formula string using the given mapping.
+
+        Uses word-boundary-aware replacement to avoid mangling operator names.
+        Applies replacements via intermediate placeholders to prevent collisions
+        (e.g., p->r and r->b would collide without this).
+        """
+        result = formula
+        # Phase 1: replace originals with unique placeholders
+        for orig, new in mapping.items():
+            placeholder = f"__REMAP_{orig}__"
+            result = re.sub(rf'\b{re.escape(orig)}\b', placeholder, result)
+        # Phase 2: replace placeholders with final values
+        for orig, new in mapping.items():
+            placeholder = f"__REMAP_{orig}__"
+            result = result.replace(placeholder, new)
+        return result
+
     def gen_nl_question_contextualized(self, formula):
         """Generate a contextualized English question using the lights theme.
 
-        Returns None if the formula uses literals not covered by the lights
-        theme (only p, q, r are mapped), to avoid mixing abstract and concrete.
+        Remaps formula literals (p->r, q->g, r->b) so they match the theme.
+        Returns (question_text, remapped_formula) or (None, None) if the formula
+        uses literals not covered by the mapping.
         """
         LIGHTS_THEME = ltltoeng_contextualized.THEMES["lights"]
 
-        as_node = ltlnode.parse_ltl_string(formula)
-
-        # Check that all literals in the formula are covered by the theme
+        # Check that all literals in the formula are in our mapping
         literals_in_formula = set(re.findall(r'\b([a-z][a-z0-9]*)\b', formula))
-        # Remove LTL operators from the set
-        ltl_operators = {'G', 'F', 'X', 'U', 'W', 'R'}
-        literals_in_formula -= ltl_operators
-        covered_literals = set(LIGHTS_THEME.literals.keys())
-        if not literals_in_formula.issubset(covered_literals):
-            return None
+        # LTL operators are uppercase (G, F, X, U) so won't match [a-z], but
+        # just in case, filter out any known operators
+        covered = set(self.LIGHTS_LITERAL_MAP.keys())
+        if not literals_in_formula.issubset(covered):
+            return None, None
+
+        remapped_formula = self._remap_formula_literals(formula, self.LIGHTS_LITERAL_MAP)
+        as_node = ltlnode.parse_ltl_string(remapped_formula)
 
         result = ltltoeng_contextualized.translate(as_node, LIGHTS_THEME)
         if not result or result.strip() == "":
-            return None
-        return result
+            return None, None
+        return result, remapped_formula
 
 
     def get_options_with_misconceptions_as_formula(self, answer):
@@ -575,21 +599,27 @@ class ExerciseBuilder:
 
     def build_english_to_ltl_question(self, answer):
 
-        options = self.get_options_with_misconceptions_as_formula(answer)
-        if options is None:
-            return None
-
         # A/B test: randomly assign abstract vs. contextualized (lights)
         translation_mode = random.choice(["abstract", "contextualized"])
 
         if translation_mode == "contextualized":
-            question = self.gen_nl_question_contextualized(answer)
-            # Fall back to abstract if contextualized fails (e.g., unsupported literals)
-            if question is None or question == "":
-                question = self.gen_nl_question(answer)
+            question, remapped_formula = self.gen_nl_question_contextualized(answer)
+            if question is not None and remapped_formula is not None:
+                # Build options using the remapped (r,g,b) formula
+                options = self.get_options_with_misconceptions_as_formula(remapped_formula)
+                if options is None:
+                    # Fall back to abstract
+                    translation_mode = "abstract"
+            else:
+                # Fall back to abstract if contextualized fails
                 translation_mode = "abstract"
-        else:
+
+        if translation_mode == "abstract":
             question = self.gen_nl_question(answer)
+            options = self.get_options_with_misconceptions_as_formula(answer)
+
+        if options is None:
+            return None
 
         if question is None or question == "":
             print("Question generation failed unexpectedly.")

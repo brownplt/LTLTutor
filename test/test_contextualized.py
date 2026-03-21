@@ -21,23 +21,23 @@ import ltltoeng_contextualized as ctx
 
 FORMULAS = [
     # (formula, description)
-    ("G p",                   "Invariant"),
-    ("F p",                   "Liveness"),
-    ("G !p",                  "Safety / never"),
-    ("G (p -> F q)",          "Response"),
-    ("G (p -> X q)",          "Immediate response"),
-    ("G(p -> (F q & F r))",   "Chain response"),
-    ("G(p -> (q U r))",       "Chain precedence"),
-    ("F (G p)",               "Persistence"),
-    ("G (F p)",               "Recurrence"),
-    ("(G p) U (F q)",         "Obligation until release"),
-    ("G(p -> X p)",           "Once true, stays true"),
-    ("!(F p)",                "Impossibility"),
-    ("p -> q",                "Simple implication"),
-    ("G(p -> X(F q))",        "Bounded response"),
-    ("F(G(p -> F q))",        "Eventual stable response"),
-    ("G((p U q) -> F r)",     "Until-triggered response"),
-    ("!(p & q)",              "Mutual exclusion"),
+    ("G r",                   "Invariant"),
+    ("F r",                   "Liveness"),
+    ("G !r",                  "Safety / never"),
+    ("G (r -> F g)",          "Response"),
+    ("G (r -> X g)",          "Immediate response"),
+    ("G(r -> (F g & F b))",   "Chain response"),
+    ("G(r -> (g U b))",       "Chain precedence"),
+    ("F (G r)",               "Persistence"),
+    ("G (F r)",               "Recurrence"),
+    ("(G r) U (F g)",         "Obligation until release"),
+    ("G(r -> X r)",           "Once true, stays true"),
+    ("!(F r)",                "Impossibility"),
+    ("r -> g",                "Simple implication"),
+    ("G(r -> X(F g))",        "Bounded response"),
+    ("F(G(r -> F g))",        "Eventual stable response"),
+    ("G((r U g) -> F b)",     "Until-triggered response"),
+    ("!(r & g)",              "Mutual exclusion"),
 ]
 
 
@@ -83,51 +83,51 @@ class TestLightsTheme(unittest.TestCase):
         return ctx.translate(parse_ltl_string(formula), self.theme)
 
     def test_globally_literal(self):
-        result = self._tr("G p")
+        result = self._tr("G r")
         self.assertIn("red light", result.lower())
         self.assertIn("all times", result.lower())
 
     def test_finally_literal(self):
-        result = self._tr("F p")
+        result = self._tr("F r")
         self.assertIn("red light", result.lower())
         self.assertIn("eventually", result.lower())
 
     def test_never(self):
-        result = self._tr("G !p")
+        result = self._tr("G !r")
         self.assertIn("red light", result.lower())
         self.assertIn("never", result.lower())
 
     def test_response_uses_event_form(self):
-        """G(p -> F q) should use 'turns on' not just 'is on'."""
-        result = self._tr("G(p -> F q)")
+        """G(r -> F g) should use 'turns on' not just 'is on'."""
+        result = self._tr("G(r -> F g)")
         self.assertIn("red light turns on", result.lower())
         self.assertIn("green light", result.lower())
         self.assertIn("eventually", result.lower())
 
     def test_immediate_response(self):
-        result = self._tr("G(p -> X q)")
+        result = self._tr("G(r -> X g)")
         self.assertIn("red light turns on", result.lower())
         self.assertIn("green light", result.lower())
         self.assertIn("next step", result.lower())
 
     def test_chain_response_mentions_both(self):
-        result = self._tr("G(p -> (F q & F r))")
+        result = self._tr("G(r -> (F g & F b))")
         self.assertIn("red light", result.lower())
         self.assertIn("green light", result.lower())
         self.assertIn("blue light", result.lower())
 
     def test_persistence(self):
-        result = self._tr("G(p -> X p)")
+        result = self._tr("G(r -> X r)")
         self.assertIn("red light", result.lower())
         self.assertIn("forever", result.lower())
 
     def test_recurrence(self):
-        result = self._tr("G(F p)")
+        result = self._tr("G(F r)")
         self.assertIn("red light", result.lower())
         self.assertIn("over and over", result.lower())
 
     def test_mutual_exclusion(self):
-        result = self._tr("!(p & q)")
+        result = self._tr("!(r & g)")
         self.assertIn("red light", result.lower())
         self.assertIn("green light", result.lower())
 
@@ -144,10 +144,10 @@ class TestLightsTheme(unittest.TestCase):
                             f"{formula_str} => '{result}' not capitalized")
 
     def test_no_abstract_quotes(self):
-        """Contextualized output should never contain raw 'p', 'q', 'r' quotes."""
+        """Contextualized output should never contain raw quoted literals."""
         for formula_str, _ in FORMULAS:
             result = self._tr(formula_str)
-            for lit in ["'p'", "'q'", "'r'"]:
+            for lit in ["'r'", "'g'", "'b'"]:
                 self.assertNotIn(lit, result,
                                  f"{formula_str} => still has abstract literal {lit}: {result}")
 
@@ -162,12 +162,12 @@ class TestRobotTheme(unittest.TestCase):
         return ctx.translate(parse_ltl_string(formula), self.theme)
 
     def test_response_pattern(self):
-        result = self._tr("G(p -> F q)")
+        result = self._tr("G(p -> F q)")  # robot theme still uses p,q,r
         self.assertIn("robot", result.lower())
         self.assertIn("goal", result.lower())
 
     def test_never(self):
-        result = self._tr("G !p")
+        result = self._tr("G !p")  # robot theme still uses p,q,r
         self.assertIn("robot", result.lower())
         self.assertIn("never", result.lower())
 

@@ -81,14 +81,14 @@ THEMES["lights"] = Theme(
     name="Light Panel",
     description="A panel with three colored lights: red, green, and blue.",
     literals={
-        "p": ("the red light is on",    "the red light is off"),
-        "q": ("the green light is on",  "the green light is off"),
-        "r": ("the blue light is on",   "the blue light is off"),
+        "r": ("the red light is on",    "the red light is off"),
+        "g": ("the green light is on",  "the green light is off"),
+        "b": ("the blue light is on",   "the blue light is off"),
     },
     event_form={
-        "p": ("the red light turns on",    "the red light turns off"),
-        "q": ("the green light turns on",  "the green light turns off"),
-        "r": ("the blue light turns on",   "the blue light turns off"),
+        "r": ("the red light turns on",    "the red light turns off"),
+        "g": ("the green light turns on",  "the green light turns off"),
+        "b": ("the blue light turns on",   "the blue light turns off"),
     },
 )
 
