@@ -14,9 +14,9 @@ Public API
     THEMES: dict of built-in theme names -> Theme objects
 
 Example:
-    node = parse_ltl_string("G(p -> F q)")
-    translate(node, theme=THEMES["traffic_lights"])
-    # => "Whenever the red light turns on, the green light must eventually turn on."
+    node = parse_ltl_string("G(r -> F g)")
+    translate(node, theme=THEMES["lights"])
+    # => "Whenever the red light turns on, then eventually the green light is on."
 """
 
 from __future__ import annotations
@@ -92,50 +92,6 @@ THEMES["lights"] = Theme(
     },
 )
 
-THEMES["robot"] = Theme(
-    name="Robot Tasks",
-    description="A robot that can pick up items, move to a location, and charge its battery.",
-    literals={
-        "p": ("the robot is holding an item",  "the robot is not holding an item"),
-        "q": ("the robot is at the goal",      "the robot is not at the goal"),
-        "r": ("the battery is charged",        "the battery is not charged"),
-    },
-    event_form={
-        "p": ("the robot picks up an item",     "the robot drops the item"),
-        "q": ("the robot reaches the goal",     "the robot leaves the goal"),
-        "r": ("the battery finishes charging",  "the battery runs out"),
-    },
-)
-
-THEMES["traffic"] = Theme(
-    name="Traffic Intersection",
-    description="A traffic intersection with signals for north-south and east-west traffic.",
-    literals={
-        "p": ("the north-south signal is green",  "the north-south signal is red"),
-        "q": ("the east-west signal is green",     "the east-west signal is red"),
-        "r": ("a pedestrian is crossing",          "no pedestrian is crossing"),
-    },
-    event_form={
-        "p": ("the north-south signal turns green",  "the north-south signal turns red"),
-        "q": ("the east-west signal turns green",    "the east-west signal turns red"),
-        "r": ("a pedestrian starts crossing",        "the pedestrian finishes crossing"),
-    },
-)
-
-THEMES["server"] = Theme(
-    name="Web Server",
-    description="A web server handling requests, with a cache and a database.",
-    literals={
-        "p": ("a request is being processed",  "no request is being processed"),
-        "q": ("the cache has a valid entry",    "the cache is empty"),
-        "r": ("the database is available",      "the database is down"),
-    },
-    event_form={
-        "p": ("a new request arrives",         "the request completes"),
-        "q": ("the cache is populated",        "the cache is invalidated"),
-        "r": ("the database comes online",     "the database goes down"),
-    },
-)
 
 
 # ---------------------------------------------------------------------------
@@ -267,7 +223,12 @@ def _t_not(node: ltlnode.NotNode, theme: Theme) -> str:
 
     # !(p -> q)
     if isinstance(inner, ltlnode.ImpliesNode):
-        return f"{_t(inner.left, theme)}, but {theme.negative(inner.right.value) if isinstance(inner.right, ltlnode.LiteralNode) else 'not ' + _t(inner.right, theme)}"
+        left_text = _t(inner.left, theme)
+        if isinstance(inner.right, ltlnode.LiteralNode):
+            right_text = theme.negative(inner.right.value)
+        else:
+            right_text = f"not {_t(inner.right, theme)}"
+        return f"{left_text}, but {right_text}"
 
     return f"it is not the case that {_t(inner, theme)}"
 
@@ -299,18 +260,17 @@ def _t_or(node: ltlnode.OrNode, theme: Theme) -> str:
 # --- IMPLIES --------------------------------------------------------------
 
 def _t_implies(node: ltlnode.ImpliesNode, theme: Theme) -> str:
-    l = _t(node.left, theme)
-    r = _t(node.right, theme)
-
     # (p & q) -> r
     if isinstance(node.left, ltlnode.AndNode):
+        r = _t(node.right, theme)
         return f"if both {_t(node.left.left, theme)} and {_t(node.left.right, theme)}, then {r}"
 
     # (p | q) -> r
     if isinstance(node.left, ltlnode.OrNode):
+        r = _t(node.right, theme)
         return f"if either {_t(node.left.left, theme)} or {_t(node.left.right, theme)}, then {r}"
 
-    return f"if {l}, then {r}"
+    return f"if {_t(node.left, theme)}, then {_t(node.right, theme)}"
 
 
 # --- EQUIVALENCE ----------------------------------------------------------

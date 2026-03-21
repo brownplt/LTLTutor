@@ -422,17 +422,22 @@ class ExerciseBuilder:
         template_formulas = self.generate_template_formulas(literals, num_templates=max(1, num_questions // 4))
         question_answers.extend(template_formulas)
 
-        ## A/B test: generate a second pool with r,g,b literals for contextualized questions
+        ## A/B test: lazily generate a pool with r,g,b literals for contextualized questions
         CONTEXTUALIZED_LITERALS = list(ltltoeng_contextualized.THEMES["lights"].literals.keys())
-        ctx_answers = spotutils.gen_rand_ltl(atoms = CONTEXTUALIZED_LITERALS,
-                                             tree_size = tree_size,
-                                             ltl_priorities = self.ltl_priorities,
-                                             num_formulae = pool_size)
-        ctx_templates = self.generate_template_formulas(CONTEXTUALIZED_LITERALS, num_templates=max(1, num_questions // 4))
-        ctx_answers.extend(ctx_templates)
-        ctx_answers = [a for a in ctx_answers if not contains_undersirable_lit(a)]
-        random.shuffle(ctx_answers)
-        ctx_iter = iter(ctx_answers)
+        ctx_iter = None
+        def _get_ctx_iter():
+            nonlocal ctx_iter
+            if ctx_iter is None:
+                ctx_pool = spotutils.gen_rand_ltl(atoms = CONTEXTUALIZED_LITERALS,
+                                                  tree_size = tree_size,
+                                                  ltl_priorities = self.ltl_priorities,
+                                                  num_formulae = pool_size)
+                ctx_templates = self.generate_template_formulas(CONTEXTUALIZED_LITERALS, num_templates=max(1, num_questions // 4))
+                ctx_pool.extend(ctx_templates)
+                ctx_pool = [a for a in ctx_pool if not contains_undersirable_lit(a)]
+                random.shuffle(ctx_pool)
+                ctx_iter = iter(ctx_pool)
+            return ctx_iter
 
 
         def formula_choice_metric(formula):
@@ -462,7 +467,7 @@ class ExerciseBuilder:
             elif kind == self.ENGLISHTOLTL:
                 # A/B test: 50/50 abstract vs. contextualized
                 if random.random() < 0.5:
-                    ctx_answer = next(ctx_iter, None)
+                    ctx_answer = next(_get_ctx_iter(), None)
                     if ctx_answer is not None:
                         question = self.build_english_to_ltl_question(ctx_answer, contextualized=True)
                     else:

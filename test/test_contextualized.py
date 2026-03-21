@@ -42,7 +42,7 @@ FORMULAS = [
 
 
 class TestContextualizedPrintComparison(unittest.TestCase):
-    """Print abstract vs. contextualized translations for all 4 themes."""
+    """Print abstract vs. contextualized (lights) translations."""
 
     def setUp(self):
         random.seed(42)
@@ -53,21 +53,15 @@ class TestContextualizedPrintComparison(unittest.TestCase):
         print("=" * 110)
 
         for formula_str, desc in FORMULAS:
-            node = parse_ltl_string(formula_str)
-
             random.seed(42)
             abstract = prose.translate(parse_ltl_string(formula_str))
             lights   = ctx.translate(parse_ltl_string(formula_str), ctx.THEMES["lights"])
-            robot    = ctx.translate(parse_ltl_string(formula_str), ctx.THEMES["robot"])
-            traffic  = ctx.translate(parse_ltl_string(formula_str), ctx.THEMES["traffic"])
 
             print(f"\n{'─' * 110}")
             print(f"  {formula_str:30s}  ({desc})")
             print(f"{'─' * 110}")
             print(f"  Abstract:  {abstract}")
             print(f"  Lights:    {lights}")
-            print(f"  Robot:     {robot}")
-            print(f"  Traffic:   {traffic}")
 
         print("\n" + "=" * 110)
 
@@ -152,26 +146,6 @@ class TestLightsTheme(unittest.TestCase):
                                  f"{formula_str} => still has abstract literal {lit}: {result}")
 
 
-class TestRobotTheme(unittest.TestCase):
-
-    def setUp(self):
-        random.seed(42)
-        self.theme = ctx.THEMES["robot"]
-
-    def _tr(self, formula):
-        return ctx.translate(parse_ltl_string(formula), self.theme)
-
-    def test_response_pattern(self):
-        result = self._tr("G(p -> F q)")  # robot theme still uses p,q,r
-        self.assertIn("robot", result.lower())
-        self.assertIn("goal", result.lower())
-
-    def test_never(self):
-        result = self._tr("G !p")  # robot theme still uses p,q,r
-        self.assertIn("robot", result.lower())
-        self.assertIn("never", result.lower())
-
-
 class TestCustomTheme(unittest.TestCase):
     """Verify that custom themes work correctly."""
 
@@ -180,24 +154,23 @@ class TestCustomTheme(unittest.TestCase):
             name="Elevator",
             description="An elevator system",
             literals={
-                "p": ("the door is open",   "the door is closed"),
-                "q": ("the elevator is moving", "the elevator is stopped"),
+                "d": ("the door is open",       "the door is closed"),
+                "m": ("the elevator is moving",  "the elevator is stopped"),
             },
             event_form={
-                "p": ("the door opens",   "the door closes"),
-                "q": ("the elevator starts moving", "the elevator stops"),
+                "d": ("the door opens",           "the door closes"),
+                "m": ("the elevator starts moving", "the elevator stops"),
             },
         )
 
         # Safety: door must never be open while moving
-        # G(q -> !p)  "whenever elevator moves, door must not be open"
-        node = parse_ltl_string("G(q -> !p)")
+        node = parse_ltl_string("G(m -> !d)")
         result = ctx.translate(node, elevator)
         self.assertIn("elevator", result.lower())
         self.assertIn("door", result.lower())
 
         # Response: if door opens, elevator must eventually move
-        node = parse_ltl_string("G(p -> F q)")
+        node = parse_ltl_string("G(d -> F m)")
         result = ctx.translate(node, elevator)
         self.assertIn("door opens", result.lower())
         self.assertIn("elevator", result.lower())
