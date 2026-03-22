@@ -7,7 +7,6 @@ import ltlnode
 import random
 import re
 import math
-import ltltoeng
 import ltltoeng_prose
 import ltltoeng_contextualized
 from syntacticmutator import applyRandomMutationNotEquivalentTo

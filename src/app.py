@@ -22,7 +22,7 @@ from collections import Counter, defaultdict
 import uuid
 import requests
 from stepper import traceSatisfactionPerStep, getTraceRenderData
-import ltltoeng
+import ltltoeng_prose
 from authroutes import (
     authroutes,
     init_app,
@@ -412,7 +412,7 @@ def ltl_to_english():
         return jsonify({"error": "Missing required query parameter 'formula'."}), 400
     try:
         node = parse_ltl_string(formula)
-        english = ltltoeng.finalize_sentence(node.__to_english__())
+        english = ltltoeng_prose.translate(node)
     except Exception as e:
         return jsonify({"error": "Failed to translate formula.", "details": str(e)}), 400
 
@@ -516,7 +516,7 @@ def ltl_to_english_ui():
         else:
             try:
                 node = parse_ltl_string(input_formula)
-                translation = ltltoeng.finalize_sentence(node.__to_english__())
+                translation = ltltoeng_prose.translate(node)
             except Exception as e:
                 error = f"Failed to translate formula: {e}"
 
