@@ -240,9 +240,13 @@ async function tracesatisfaction_mc_getfeedback(button) {
         question_text: question_text,
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
-        exercise: getExerciseName()
+        exercise: getExerciseName(),
+        // The trace the student selected, so the server can explain why it
+        // fails the formula.
+        trace: selected_radio.value.trim()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
+    displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
 }
 
 
@@ -270,9 +274,66 @@ async function tracesatisfaction_yn_getfeedback(button) {
         question_text: question_text,
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
-        exercise: getExerciseName()
+        exercise: getExerciseName(),
+        // The question's trace, so the server can explain the correct verdict.
+        trace: getQuestionTrace(parent_node).trim()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
+    displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
+}
+
+// Renders per-state satisfaction feedback for trace satisfaction questions:
+// the relevant trace (the question's trace for y/n, the student's selected
+// trace for mc) redrawn with each state marked ✓/✗ for whether the formula
+// holds from that state onward.
+function displayTraceSatFeedback(response, parent_node, question_type) {
+    if (!response || response.error || !Array.isArray(response.state_satisfaction)
+        || response.state_satisfaction.length === 0 || typeof TraceRenderer === 'undefined') {
+        return;
+    }
+
+    let marks = response.state_satisfaction;
+    let satisfies = marks[0];
+
+    // Reuse the trace data already rendered in the question DOM.
+    let traceDiv;
+    if (question_type === "trace_satisfaction_yn") {
+        traceDiv = parent_node.querySelector('.trace-diagram');
+    } else {
+        let selected = parent_node.querySelector('input[type=radio]:checked');
+        let item = selected ? selected.closest('li') : null;
+        traceDiv = item ? item.querySelector('.trace-diagram') : null;
+    }
+    if (!traceDiv || !traceDiv.dataset.trace) {
+        return;
+    }
+
+    let traceData;
+    try {
+        traceData = JSON.parse(traceDiv.dataset.trace);
+    } catch (e) {
+        return;
+    }
+    let numStates = (traceData.prefix || []).length + (traceData.cycle || []).length;
+    if (numStates !== marks.length) {
+        return;
+    }
+
+    let subject = (question_type === "trace_satisfaction_yn") ? "This trace" : "The trace you selected";
+    let verdict = satisfies
+        ? subject + " <strong>does</strong> satisfy the formula."
+        : subject + " does <strong>not</strong> satisfy the formula.";
+
+    let el = document.createElement('div');
+    el.innerHTML = "<p>" + verdict +
+        " Each state below is marked with whether the formula holds from that state onward" +
+        " (<span style='color:#198754;font-weight:700'>✓</span> holds," +
+        " <span style='color:#dc3545;font-weight:700'>✗</span> fails)." +
+        " A trace satisfies the formula exactly when it holds from the very first state.</p>" +
+        "<div class='tracesat-feedback-trace'></div>";
+    document.querySelector('#feedback').appendChild(el);
+
+    TraceRenderer.render(el.querySelector('.tracesat-feedback-trace'), traceData, { stateMarks: marks });
 }
 
 async function englishtoltl_getfeedback(button) {

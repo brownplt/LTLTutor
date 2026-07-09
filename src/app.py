@@ -878,8 +878,24 @@ def loganswer(questiontype):
             to_return['trace_data'] = [exerciseprocessor.traceToRenderData(sr) for sr in to_return['cewords']]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
+        to_return = {}
         if not isCorrect:
-            return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
+            # Evaluate the question formula at every state of the relevant trace
+            # (the question trace for y/n, the student's selected trace for mc) so
+            # the client can mark each state with whether the formula holds from it.
+            trace = (data.get('trace') or '').strip()
+            formula = (data.get(MP_FORMULA_KEY) or '').strip()
+            if trace and formula:
+                try:
+                    node = parse_ltl_string(formula)
+                    per_step = traceSatisfactionPerStep(node=node, trace=trace, syntax='Classic')
+                    to_return['state_satisfaction'] = (
+                        [bool(s.satisfied) for s in per_step.prefix_states]
+                        + [bool(s.satisfied) for s in per_step.cycle_states]
+                    )
+                except Exception:
+                    pass
+        return json.dumps(to_return)
     else:
         return { "message": "INVALID QUESTION TYPE!!." }
     return { "message": "No further feedback." }
