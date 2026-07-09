@@ -88,6 +88,27 @@ var TraceRenderer = (function () {
         return t.charAt(0) === '¬' || t.charAt(0) === '!';
     }
 
+    // Natural-language description of the trace, used as the SVG's aria-label
+    // so screen readers get the actual trace content rather than a generic label.
+    function _describeStates(states, prefixLen) {
+        var parts = [];
+        for (var i = 0; i < states.length; i++) {
+            var words = [];
+            for (var j = 0; j < states[i].tokens.length; j++) {
+                var t = states[i].tokens[j];
+                words.push(t.negated ? 'not ' + t.text.replace(/^[¬!]\s*/, '') : t.text);
+            }
+            parts.push('state ' + i + ': ' + (words.join(', ') || 'any values'));
+        }
+        var desc = 'Trace diagram with ' + states.length + ' states';
+        if (prefixLen < states.length) {
+            desc += (prefixLen === 0)
+                ? ', all repeating forever'
+                : ', states ' + prefixLen + ' onward repeating forever';
+        }
+        return desc + '. ' + parts.join('; ') + '.';
+    }
+
     var CFG = {
         font: '13px SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
         padX: 14,
@@ -247,7 +268,7 @@ var TraceRenderer = (function () {
             'width': '100%',
             'preserveAspectRatio': 'xMinYMin meet',
             'role': 'img',
-            'aria-label': 'Trace diagram with ' + states.length + ' states'
+            'aria-label': _describeStates(states, prefix.length)
         });
         svg.style.display = 'block';
         svg.style.width = '100%';

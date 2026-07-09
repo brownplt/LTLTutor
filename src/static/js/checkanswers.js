@@ -304,10 +304,10 @@ async function englishtoltl_getfeedback(button) {
     }
 
     let response = await postFeedback(data, QUESTION_TYPE);
-    displayServerResponse(response);
+    displayServerResponse(response, selected_radio.value, correct_option);
 }
 
-function displayServerResponse(response) {
+function displayServerResponse(response, selected_formula, correct_formula) {
 
     let feedback_div = document.querySelector('#feedback');
     // First, parse the response.
@@ -324,14 +324,10 @@ function displayServerResponse(response) {
     //     return response.message;
     // }
 
-    // TODO: Fix this to allow for different response feedback.
-
     let disjoint = response.disjoint;
     let subsumed = response.subsumed;
     let contained = response.contained;
     let equivalent = response.equivalent;
-
-    // TODO: Switch on equivalent
 
     let cewords = response.cewords;
     let traceDataList = response.trace_data;
@@ -340,52 +336,45 @@ function displayServerResponse(response) {
     let ce_trace = (cewords.length > 0) ? cewords[r] : null;
     let ce_trace_data = (cewords.length > 0) ? traceDataList[r] : null;
 
-
-    ce_trace_img = "<div id='generated_ltl_trace'></div> <br> Alt Trace: " + ce_trace;
-
     var feedback_string = "";
 
     if (!ce_trace) {
         console.log("Could not generate a counterexample trace.")
     }
 
-    if (equivalent) {
+    let relation = equivalent ? 'equivalent'
+        : disjoint ? 'disjoint'
+        : subsumed ? 'subsumed'
+        : contained ? 'contained'
+        : 'overlap';
+
+    if (relation === 'equivalent') {
         feedback_string += "Your selection is equivalent to the correct answer, meaning that it allows the same set of traces. However, the correct answer may represent a better way of expressing the solution.";
     }
-    else if (disjoint) {
-        feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
-
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
-        }
-
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/disjoint.png' alt='Euler diagram of two disjoint sets: a green set (representing the correct answer) and a red set (representing your answer).' > ";
-
-    }
-    else if (subsumed) {
-        feedback_string += "Your selection is more restrictive than the correct answer.";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace_img;
-        }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/subsumes.png' alt='Euler diagram of a green set (representing the correct answer) subsuming a red set (representing your answer).' >  ";
-
-
-    }
-    else if (contained) {
-        feedback_string += "Your selection is more permissive than the correct answer. ";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
-        }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/contained.png' alt='Euler diagram of a green set (representing the correct answer) being subsumed by a red set (representing your answer).' > ";
-
-    }
     else {
-        feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
+        if (relation === 'disjoint') {
+            feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
         }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/overlap.png' alt='Euler diagram of two overlapping, but not contained sets: a green set (representing the correct answer) and a red set (representing your answer).' >  ";
+        else if (relation === 'subsumed') {
+            feedback_string += "Your selection is more restrictive than the correct answer. ";
+        }
+        else if (relation === 'contained') {
+            feedback_string += "Your selection is more permissive than the correct answer. ";
+        }
+        else {
+            feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
+        }
+
+        if (ce_trace) {
+            // For 'subsumed' the counterexample goes the other way around.
+            let ce_direction = (relation === 'subsumed')
+                ? "the correct answer, but not your selection"
+                : "your selection, but not the correct answer";
+            feedback_string += "Here is a trace that satisfies " + ce_direction + ": <div id='generated_ltl_trace'></div>";
+        }
     }
+
+    feedback_string += "<div id='answer_relationship_diagram' class='mt-2'></div>";
 
     let responseAsHTMLElement = document.createElement('div');
     responseAsHTMLElement.innerHTML = feedback_string;
@@ -396,6 +385,14 @@ function displayServerResponse(response) {
         TraceRenderer.render(traceElement, ce_trace_data);
     }
 
+    let diagramElement = document.getElementById('answer_relationship_diagram');
+    if (diagramElement && typeof EulerDiagram !== 'undefined') {
+        EulerDiagram.render(diagramElement, relation, {
+            correctLabel: correct_formula,
+            yourLabel: selected_formula,
+            showTraceDot: !!ce_trace
+        });
+    }
 }
 
 async function postFeedback(data, questiontype) {
