@@ -2,6 +2,13 @@
 
 This document summarizes notable updates since February 2025, with commit dates from the repository history for context.【728428†L1-L48】
 
+## 2026-07
+- **UX:** The stepper link on wrong trace-satisfaction answers is now honestly labeled. Multiple-choice questions offer two clearly-labeled buttons — "See why your trace fails the formula" (selected trace + question formula) and "See why the correct trace satisfies the formula" (correct trace + question formula) — resolving a long-standing TODO about the ambiguous trace being passed.
+- **New:** Trace-satisfaction questions now get real feedback on wrong answers (previously "No further feedback currently available"): the server evaluates the formula at every state of the relevant trace (the question's trace for y/n, the student's selected trace for multiple choice) and the trace is redrawn with per-state ✓/✗ marks showing where the formula holds.
+- **UX:** Replaced the static Euler-diagram PNGs in english-to-LTL feedback with a live SVG renderer (`eulerdiagram.js`). Diagrams now show the actual selected and correct formulas in a color-coded legend, place a dot marking where the counterexample trace falls, and cover the equivalent-answer case (previously no visual).
+- **Accessibility:** Removed the raw spot-syntax "Alt Trace" text from feedback; trace SVGs now carry a natural-language per-state `aria-label` instead.
+- **Bugfix:** Fixed a missing space in the "more restrictive" feedback message.
+
 ## 2026-03
 - **UX:** Reworked Stepper view into explicit `AST` then `Trace` sections per state, with a standard top-down AST layout and connector lines.
 - **UX:** Improved current-state visibility in Stepper traces with stronger highlight styling, state index labels (`sN`), and a `CURRENT` badge on the active node.
