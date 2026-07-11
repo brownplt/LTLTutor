@@ -113,21 +113,29 @@ function show_feedback(parent_node, question_type) {
     }
     else {
 
+        function getStepperFormHtml(formula, trace, label) {
+            return `
+                    <form action="/stepper" method="post" target="_blank" class="d-inline-block mr-2 mt-1">
+                        <input type="hidden" name="formula" value='${formula}'>
+                        <input type="hidden" name="trace" value='${trace}'>
+                        <button type="submit" class="btn btn-secondary">${label}</button>
+                    </form>
+                    `;
+        }
+
         function getTraceStepperButtonHtml() {
-            if (question_type == "trace_satisfaction_yn" || question_type == "trace_satisfaction_mc") {
-                var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
-                var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getSelectedRadio(parent_node).value;
-                
-                
-                // TODO: There is a sort of bug here! The trace being passed is not alwayts the correct one!
-                var fv = `
-                        <form action="/stepper" method="post" target="_blank">
-                            <input type="hidden" name="formula" value='${formulaForStepper}'>
-                            <input type="hidden" name="trace" value='${qtrace}'>
-                            <button type="submit" class="btn btn-secondary">Step through the trace and your answer.</button>
-                        </form>
-                        `
-                return fv;
+            var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
+            if (question_type == "trace_satisfaction_yn") {
+                return getStepperFormHtml(formulaForStepper, getQuestionTrace(parent_node).trim(),
+                    "Step through this trace and the formula.");
+            }
+            if (question_type == "trace_satisfaction_mc") {
+                // The selected trace violates the question formula; the correct
+                // trace satisfies it. Offer both pairings, clearly labeled.
+                return getStepperFormHtml(formulaForStepper, getSelectedRadio(parent_node).value.trim(),
+                        "See why your trace fails the formula.")
+                    + getStepperFormHtml(formulaForStepper, getCorrectRadio(parent_node).value.trim(),
+                        "See why the correct trace satisfies the formula.");
             }
             return "";
         }
@@ -139,7 +147,7 @@ function show_feedback(parent_node, question_type) {
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )" +  getTraceStepperButtonHtml() +  "</p>";
+        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )</p>" + getTraceStepperButtonHtml();
         feedback_div.classList.add('alert');
         feedback_div.classList.remove('alert-success');
         feedback_div.classList.add('alert-secondary');
