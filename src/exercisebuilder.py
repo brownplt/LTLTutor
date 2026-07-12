@@ -54,7 +54,7 @@ class ExerciseBuilder:
         elif self.syntax == "English":
             ## We should hopefully never get here. However, 
             ## I'm adding it here to suggest a way forward.
-            return node.__to_english__()
+            return ltltoeng.translate(node, discourse=True)
 
         ## Default to classic syntax
         return str(node)
@@ -492,14 +492,14 @@ class ExerciseBuilder:
     def gen_nl_question(self, formula):
 
         as_node = ltlnode.parse_ltl_string(formula)
-        formula_eng = as_node.__to_english__()
+        formula_eng = ltltoeng.translate(as_node, discourse=True)
         if formula_eng is None or formula_eng == "":
             return None
         
         formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
         ### If there are multiple '.' in a row, replace with a single '.'
         formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
-        return ltltoeng.finalize_sentence(formula_eng_corrected)
+        return formula_eng_corrected
 
 
     def get_options_with_misconceptions_as_formula(self, answer):

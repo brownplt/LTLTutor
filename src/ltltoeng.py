@@ -1,11 +1,43 @@
 import ltlnode
+import ltlir
 import random
 import re
+from dataclasses import dataclass
+from contextlib import contextmanager
 
 import inflect
 from wordfreq import zipf_frequency
 
 _inflect_engine = inflect.engine()
+
+
+@dataclass
+class PragmaticPolicy:
+    """Controls pragmatic inferences in LTL->English rendering."""
+    avoid_exclusive_or: bool = True
+    allow_now_in_eventually: bool = True
+    avoid_deontic: bool = True
+    avoid_causal: bool = True
+    explicit_weak_until: bool = True
+
+
+_PRAGMATIC_POLICY = PragmaticPolicy()
+
+
+def get_pragmatic_policy():
+    return _PRAGMATIC_POLICY
+
+
+@contextmanager
+def _use_pragmatic_policy(policy):
+    global _PRAGMATIC_POLICY
+    prev = _PRAGMATIC_POLICY
+    if policy is not None:
+        _PRAGMATIC_POLICY = policy
+    try:
+        yield
+    finally:
+        _PRAGMATIC_POLICY = prev
 
 ## We should list the various patterns of LTL formulae that we can handle
 
@@ -194,6 +226,155 @@ def finalize_sentence(text):
     return capitalize_sentence(smoothed)
 
 
+def _conditional_word():
+    return "if" if get_pragmatic_policy().avoid_causal else "whenever"
+
+
+def _deontic_variants(neutral_variants, deontic_variants):
+    if get_pragmatic_policy().avoid_deontic:
+        return neutral_variants
+    return neutral_variants + deontic_variants
+
+
+def or_phrase(lhs, rhs):
+    policy = get_pragmatic_policy()
+    if policy.avoid_exclusive_or:
+        patterns = [
+            f"one or both of {lhs} and {rhs}",
+            f"{lhs} or {rhs} (or both)",
+            f"at least one of {lhs} or {rhs} (possibly both)"
+        ]
+    else:
+        patterns = [
+            f"either {lhs} or {rhs}",
+            f"{lhs} or {rhs}",
+            f"at least one of {lhs} or {rhs}"
+        ]
+    return choose_best_sentence(patterns)
+
+
+def finally_phrase(op, is_literal=False):
+    patterns = []
+    if get_pragmatic_policy().allow_now_in_eventually:
+        patterns.append(f"now or later, {op}")
+        patterns.append(f"at some point, possibly now, {op}")
+    if is_literal:
+        patterns.extend([
+            f"eventually, {op}",
+            f"{op} will eventually occur",
+            f"at some point, {op} will hold"
+        ])
+    else:
+        patterns.append(f"eventually, {op}")
+    return choose_best_sentence(patterns)
+
+
+def _embedded_clause(node):
+    """Return a clause suitable for embedding after a discourse prefix."""
+    text = clean_for_composition(node.__to_english__())
+    return normalize_embedded_clause(text)
+
+
+def _node_size(node):
+    if isinstance(node, ltlnode.UnaryOperatorNode):
+        return 1 + _node_size(node.operand)
+    if isinstance(node, ltlnode.BinaryOperatorNode):
+        return 1 + _node_size(node.left) + _node_size(node.right)
+    return 1
+
+
+def _temporal_op_count(node):
+    count = 0
+    if isinstance(node, (ltlnode.NextNode, ltlnode.FinallyNode, ltlnode.GloballyNode, ltlnode.UntilNode)):
+        count += 1
+    if isinstance(node, ltlnode.UnaryOperatorNode):
+        return count + _temporal_op_count(node.operand)
+    if isinstance(node, ltlnode.BinaryOperatorNode):
+        return count + _temporal_op_count(node.left) + _temporal_op_count(node.right)
+    return count
+
+
+def _should_split_conjunction(node):
+    if not isinstance(node, (ltlnode.AndNode, ltlnode.OrNode)):
+        return False
+    left_ops = _temporal_op_count(node.left)
+    right_ops = _temporal_op_count(node.right)
+    total_ops = left_ops + right_ops
+    total_size = _node_size(node)
+    return total_ops >= 2 or total_size >= 8
+
+
+def _eventual_anchor_phrasing():
+    return (
+        choose_best_sentence([
+            "eventually we reach a point in time",
+            "eventually there is a point in time",
+            "eventually a point is reached"
+        ]),
+        "from then on"
+    )
+
+
+def build_discourse_plan(node):
+    """Compile select LTL forms into a discourse-oriented plan."""
+    # Eventual permanence: F(G φ) -> anchor + "from then on" clause
+    if isinstance(node, ltlnode.FinallyNode) and isinstance(node.operand, ltlnode.GloballyNode):
+        anchor_sentence, prefix = _eventual_anchor_phrasing()
+        inner = node.operand.operand
+        plan = ltlir.TemporalPlan()
+        plan.add_anchor(anchor_sentence)
+        plan.add_clause(_embedded_clause(inner), prefix=prefix)
+        return plan
+
+    # Split large conjunctions into two sentences
+    if isinstance(node, ltlnode.AndNode) and _should_split_conjunction(node):
+        plan = ltlir.TemporalPlan()
+        lead = "both of the following hold" if get_pragmatic_policy().avoid_deontic else "both of the following must hold"
+        plan.add_lead(lead)
+        plan.add_clause(_embedded_clause(node.left), prefix="first")
+        plan.add_clause(_embedded_clause(node.right), prefix="second")
+        return plan
+
+    # Split large disjunctions into two sentences
+    if isinstance(node, ltlnode.OrNode) and _should_split_conjunction(node):
+        plan = ltlir.TemporalPlan()
+        lead = "at least one of the following holds" if get_pragmatic_policy().avoid_deontic else "at least one of the following must hold"
+        plan.add_lead(lead)
+        left_clause = _embedded_clause(node.left)
+        right_clause = _embedded_clause(node.right)
+        plan.add_clause(f"either {left_clause} or {right_clause}")
+        return plan
+
+    return None
+
+
+def render_discourse_plan(plan):
+    sentences = []
+    for step in plan.steps:
+        text = step.text
+        if step.prefix:
+            text = f"{step.prefix}, {text}"
+        sentence = finalize_sentence(text)
+        if sentence:
+            sentences.append(sentence)
+    return ". ".join(sentences)
+
+
+def to_english_discourse(node):
+    plan = build_discourse_plan(node)
+    if plan:
+        return render_discourse_plan(plan)
+    return finalize_sentence(node.__to_english__())
+
+
+def translate(node, discourse=False, policy=None):
+    """Top-level translation entrypoint with optional discourse planning and pragmatics."""
+    with _use_pragmatic_policy(policy):
+        if discourse:
+            return to_english_discourse(node)
+        return finalize_sentence(node.__to_english__())
+
+
 def _ngram_fluency_score(text):
     """Lightweight fluency score using token and bi-gram heuristics.
     
@@ -304,12 +485,16 @@ def globally_literal_pattern_to_english(node):
         op = node.operand
         if type(op) is ltlnode.LiteralNode:
             lit_eng = clean_for_composition(op.__to_english__())
-            patterns = [
-                f"{lit_eng} holds at all times",
-                f"{lit_eng} always holds",
-                f"{lit_eng} must always hold",
-                f"at all times, {lit_eng} holds"
-            ]
+            patterns = _deontic_variants(
+                [
+                    f"{lit_eng} holds at all times",
+                    f"{lit_eng} always holds",
+                    f"at all times, {lit_eng} holds"
+                ],
+                [
+                    f"{lit_eng} must always hold"
+                ]
+            )
             return choose_best_sentence(patterns)
     return None
 
@@ -323,11 +508,15 @@ def globally_and_pattern_to_english(node):
         if type(op) is ltlnode.AndNode:
             left_eng = clean_for_composition(op.left.__to_english__())
             right_eng = clean_for_composition(op.right.__to_english__())
-            patterns = [
-                f"always maintain both {left_eng} and {right_eng}",
-                f"both {left_eng} and {right_eng} must always hold",
-                f"at all times, both {left_eng} and {right_eng} hold"
-            ]
+            patterns = _deontic_variants(
+                [
+                    f"always maintain both {left_eng} and {right_eng}",
+                    f"at all times, both {left_eng} and {right_eng} hold"
+                ],
+                [
+                    f"both {left_eng} and {right_eng} must always hold"
+                ]
+            )
             return choose_best_sentence(patterns)
     return None
 
@@ -341,11 +530,15 @@ def globally_or_pattern_to_english(node):
         if type(op) is ltlnode.OrNode:
             left_eng = clean_for_composition(op.left.__to_english__())
             right_eng = clean_for_composition(op.right.__to_english__())
-            patterns = [
-                f"always have either {left_eng} or {right_eng}",
-                f"either {left_eng} or {right_eng} must always hold",
-                f"at all times, either {left_eng} or {right_eng} holds"
-            ]
+            patterns = _deontic_variants(
+                [
+                    f"always have either {left_eng} or {right_eng}",
+                    f"at all times, either {left_eng} or {right_eng} holds"
+                ],
+                [
+                    f"either {left_eng} or {right_eng} must always hold"
+                ]
+            )
             return choose_best_sentence(patterns)
     return None
 
@@ -384,6 +577,8 @@ def response_pattern_to_english(node):
             if type(right) is ltlnode.FinallyNode:
                 left_eng = clean_for_composition(left.__to_english__())
                 right_eng = clean_for_composition(right.operand.__to_english__())
+                if get_pragmatic_policy().avoid_causal:
+                    return f"if {left_eng}, then eventually {right_eng}"
                 return f"whenever {left_eng}, eventually {right_eng}"
             
     return None
@@ -498,6 +693,8 @@ def chain_precedence_pattern_to_english(node):
                 left_eng = clean_for_composition(left.__to_english__())
                 lhs_eng = clean_for_composition(lhs.__to_english__())
                 rhs_eng = clean_for_composition(rhs.__to_english__())
+                if get_pragmatic_policy().avoid_causal:
+                    return f"if {left_eng}, then {lhs_eng} until {rhs_eng}"
                 return f"whenever {left_eng}, {lhs_eng} until {rhs_eng}"
     return None
 
@@ -519,6 +716,8 @@ def chain_response_pattern_to_english(node):
                     left_eng = clean_for_composition(left.__to_english__())
                     lhs_eng = clean_for_composition(lhs.operand.__to_english__())
                     rhs_eng = clean_for_composition(rhs.operand.__to_english__())
+                    if get_pragmatic_policy().avoid_causal:
+                        return f"if {left_eng}, then eventually {lhs_eng} and {rhs_eng}"
                     return f"whenever {left_eng}, eventually {lhs_eng} and {rhs_eng}"
     return None
 
@@ -543,7 +742,10 @@ def immediate_response_pattern_to_english(node):
                     return None
                 left_eng = clean_for_composition(left.__to_english__())
                 right_eng = clean_for_composition(right.operand.__to_english__())
-                return f"whenever {left_eng}, {right_eng} must hold in the next step"
+                verb = "will hold" if get_pragmatic_policy().avoid_deontic else "must hold"
+                if get_pragmatic_policy().avoid_causal:
+                    return f"if {left_eng}, then {right_eng} {verb} in the next step"
+                return f"whenever {left_eng}, {right_eng} {verb} in the next step"
     return None
 
 
@@ -564,6 +766,8 @@ def bounded_response_pattern_to_english(node):
                 if type(inner) is ltlnode.FinallyNode:
                     left_eng = clean_for_composition(left.__to_english__())
                     right_eng = clean_for_composition(inner.operand.__to_english__())
+                    if get_pragmatic_policy().avoid_causal:
+                        return f"if {left_eng}, then {right_eng} will eventually occur after the next step"
                     return f"whenever {left_eng}, {right_eng} will eventually occur after the next step"
     return None
 
@@ -579,12 +783,16 @@ def never_globally_pattern_to_english(node):
             negated_eng = clean_for_composition(negated.__to_english__())
             # For literals, use simpler phrasing with multiple alternatives
             if type(negated) is ltlnode.LiteralNode:
-                patterns = [
-                    f"{negated_eng} will never occur",
-                    f"always avoid {negated_eng}",
-                    f"never {negated_eng}",
-                    f"{negated_eng} must never happen"
-                ]
+                patterns = _deontic_variants(
+                    [
+                        f"{negated_eng} will never occur",
+                        f"always avoid {negated_eng}",
+                        f"never {negated_eng}"
+                    ],
+                    [
+                        f"{negated_eng} must never happen"
+                    ]
+                )
                 return choose_best_sentence(patterns)
             return f"it is never the case that {negated_eng}"
 
@@ -809,11 +1017,15 @@ def recovery_pattern_to_english(node):
     
     # Pattern matched! Provide alternative phrasings
     lit_eng = clean_for_composition(left.__to_english__())
-    patterns = [
-        f"{lit_eng} should eventually hold in consecutive steps, with a grace period for recovery",
-        f"{lit_eng} must eventually occur in back-to-back steps, allowing for recovery",
-        f"{lit_eng} will eventually happen consecutively, with recovery allowed"
-    ]
+    patterns = _deontic_variants(
+        [
+            f"{lit_eng} will eventually happen consecutively, with recovery allowed"
+        ],
+        [
+            f"{lit_eng} should eventually hold in consecutive steps, with a grace period for recovery",
+            f"{lit_eng} must eventually occur in back-to-back steps, allowing for recovery"
+        ]
+    )
     return choose_best_sentence(patterns)
 
 
@@ -907,12 +1119,12 @@ def weak_until_disjunction_pattern_to_english(node):
                 if ltlnode.LTLNode.equiv(str(p), str(glob.operand)):
                     p_eng = clean_for_composition(p.__to_english__())
                     q_eng = clean_for_composition(q.__to_english__())
-                    return choose_best_sentence([
-                        # Canonical: explicit case split
-                        f"{p_eng} holds until {q_eng} happens, or {p_eng} holds forever if {q_eng} never happens",
-                        # Template B: conditional termination
-                        f"{p_eng} keeps holding and stops only if {q_eng} happens",
-                    ])
+                    patterns = [
+                        f"{p_eng} holds until {q_eng} happens, or {p_eng} holds forever if {q_eng} never happens"
+                    ]
+                    if not get_pragmatic_policy().explicit_weak_until:
+                        patterns.append(f"{p_eng} keeps holding and stops only if {q_eng} happens")
+                    return choose_best_sentence(patterns)
             return None
 
         # Handle (p U q) ∨ G p and G p ∨ (p U q)

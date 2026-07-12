@@ -316,14 +316,9 @@ class FinallyNode(UnaryOperatorNode):
 
         # Provide more natural alternatives
         if type(self.operand) is LiteralNode:
-            patterns = [
-                f"eventually, {op}",
-                f"{op} will eventually occur",
-                f"at some point, {op} will hold"
-            ]
-            return ltltoeng.choose_best_sentence(patterns)
-        
-        return f"eventually, {op}"
+            return ltltoeng.finally_phrase(op, is_literal=True)
+
+        return ltltoeng.finally_phrase(op, is_literal=False)
     
     def __forge__(self):
         return f"(EVENTUALLY {self.operand.__forge__()})"
@@ -348,13 +343,10 @@ class OrNode(BinaryOperatorNode):
         
         # Provide alternatives for simple literals
         if type(self.left) is LiteralNode and type(self.right) is LiteralNode:
-            patterns = [
-                f"either {lhs} or {rhs}",
-                f"{lhs} or {rhs}",
-                f"at least one of {lhs} or {rhs}"
-            ]
-            return ltltoeng.choose_best_sentence(patterns)
-        
+            return ltltoeng.or_phrase(lhs, rhs)
+
+        if ltltoeng.get_pragmatic_policy().avoid_exclusive_or:
+            return f"either {lhs} or {rhs} (or both)"
         return f"either {lhs} or {rhs}"
     
 
@@ -426,9 +418,10 @@ class ImpliesNode(BinaryOperatorNode):
         # Potential patterns:
         patterns = [
             f"if {lhs}, then {rhs}",
-            f"{lhs} implies {rhs}",
-            f"whenever {lhs}, then {rhs}"
+            f"{lhs} implies {rhs}"
         ]
+        if not ltltoeng.get_pragmatic_policy().avoid_causal:
+            patterns.append(f"whenever {lhs}, {rhs}")
 
         # Choose the most fluent pattern rather than picking randomly
         english = ltltoeng.choose_best_sentence(patterns)
