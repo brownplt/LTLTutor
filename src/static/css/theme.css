@@ -5,7 +5,8 @@
    corners, warm non-blue palette. Green/red are reserved for correctness only.
 
    Loaded AFTER bootstrap.css and common.css so its overrides win. Colors are
-   driven by CSS custom properties so light and (OS) dark themes both work.
+   driven by CSS custom properties; single light theme by design — the token
+   layer keeps adding a dark theme later a contained change.
    ========================================================================== */
 
 /* ---- Tokens: LIGHT ------------------------------------------------------- */
@@ -38,22 +39,6 @@
 
   --font-sans: "Helvetica Neue", Helvetica, Arial, "Segoe UI", Roboto, system-ui, sans-serif;
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
-}
-
-/* ---- Tokens: DARK (follows OS preference) -------------------------------- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:#1a1611; --surface:#231e16; --surface-2:#2d2719;
-    --ink:#efe6d3; --ink-2:#c9bda2; --ink-3:#928769;
-    --line:#372f1f; --line-2:#4a4029;
-
-    --brand:#e6ad33; --brand-strong:#f3c765; --brand-ink:#201a10;
-    --brand-soft:#332815; --brand-line:#4d3d1c;
-    --accent:#d9713f; --accent-strong:#ee9166;
-
-    --ok:#8dbf63; --ok-soft:#232a18; --bad:#e58a6c; --bad-soft:#2f1c16;
-    --warn:#e0a437; --warn-soft:#322414; --focus:#5fd0c4;
-  }
 }
 
 /* ---- Base ---------------------------------------------------------------- */
@@ -208,13 +193,6 @@ pre { background: transparent; color: var(--ink); }
 /* ---- Modals -------------------------------------------------------------- */
 .modal-content { background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--r-lg); }
 .modal-header, .modal-footer { border-color: var(--line); }
-
-/* ---- Dark-mode patches for hardcoded-light spots in common.css ---------- */
-@media (prefers-color-scheme: dark) {
-  .footer, .footer.bg-light { background-color: var(--paper) !important; }
-  .ltl-hint { background-color: var(--surface); border-color: var(--line-2); }
-  .ltl-formula { color: var(--brand-strong); background-color: var(--brand-soft); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .btn, .btn-primary { transition: none; }
