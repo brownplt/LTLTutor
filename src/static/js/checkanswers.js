@@ -184,9 +184,9 @@ function show_feedback(parent_node, question_type) {
                 // The selected trace violates the question formula; the correct
                 // trace satisfies it. Offer both pairings, clearly labeled.
                 buttons = getStepperFormHtml(formulaForStepper, getSelectedRadio(parent_node).value.trim(),
-                        "See why your trace fails the formula")
+                        "See why the trace you selected does not satisfy this formula")
                     + getStepperFormHtml(formulaForStepper, getCorrectRadio(parent_node).value.trim(),
-                        "See why the correct trace satisfies the formula");
+                        "See why the correct trace satisfies this formula");
             }
             if (!buttons) {
                 return "";
