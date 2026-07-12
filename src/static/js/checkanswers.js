@@ -168,7 +168,7 @@ function show_feedback(parent_node, question_type) {
                         <input type="hidden" name="formula" value='${formula}'>
                         <input type="hidden" name="trace" value='${trace}'>
                         <button type="submit" class="btn btn-outline-primary btn-stepper">
-                            <i class="fas fa-shoe-prints mr-2" aria-hidden="true"></i>${label}<i class="fas fa-external-link-alt ml-2 small" aria-hidden="true"></i>
+                            ${label}<i class="fas fa-external-link-alt ml-2 small" aria-hidden="true"></i>
                         </button>
                     </form>
                     `;
@@ -207,9 +207,9 @@ function show_feedback(parent_node, question_type) {
         let selectedAnswerFormula = getGeneratedFromFormulaIfExists(selected_radio);
         let correctAnswerFormula = getGeneratedFromFormulaIfExists(correct_radio);
 
-        // The verdict points to the "✓ Correct answer" / "✗ Your answer" badges on
-        // the options rather than repeating the raw option or relying on color.
-        let verdictHtml = "<p>That's not correct 😕 Don't worry, keep trying! The choice marked <span class=\"answer-badge answer-badge-correct\"><span class=\"answer-badge-icon\" aria-hidden=\"true\">✓</span> Correct answer</span> is the right one; the option you picked is marked <span class=\"answer-badge answer-badge-wrong\"><span class=\"answer-badge-icon\" aria-hidden=\"true\">✗</span> Your answer</span>.</p>";
+        // The options themselves carry "✓ Correct answer" / "✗ Your answer"
+        // badges, so the verdict stays short instead of restating them.
+        let verdictHtml = "<p>That's not correct 😕 Don't worry, keep trying!</p>";
 
         let hintHtml = "";
         if (predetermined_feedback) {
