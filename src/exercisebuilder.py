@@ -951,7 +951,47 @@ class ExerciseBuilder:
             "complexity": self.complexity,
             'misconception_count': misconception_count
         }
-    
+
+    def _complexity_band(self):
+        """Coarse label for the current complexity within [MIN, MAX]:
+        lowest third Beginner, middle third Intermediate, top third Advanced."""
+        span = self.COMPLEXITY_MAX - self.COMPLEXITY_MIN
+        if span <= 0:
+            return "Intermediate"
+        position = (self.complexity - self.COMPLEXITY_MIN) / span
+        if position < 1 / 3:
+            return "Beginner"
+        if position < 2 / 3:
+            return "Intermediate"
+        return "Advanced"
+
+    def get_profile_snapshot(self):
+        """A point-in-time view of the state the exercise engine uses to adapt,
+        for display on the student profile page and the JSON export:
+
+          - complexity: the current difficulty level and its band, plus bounds
+          - misconception_snapshot: per-misconception weights the distractor
+            sampler uses now (the enum prefix stripped), most-likely first
+          - question_type_weights: the selection weights per question type
+
+        Pure w.r.t. the builder's logs (no SPOT, no DB), so it is safe to call
+        from a request handler and straightforward to unit-test."""
+        weights = self._full_misconception_weights()
+        misconception_snapshot = [
+            {"name": code.replace('MisconceptionCode.', ''), "weight": weight}
+            for code, weight in sorted(weights.items(),
+                                       key=lambda kv: kv[1], reverse=True)
+        ]
+
+        return {
+            "complexity": self.complexity,
+            "complexity_min": self.COMPLEXITY_MIN,
+            "complexity_max": self.COMPLEXITY_MAX,
+            "complexity_band": self._complexity_band(),
+            "misconception_snapshot": misconception_snapshot,
+            "question_type_weights": self.calculate_question_type_weights(),
+        }
+
     def _get_trend_label(self, trend_score):
         """
         Convert a trend score (-1 to 1) to a human-readable label.

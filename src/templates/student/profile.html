@@ -23,11 +23,97 @@
         <div class="btn-group btn-group-lg d-flex justify-content-center" role="group">
             <a href="/view/logs" class="btn btn-secondary">View Logs</a>
             <a href="/view/generatedexercises" class="btn btn-secondary">View Generated Exercises</a>
+            <a href="/profile/export" class="btn btn-outline-secondary" download>Export Profile (JSON)</a>
         </div>
 
 
 
         <hr>
+
+        <!-- Adaptive Profile: the state the exercise engine uses to adapt -->
+        <h3 class="mt-5">Your Adaptive Profile</h3>
+        <p class="text-muted">
+            This is the current state the tutor uses to tailor your questions.
+            Answer more questions and it updates automatically.
+        </p>
+        <div class="row">
+
+            <!-- Complexity level -->
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Difficulty Level</h5>
+                        <p class="display-4 mb-0">{{ complexity }}<small class="text-muted" style="font-size: 1.5rem;">/{{ complexity_max }}</small></p>
+                        <span class="badge badge-info">{{ complexity_band }}</span>
+                        <div class="progress mt-3" style="height: 8px;">
+                            {% set pct = ((complexity - complexity_min) / (complexity_max - complexity_min) * 100) if complexity_max > complexity_min else 0 %}
+                            <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;"
+                                 aria-valuenow="{{ complexity }}" aria-valuemin="{{ complexity_min }}" aria-valuemax="{{ complexity_max }}"></div>
+                        </div>
+                        <small class="text-muted d-block mt-2">
+                            Goes up when your recent accuracy is high, down when you struggle.
+                            Ranges from {{ complexity_min }} to {{ complexity_max }}.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question-type mix -->
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Question Mix</h5>
+                        <small class="text-muted d-block mb-3">
+                            How often each question type comes up. Types you miss more are drilled more.
+                        </small>
+                        {% for q in question_type_mix %}
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <small>{{ q.label }}</small>
+                                <small class="text-muted">{{ "%.0f"|format(q.weight * 100) }}%</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-secondary" role="progressbar"
+                                     style="width: {{ q.weight * 100 }}%;"
+                                     aria-valuenow="{{ (q.weight * 100)|round }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Misconception snapshot -->
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Misconception Snapshot</h5>
+                        <small class="text-muted d-block mb-3">
+                            The tutor's current estimate of which misconceptions you hold (higher = more likely).
+                            These drive the wrong answers you see.
+                        </small>
+                        {% if misconception_snapshot %}
+                            {% for m in misconception_snapshot %}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small>{{ m.name }}</small>
+                                    <small class="text-muted">{{ "%.2f"|format(m.weight) }}</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar {% if m.weight >= 0.5 %}bg-danger{% else %}bg-success{% endif %}"
+                                         role="progressbar" style="width: {{ m.weight * 100 }}%;"
+                                         aria-valuenow="{{ (m.weight * 100)|round }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted"><em>Answer a few questions to build your profile.</em></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
 
         <!-- Misconception Trends Summary -->
         {% if misconception_trends %}
