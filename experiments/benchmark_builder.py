@@ -18,10 +18,10 @@ import random
 # Add src to path for LTL Tutor imports
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from ltlnode import parse_ltl_string
+from ltlmutator import parse_ltl_string
 import ltltoeng
 import spot
-import codebook
+from ltlmutator import codebook
 
 from sentence_transformers import SentenceTransformer
 
@@ -132,7 +132,7 @@ def compute_sbert_distance(text1, text2, model):
 # Misconception distribution control
 def get_all_misconception_types():
     """Get all misconception types from the codebook."""
-    from codebook import MisconceptionCode
+    from ltlmutator import MisconceptionCode
     return [m.value for m in MisconceptionCode if m != MisconceptionCode.Syntactic]
 
 
@@ -275,7 +275,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
         template_formulas = []
         
         # Only generate templates for misconceptions that need them
-        from codebook import MisconceptionCode
+        from ltlmutator import MisconceptionCode
         
         for misconception_name, deficit in misconceptions_needed:
             # Skip if no deficit (already have enough)
@@ -316,7 +316,7 @@ def build_tiered_benchmark(n_formulas_per_tier,
         # For each missing misconception, boost its associated operators
         for misconception_name, _ in misconceptions_needed[:3]:  # Top 3 most needed
             try:
-                from codebook import MisconceptionCode
+                from ltlmutator import MisconceptionCode
                 misconception_enum = MisconceptionCode(misconception_name)
                 operators = misconception_enum.associatedOperators()
                 

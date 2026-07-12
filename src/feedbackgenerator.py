@@ -1,4 +1,4 @@
-import spotutils
+from ltlmutator import spotutils
 
 
 class FeedbackGenerator:

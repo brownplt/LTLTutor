@@ -3,9 +3,9 @@ from antlr4 import *
 from io import StringIO
 import sys
 if sys.version_info[1] > 5:
-    from typing import TextIO
+	from typing import TextIO
 else:
-    from typing.io import TextIO
+	from typing.io import TextIO
 
 
 def serializedATN():
@@ -79,15 +79,15 @@ class ltlLexer(Lexer):
     modeNames = [ "DEFAULT_MODE" ]
 
     literalNames = [ "<INVALID>",
-            "'!'", "'X'", "'AFTER'", "'NEXT_STATE'", "'F'", "'EVENTUALLY'", 
-            "'G'", "'ALWAYS'", "'&'", "'|'", "'U'", "'UNTIL'", "'->'", "'<->'", 
+            "'!'", "'X'", "'AFTER'", "'NEXT_STATE'", "'F'", "'EVENTUALLY'",
+            "'G'", "'ALWAYS'", "'&'", "'|'", "'U'", "'UNTIL'", "'->'", "'<->'",
             "'('", "')'" ]
 
     symbolicNames = [ "<INVALID>",
             "ID", "WS" ]
 
-    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", 
-                  "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13", 
+    ruleNames = [ "T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6",
+                  "T__7", "T__8", "T__9", "T__10", "T__11", "T__12", "T__13",
                   "T__14", "T__15", "ID", "WS" ]
 
     grammarFileName = "ltl.g4"
@@ -98,5 +98,3 @@ class ltlLexer(Lexer):
         self._interp = LexerATNSimulator(self, self.atn, self.decisionsToDFA, PredictionContextCache())
         self._actions = None
         self._predicates = None
-
-

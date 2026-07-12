@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
-from spotutils import weighted_trace_choice, _count_trace_steps
+from ltlmutator.spotutils import weighted_trace_choice, _count_trace_steps
 
 
 class TestCountTraceSteps(unittest.TestCase):

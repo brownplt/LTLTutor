@@ -2,8 +2,8 @@ from flask import Flask, render_template, request, Blueprint, jsonify, redirect,
 from flask_login import login_required, current_user
 
 
-from ltlnode import parse_ltl_string, SUPPORTED_SYNTAXES
-from codebook import getAllApplicableMisconceptions
+from ltlmutator import parse_ltl_string, SUPPORTED_SYNTAXES
+from ltlmutator import getAllApplicableMisconceptions
 import os
 import json
 import sys
@@ -16,7 +16,7 @@ import ast
 import exerciseprocessor
 import exercisebuilder
 import random
-import spotutils
+from ltlmutator import spotutils
 from itertools import chain
 from collections import Counter, defaultdict
 import uuid

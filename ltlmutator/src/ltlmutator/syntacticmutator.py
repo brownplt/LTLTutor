@@ -1,4 +1,4 @@
-from ltlnode import *
+from .ltlnode import *
 import copy
 import random
 
@@ -69,14 +69,14 @@ def findParentNode(root, node):
 
 
 def isEquivalentToAny(node, nodes):
-        
+
         # Checks if the node is equivalent to any of the nodes in the list
         # Returns True if it is, False otherwise
-    
+
         for n in nodes:
             if LTLNode.equiv(node, n):
                 return True
-    
+
         return False
 
 
@@ -84,13 +84,13 @@ def isEquivalentToAny(node, nodes):
 def collectNodes(node):
     """Recursively collect all nodes in the tree."""
     nodes = [node]
-    
+
     if isinstance(node, UnaryOperatorNode):
         nodes.extend(collectNodes(node.operand))
     elif isinstance(node, BinaryOperatorNode):
         nodes.extend(collectNodes(node.left))
         nodes.extend(collectNodes(node.right))
-    
+
     return nodes
 
 def chooseRandomSubtree(node):
@@ -112,7 +112,7 @@ def applyRandomMutationAtRoot(node):
         possible_mutations = [changeUnaryOperator]
     else:
         return node
-    
+
     # Choose a random mutation from the list of possible mutations
     mutation = random.choice(possible_mutations)
     return mutation(node)
@@ -125,7 +125,7 @@ def swapOperands(node : BinaryOperatorNode):
     return node.__class__(node.right, node.left)
 
 def changeBinaryOperator(node : BinaryOperatorNode):
-        
+
         # Get the current class
         currentOperator = node.__class__
 
@@ -133,10 +133,10 @@ def changeBinaryOperator(node : BinaryOperatorNode):
         ## Get all classes that inherit from BinaryOperatorNode
         binopclasses = BinaryOperatorNode.__subclasses__()
         candidatebinops = [c for c in binopclasses if c != currentOperator]
-    
+
         # Choose a random operator from the list of candidate operators
         newOperator = random.choice(candidatebinops)
-    
+
         # Create a new node with the new operator
         newNode = binopclasses[candidatebinops.index(newOperator)](node.left, node.right)
         return newNode
@@ -144,7 +144,7 @@ def changeBinaryOperator(node : BinaryOperatorNode):
 
 ## I think this works right?
 def changeUnaryOperator(node : UnaryOperatorNode):
-    
+
     # Get the current operator
     currentOperator = node.__class__
 
@@ -159,7 +159,3 @@ def changeUnaryOperator(node : UnaryOperatorNode):
     # Create a new node with the new operator
     newNode = unopclasses[candidateunops.index(newOperator)](node.operand)
     return newNode
-
-
-
-

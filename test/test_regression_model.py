@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
 from exercisebuilder import ExerciseBuilder
-from codebook import MisconceptionCode
+from ltlmutator import MisconceptionCode
 
 
 class MockStudentLog:

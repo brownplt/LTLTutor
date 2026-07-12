@@ -1,0 +1,15 @@
+pyproject.toml
+src/ltlmutator/__init__.py
+src/ltlmutator/codebook.py
+src/ltlmutator/ltlnode.py
+src/ltlmutator/spotutils.py
+src/ltlmutator/syntacticmutator.py
+src/ltlmutator.egg-info/PKG-INFO
+src/ltlmutator.egg-info/SOURCES.txt
+src/ltlmutator.egg-info/dependency_links.txt
+src/ltlmutator.egg-info/requires.txt
+src/ltlmutator.egg-info/top_level.txt
+src/ltlmutator/grammar/__init__.py
+src/ltlmutator/grammar/ltlLexer.py
+src/ltlmutator/grammar/ltlListener.py
+src/ltlmutator/grammar/ltlParser.py

@@ -1,0 +1,12 @@
+[project]
+name = "ltlmutator"
+version = "0.1.0"
+description = "LTL formula semantic and syntactic mutation library"
+requires-python = ">=3.9"
+dependencies = [
+    "antlr4-python3-runtime>=4.13.1",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

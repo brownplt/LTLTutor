@@ -13,7 +13,7 @@ import string
 from functools import wraps
 from urllib.parse import urlparse
 from datetime import datetime, timezone
-from ltlnode import SUPPORTED_SYNTAXES
+from ltlmutator import SUPPORTED_SYNTAXES
 
 authroutes = Blueprint('authroutes', __name__)
 
@@ -659,8 +659,8 @@ def delete_instructor_exercise(exercise_id):
 def suggest_distractors():
     """API endpoint to suggest distractors for a question"""
     from flask import jsonify
-    import ltlnode
-    from codebook import getAllApplicableMisconceptions
+    import ltlmutator.ltlnode as ltlnode
+    from ltlmutator import getAllApplicableMisconceptions
     
     answer = request.form.get('answer', '')
     kind = request.form.get('kind', 'englishtoltl')
@@ -700,9 +700,9 @@ def suggest_distractors():
 def suggest_traces():
     """API endpoint to suggest traces for trace satisfaction questions"""
     from flask import jsonify
-    import spotutils
+    from ltlmutator import spotutils
     import exerciseprocessor
-    import ltlnode
+    import ltlmutator.ltlnode as ltlnode
     
     formula = request.form.get('formula', '')
     

@@ -4,7 +4,7 @@ import requests
 import json
 import re
 from exercisebuilder import ExerciseBuilder
-import ltlnode
+import ltlmutator.ltlnode as ltlnode
 
 def load_questions_from_sourceuri(sourceuri, staticfolderpath):
     if sourceuri.startswith('preload:'):

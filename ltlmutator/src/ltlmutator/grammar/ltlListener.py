@@ -1,9 +1,6 @@
 # Generated from ltl.g4 by ANTLR 4.13.2
 from antlr4 import *
-if "." in __name__:
-    from .ltlParser import ltlParser
-else:
-    from ltlParser import ltlParser
+from .ltlParser import ltlParser
 
 # This class defines a complete listener for a parse tree produced by ltlParser.
 class ltlListener(ParseTreeListener):

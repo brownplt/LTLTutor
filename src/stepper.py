@@ -1,6 +1,6 @@
-from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
+from ltlmutator import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
 import ltltoeng
-from spotutils import is_trace_satisfied
+from ltlmutator.spotutils import is_trace_satisfied
 import re
 import random
 import html as html_module

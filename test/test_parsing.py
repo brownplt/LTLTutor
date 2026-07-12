@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../s
 from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
-from ltlnode import *
+from ltlmutator.ltlnode import *
 
 
 ## LTL String --> AST Node
