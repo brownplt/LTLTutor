@@ -319,14 +319,22 @@ def getFormulaLiterals(ltlFormula):
 
     literals = set()
 
+    # Boolean constants parse to LiteralNodes too, but they are not atomic
+    # propositions and must never be treated as trace literals.
+    CONSTANTS = {'true', 'false', '1', '0'}
+
     def getLiterals(n):
-        if type(n) is ltlnode.LiteralNode:
-            literals.add(n.value)
-        elif type(n) is ltlnode.UnaryOperatorNode:
+        # Use isinstance, not `type(n) is ...`: every concrete formula is built
+        # from subclasses (AndNode, GloballyNode, UntilNode, ...), so exact-type
+        # checks against the base classes never match and the walk finds nothing.
+        if isinstance(n, ltlnode.LiteralNode):
+            if str(n.value) not in CONSTANTS:
+                literals.add(n.value)
+        elif isinstance(n, ltlnode.UnaryOperatorNode):
             getLiterals(n.operand)
-        elif type(n) is ltlnode.BinaryOperatorNode:
+        elif isinstance(n, ltlnode.BinaryOperatorNode):
             getLiterals(n.left)
             getLiterals(n.right)
-    
+
     getLiterals(n)
     return literals
