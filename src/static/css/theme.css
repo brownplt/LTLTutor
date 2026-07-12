@@ -10,14 +10,14 @@
 
 /* ---- Tokens: LIGHT ------------------------------------------------------- */
 :root {
-  --paper:      #eae0cc;   /* warm oat ground */
-  --surface:    #f5eee0;   /* cards, panels */
-  --surface-2:  #e0d4bb;   /* sunken / muted */
+  --paper:      #f3eee4;   /* warm off-white ground (ivory, not clinical) */
+  --surface:    #fbf8f2;   /* cards — bright warm white */
+  --surface-2:  #eae3d5;   /* sunken / muted warm panel */
   --ink:        #211c14;   /* warm near-black — the structural workhorse */
   --ink-2:      #544c3c;   /* secondary text */
-  --ink-3:      #867c66;   /* muted / captions */
-  --line:       #d6cab0;   /* hairline */
-  --line-2:     #bfb08e;   /* stronger hairline / control borders */
+  --ink-3:      #82775f;   /* muted / captions */
+  --line:       #e7e0d0;   /* hairline */
+  --line-2:     #d3cab4;   /* stronger hairline / control borders */
 
   /* Marigold brand: mustard with black ink (the Bauhaus move) */
   --brand:        #e0a41c;
