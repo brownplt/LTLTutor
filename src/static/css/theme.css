@@ -1,0 +1,224 @@
+/* ==========================================================================
+   LTL Tutor — theme.css
+   A design-token layer + Bootstrap 4 restyle. Direction: midcentury / Bauhaus
+   ("Marigold"). Flat surfaces, real black doing structural work, near-square
+   corners, warm non-blue palette. Green/red are reserved for correctness only.
+
+   Loaded AFTER bootstrap.css and common.css so its overrides win. Colors are
+   driven by CSS custom properties so light and (OS) dark themes both work.
+   ========================================================================== */
+
+/* ---- Tokens: LIGHT ------------------------------------------------------- */
+:root {
+  --paper:      #eae0cc;   /* warm oat ground */
+  --surface:    #f5eee0;   /* cards, panels */
+  --surface-2:  #e0d4bb;   /* sunken / muted */
+  --ink:        #211c14;   /* warm near-black — the structural workhorse */
+  --ink-2:      #544c3c;   /* secondary text */
+  --ink-3:      #867c66;   /* muted / captions */
+  --line:       #d6cab0;   /* hairline */
+  --line-2:     #bfb08e;   /* stronger hairline / control borders */
+
+  /* Marigold brand: mustard with black ink (the Bauhaus move) */
+  --brand:        #e0a41c;
+  --brand-strong: #a97a06;
+  --brand-ink:    #211c14;
+  --brand-soft:   #f6e6bd;
+  --brand-line:   #e4cb8b;
+  --accent:       #bf5327;   /* terracotta accent */
+  --accent-strong:#993f1b;
+
+  /* semantics — correctness / status only */
+  --ok:   #4d7a39;  --ok-soft:  #e0e9cf;
+  --bad:  #a62b22;  --bad-soft: #f0dac9;
+  --warn: #b5731a;  --warn-soft:#f6e7cd;
+  --focus:#0b6b62;                          /* teal focus ring (a11y affordance) */
+
+  --r-sm: 3px; --r: 4px; --r-lg: 6px; --r-pill: 999px;
+
+  --font-sans: "Helvetica Neue", Helvetica, Arial, "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+/* ---- Tokens: DARK (follows OS preference) -------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:#1a1611; --surface:#231e16; --surface-2:#2d2719;
+    --ink:#efe6d3; --ink-2:#c9bda2; --ink-3:#928769;
+    --line:#372f1f; --line-2:#4a4029;
+
+    --brand:#e6ad33; --brand-strong:#f3c765; --brand-ink:#201a10;
+    --brand-soft:#332815; --brand-line:#4d3d1c;
+    --accent:#d9713f; --accent-strong:#ee9166;
+
+    --ok:#8dbf63; --ok-soft:#232a18; --bad:#e58a6c; --bad-soft:#2f1c16;
+    --warn:#e0a437; --warn-soft:#322414; --focus:#5fd0c4;
+  }
+}
+
+/* ---- Base ---------------------------------------------------------------- */
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4, h5, h6 { color: var(--ink); font-weight: 800; letter-spacing: -.01em; }
+a { color: var(--accent-strong); }
+a:hover { color: var(--accent); }
+.text-muted { color: var(--ink-3) !important; }
+code, pre, .mono, kbd { font-family: var(--font-mono); }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Utility strip + navbar --------------------------------------------- */
+.bg-light { background-color: var(--surface) !important; }
+.border-bottom { border-color: var(--line) !important; }
+
+.navbar {
+  border-bottom: 1px solid var(--line);
+  padding-top: .6rem; padding-bottom: .6rem;
+}
+.navbar.bg-light { background-color: color-mix(in srgb, var(--paper) 90%, transparent) !important; }
+/* specificity matches Bootstrap's .navbar-light .navbar-brand so it wins in dark mode too */
+.navbar-light .navbar-brand, .navbar-brand {
+  font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--ink); font-size: 1.02rem;
+}
+.navbar-light .navbar-brand:hover, .navbar-brand:hover { color: var(--ink); }
+/* Bauhaus mark (square / circle / triangle) — optional, used in navbar.html */
+.bauhaus-mark { display: inline-flex; align-items: center; gap: 5px; vertical-align: -2px; margin-right: 8px; }
+.bauhaus-mark i { display: block; width: 14px; height: 14px; }
+.bauhaus-mark .sq { background: var(--brand); }
+.bauhaus-mark .ci { background: var(--accent); border-radius: 50%; }
+.bauhaus-mark .tr { width: 0; height: 0;
+  border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid var(--ink); }
+
+.navbar-light .navbar-nav .nav-link {
+  color: var(--ink-2); font-weight: 600;
+  border-bottom: 3px solid transparent; margin: 0 2px; padding: .4rem .7rem;
+}
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link:focus { color: var(--ink); border-bottom-color: var(--brand); }
+.navbar-toggler { border-color: var(--line-2); }
+
+.dropdown-menu {
+  background: var(--surface); border: 1.5px solid var(--line-2); border-radius: var(--r);
+  box-shadow: none; color: var(--ink);
+}
+.dropdown-item { color: var(--ink-2); }
+.dropdown-item:hover, .dropdown-item:focus { background: var(--surface-2); color: var(--ink); }
+.dropdown-divider { border-color: var(--line); }
+
+/* ---- Buttons: rectangular, flat, hard-offset on hover ------------------- */
+.btn {
+  font-weight: 700; letter-spacing: .01em; border-radius: var(--r);
+  border-width: 1.5px; transition: transform .1s ease, box-shadow .1s ease, background-color .1s ease;
+}
+.btn-lg { border-radius: var(--r); }
+.btn-primary {
+  background-color: var(--brand); border-color: var(--ink); color: var(--brand-ink);
+}
+.btn-primary:hover {
+  background-color: var(--brand); border-color: var(--ink); color: var(--brand-ink);
+  transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink);
+}
+.btn-primary:active, .btn-primary:not(:disabled):not(.disabled):active {
+  background-color: var(--brand-strong); border-color: var(--ink); color: var(--brand-ink);
+  transform: translate(1px,1px); box-shadow: none;
+}
+.btn-primary:focus, .btn-primary.focus { box-shadow: 0 0 0 .2rem var(--brand-line); }
+.btn-primary:disabled, .btn-primary.disabled {
+  background-color: var(--surface-2); border-color: var(--line-2); color: var(--ink-3);
+}
+
+.btn-outline-secondary { color: var(--ink); border-color: var(--ink); }
+.btn-outline-secondary:hover { background: var(--surface-2); color: var(--ink); border-color: var(--ink); }
+.btn-outline-success { color: var(--ok); border-color: var(--ok); }
+.btn-outline-success:hover { background: var(--ok); color: #fff; border-color: var(--ok); }
+.btn-link { color: var(--accent-strong); font-weight: 600; }
+.btn-link:hover { color: var(--accent); }
+
+/* ---- Cards: flat, hard-edged, structural borders ------------------------ */
+.card {
+  background: var(--surface);
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--r-lg);
+  box-shadow: none;
+}
+.card.shadow-sm, .card.shadow { box-shadow: none !important; }
+.card-header {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--line-2);
+  font-weight: 700;
+}
+/* colored card headers → tokenized, still flat */
+.card-header.bg-primary { background-color: var(--brand) !important; color: var(--brand-ink) !important; border-bottom-color: var(--ink) !important; }
+.card-header.bg-success { background-color: var(--ok) !important; color: #fff !important; }
+.card-header.bg-warning { background-color: var(--warn) !important; color: #fff !important; }
+.card.border-primary { border-color: var(--brand) !important; }
+.card.border-warning { border-color: var(--warn) !important; }
+.card.bg-light { background-color: var(--surface-2) !important; }
+
+/* ---- Badges -------------------------------------------------------------- */
+.badge { border-radius: var(--r-sm); font-weight: 700; padding: .35em .6em; }
+.badge-light { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line-2); }
+.badge-info { background: var(--ink); color: var(--paper); }
+.badge-primary { background: var(--brand); color: var(--brand-ink); }
+.badge-secondary { background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line-2); }
+.badge-success { background: var(--ok); color: #fff; }
+.badge-danger { background: var(--bad); color: #fff; }
+
+/* ---- List groups --------------------------------------------------------- */
+.list-group-item {
+  background: var(--surface); border-color: var(--line); color: var(--ink);
+}
+.list-group-item-action:hover, .list-group-item-action:focus { background: var(--surface-2); color: var(--ink); }
+.list-group-item-success { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 40%, transparent); color: var(--ink); }
+
+/* ---- Forms --------------------------------------------------------------- */
+.form-control {
+  background: var(--surface); color: var(--ink);
+  border: 1.5px solid var(--line-2); border-radius: var(--r);
+}
+.form-control:focus {
+  background: var(--surface); color: var(--ink);
+  border-color: var(--brand); box-shadow: 0 0 0 .2rem var(--brand-line);
+}
+.form-control::placeholder { color: var(--ink-3); }
+.input-group > .form-control { border-right: 0; }
+
+/* ---- Code / formula blocks (highlight.js themed to tokens) -------------- */
+/* highlight.js default.min.css hardcodes a light code theme; retheme it so
+   formulas match the surface (and don't glow white in dark mode). */
+pre { background: transparent; color: var(--ink); }
+.hljs, pre code.hljs { background: var(--surface-2) !important; color: var(--ink); border-radius: var(--r-sm); }
+.hljs-keyword { color: var(--brand-strong); font-weight: 700; }  /* G F X U → operators */
+
+/* Nothing in this theme is blue: retire Bootstrap's primary-blue utility. */
+.text-primary { color: var(--accent-strong) !important; }
+
+/* ---- Alerts -------------------------------------------------------------- */
+.alert { border-radius: var(--r); border-width: 1.5px; }
+.alert-secondary { background: var(--surface-2); border-color: var(--line-2); color: var(--ink); }
+.alert-danger { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 45%, transparent); color: var(--ink); }
+.alert-warning { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 45%, transparent); color: var(--ink); }
+
+/* ---- Modals -------------------------------------------------------------- */
+.modal-content { background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--r-lg); }
+.modal-header, .modal-footer { border-color: var(--line); }
+
+/* ---- Dark-mode patches for hardcoded-light spots in common.css ---------- */
+@media (prefers-color-scheme: dark) {
+  .footer, .footer.bg-light { background-color: var(--paper) !important; }
+  .ltl-hint { background-color: var(--surface); border-color: var(--line-2); }
+  .ltl-formula { color: var(--brand-strong); background-color: var(--brand-soft); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn-primary { transition: none; }
+}

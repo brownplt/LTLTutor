@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LTL Tutor{% endblock %}</title>
+    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+
+    <!-- Bootstrap 4 + jQuery + Popper (themed via theme.css). Shared by every page. -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
+
+    {# Page-specific <head> assets: Chart.js, highlight.js, Font Awesome, trace renderer, etc. #}
+    {% block head %}{% endblock %}
+
+    <!-- App styles: bootstrap, then common.css, then theme.css so the theme wins. -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+
+<body>
+    <div class="{% block container_class %}container{% endblock %}">
+        {% block navbar %}{% include 'navbar.html' %}{% endblock %}
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block footer %}{% include 'footer.html' %}{% endblock %}
+
+    {# Page-specific end-of-body scripts. #}
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,13 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Logs</title>
+{% extends 'base.html' %}
+
+{% block title %}Student Logs{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block container_class %}{% endblock %}
+
+{% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     <h1>Your Logs</h1>
     <button id="downloadJsonBtn">Download As JSON</button>
     <table id="logsTable" class="display">
@@ -42,6 +48,9 @@
             {% endfor %}
         </tbody>
     </table>
+{% endblock %}
+
+{% block scripts %}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script>
@@ -62,5 +71,4 @@
             });
         });
     </script>
-</body>
-</html>
+{% endblock %}
