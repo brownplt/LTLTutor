@@ -23,6 +23,14 @@ class ExerciseBuilder:
     ## (exploration floor), no matter how well the student does on it.
     QUESTION_TYPE_FLOOR = 0.15
 
+    ## A multiple-choice question shows at most this many options total
+    ## (1 correct + up to 5 distractors).
+    MAX_TOTAL_OPTIONS = 6
+    ## Every applicable misconception keeps at least this much sampling weight,
+    ## so a resolved/unseen misconception can still surface occasionally and
+    ## its weight can be measured back down.
+    DISTRACTOR_WEIGHT_FLOOR = 0.25
+
     COMPLEXITY_MIN = 3
     COMPLEXITY_MAX = 12
     COMPLEXITY_WINDOW = 10
@@ -627,6 +635,49 @@ class ExerciseBuilder:
         return ltltoeng.finalize_sentence(formula_eng_corrected)
 
 
+    def _weighted_sample_without_replacement(self, items, weight_fn, k):
+        """
+        Pick k items from `items` without replacement, with the probability of
+        each remaining item proportional to weight_fn(item). Returns fewer than
+        k items only if `items` has fewer than k.
+        """
+        pool = list(items)
+        chosen = []
+        while pool and len(chosen) < k:
+            weights = [max(weight_fn(x), 1e-9) for x in pool]
+            total = sum(weights)
+            r = random.uniform(0, total)
+            upto = 0.0
+            picked = len(pool) - 1
+            for i, w in enumerate(weights):
+                upto += w
+                if r <= upto:
+                    picked = i
+                    break
+            chosen.append(pool.pop(picked))
+        return chosen
+
+    def _sample_misconception_options(self, options, budget):
+        """
+        Reduce a list of misconception distractor options to at most `budget`,
+        sampling without replacement weighted by misconception weight (with a
+        floor so resolved/unseen misconceptions still occasionally appear).
+        Returns the list unchanged when it already fits.
+        """
+        if len(options) <= budget:
+            return options
+
+        weights_by_code = self.calculate_misconception_weights(self.aggregateLogs())
+
+        def option_weight(option):
+            codes = option.get('misconceptions') or []
+            ## An option merged from several misconceptions is weighted by its
+            ## most-salient (highest-weight) code.
+            raw = max((weights_by_code.get(c, 0.5) for c in codes), default=0.5)
+            return self.DISTRACTOR_WEIGHT_FLOOR + raw
+
+        return self._weighted_sample_without_replacement(options, option_weight, budget)
+
     def get_options_with_misconceptions_as_formula(self, answer):
         ltl = ltlnode.parse_ltl_string(answer)
         d = codebook.getAllApplicableMisconceptions(ltl)
@@ -649,28 +700,39 @@ class ExerciseBuilder:
         ## If we couldn't build anything here, skip it
         if len(merged_options) == 0:
             return None
-        
-        merged_options.append({
-                "option": self.getLTLFormulaAsString(ltl),
-                "isCorrect": True,
-                "misconceptions": []
-            })
-        
 
-        ### NOW, ADD A SINGLE RANDOM SYNTACTIC MUTATION
-        ## THAT IS NOT EQUIVALENT TO THE CORRECT ANSWER
-        ## OR ANY OF THE OTHER OPTIONS
+        correct_option = {
+            "option": self.getLTLFormulaAsString(ltl),
+            "isCorrect": True,
+            "misconceptions": []
+        }
+
+        ### BUILD A SINGLE RANDOM SYNTACTIC MUTATION (the red-herring control)
+        ## THAT IS NOT EQUIVALENT TO THE CORRECT ANSWER OR ANY OTHER OPTION
         notEquivalentToNodes = [ltlnode.parse_ltl_string(o['option']) for o in merged_options]
+        notEquivalentToNodes.append(ltl)
         mutated_node = applyRandomMutationNotEquivalentTo(ltl, notEquivalentToNodes)
+        syntactic_option = None
         if mutated_node is not None:
-            merged_options.append({
+            syntactic_option = {
                 "option": self.getLTLFormulaAsString(mutated_node),
                 "isCorrect": False,
                 "misconceptions": [str(MisconceptionCode.Syntactic)]
-            })
-        
+            }
 
-        return merged_options
+        ## Cap the total number of options. Reserve one wrong slot for the
+        ## syntactic control when present, and fill the rest with misconception
+        ## distractors sampled by weight (mastered misconceptions fade out).
+        wrong_budget = self.MAX_TOTAL_OPTIONS - 1
+        misconception_budget = wrong_budget - (1 if syntactic_option is not None else 0)
+        sampled = self._sample_misconception_options(merged_options, misconception_budget)
+
+        final_options = list(sampled)
+        if syntactic_option is not None:
+            final_options.append(syntactic_option)
+        final_options.append(correct_option)
+
+        return final_options
 
     def build_english_to_ltl_question(self, answer):
         
