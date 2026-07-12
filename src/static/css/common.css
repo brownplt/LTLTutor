@@ -7,6 +7,98 @@
     cursor: pointer;
 }
 
+/* --- Accessible answer feedback --------------------------------------------
+   After an answer is checked, correctness must never be conveyed by color
+   alone (WCAG 1.4.1 "Use of Color"). Each marked option carries three
+   redundant cues: an icon + text badge ("✓ Correct answer" / "✗ Your
+   answer"), a shape cue (the inset accent bar on the left edge), and color.
+   Hues match the ✓/✗ state marks drawn inside the trace SVGs so the whole
+   feedback surface reads as one language. */
+.trace-option-item.answer-correct {
+    background-color: #eaf6ef;
+    box-shadow: inset 4px 0 0 #198754;
+}
+.trace-option-item.answer-wrong {
+    background-color: #fdecea;
+    box-shadow: inset 4px 0 0 #dc3545;
+}
+
+.answer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    margin-bottom: 0.5rem;
+    padding: 0.28em 0.65em;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+}
+/* Pill backgrounds are a touch darker than the accent bars so the white
+   label text clears AA contrast (5.8:1 / 5.6:1) with margin to spare. */
+.answer-badge-correct {
+    background-color: #157347;
+}
+.answer-badge-wrong {
+    background-color: #c82333;
+}
+.answer-badge-icon {
+    font-weight: 900;
+}
+
+/* --- Feedback hint with inline LTL formulas --------------------------------
+   The tracesat hint used to drop each formula into its own block <pre>, which
+   broke the sentence across lines. Formulas now flow inline as chips, in the
+   exercise's selected syntax, behind a small amber "Hint" badge. */
+.ltl-hint {
+    padding: 0.6rem 0.75rem;
+    background-color: #fbfbfb;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-left: 3px solid #ffc107;
+    border-radius: 6px;
+    line-height: 1.7;
+}
+.ltl-hint-badge {
+    display: inline-block;
+    margin-right: 0.4rem;
+    padding: 0.12em 0.6em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #664d03;
+    background-color: #fff3cd;
+    border-radius: 999px;
+}
+/* Neutral monospace chip so formulas read as code, not Bootstrap's pink <code>. */
+.ltl-formula {
+    padding: 0.1em 0.4em;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9em;
+    color: #0b4ea2;
+    background-color: rgba(11, 78, 162, 0.08);
+    border-radius: 4px;
+}
+
+/* --- Feedback action buttons (interactive stepper) -------------------------
+   Presented last in the feedback, after the explanation and hint, as an
+   optional deeper dive. Set off with a divider so they read as a distinct,
+   salient call-to-action rather than inline gray buttons. The :not(:empty)
+   guard keeps the divider from showing on questions with no stepper actions. */
+.fb-actions:not(:empty) {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+.fb-actions-label {
+    font-weight: 600;
+    color: #495057;
+}
+.btn-stepper {
+    font-weight: 600;
+}
+
 .trace-option-body .trace-diagram {
     width: 100%;
     max-width: 100%;

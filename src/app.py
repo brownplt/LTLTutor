@@ -815,14 +815,12 @@ def loganswer(questiontype):
     userId = getUserName()
     courseId = getUserCourse(userId)
     mp_class = ""
-    mp_formula_literals = []
     # If response has a mp_class field, log it
     if MP_FORMULA_KEY in data:
 
         ## TODO: For this classification, we need to ensure we are in classic syntax.
         to_classify = str(parse_ltl_string(data[MP_FORMULA_KEY]))
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
-        mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
 
     exercise = ""
     if EXERCISE_KEY in data:
@@ -871,10 +869,15 @@ def loganswer(questiontype):
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
             to_return['equivalent'] = fgen.equivalent()
-            
 
+            # The counterexample words distinguish the two answers, so they range
+            # over the combined alphabet. Expand each state across the union of
+            # both formulas' literals so every state shows a full valuation
+            # (no bare spot "1" tautology states, no states missing a variable).
+            ce_literals = (exerciseprocessor.getFormulaLiterals(correct_answer_spot_syntax)
+                           | exerciseprocessor.getFormulaLiterals(student_selection_spot_syntax))
 
-            to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
+            to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(ce_literals)) for w in fgen.getCEWords()]
             to_return['trace_data'] = [exerciseprocessor.traceToRenderData(sr) for sr in to_return['cewords']]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":

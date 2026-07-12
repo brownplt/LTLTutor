@@ -88,8 +88,37 @@ var TraceRenderer = (function () {
         return t.charAt(0) === '¬' || t.charAt(0) === '!';
     }
 
+    // Reconstruct a single state's SPOT syntax (e.g. "d & !e") from its tokens.
+    // A state with no literals is the tautology, written "1" in SPOT.
+    function _spotState(state) {
+        var lits = [];
+        for (var j = 0; j < state.tokens.length; j++) {
+            var t = state.tokens[j];
+            var name = (t.text || '').replace(/^[¬!]\s*/, '').trim();
+            if (!name) continue;
+            lits.push((t.negated ? '!' : '') + name);
+        }
+        return lits.length ? lits.join(' & ') : '1';
+    }
+
+    // Reconstruct the full trace in SPOT's word syntax, e.g.
+    // "!d & e; d & e; cycle{d & !e}", from the rendered states.
+    function _spotSyntax(states, prefixLen) {
+        var prefixParts = [];
+        var cycleParts = [];
+        for (var i = 0; i < states.length; i++) {
+            (i < prefixLen ? prefixParts : cycleParts).push(_spotState(states[i]));
+        }
+        var cycleStr = cycleParts.length ? 'cycle{' + cycleParts.join('; ') + '}' : '';
+        if (prefixParts.length && cycleStr) {
+            return prefixParts.join('; ') + '; ' + cycleStr;
+        }
+        return prefixParts.join('; ') || cycleStr;
+    }
+
     // Natural-language description of the trace, used as the SVG's aria-label
     // so screen readers get the actual trace content rather than a generic label.
+    // Ends with the exact SPOT word syntax so it is also available as alt text.
     function _describeStates(states, prefixLen, marks) {
         var parts = [];
         for (var i = 0; i < states.length; i++) {
@@ -110,7 +139,8 @@ var TraceRenderer = (function () {
                 ? ', all repeating forever'
                 : ', states ' + prefixLen + ' onward repeating forever';
         }
-        return desc + '. ' + parts.join('; ') + '.';
+        return desc + '. ' + parts.join('; ') + '.'
+            + ' In SPOT trace syntax: ' + _spotSyntax(states, prefixLen) + '.';
     }
 
     var CFG = {
