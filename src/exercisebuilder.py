@@ -18,6 +18,13 @@ class ExerciseBuilder:
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
 
+    COMPLEXITY_MIN = 3
+    COMPLEXITY_MAX = 12
+    COMPLEXITY_WINDOW = 10
+    COMPLEXITY_MIN_ANSWERS = 5
+    COMPLEXITY_STEP_UP_ACCURACY = 0.8
+    COMPLEXITY_STEP_DOWN_ACCURACY = 0.45
+
 
     def __init__(self, userLogs, complexity=5, syntax="Classic"):
         self.userLogs = userLogs
@@ -26,10 +33,13 @@ class ExerciseBuilder:
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
 
-        ## TODO: We want complexity to be persistent for user, and scale up or down.
-        self.complexity = complexity
-   
+        ## Persisted per user via the generated_exercise table and updated by
+        ## update_complexity(); kept within [COMPLEXITY_MIN, COMPLEXITY_MAX].
+        self.complexity = max(self.COMPLEXITY_MIN, min(self.COMPLEXITY_MAX, complexity))
+
         self.syntax = syntax
+
+        self._distinct_answers_cache = None
 
 
     def toSpotSyntax(self, s):
@@ -205,10 +215,67 @@ class ExerciseBuilder:
             # Sigmoid squashing to bound output between 0 and 1
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
-        if weights and max(weights.values()) < default_weight:
-            print("Increasing complexity for user")
-            self.complexity += 1
         return weights
+
+    def _log_is_correct(self, log):
+        """
+        Whether a student_responses row records a correct answer.
+        correct_answer is stored as a bool in some rows and as the strings
+        'True'/'true' in others, so both representations are handled.
+        """
+        value = getattr(log, 'correct_answer', None)
+        if isinstance(value, str):
+            return value.lower() == 'true'
+        return bool(value)
+
+    def _distinct_answers(self):
+        """
+        Collapse log rows into one entry per answered question, sorted by time.
+        A wrong answer is logged once per misconception on the selected option
+        (each row with its own now() timestamp), so raw rows overcount
+        incorrect answers.
+        """
+        if self._distinct_answers_cache is not None:
+            return self._distinct_answers_cache
+
+        ordered = sorted(self.userLogs,
+                         key=lambda log: getattr(log, 'timestamp', None) or datetime.datetime.min)
+
+        answers = []
+        last_kept = {}
+        for log in ordered:
+            question = getattr(log, 'question_text', None)
+            timestamp = getattr(log, 'timestamp', None)
+            previous = last_kept.get(question)
+            if (previous is not None and timestamp is not None
+                    and abs((timestamp - previous).total_seconds()) < 5):
+                continue
+            last_kept[question] = timestamp
+            answers.append(log)
+
+        self._distinct_answers_cache = answers
+        return answers
+
+    def update_complexity(self):
+        """
+        Move complexity one step up or down based on the student's recent
+        overall accuracy, clamped to [COMPLEXITY_MIN, COMPLEXITY_MAX].
+        Requires at least COMPLEXITY_MIN_ANSWERS recent answers to move at all,
+        and moves at most one step per call (i.e. per generated exercise).
+
+        This replaces the old always-upward bump that lived inside
+        calculate_misconception_weights, whose result was never persisted.
+        """
+        recent = self._distinct_answers()[-self.COMPLEXITY_WINDOW:]
+        if len(recent) >= self.COMPLEXITY_MIN_ANSWERS:
+            accuracy = sum(1 for a in recent if self._log_is_correct(a)) / len(recent)
+            if accuracy >= self.COMPLEXITY_STEP_UP_ACCURACY:
+                self.complexity += 1
+            elif accuracy <= self.COMPLEXITY_STEP_DOWN_ACCURACY:
+                self.complexity -= 1
+
+        self.complexity = max(self.COMPLEXITY_MIN, min(self.COMPLEXITY_MAX, self.complexity))
+        return self.complexity
     
     def _calculate_trend(self, entries, now, window_hours=48):
         """
@@ -405,6 +472,7 @@ class ExerciseBuilder:
 
 
         self.set_ltl_priorities()
+        self.update_complexity()
 
         ## TODO: Find a better mapping between complexity and tree size
         tree_size = self.get_tree_size()

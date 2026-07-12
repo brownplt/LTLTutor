@@ -181,13 +181,13 @@ class Logger:
             return logs
 
 
-    def recordGeneratedExercise(self, userId, exercise_data, exercise_name):
+    def recordGeneratedExercise(self, userId, exercise_data, exercise_name, complexity=None):
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
         if not isinstance(exercise_data, str):
             raise ValueError("exercise_data should be a string")
         
-        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data, exerciseName=exercise_name)
+        log = GeneratedExercise(user_id=userId, timestamp=datetime.datetime.now(), exercise_data=exercise_data, exerciseName=exercise_name, complexity=complexity)
         self.record(log)
 
 

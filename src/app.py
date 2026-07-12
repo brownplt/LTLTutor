@@ -1087,7 +1087,9 @@ def newexercise():
     data = exerciseprocessor.randomize_questions(data)
     data = exerciseprocessor.change_traces_to_render_data(data, literals = LITERALS)
 
-    answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
+    ## build_exercise may have stepped complexity up or down; persist it so the
+    ## next generated exercise picks the new value up.
+    answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name, complexity = exercise_builder.complexity)
 
     return render_template(
         'exercise.html',
