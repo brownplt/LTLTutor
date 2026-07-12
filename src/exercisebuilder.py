@@ -54,6 +54,7 @@ class ExerciseBuilder:
 
         self._distinct_answers_cache = None
         self._question_type_weights_cache = None
+        self._misconception_weights_cache = None
 
 
     def toSpotSyntax(self, s):
@@ -230,6 +231,19 @@ class ExerciseBuilder:
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
         return weights
+
+    def _full_misconception_weights(self):
+        """
+        Misconception weights over the student's full log history, memoized for
+        this builder's lifetime. userLogs is fixed once the builder is created,
+        so the weights don't change within a generation pass, and computing them
+        is O(#logs). Callers that need weights over a *partial* history (e.g.
+        get_model's per-bucket sub-histories) must call
+        calculate_misconception_weights directly instead.
+        """
+        if self._misconception_weights_cache is None:
+            self._misconception_weights_cache = self.calculate_misconception_weights(self.aggregateLogs())
+        return self._misconception_weights_cache
 
     def _log_is_correct(self, log):
         """
@@ -437,8 +451,7 @@ class ExerciseBuilder:
         template_formulas = []
         
         # Get misconceptions that need template generation, weighted by their current weights
-        concept_history = self.aggregateLogs()
-        misconception_weights = self.calculate_misconception_weights(concept_history)
+        misconception_weights = self._full_misconception_weights()
         
         # Filter to only misconceptions that benefit from templates AND have high weight
         template_misconceptions = []
@@ -482,8 +495,7 @@ class ExerciseBuilder:
         def scale(weight):
             return 2 * weight if weight > 0.5 else 2 * (1 - weight)
 
-        concept_history = self.aggregateLogs()
-        misconception_weights = self.calculate_misconception_weights(concept_history)
+        misconception_weights = self._full_misconception_weights()
 
         for m, weight in misconception_weights.items():
 
@@ -667,7 +679,7 @@ class ExerciseBuilder:
         if len(options) <= budget:
             return options
 
-        weights_by_code = self.calculate_misconception_weights(self.aggregateLogs())
+        weights_by_code = self._full_misconception_weights()
 
         def option_weight(option):
             codes = option.get('misconceptions') or []
