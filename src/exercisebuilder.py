@@ -17,6 +17,26 @@ class ExerciseBuilder:
     TRACESATMC = "tracesatisfaction_mc"
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
+    QUESTION_TYPES = [TRACESATMC, TRACESATYN, ENGLISHTOLTL]
+
+    ## No question type's selection probability ever drops below this
+    ## (exploration floor), no matter how well the student does on it.
+    QUESTION_TYPE_FLOOR = 0.15
+
+    ## A multiple-choice question shows at most this many options total
+    ## (1 correct + up to 5 distractors).
+    MAX_TOTAL_OPTIONS = 6
+    ## Every applicable misconception keeps at least this much sampling weight,
+    ## so a resolved/unseen misconception can still surface occasionally and
+    ## its weight can be measured back down.
+    DISTRACTOR_WEIGHT_FLOOR = 0.25
+
+    COMPLEXITY_MIN = 3
+    COMPLEXITY_MAX = 12
+    COMPLEXITY_WINDOW = 10
+    COMPLEXITY_MIN_ANSWERS = 5
+    COMPLEXITY_STEP_UP_ACCURACY = 0.8
+    COMPLEXITY_STEP_DOWN_ACCURACY = 0.45
 
 
     def __init__(self, userLogs, complexity=5, syntax="Classic"):
@@ -26,10 +46,15 @@ class ExerciseBuilder:
         self.DEFAULT_WEIGHT = 0.7
         self.ltl_priorities = spotutils.DEFAULT_LTL_PRIORITIES.copy()
 
-        ## TODO: We want complexity to be persistent for user, and scale up or down.
-        self.complexity = complexity
-   
+        ## Persisted per user via the generated_exercise table and updated by
+        ## update_complexity(); kept within [COMPLEXITY_MIN, COMPLEXITY_MAX].
+        self.complexity = max(self.COMPLEXITY_MIN, min(self.COMPLEXITY_MAX, complexity))
+
         self.syntax = syntax
+
+        self._distinct_answers_cache = None
+        self._question_type_weights_cache = None
+        self._misconception_weights_cache = None
 
 
     def toSpotSyntax(self, s):
@@ -205,10 +230,131 @@ class ExerciseBuilder:
             # Sigmoid squashing to bound output between 0 and 1
             weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
 
-        if weights and max(weights.values()) < default_weight:
-            print("Increasing complexity for user")
-            self.complexity += 1
         return weights
+
+    def _full_misconception_weights(self):
+        """
+        Misconception weights over the student's full log history, memoized for
+        this builder's lifetime. userLogs is fixed once the builder is created,
+        so the weights don't change within a generation pass, and computing them
+        is O(#logs). Callers that need weights over a *partial* history (e.g.
+        get_model's per-bucket sub-histories) must call
+        calculate_misconception_weights directly instead.
+        """
+        if self._misconception_weights_cache is None:
+            self._misconception_weights_cache = self.calculate_misconception_weights(self.aggregateLogs())
+        return self._misconception_weights_cache
+
+    def _log_is_correct(self, log):
+        """
+        Whether a student_responses row records a correct answer.
+        correct_answer is stored as a bool in some rows and as the strings
+        'True'/'true' in others, so both representations are handled.
+        """
+        value = getattr(log, 'correct_answer', None)
+        if isinstance(value, str):
+            return value.lower() == 'true'
+        return bool(value)
+
+    def _distinct_answers(self):
+        """
+        Collapse log rows into one entry per answered question, sorted by time.
+        A wrong answer is logged once per misconception on the selected option
+        (each row with its own now() timestamp), so raw rows overcount
+        incorrect answers.
+        """
+        if self._distinct_answers_cache is not None:
+            return self._distinct_answers_cache
+
+        ordered = sorted(self.userLogs,
+                         key=lambda log: getattr(log, 'timestamp', None) or datetime.datetime.min)
+
+        answers = []
+        last_kept = {}
+        for log in ordered:
+            question = getattr(log, 'question_text', None)
+            timestamp = getattr(log, 'timestamp', None)
+            previous = last_kept.get(question)
+            if (previous is not None and timestamp is not None
+                    and abs((timestamp - previous).total_seconds()) < 5):
+                continue
+            last_kept[question] = timestamp
+            answers.append(log)
+
+        self._distinct_answers_cache = answers
+        return answers
+
+    def calculate_question_type_weights(self):
+        """
+        Selection weights per question type, biased toward the types the
+        student gets wrong. Uses a Laplace-smoothed error rate
+        (incorrect + 1) / (attempts + 2), so with no history every type gets
+        0.5 and selection is uniform. After normalization, a floor guarantees
+        every type keeps at least QUESTION_TYPE_FLOOR probability.
+        """
+        if self._question_type_weights_cache is not None:
+            return self._question_type_weights_cache
+
+        counts = {qtype: {"attempts": 0, "incorrect": 0} for qtype in self.QUESTION_TYPES}
+        for answer in self._distinct_answers():
+            qtype = getattr(answer, 'question_type', None)
+            if qtype not in counts:
+                continue
+            counts[qtype]["attempts"] += 1
+            if not self._log_is_correct(answer):
+                counts[qtype]["incorrect"] += 1
+
+        error_rates = {
+            qtype: (c["incorrect"] + 1) / (c["attempts"] + 2)
+            for qtype, c in counts.items()
+        }
+        total = sum(error_rates.values())
+        normalized = {qtype: rate / total for qtype, rate in error_rates.items()}
+
+        ## Apply the exploration floor: floored types get exactly the floor and
+        ## the remaining mass is split proportionally among the rest. Repeat in
+        ## case the rescaling pushes another type under the floor.
+        result = dict(normalized)
+        floored = set()
+        for _ in range(len(result)):
+            low = {k for k, v in result.items() if k not in floored and v < self.QUESTION_TYPE_FLOOR}
+            if not low:
+                break
+            floored |= low
+            free_keys = [k for k in result if k not in floored]
+            free_mass = 1.0 - self.QUESTION_TYPE_FLOOR * len(floored)
+            free_total = sum(normalized[k] for k in free_keys)
+            for k in floored:
+                result[k] = self.QUESTION_TYPE_FLOOR
+            for k in free_keys:
+                if free_total > 0:
+                    result[k] = normalized[k] * free_mass / free_total
+                else:
+                    result[k] = free_mass / len(free_keys)
+
+        self._question_type_weights_cache = result
+        return result
+
+    def update_complexity(self):
+        """
+        Move complexity one step up or down based on the student's recent
+        overall accuracy, clamped to [COMPLEXITY_MIN, COMPLEXITY_MAX].
+        Requires at least COMPLEXITY_MIN_ANSWERS recent answers to move at all,
+        and moves at most one step per call (i.e. per generated exercise).
+
+        This replaces the old always-upward bump that lived inside
+        calculate_misconception_weights, whose result was never persisted.
+        """
+        recent = self._distinct_answers()[-self.COMPLEXITY_WINDOW:]
+        if len(recent) >= self.COMPLEXITY_MIN_ANSWERS:
+            accuracy = sum(1 for a in recent if self._log_is_correct(a)) / len(recent)
+            if accuracy >= self.COMPLEXITY_STEP_UP_ACCURACY:
+                self.complexity += 1
+            elif accuracy <= self.COMPLEXITY_STEP_DOWN_ACCURACY:
+                self.complexity -= 1
+
+        self.complexity = max(self.COMPLEXITY_MIN, min(self.COMPLEXITY_MAX, self.complexity))
+        return self.complexity
     
     def _calculate_trend(self, entries, now, window_hours=48):
         """
@@ -305,8 +451,7 @@ class ExerciseBuilder:
         template_formulas = []
         
         # Get misconceptions that need template generation, weighted by their current weights
-        concept_history = self.aggregateLogs()
-        misconception_weights = self.calculate_misconception_weights(concept_history)
+        misconception_weights = self._full_misconception_weights()
         
         # Filter to only misconceptions that benefit from templates AND have high weight
         template_misconceptions = []
@@ -350,8 +495,7 @@ class ExerciseBuilder:
         def scale(weight):
             return 2 * weight if weight > 0.5 else 2 * (1 - weight)
 
-        concept_history = self.aggregateLogs()
-        misconception_weights = self.calculate_misconception_weights(concept_history)
+        misconception_weights = self._full_misconception_weights()
 
         for m, weight in misconception_weights.items():
 
@@ -379,9 +523,9 @@ class ExerciseBuilder:
 
 
     def choose_question_kind(self):
-        ## TODO: Maybe this can be more sophisticated, looking at the kinds of questions students
-        ## have gotten wrong in the past
-        return random.choice([self.TRACESATMC, self.ENGLISHTOLTL, self.TRACESATYN])
+        weights = self.calculate_question_type_weights()
+        kinds = list(weights.keys())
+        return random.choices(kinds, weights=[weights[k] for k in kinds], k=1)[0]
 
     def get_tree_size(self):
         ## TODO: Determine complexity somehow, maybe based on the number of misconceptions encountered
@@ -405,6 +549,7 @@ class ExerciseBuilder:
 
 
         self.set_ltl_priorities()
+        self.update_complexity()
 
         ## TODO: Find a better mapping between complexity and tree size
         tree_size = self.get_tree_size()
@@ -502,6 +647,49 @@ class ExerciseBuilder:
         return ltltoeng.finalize_sentence(formula_eng_corrected)
 
 
+    def _weighted_sample_without_replacement(self, items, weight_fn, k):
+        """
+        Pick k items from `items` without replacement, with the probability of
+        each remaining item proportional to weight_fn(item). Returns fewer than
+        k items only if `items` has fewer than k.
+        """
+        pool = list(items)
+        chosen = []
+        while pool and len(chosen) < k:
+            weights = [max(weight_fn(x), 1e-9) for x in pool]
+            total = sum(weights)
+            r = random.uniform(0, total)
+            upto = 0.0
+            picked = len(pool) - 1
+            for i, w in enumerate(weights):
+                upto += w
+                if r <= upto:
+                    picked = i
+                    break
+            chosen.append(pool.pop(picked))
+        return chosen
+
+    def _sample_misconception_options(self, options, budget):
+        """
+        Reduce a list of misconception distractor options to at most `budget`,
+        sampling without replacement weighted by misconception weight (with a
+        floor so resolved/unseen misconceptions still occasionally appear).
+        Returns the list unchanged when it already fits.
+        """
+        if len(options) <= budget:
+            return options
+
+        weights_by_code = self._full_misconception_weights()
+
+        def option_weight(option):
+            codes = option.get('misconceptions') or []
+            ## An option merged from several misconceptions is weighted by its
+            ## most-salient (highest-weight) code.
+            raw = max((weights_by_code.get(c, 0.5) for c in codes), default=0.5)
+            return self.DISTRACTOR_WEIGHT_FLOOR + raw
+
+        return self._weighted_sample_without_replacement(options, option_weight, budget)
+
     def get_options_with_misconceptions_as_formula(self, answer):
         ltl = ltlnode.parse_ltl_string(answer)
         d = codebook.getAllApplicableMisconceptions(ltl)
@@ -524,28 +712,39 @@ class ExerciseBuilder:
         ## If we couldn't build anything here, skip it
         if len(merged_options) == 0:
             return None
-        
-        merged_options.append({
-                "option": self.getLTLFormulaAsString(ltl),
-                "isCorrect": True,
-                "misconceptions": []
-            })
-        
 
-        ### NOW, ADD A SINGLE RANDOM SYNTACTIC MUTATION
-        ## THAT IS NOT EQUIVALENT TO THE CORRECT ANSWER
-        ## OR ANY OF THE OTHER OPTIONS
+        correct_option = {
+            "option": self.getLTLFormulaAsString(ltl),
+            "isCorrect": True,
+            "misconceptions": []
+        }
+
+        ### BUILD A SINGLE RANDOM SYNTACTIC MUTATION (the red-herring control)
+        ## THAT IS NOT EQUIVALENT TO THE CORRECT ANSWER OR ANY OTHER OPTION
         notEquivalentToNodes = [ltlnode.parse_ltl_string(o['option']) for o in merged_options]
+        notEquivalentToNodes.append(ltl)
         mutated_node = applyRandomMutationNotEquivalentTo(ltl, notEquivalentToNodes)
+        syntactic_option = None
         if mutated_node is not None:
-            merged_options.append({
+            syntactic_option = {
                 "option": self.getLTLFormulaAsString(mutated_node),
                 "isCorrect": False,
                 "misconceptions": [str(MisconceptionCode.Syntactic)]
-            })
-        
+            }
 
-        return merged_options
+        ## Cap the total number of options. Reserve one wrong slot for the
+        ## syntactic control when present, and fill the rest with misconception
+        ## distractors sampled by weight (mastered misconceptions fade out).
+        wrong_budget = self.MAX_TOTAL_OPTIONS - 1
+        misconception_budget = wrong_budget - (1 if syntactic_option is not None else 0)
+        sampled = self._sample_misconception_options(merged_options, misconception_budget)
+
+        final_options = list(sampled)
+        if syntactic_option is not None:
+            final_options.append(syntactic_option)
+        final_options.append(correct_option)
+
+        return final_options
 
     def build_english_to_ltl_question(self, answer):
         
@@ -752,7 +951,47 @@ class ExerciseBuilder:
             "complexity": self.complexity,
             'misconception_count': misconception_count
         }
-    
+
+    def _complexity_band(self):
+        """Coarse label for the current complexity within [MIN, MAX]:
+        lowest third Beginner, middle third Intermediate, top third Advanced."""
+        span = self.COMPLEXITY_MAX - self.COMPLEXITY_MIN
+        if span <= 0:
+            return "Intermediate"
+        position = (self.complexity - self.COMPLEXITY_MIN) / span
+        if position < 1 / 3:
+            return "Beginner"
+        if position < 2 / 3:
+            return "Intermediate"
+        return "Advanced"
+
+    def get_profile_snapshot(self):
+        """A point-in-time view of the state the exercise engine uses to adapt,
+        for display on the student profile page and the JSON export:
+
+          - complexity: the current difficulty level and its band, plus bounds
+          - misconception_snapshot: per-misconception weights the distractor
+            sampler uses now (the enum prefix stripped), most-likely first
+          - question_type_weights: the selection weights per question type
+
+        Pure w.r.t. the builder's logs (no SPOT, no DB), so it is safe to call
+        from a request handler and straightforward to unit-test."""
+        weights = self._full_misconception_weights()
+        misconception_snapshot = [
+            {"name": code.replace('MisconceptionCode.', ''), "weight": weight}
+            for code, weight in sorted(weights.items(),
+                                       key=lambda kv: kv[1], reverse=True)
+        ]
+
+        return {
+            "complexity": self.complexity,
+            "complexity_min": self.COMPLEXITY_MIN,
+            "complexity_max": self.COMPLEXITY_MAX,
+            "complexity_band": self._complexity_band(),
+            "misconception_snapshot": misconception_snapshot,
+            "question_type_weights": self.calculate_question_type_weights(),
+        }
+
     def _get_trend_label(self, trend_score):
         """
         Convert a trend score (-1 to 1) to a human-readable label.

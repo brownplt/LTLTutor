@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from authroutes import Course, retrieve_course_data, get_owned_courses, login_required_as_courseinstructor
 from logger import Logger
 import json
+import datetime
 import exercisebuilder
 from collections import Counter
 
@@ -33,6 +34,54 @@ def _format_score(value):
     if isinstance(value, (int, float)):
         return f"{value:.2f}".rstrip('0').rstrip('.')
     return str(value)
+
+
+# Human-readable labels for the internal question-type identifiers, used on
+# the profile page and in the exported profile.
+QUESTION_TYPE_LABELS = {
+    exercisebuilder.ExerciseBuilder.TRACESATMC: "Trace satisfaction (multiple choice)",
+    exercisebuilder.ExerciseBuilder.TRACESATYN: "Trace satisfaction (yes/no)",
+    exercisebuilder.ExerciseBuilder.ENGLISHTOLTL: "English to LTL",
+}
+
+
+def _build_profile_snapshot(uid, logs, lookback_days):
+    """Assemble the adaptive-profile view model shared by the profile page and
+    the JSON export. The adaptive state itself (complexity, misconception
+    weights, question-type weights) comes from ExerciseBuilder; here we add the
+    answered/correct summary and map question types to human-readable labels."""
+    num_logs = len(logs)
+    num_correct = len([log for log in logs if _coerce_bool(log.correct_answer)])
+
+    builder = exercisebuilder.ExerciseBuilder(logs)
+    snapshot = builder.get_profile_snapshot()
+
+    # Attach human-readable labels and sort so the most-drilled type is first.
+    raw_type_weights = snapshot['question_type_weights']
+    question_type_mix = [
+        {
+            "type": qtype,
+            "label": QUESTION_TYPE_LABELS.get(qtype, qtype),
+            "weight": raw_type_weights.get(qtype, 0.0),
+        }
+        for qtype in sorted(raw_type_weights, key=raw_type_weights.get, reverse=True)
+    ]
+
+    accuracy = (num_correct / num_logs) if num_logs else None
+
+    return {
+        "uid": uid,
+        "lookback_days": lookback_days,
+        "num_answered": num_logs,
+        "num_correct": num_correct,
+        "accuracy": accuracy,
+        "complexity": snapshot['complexity'],
+        "complexity_min": snapshot['complexity_min'],
+        "complexity_max": snapshot['complexity_max'],
+        "complexity_band": snapshot['complexity_band'],
+        "misconception_snapshot": snapshot['misconception_snapshot'],
+        "question_type_mix": question_type_mix,
+    }
 
 
 def _normalize_questions(parsed_exercise_data):
@@ -169,14 +218,9 @@ def profile():
     uid = current_user.username
     logs = getLogsForUser(uid, LOOKBACK_DAYS)
 
-    num_logs = len(logs)
+    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS)
 
-    num_correct = len([log for log in logs if log.correct_answer == 'True' or log.correct_answer == True or log.correct_answer == 'true'])
-
-    exercise_builder = exercisebuilder.ExerciseBuilder(logs)
-    model = exercise_builder.get_model()
-
-    complexity = model['complexity']
+    model = exercisebuilder.ExerciseBuilder(logs).get_model()
     misconception_weights_over_time = model['misconception_weights_over_time']
     misconception_trends = model.get('misconception_trends', {})
 
@@ -185,7 +229,65 @@ def profile():
     misconception_trends = {key.replace('MisconceptionCode.', ''): value for key, value in misconception_trends.items()}
 
 
-    return render_template('student/profile.html', uid= uid, complexity = complexity, misconception_weights_over_time = misconception_weights_over_time, misconception_trends = misconception_trends, lookback_days = LOOKBACK_DAYS, num_answered = num_logs, num_correct = num_correct)
+    return render_template(
+        'student/profile.html',
+        uid=uid,
+        complexity=snapshot['complexity'],
+        complexity_min=snapshot['complexity_min'],
+        complexity_max=snapshot['complexity_max'],
+        complexity_band=snapshot['complexity_band'],
+        misconception_snapshot=snapshot['misconception_snapshot'],
+        question_type_mix=snapshot['question_type_mix'],
+        misconception_weights_over_time=misconception_weights_over_time,
+        misconception_trends=misconception_trends,
+        lookback_days=LOOKBACK_DAYS,
+        num_answered=snapshot['num_answered'],
+        num_correct=snapshot['num_correct'],
+    )
+
+
+@modelroutes.route('/profile/export', methods=['GET'])
+@login_required
+def profile_export():
+    """Download the student's current adaptive profile as a JSON snapshot.
+
+    Includes the exact values the exercise engine uses to adapt: complexity,
+    per-misconception weights, and question-type selection weights. Timestamps
+    are UTC ISO-8601. Excludes the over-time chart series to keep the file small
+    and focused on the current state."""
+    LOOKBACK_DAYS = 365
+    uid = current_user.username
+    logs = getLogsForUser(uid, LOOKBACK_DAYS)
+    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS)
+
+    payload = {
+        "schema_version": 1,
+        "user_id": uid,
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "lookback_days": LOOKBACK_DAYS,
+        "summary": {
+            "answered": snapshot['num_answered'],
+            "correct": snapshot['num_correct'],
+            "accuracy": snapshot['accuracy'],
+        },
+        "complexity": {
+            "level": snapshot['complexity'],
+            "min": snapshot['complexity_min'],
+            "max": snapshot['complexity_max'],
+            "band": snapshot['complexity_band'],
+        },
+        "question_type_weights": [
+            {"type": q['type'], "label": q['label'], "weight": q['weight']}
+            for q in snapshot['question_type_mix']
+        ],
+        "misconception_weights": snapshot['misconception_snapshot'],
+    }
+
+    body = json.dumps(payload, indent=2, sort_keys=False)
+    filename = f"ltltutor-profile-{uid}.json"
+    response = current_app.response_class(body, mimetype='application/json')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 
 

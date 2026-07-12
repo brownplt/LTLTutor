@@ -157,7 +157,7 @@ function show_feedback(parent_node, question_type) {
             correctCountElement.innerText = currentCount + 1;
         }
         catch (error) {
-            console.err("Something went wrong. Could not increment correctness count.");
+            console.error("Something went wrong. Could not increment correctness count.");
         }
     }
     else {
@@ -257,7 +257,7 @@ function show_feedback(parent_node, question_type) {
             let currentCount = parseInt(incorrectCountElement.innerText);
             incorrectCountElement.innerText = currentCount + 1;
         } catch (error) {
-            console.err("Something went wrong. Could not modify correctness count.");
+            console.error("Something went wrong. Could not modify correctness count.");
         }
     }
 
