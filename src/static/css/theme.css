@@ -90,13 +90,10 @@ code, pre, .mono, kbd { font-family: var(--font-mono); }
   color: var(--ink); font-size: 1.02rem;
 }
 .navbar-light .navbar-brand:hover, .navbar-brand:hover { color: var(--ink); }
-/* Bauhaus mark (square / circle / triangle) — optional, used in navbar.html */
-.bauhaus-mark { display: inline-flex; align-items: center; gap: 5px; vertical-align: -2px; margin-right: 8px; }
+/* Brand mark — a single mustard square, used in navbar.html */
+.bauhaus-mark { display: inline-flex; align-items: center; vertical-align: -2px; margin-right: 8px; }
 .bauhaus-mark i { display: block; width: 14px; height: 14px; }
 .bauhaus-mark .sq { background: var(--brand); }
-.bauhaus-mark .ci { background: var(--accent); border-radius: 50%; }
-.bauhaus-mark .tr { width: 0; height: 0;
-  border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 14px solid var(--ink); }
 
 .navbar-light .navbar-nav .nav-link {
   color: var(--ink-2); font-weight: 600;
