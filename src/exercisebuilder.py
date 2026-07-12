@@ -17,6 +17,11 @@ class ExerciseBuilder:
     TRACESATMC = "tracesatisfaction_mc"
     TRACESATYN = "tracesatisfaction_yn"
     ENGLISHTOLTL = "englishtoltl"
+    QUESTION_TYPES = [TRACESATMC, TRACESATYN, ENGLISHTOLTL]
+
+    ## No question type's selection probability ever drops below this
+    ## (exploration floor), no matter how well the student does on it.
+    QUESTION_TYPE_FLOOR = 0.15
 
     COMPLEXITY_MIN = 3
     COMPLEXITY_MAX = 12
@@ -40,6 +45,7 @@ class ExerciseBuilder:
         self.syntax = syntax
 
         self._distinct_answers_cache = None
+        self._question_type_weights_cache = None
 
 
     def toSpotSyntax(self, s):
@@ -256,6 +262,57 @@ class ExerciseBuilder:
         self._distinct_answers_cache = answers
         return answers
 
+    def calculate_question_type_weights(self):
+        """
+        Selection weights per question type, biased toward the types the
+        student gets wrong. Uses a Laplace-smoothed error rate
+        (incorrect + 1) / (attempts + 2), so with no history every type gets
+        0.5 and selection is uniform. After normalization, a floor guarantees
+        every type keeps at least QUESTION_TYPE_FLOOR probability.
+        """
+        if self._question_type_weights_cache is not None:
+            return self._question_type_weights_cache
+
+        counts = {qtype: {"attempts": 0, "incorrect": 0} for qtype in self.QUESTION_TYPES}
+        for answer in self._distinct_answers():
+            qtype = getattr(answer, 'question_type', None)
+            if qtype not in counts:
+                continue
+            counts[qtype]["attempts"] += 1
+            if not self._log_is_correct(answer):
+                counts[qtype]["incorrect"] += 1
+
+        error_rates = {
+            qtype: (c["incorrect"] + 1) / (c["attempts"] + 2)
+            for qtype, c in counts.items()
+        }
+        total = sum(error_rates.values())
+        normalized = {qtype: rate / total for qtype, rate in error_rates.items()}
+
+        ## Apply the exploration floor: floored types get exactly the floor and
+        ## the remaining mass is split proportionally among the rest. Repeat in
+        ## case the rescaling pushes another type under the floor.
+        result = dict(normalized)
+        floored = set()
+        for _ in range(len(result)):
+            low = {k for k, v in result.items() if k not in floored and v < self.QUESTION_TYPE_FLOOR}
+            if not low:
+                break
+            floored |= low
+            free_keys = [k for k in result if k not in floored]
+            free_mass = 1.0 - self.QUESTION_TYPE_FLOOR * len(floored)
+            free_total = sum(normalized[k] for k in free_keys)
+            for k in floored:
+                result[k] = self.QUESTION_TYPE_FLOOR
+            for k in free_keys:
+                if free_total > 0:
+                    result[k] = normalized[k] * free_mass / free_total
+                else:
+                    result[k] = free_mass / len(free_keys)
+
+        self._question_type_weights_cache = result
+        return result
+
     def update_complexity(self):
         """
         Move complexity one step up or down based on the student's recent
@@ -446,9 +503,9 @@ class ExerciseBuilder:
 
 
     def choose_question_kind(self):
-        ## TODO: Maybe this can be more sophisticated, looking at the kinds of questions students
-        ## have gotten wrong in the past
-        return random.choice([self.TRACESATMC, self.ENGLISHTOLTL, self.TRACESATYN])
+        weights = self.calculate_question_type_weights()
+        kinds = list(weights.keys())
+        return random.choices(kinds, weights=[weights[k] for k in kinds], k=1)[0]
 
     def get_tree_size(self):
         ## TODO: Determine complexity somehow, maybe based on the number of misconceptions encountered

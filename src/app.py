@@ -1065,23 +1065,30 @@ def newexercise():
 
 
 
-    ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
-    literals_pool = list("abcdehijknpqstvz")
-    num_literals = random.randint(2, 4)
-    LITERALS = random.sample(literals_pool, num_literals)
-    num_questions = random.randint(3, 8)
-
-    
     try:
         exercise_name = "Exercise " + generate_new_name()
     except Exception as e:
         print("Error generating exercise name:", e)
         exercise_name = "Exercise"
-    
+
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
-    complexity = answer_logger.getComplexity(userId=userId)       
+    complexity = answer_logger.getComplexity(userId=userId)
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity, syntax = syntax_choice)
+
+    ### TODO: Should exercise involve only the literals the user has encountered?
+    ## This block sits below the builder construction because the number of
+    ## atomic propositions scales with the student's complexity band:
+    ## fewer literals while they are finding their feet, more once they're cruising.
+    literals_pool = list("abcdehijknpqstvz")
+    if exercise_builder.complexity <= 5:
+        num_literals = random.randint(2, 3)
+    elif exercise_builder.complexity >= 9:
+        num_literals = random.randint(3, 4)
+    else:
+        num_literals = random.randint(2, 4)
+    LITERALS = random.sample(literals_pool, num_literals)
+    num_questions = random.randint(3, 8)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
