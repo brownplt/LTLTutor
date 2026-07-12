@@ -1,23 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-</head>
-
-<body>
-    <div class="container">
-        {% include 'navbar.html' %}
-
+{% block content %}
 
 
 
@@ -126,14 +109,16 @@
                 </tbody>
             </table>
         </div>
-    </div>
+{% endblock %}
+
+{% block scripts %}
     <script>
         function setLtlSyntax(syntax) {
             document.cookie = "ltlsyntax=" + syntax + "; path=/";
-            
+
             updateSyntaxExamples(syntax);
         }
-    
+
         // Function to get the value of a cookie by name
         function getCookie(name) {
             let cookieArr = document.cookie.split(";");
@@ -145,7 +130,7 @@
             }
             return null;
         }
-    
+
         // Function to update the Until text based on the syntax
         function updateSyntaxExamples(syntax) {
 
@@ -186,7 +171,7 @@
                 eventuallyExample.innerText = 'EVENTUALLY a';
                 nextCode.innerText = 'NEXT_STATE';
                 nextExample.innerText = 'NEXT_STATE a';
-                
+
             } else if (syntax === 'Electrum') {
                 untilCode.innerText = 'UNTIL';
                 untilExample.innerText = 'a UNTIL b';
@@ -198,7 +183,7 @@
                 nextExample.innerText = 'AFTER a';
             }
         }
-    
+
         document.addEventListener('DOMContentLoaded', (event) => {
             let currentSyntax = getCookie('ltlsyntax');
             if (currentSyntax) {
@@ -208,7 +193,4 @@
             }
         });
     </script>
-    {% include 'footer.html' %}
-</body>
-
-</html>
+{% endblock %}

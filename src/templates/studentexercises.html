@@ -1,14 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generated Exercises</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+{% extends 'base.html' %}
+
+{% block title %}Generated Exercises{% endblock %}
+
+{% block container_class %}container py-3{% endblock %}
+
+{% block head %}
     <style>
         .controls-card {
             border: 1px solid #d9e2ec;
@@ -109,10 +105,9 @@
             }
         }
     </style>
-</head>
-<body>
-    <div class="container py-3">
-        {% include 'navbar.html' %}
+{% endblock %}
+
+{% block content %}
 
         <div class="d-flex justify-content-between align-items-start flex-wrap mt-3 mb-3">
             <div>
@@ -325,10 +320,9 @@
         {% endif %}
 
         <div id="noResults" class="alert alert-light d-none">No exercises match the current filters.</div>
-    </div>
+{% endblock %}
 
-    {% include 'footer.html' %}
-
+{% block scripts %}
     <script>
         (function () {
             const rawData = {{ raw_exercises|tojson }};
@@ -430,5 +424,4 @@
             renderCards();
         })();
     </script>
-</body>
-</html>
+{% endblock %}

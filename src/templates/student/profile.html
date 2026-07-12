@@ -1,36 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor</title>
+{% block footer %}{% endblock %}
 
+{% block head %}
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.2"></script>
+{% endblock %}
 
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-
-</head>
-
-<body>
-
-    <div class="container">
-        {% include 'navbar.html' %}
+{% block content %}
 
 
         <div class="mt-4 mb-4">
             <h1 class="text-center">Your Profile</h1>
             <p class="text-center">
-            In the last {{lookback_days}} days, you have 
+            In the last {{lookback_days}} days, you have
             answered <span class="font-weight-bolder"> {{num_correct}} out of {{num_answered}} </span> question(s) correctly.
             </p>
         </div>
@@ -88,8 +72,8 @@
 
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
         <p class="text-muted">
-            This chart shows how your misconception likelihood has evolved over time using 
-            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a> 
+            This chart shows how your misconception likelihood has evolved over time using
+            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a>
             combined with spaced repetition principles.
         </p>
         <canvas id="allMisconceptionsChart"></canvas>
@@ -102,7 +86,7 @@
                 {% endfor %}
             };
 
-            
+
             // Find the latest timestamp to compute "days ago"
             let latestTimestamp = 0;
             for (const weights of Object.values(misconceptionData)) {
@@ -222,6 +206,4 @@
             });
         });
         </script>
-    </div>
-</body>
-</html>
+{% endblock %}

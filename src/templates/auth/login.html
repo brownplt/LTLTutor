@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>LTL Tutor: Login</title>
+{% block title %}LTL Tutor: Login{% endblock %}
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
+{% block navbar %}{% endblock %}
 
+{% block container_class %}container mt-5{% endblock %}
+
+{% block head %}
     <style>
     .highlight-section {
         border: 2px solid #007bff;
@@ -19,10 +15,9 @@
         transition: background 0.3s, box-shadow 0.3s;
     }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <div class="container mt-5">
+{% block content %}
         <div>
         <p class="text-center mt-2 mb-2">
             LTLTutor is built and maintained by the <a href="https://cs.brown.edu/research/plt/">PLT Group at
@@ -128,8 +123,4 @@
 
 
 
-    </div>
-    {% include 'footer.html' %}
-</body>
-
-</html>
+{% endblock %}

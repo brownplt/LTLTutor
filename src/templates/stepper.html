@@ -1,32 +1,19 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>LTL Stepper</title>
+{% block title %}LTL Stepper{% endblock %}
 
-    <!-- Include Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-    <!-- Include Bootstrap JS and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
+{% block head %}
     <script src="{{ url_for('static', filename='js/tracerenderer.js') }}"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-
     <script>
         hljs.registerLanguage('ltl', ltlSyntaxDefs);
         hljs.highlightAll();
     </script>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <style>
@@ -244,12 +231,9 @@
             }
         }
     </style>
+{% endblock %}
 
-</head>
-
-<body>
-    <div class="container">
-        {% include 'navbar.html' %}
+{% block content %}
 
         <div id="Controls">
 
@@ -418,7 +402,7 @@
                 Each row represents a subformula, and each column represents a time step.
                 Values are shown as <strong class="matrix-satisfied">1</strong> (satisfied) or <strong class="matrix-unsatisfied">0</strong> (unsatisfied).
                 </p>
-                
+
                 {% if matrix_data.subformulae %}
                 <!-- Matrix view table -->
                 <table class="table table-bordered table-sm" id="matrixTable">
@@ -474,10 +458,17 @@
                 {% endif %}
             </div>
         </div>
-    </div>
 
     <hr>
 
+    <div class="container mt-4 mb-4">
+        <button type="button" class="btn btn-outline-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
+            <p class="text-muted"> Step through a different trace &bsol; formula pair </p>
+        </button>
+    </div>
+{% endblock %}
+
+{% block scripts %}
     <script>
         $(document).ready(function () {
 
@@ -651,14 +642,4 @@
             });
         });
     </script>
-
-    <div class="container mt-4 mb-4">
-        <button type="button" class="btn btn-outline-secondary btn-block" data-toggle="modal" data-target="#exampleModal">
-            <p class="text-muted"> Step through a different trace &bsol; formula pair </p>
-        </button>
-    </div>
-
-    {% include 'footer.html' %}
-</body>
-
-</html>
+{% endblock %}
