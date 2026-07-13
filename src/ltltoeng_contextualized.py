@@ -454,13 +454,18 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
         consequence = _t(right, theme)
         return f"whenever {trigger}, it must be the case that {consequence}"
 
-    # G(F p) — recurrence
+    # G(F p) — recurrence.  The G and the F must be carried by separate
+    # phrases ("no matter how much time passes" / "eventually"): a single
+    # continuity idiom like "keeps being the case" reads as plain G and
+    # collides with the G(p) distractor.
     if isinstance(inner, ltlnode.FinallyNode):
         fi = inner.operand
+        if theme.deontic:
+            return f"no matter how much time passes, {_obligation(fi, theme, 'eventually')}"
         if isinstance(fi, ltlnode.AndNode):
-            return f"it must keep being the case, over and over forever, that {_t(fi.left, theme)} and {_t(fi.right, theme)}"
+            return f"no matter how much time passes, eventually {_t(fi.left, theme)} and {_t(fi.right, theme)} at the same time"
         target = _t(fi, theme)
-        return f"it must keep being the case, over and over forever, that {target}"
+        return f"no matter how much time passes, eventually {target}"
 
     # G(G(...)) — idempotent
     if isinstance(inner, ltlnode.GloballyNode):
@@ -482,6 +487,10 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
             return _modal(theme.positive(inner.value), "always")
         return f"{theme.positive(inner.value)} at all times"
     if theme.deontic:
+        # Next/Until renderings already carry their own "must"; wrapping
+        # them in _modal would produce a double modal.
+        if isinstance(inner, (ltlnode.NextNode, ltlnode.UntilNode)):
+            return f"at every point, {_t(inner, theme)}"
         return _modal(_t(inner, theme), "always")
     return f"at all times, {_t(inner, theme)}"
 
