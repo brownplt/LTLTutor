@@ -91,18 +91,34 @@ class TestLightsTheme(unittest.TestCase):
         self.assertIn("blue light", result.lower())
         self.assertIn("never", result.lower())
 
-    def test_response_uses_event_form(self):
-        """G(b -> F a) should use 'turns on' not just 'is on'."""
+    def test_response_uses_state_phrasing(self):
+        """G(b -> F a) triggers in every state where b holds, so the
+        antecedent must be phrased as a state ('is on'), never as an
+        event ('turns on')."""
         result = self._tr("G(b -> F a)")
-        self.assertIn("blue light turns on", result.lower())
+        self.assertIn("blue light is on", result.lower())
         self.assertIn("amber light", result.lower())
         self.assertIn("eventually", result.lower())
 
     def test_immediate_response(self):
         result = self._tr("G(b -> X a)")
-        self.assertIn("blue light turns on", result.lower())
+        self.assertIn("blue light is on", result.lower())
         self.assertIn("amber light", result.lower())
         self.assertIn("next step", result.lower())
+
+    def test_no_event_phrasing_anywhere(self):
+        """A bare LTL literal has state semantics: it holds in every state
+        where it is true, not only on a false->true transition. Event
+        phrasing would describe a different formula — e.g. a trace where
+        blue starts on and stays on satisfies the trigger of G(b -> F a)
+        even though blue never 'turns on' — corrupting both grading and
+        the A/B comparison."""
+        for formula_str, _ in FORMULAS:
+            result = self._tr(formula_str)
+            for phrase in ["turns on", "turns off", "becomes", "happens"]:
+                self.assertNotIn(
+                    phrase, result.lower(),
+                    f"{formula_str} => event phrasing '{phrase}': {result}")
 
     def test_chain_response_mentions_both(self):
         result = self._tr("G(b -> (F a & F p))")
@@ -211,10 +227,6 @@ class TestCustomTheme(unittest.TestCase):
                 "d": ("the door is open",       "the door is closed"),
                 "m": ("the elevator is moving",  "the elevator is stopped"),
             },
-            event_form={
-                "d": ("the door opens",           "the door closes"),
-                "m": ("the elevator starts moving", "the elevator stops"),
-            },
         )
 
         # Safety: door must never be open while moving
@@ -223,10 +235,10 @@ class TestCustomTheme(unittest.TestCase):
         self.assertIn("elevator", result.lower())
         self.assertIn("door", result.lower())
 
-        # Response: if door opens, elevator must eventually move
+        # Response: whenever the door is open, elevator must eventually move
         node = parse_ltl_string("G(d -> F m)")
         result = ctx.translate(node, elevator)
-        self.assertIn("door opens", result.lower())
+        self.assertIn("door is open", result.lower())
         self.assertIn("elevator", result.lower())
         self.assertIn("eventually", result.lower())
 
