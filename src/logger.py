@@ -78,6 +78,10 @@ class MisconceptionAttempt(Base):
     course = Column(String, default="")
     policy_version = Column(String)
     question_options = Column(String)
+    ## Experiment arm (abstract / contextualized / contextualizeddeontic),
+    ## duplicated from the legacy rows so opportunity-level analyses can join
+    ## attempts directly instead of reconstructing the arm per response.
+    translation_mode = Column(String, default="")
 
 
 class MisconceptionOpportunity(Base):
@@ -157,18 +161,18 @@ class Logger:
         self._ensure_student_response_schema()
 
     def _ensure_student_response_schema(self):
-        """Add newly introduced columns to student_responses if they are missing.
+        """Add newly introduced columns to existing tables if they are missing.
 
         create_all only creates missing tables; on an existing deployment the
-        table predates these columns, so they have to be added explicitly.
+        tables predate these columns, so they have to be added explicitly.
         """
-        existing_columns = {col['name'] for col in self.inspector.get_columns(STUDENT_RESPONSE_TABLE)}
-
-        with self.engine.begin() as connection:
-            if 'translation_mode' not in existing_columns:
-                connection.execute(
-                    text(f"ALTER TABLE {STUDENT_RESPONSE_TABLE} ADD COLUMN translation_mode VARCHAR DEFAULT ''")
-                )
+        for table in (STUDENT_RESPONSE_TABLE, MISCONCEPTION_ATTEMPT_TABLE):
+            existing_columns = {col['name'] for col in self.inspector.get_columns(table)}
+            with self.engine.begin() as connection:
+                if 'translation_mode' not in existing_columns:
+                    connection.execute(
+                        text(f"ALTER TABLE {table} ADD COLUMN translation_mode VARCHAR DEFAULT ''")
+                    )
 
     def record(self, log):
         with self.Session() as session:
@@ -329,6 +333,7 @@ class Logger:
             course=course,
             policy_version=MODEL_VERSION,
             question_options=question_options,
+            translation_mode=translation_mode,
         )
         opportunities = self._build_opportunity_events(attempt, options, misconceptions or [])
 

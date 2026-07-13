@@ -168,5 +168,64 @@ class TestSubmissionCounter(unittest.TestCase):
         self.assertNotIn("other_ex", completed)
 
 
+class TestAttemptTranslationMode(unittest.TestCase):
+    """The experiment arm must land on the attempt row itself, so
+    opportunity-level analyses (arm x misconception) join attempts directly
+    instead of reconstructing the arm from legacy per-code response rows."""
+
+    def test_attempt_row_records_translation_mode(self):
+        LOGGER.logStudentResponse(
+            userId="u_mode",
+            misconceptions=[],
+            question_text="policy question",
+            question_options="[]",
+            correct_answer=True,
+            questiontype="englishtoltl",
+            mp_class="",
+            exercise="mode_ex",
+            course="",
+            translation_mode="contextualizeddeontic",
+            attempt_id="mode-1",
+        )
+        with LOGGER.Session() as session:
+            row = session.query(MisconceptionAttempt).filter(
+                MisconceptionAttempt.user_id == "u_mode").one()
+        self.assertEqual(row.translation_mode, "contextualizeddeontic")
+
+    def test_startup_migration_adds_column_to_existing_table(self):
+        """A deployment whose misconception_attempts table predates the
+        column must get it added by Logger's startup schema check."""
+        import sqlite3
+        from logger import Logger, MISCONCEPTION_ATTEMPT_TABLE
+
+        tmpdir = tempfile.mkdtemp(prefix="ltltutor_migr_")
+        db_path = os.path.join(tmpdir, "old.db")
+        con = sqlite3.connect(db_path)
+        con.execute(
+            f"CREATE TABLE {MISCONCEPTION_ATTEMPT_TABLE} "
+            "(id VARCHAR PRIMARY KEY, user_id VARCHAR)")
+        con.commit()
+        con.close()
+
+        prev = os.environ.get("DATABASE_URL")
+        os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+        try:
+            migrated = Logger()
+            migrated.engine.dispose()
+            # Inspect via sqlite directly: Logger's Inspector caches the
+            # pre-migration reflection it did during the schema check.
+            con = sqlite3.connect(db_path)
+            columns = {row[1] for row in con.execute(
+                f"PRAGMA table_info({MISCONCEPTION_ATTEMPT_TABLE})")}
+            con.close()
+            self.assertIn("translation_mode", columns)
+        finally:
+            if prev is None:
+                os.environ.pop("DATABASE_URL", None)
+            else:
+                os.environ["DATABASE_URL"] = prev
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()
