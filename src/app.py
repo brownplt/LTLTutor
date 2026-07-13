@@ -282,14 +282,25 @@ def getUserId():
     return current_user.id
 
 
+# Endpoints that render an active exercise. The top-bar LTL-syntax setting is
+# locked on these pages so a student can't switch syntax mid-exercise (the
+# exercise was already rendered — and its answers logged — in one syntax).
+EXERCISE_ENDPOINTS = {'exercise', 'exercise_predefined_get', 'newexercise'}
+
+
 @app.context_processor
 def inject_nav_flags():
-    """Expose is_instructor to every template so the navbar can show instructor-only links."""
+    """Expose nav flags to every template: is_instructor (show instructor-only
+    links) and in_exercise (lock the top-bar LTL-syntax setting)."""
     try:
         is_instructor = current_user.is_authenticated and isinstance(current_user, CourseInstructor)
     except Exception:
         is_instructor = False
-    return {'is_instructor': is_instructor}
+    try:
+        in_exercise = request.endpoint in EXERCISE_ENDPOINTS
+    except Exception:
+        in_exercise = False
+    return {'is_instructor': is_instructor, 'in_exercise': in_exercise}
 
 
 @app.template_filter('flatten')
