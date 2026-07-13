@@ -132,9 +132,12 @@ class TestLightsTheme(unittest.TestCase):
         self.assertIn("forever", result.lower())
 
     def test_recurrence(self):
+        """G and F must be carried by separate phrases: a single continuity
+        idiom ("over and over") reads as plain G and collides with the G(p)
+        distractor."""
         result = self._tr("G(F b)")
-        self.assertIn("blue light", result.lower())
-        self.assertIn("over and over", result.lower())
+        self.assertEqual(result,
+            "No matter how much time passes, eventually the blue light is on.")
 
     def test_mutual_exclusion(self):
         result = self._tr("!(b & a)")

@@ -557,13 +557,31 @@ class ExerciseBuilder:
                 "isCorrect": False,
                 "misconceptions": [str(misconception.misconception)]
             })
+        ## Mutations from different misconceptions can collide textually OR
+        ## semantically (e.g. "G d" and "G (G d)"): two options denoting the
+        ## same property waste a distractor slot and make the misconception
+        ## attribution of whichever one the student picks arbitrary, so both
+        ## kinds of duplicate are merged.
         merged_options = []
+        merged_nodes = []
         for option in options:
             existing_option = next((o for o in merged_options if o['option'] == option['option']), None)
+            if existing_option is None:
+                node = ltlnode.parse_ltl_string(option['option'])
+                existing_option = next(
+                    (o for o, kept in zip(merged_options, merged_nodes)
+                     if ltlnode.LTLNode.equiv(kept, node)), None)
             if existing_option:
-                existing_option['misconceptions'] += option['misconceptions']
+                ## Union, not concatenation: the evidence model splits a
+                ## pick's strength by len(codes), so listing a code twice
+                ## (same misconception at two sites yielding equivalent
+                ## formulas) would halve that code's evidence.
+                existing_option['misconceptions'] += [
+                    code for code in option['misconceptions']
+                    if code not in existing_option['misconceptions']]
             else:
                 merged_options.append(option)
+                merged_nodes.append(node)
 
         ## If we couldn't build anything here, skip it
         if len(merged_options) == 0:

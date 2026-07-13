@@ -126,6 +126,27 @@ class TestAbacTheme(unittest.TestCase):
             "It must not be the case that both the document is open "
             "and the screen is shared.")
 
+    def test_recurrence(self):
+        """G carried by the prefix, F by "eventually" — must not read as
+        plain G(d), which appears among the distractors."""
+        self.assertEqual(self._tr("G(F d)"),
+            "No matter how much time passes, the document must eventually be open.")
+
+    def test_recurrence_distinct_from_neighbours(self):
+        """The G(F d) sentence must differ from its G(d) and F(d) siblings."""
+        recur = self._tr("G(F d)")
+        self.assertNotEqual(recur, self._tr("G d"))
+        self.assertNotEqual(recur, self._tr("F d"))
+
+    def test_globally_next_single_modal(self):
+        self.assertEqual(self._tr("G(X d)"),
+            "At every point, the document must be open in the very next step.")
+
+    def test_globally_until_single_modal(self):
+        self.assertEqual(self._tr("G(d U c)"),
+            "At every point, the document must remain open "
+            "until the user's clearance is active.")
+
 
 class TestLightsUnchanged(unittest.TestCase):
     """Deontic support must not alter the descriptive lights arm: historical
