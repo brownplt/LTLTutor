@@ -95,7 +95,7 @@ class TestDeonticArm(unittest.TestCase):
             "G(z -> F k)", theme_name="abac")
         q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
         self.assertIsNotNone(q)
-        self.assertEqual(q["translation_mode"], "contextualized_deontic")
+        self.assertEqual(q["translation_mode"], "contextualizeddeontic")
 
     def test_deontic_question_has_preamble_and_obligation(self):
         themed = self.builder.gen_contextualized_answer(

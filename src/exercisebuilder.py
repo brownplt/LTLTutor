@@ -607,7 +607,7 @@ class ExerciseBuilder:
     # spanning old and new responses will split the condition in two.
     THEME_TRANSLATION_MODES = {
         "lights": "contextualized",
-        "abac": "contextualized_deontic",
+        "abac": "contextualizeddeontic",
     }
 
     def build_english_to_ltl_question(self, answer, contextualized=False, theme_name=None):
