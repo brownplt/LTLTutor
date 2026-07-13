@@ -87,6 +87,16 @@ class TestSemanticOptionDedup(unittest.TestCase):
         texts = sorted(o["option"] for o in options if not o["isCorrect"])
         self.assertEqual(texts, ["(F d)", "(G d)"])
 
+    def test_same_code_from_equivalent_forms_listed_once(self):
+        """The evidence model splits strength by len(codes), so a duplicated
+        code would halve its own evidence."""
+        options = self._options(_fake_misconceptions(
+            ("G d", "MissingFinally"),
+            ("G(G d)", "MissingFinally"),
+        ))
+        merged = next(o for o in options if o["option"] in _EQUIV_CLASS)
+        self.assertEqual(merged["misconceptions"], ["MissingFinally"])
+
     def test_correct_option_still_present(self):
         options = self._options(_fake_misconceptions(
             ("G d", "MissingFinally"),

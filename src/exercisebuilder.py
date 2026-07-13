@@ -572,7 +572,13 @@ class ExerciseBuilder:
                     (o for o, kept in zip(merged_options, merged_nodes)
                      if ltlnode.LTLNode.equiv(kept, node)), None)
             if existing_option:
-                existing_option['misconceptions'] += option['misconceptions']
+                ## Union, not concatenation: the evidence model splits a
+                ## pick's strength by len(codes), so listing a code twice
+                ## (same misconception at two sites yielding equivalent
+                ## formulas) would halve that code's evidence.
+                existing_option['misconceptions'] += [
+                    code for code in option['misconceptions']
+                    if code not in existing_option['misconceptions']]
             else:
                 merged_options.append(option)
                 merged_nodes.append(node)
