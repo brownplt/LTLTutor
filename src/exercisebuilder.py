@@ -403,15 +403,22 @@ class ExerciseBuilder:
             if kind == self.TRACESATMC:
                 question = self.build_tracesat_mc_question(answer)
             elif kind == self.ENGLISHTOLTL:
-                # A/B test: 50/50 abstract vs. contextualized framing. The
-                # contextualized arm reuses the same formula with literals
-                # renamed onto the lights theme, so the two conditions differ
-                # only in framing, not in formula structure.
+                # Randomized framing experiment, one arm per question (1/3 each):
+                #   abstract — plain prose over bare literals (control)
+                #   lights   — same formula renamed onto the light panel
+                #              (concrete but descriptive content)
+                #   abac     — same formula renamed onto the document-access
+                #              audit theme and phrased as a policy to enforce
+                #              (concrete AND deontic — the Wason arm)
+                # Every arm poses the SAME formula modulo literal renaming, so
+                # conditions differ only in framing. Themed arms fall back to
+                # abstract if the formula cannot be themed.
                 question = None
-                if random.random() < 0.5:
-                    ctx_answer = self.gen_contextualized_answer(answer)
+                arm = random.choice(("abstract", "lights", "abac"))
+                if arm != "abstract":
+                    ctx_answer = self.gen_contextualized_answer(answer, theme_name=arm)
                     if ctx_answer is not None:
-                        question = self.build_english_to_ltl_question(ctx_answer, contextualized=True)
+                        question = self.build_english_to_ltl_question(ctx_answer, theme_name=arm)
                 if question is None:
                     question = self.build_english_to_ltl_question(answer)
             elif kind == self.TRACESATYN:
@@ -463,31 +470,35 @@ class ExerciseBuilder:
         return result
 
 
-    def gen_contextualized_answer(self, formula):
-        """Rename *formula*'s literals onto the lights theme.
+    def gen_contextualized_answer(self, formula, theme_name="lights"):
+        """Rename *formula*'s literals onto the given theme.
 
         Returns the renamed formula string, or None if it cannot be themed
-        (parse failure or more distinct literals than the theme has lights).
+        (parse failure or more distinct literals than the theme can name).
         """
         try:
             as_node = ltlnode.parse_ltl_string(formula)
         except Exception:
             return None
-        remapped = ltltoeng_contextualized.remap_to_theme(as_node)
+        theme = ltltoeng_contextualized.THEMES[theme_name]
+        remapped = ltltoeng_contextualized.remap_to_theme(as_node, theme)
         return str(remapped) if remapped is not None else None
 
 
-    def gen_nl_question_contextualized(self, formula):
-        """Generate a contextualized English question using the lights theme.
+    def gen_nl_question_contextualized(self, formula, theme_name="lights"):
+        """Generate a contextualized English question using the given theme.
 
         Expects the formula's literals to already match the theme (see
-        gen_contextualized_answer). Returns None if translation fails.
+        gen_contextualized_answer). Deontic themes get their stance-setting
+        preamble prepended. Returns None if translation fails.
         """
-        LIGHTS_THEME = ltltoeng_contextualized.THEMES["lights"]
+        theme = ltltoeng_contextualized.THEMES[theme_name]
         as_node = ltlnode.parse_ltl_string(formula)
-        result = ltltoeng_contextualized.translate(as_node, LIGHTS_THEME)
+        result = ltltoeng_contextualized.translate(as_node, theme)
         if not result or result.strip() == "":
             return None
+        if theme.preamble:
+            result = f"{theme.preamble}\n\n{result}"
         return result
 
 
@@ -591,15 +602,27 @@ class ExerciseBuilder:
 
         return final_options
 
-    def build_english_to_ltl_question(self, answer, contextualized=False):
+    # translation_mode value logged per themed arm. "contextualized" is the
+    # historical value for the lights arm — do not rename it, or analyses
+    # spanning old and new responses will split the condition in two.
+    THEME_TRANSLATION_MODES = {
+        "lights": "contextualized",
+        "abac": "contextualized_deontic",
+    }
+
+    def build_english_to_ltl_question(self, answer, contextualized=False, theme_name=None):
 
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
 
-        if contextualized:
-            question = self.gen_nl_question_contextualized(answer)
-            translation_mode = "contextualized"
+        # Legacy callers use contextualized=True to mean the lights theme.
+        if theme_name is None and contextualized:
+            theme_name = "lights"
+
+        if theme_name is not None:
+            question = self.gen_nl_question_contextualized(answer, theme_name)
+            translation_mode = self.THEME_TRANSLATION_MODES[theme_name]
             # Fall back to abstract if contextualized translation fails
             if question is None or question == "":
                 question = self.gen_nl_question(answer)

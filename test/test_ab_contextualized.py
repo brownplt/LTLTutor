@@ -77,5 +77,49 @@ class TestTranslationModeLogging(unittest.TestCase):
             self.assertNotIn(f"'{lit}'", q["question"])
 
 
+class TestDeonticArm(unittest.TestCase):
+    """The abac (deontic audit) arm: same formula, policy framing, own mode."""
+
+    def setUp(self):
+        self.builder = StubBuilder()
+
+    def test_remaps_onto_abac_literals(self):
+        result = self.builder.gen_contextualized_answer(
+            "G(z -> F k)", theme_name="abac")
+        self.assertIsNotNone(result)
+        lits = ctx.collect_literals(parse_ltl_string(result))
+        self.assertTrue(lits.issubset(set(ctx.THEMES["abac"].literals)))
+
+    def test_deontic_question_marks_mode(self):
+        themed = self.builder.gen_contextualized_answer(
+            "G(z -> F k)", theme_name="abac")
+        q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
+        self.assertIsNotNone(q)
+        self.assertEqual(q["translation_mode"], "contextualized_deontic")
+
+    def test_deontic_question_has_preamble_and_obligation(self):
+        themed = self.builder.gen_contextualized_answer(
+            "G(z -> F k)", theme_name="abac")
+        q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
+        self.assertTrue(q["question"].startswith(ctx.THEMES["abac"].preamble))
+        self.assertIn("must", q["question"])
+
+    def test_deontic_question_has_no_quoted_literals(self):
+        themed = self.builder.gen_contextualized_answer(
+            "G(z -> (k U j))", theme_name="abac")
+        q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
+        for lit in ctx.THEMES["abac"].literals:
+            self.assertNotIn(f"'{lit}'", q["question"])
+
+    def test_lights_arm_has_no_preamble(self):
+        """Only the deontic arm carries a stance-setting preamble; the lights
+        arm must keep producing exactly what it produced before the third arm
+        existed, so historical responses stay comparable."""
+        themed = self.builder.gen_contextualized_answer("G(z -> F k)")
+        q = self.builder.build_english_to_ltl_question(themed, contextualized=True)
+        self.assertNotIn("\n", q["question"])
+        self.assertEqual(q["translation_mode"], "contextualized")
+
+
 if __name__ == "__main__":
     unittest.main()

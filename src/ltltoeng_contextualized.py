@@ -11,6 +11,18 @@ are chosen so that each literal is the color's first letter AND stays inside
 the tutor's exercise-literal pool, which deliberately avoids letters that look
 like LTL operators (r, g, f, u, x, w, m).
 
+A theme may also be *deontic*: the formula is phrased as a rule someone could
+violate ("the VPN must be connected") rather than a description, and a
+preamble puts the student in the role of policing it.  The Wason literature
+locates the facilitation effect in exactly this framing — violation-checkable
+rules — not in concrete content per se (Griggs & Cox 1982; Cheng & Holyoak
+1985; Cosmides 1989).  The built-in deontic theme, "abac", audits access to a
+confidential document.  Its four attributes are deliberately independent in
+the student's mental model: nothing physical forces any combination of them,
+so every state assignment is conceivable and only the policy under test rules
+combinations out.  Themes whose atoms are coupled by physics (doors, rooms,
+occupancy) would smuggle constraints into the trace semantics.
+
 Public API
 ----------
     translate(node, theme=None) -> str
@@ -53,10 +65,17 @@ class Theme:
         description: One-line description of the scenario.
         literals:    Maps literal names to (positive_phrase, negative_phrase).
                      e.g. {"b": ("the blue light is on", "the blue light is off")}
+        deontic:     Phrase the formula as an enforceable rule ("must") rather
+                     than a description.  Requires copular literal phrases
+                     ("the X is Y") so the modal transform stays grammatical.
+        preamble:    Stance-setting text shown before the sentence (only
+                     meaningful for deontic themes).  Empty = no preamble.
     """
     name: str
     description: str
     literals: Dict[str, tuple[str, str]]  # lit -> (positive, negative)
+    deontic: bool = False
+    preamble: str = ""
 
     def positive(self, lit: str) -> str:
         if lit in self.literals:
@@ -83,6 +102,24 @@ THEMES["lights"] = Theme(
         "a": ("the amber light is on",   "the amber light is off"),
         "p": ("the purple light is on",  "the purple light is off"),
         "c": ("the cyan light is on",    "the cyan light is off"),
+    },
+)
+
+# Deontic theme: an ABAC-style policy on one confidential document.  The four
+# attributes are independent — no combination is physically impossible, only
+# policy-forbidden — and each positive/negative pair is a natural antonym so
+# negated literals read cleanly.  First-letter convention and the operator-safe
+# letter pool (d, c, v, s) are preserved.
+THEMES["abac"] = Theme(
+    name="Document Access Audit",
+    description="Auditing access to a confidential document.",
+    deontic=True,
+    preamble="You are auditing access to a confidential document. Company policy:",
+    literals={
+        "d": ("the document is open",            "the document is closed"),
+        "c": ("the user's clearance is active",  "the user's clearance is revoked"),
+        "v": ("the VPN is connected",            "the VPN is disconnected"),
+        "s": ("the screen is shared",            "the screen is not shared"),
     },
 )
 
@@ -136,6 +173,44 @@ def _steps(n: int) -> str:
     if n == 1:
         return "the very next step"
     return f"{n} steps from now"
+
+
+def _lit_phrase(node: ltlnode.LTLNode, theme: Theme) -> Optional[str]:
+    """The state phrase for a literal or negated literal, else None."""
+    if isinstance(node, ltlnode.LiteralNode):
+        return theme.positive(node.value)
+    if isinstance(node, ltlnode.NotNode) and isinstance(node.operand, ltlnode.LiteralNode):
+        return theme.negative(node.operand.value)
+    return None
+
+
+def _modal(phrase: str, adverb: str = "") -> str:
+    """Rewrite a copular state phrase as an obligation.
+
+    "the VPN is connected"      -> "the VPN must be connected"
+    "the screen is not shared"  -> "the screen must not be shared"
+    With an adverb it slots in after "must":
+    _modal("the VPN is connected", "eventually")
+                                -> "the VPN must eventually be connected"
+    Non-copular phrases fall back to a generic "it must be the case that"
+    wrapper, so the transform is safe on any recursive translation.
+    """
+    must = f"must {adverb}".strip()
+    if " is not " in phrase:
+        return phrase.replace(" is not ", f" {must} not be ", 1)
+    if " is " in phrase:
+        return phrase.replace(" is ", f" {must} be ", 1)
+    if " are " in phrase:
+        return phrase.replace(" are ", f" {must} be ", 1)
+    return f"it {must} be the case that {phrase}"
+
+
+def _obligation(node: ltlnode.LTLNode, theme: Theme, adverb: str = "") -> str:
+    """Deontic rendering of a rule's consequent/scope."""
+    phrase = _lit_phrase(node, theme)
+    if phrase is not None:
+        return _modal(phrase, adverb)
+    return _modal(_t(node, theme), adverb)
 
 
 # ---------------------------------------------------------------------------
@@ -201,6 +276,8 @@ def _t_not(node: ltlnode.NotNode, theme: Theme) -> str:
 
     # !(F p) -> never
     if isinstance(inner, ltlnode.FinallyNode) and isinstance(inner.operand, ltlnode.LiteralNode):
+        if theme.deontic:
+            return _modal(theme.positive(inner.operand.value), "never")
         return f"it is never the case that {theme.positive(inner.operand.value)}"
 
     # !!p
@@ -209,6 +286,8 @@ def _t_not(node: ltlnode.NotNode, theme: Theme) -> str:
 
     # !(p & q) -> not both
     if isinstance(inner, ltlnode.AndNode):
+        if theme.deontic:
+            return f"it must not be the case that both {_t(inner.left, theme)} and {_t(inner.right, theme)}"
         return f"it is not the case that both {_t(inner.left, theme)} and {_t(inner.right, theme)}"
 
     # !(p | q) -> neither/nor
@@ -254,17 +333,22 @@ def _t_or(node: ltlnode.OrNode, theme: Theme) -> str:
 # --- IMPLIES --------------------------------------------------------------
 
 def _t_implies(node: ltlnode.ImpliesNode, theme: Theme) -> str:
+    # Deontic themes place the obligation on the consequent; the trigger
+    # stays indicative ("if the document is open, the VPN must be connected").
+    if theme.deontic:
+        r = _obligation(node.right, theme)
+    else:
+        r = _t(node.right, theme)
+
     # (p & q) -> r
     if isinstance(node.left, ltlnode.AndNode):
-        r = _t(node.right, theme)
         return f"if both {_t(node.left.left, theme)} and {_t(node.left.right, theme)}, then {r}"
 
     # (p | q) -> r
     if isinstance(node.left, ltlnode.OrNode):
-        r = _t(node.right, theme)
         return f"if either {_t(node.left.left, theme)} or {_t(node.left.right, theme)}, then {r}"
 
-    return f"if {_t(node.left, theme)}, then {_t(node.right, theme)}"
+    return f"if {_t(node.left, theme)}, then {r}"
 
 
 # --- EQUIVALENCE ----------------------------------------------------------
@@ -282,7 +366,15 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
     if isinstance(inner, ltlnode.NotNode):
         negated = inner.operand
         if isinstance(negated, ltlnode.LiteralNode):
+            if theme.deontic:
+                return _modal(theme.positive(negated.value), "never")
             return f"it is never the case that {theme.positive(negated.value)}"
+        # G(!(p & q)) -> "P must never hold while Q holds"
+        if theme.deontic and isinstance(negated, ltlnode.AndNode):
+            lp = _lit_phrase(negated.left, theme)
+            rp = _lit_phrase(negated.right, theme)
+            if lp is not None and rp is not None:
+                return f"{_modal(lp, 'never')} while {rp}"
         return f"at no point may it be the case that {_t(negated, theme)}"
 
     # G(p -> ...) patterns
@@ -294,6 +386,8 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
         if isinstance(right, (ltlnode.NextNode, ltlnode.GloballyNode)):
             if _same_literal(left, right.operand):
                 lit = left.value
+                if theme.deontic:
+                    return f"once {theme.positive(lit)}, it must stay that way forever"
                 return f"once {theme.positive(lit)}, it stays that way forever"
 
         # G(p -> F q) — response
@@ -301,6 +395,13 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
             if isinstance(left, ltlnode.UntilNode):
                 p = _t(left.left, theme)
                 q = _t(left.right, theme)
+                if theme.deontic:
+                    r = _obligation(right.operand, theme, "eventually")
+                    return _join(
+                        f"suppose {p} continues until {q}",
+                        f"then {r}",
+                        "this rule applies every time",
+                    )
                 r = _t(right.operand, theme)
                 return _join(
                     f"suppose {p} continues until {q}",
@@ -308,18 +409,25 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
                     "this rule applies every time",
                 )
             trigger = _t(left, theme)
+            if theme.deontic:
+                return f"whenever {trigger}, {_obligation(right.operand, theme, 'eventually')}"
             response = _t(right.operand, theme)
             return f"whenever {trigger}, then eventually {response}"
 
         # G(p -> X(F q)) — bounded response
         if isinstance(right, ltlnode.NextNode) and isinstance(right.operand, ltlnode.FinallyNode):
             trigger = _t(left, theme)
+            if theme.deontic:
+                response = _obligation(right.operand.operand, theme, "eventually")
+                return f"whenever {trigger}, starting from the very next step, {response}"
             response = _t(right.operand.operand, theme)
             return f"whenever {trigger}, starting from the very next step, eventually {response}"
 
         # G(p -> X q) — immediate response
         if isinstance(right, ltlnode.NextNode):
             trigger = _t(left, theme)
+            if theme.deontic:
+                return f"whenever {trigger}, {_obligation(right.operand, theme)} in the very next step"
             response = _t(right.operand, theme)
             return f"whenever {trigger}, then {response} in the very next step"
 
@@ -341,6 +449,8 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
 
         # G(p -> q) — generic
         trigger = _t(left, theme)
+        if theme.deontic:
+            return f"whenever {trigger}, {_obligation(right, theme)}"
         consequence = _t(right, theme)
         return f"whenever {trigger}, it must be the case that {consequence}"
 
@@ -358,13 +468,21 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
 
     # G(p & q) / G(p | q)
     if isinstance(inner, ltlnode.AndNode):
+        if theme.deontic:
+            return f"at every moment, it must be the case that {_t(inner.left, theme)} and {_t(inner.right, theme)}"
         return f"at every moment, {_t(inner.left, theme)} and {_t(inner.right, theme)}"
     if isinstance(inner, ltlnode.OrNode):
+        if theme.deontic:
+            return f"at every moment, it must be the case that either {_t(inner.left, theme)} or {_t(inner.right, theme)}"
         return f"at every moment, either {_t(inner.left, theme)} or {_t(inner.right, theme)}"
 
     # G(literal)
     if isinstance(inner, ltlnode.LiteralNode):
+        if theme.deontic:
+            return _modal(theme.positive(inner.value), "always")
         return f"{theme.positive(inner.value)} at all times"
+    if theme.deontic:
+        return _modal(_t(inner, theme), "always")
     return f"at all times, {_t(inner, theme)}"
 
 
@@ -384,6 +502,12 @@ def _t_finally(node: ltlnode.FinallyNode, theme: Theme) -> str:
         # F(G(p -> F q))
         if isinstance(gi, ltlnode.ImpliesNode) and isinstance(gi.right, ltlnode.FinallyNode):
             trigger = _t(gi.left, theme)
+            if theme.deontic:
+                response = _obligation(gi.right.operand, theme, "eventually")
+                return _join(
+                    "eventually, the system stabilizes",
+                    f"from that point on, whenever {trigger}, {response}",
+                )
             response = _t(gi.right.operand, theme)
             return _join(
                 "eventually, the system stabilizes",
@@ -417,6 +541,8 @@ def _t_finally(node: ltlnode.FinallyNode, theme: Theme) -> str:
         result = _t(inner.right.operand, theme)
         return f"eventually, once {trigger}, then {result} forever after"
 
+    if theme.deontic:
+        return _obligation(inner, theme, "eventually")
     return f"eventually, {_t(inner, theme)}"
 
 
@@ -433,6 +559,11 @@ def _t_next(node: ltlnode.NextNode, theme: Theme) -> str:
     if steps == 1 and isinstance(core, ltlnode.FinallyNode):
         target = _t(core.operand, theme)
         return f"starting from the next step, {target} must eventually happen"
+
+    if theme.deontic:
+        phrase = _lit_phrase(core, theme)
+        if phrase is not None:
+            return f"{_modal(phrase)} in {_steps(steps)}"
 
     target = _t(core, theme)
     return f"in {_steps(steps)}, {target}"
@@ -464,6 +595,11 @@ def _t_until(node: ltlnode.UntilNode, theme: Theme) -> str:
 
     l = _t(l_node, theme)
     r = _t(r_node, theme)
+    if theme.deontic:
+        # "the document is closed" -> "the document must remain closed"
+        lp = _lit_phrase(l_node, theme)
+        if lp is not None and " is not " not in lp and " is " in lp:
+            return f"{lp.replace(' is ', ' must remain ', 1)} until {r}"
     return f"it must remain the case that {l} until {r}"
 
 
