@@ -49,6 +49,7 @@ secret.key
 
 # Ignore compiled documentation
 *.pdf
+*.docx
 
 # Include all files in the static directory
 !static/*
