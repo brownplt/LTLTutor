@@ -30,6 +30,7 @@ from authroutes import (
     get_owned_courses,
     login_required_as_courseinstructor,
     CourseInstructor,
+    CourseStudent,
     getUserCourse,
     get_course_students,
     get_exercises_for_course,
@@ -389,6 +390,8 @@ def index():
     course_exercises = []
     completed_exercises = set()
     user_course = getUserCourse(userId)
+    # A student account with no course can join one from the home page.
+    can_join_course = isinstance(current_user, CourseStudent) and not user_course
     if user_course:
         course_exercises = get_exercises_for_course(user_course)
 
@@ -414,6 +417,7 @@ def index():
         num_logs=num_logs,
         num_correct=num_correct,
         user_course=user_course,
+        can_join_course=can_join_course,
         course_exercises=course_exercises,
         completed_exercises=completed_exercises
     )

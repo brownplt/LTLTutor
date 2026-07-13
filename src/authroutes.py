@@ -65,9 +65,9 @@ class User(UserMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String, unique=True)
     type: Mapped[str] = mapped_column(String)
-    # Optional credential. Only account types that authenticate with a password
-    # (instructors and self-study students) populate this; anonymous and
-    # course-code students leave it NULL.
+    # Optional credential. Populated for accounts that authenticate with a
+    # password (instructors, and persistent student accounts); anonymous
+    # students and quick course-code students leave it NULL.
     password_hash: Mapped[str] = mapped_column(String, nullable=True)
 
     __mapper_args__ = {
@@ -91,20 +91,24 @@ class AnonymousStudent(User):
 
 
 class CourseStudent(User):
+    """A student account, identified by its (globally unique) username. The two
+    fields below are optional and independent:
+
+      * course_id     — set when the student is enrolled in a course (via a
+                        course code at login/signup, or by joining one later).
+      * password_hash — (inherited from User) set for a persistent account the
+                        student can log back into from any device. A course-code
+                        student with no password is quick to create but is bound
+                        to the browser/device it was created in.
+
+    So the same type covers a quick passwordless course-code student, a
+    persistent password-protected student, and any combination (e.g. a
+    persistent account that is also enrolled in a course)."""
     __mapper_args__ = {
         'polymorphic_identity': 'course-student',
     }
 
     course_id: Mapped[str] = mapped_column(String, nullable=True)
-
-
-class SelfStudyStudent(User):
-    """A self-directed learner with a persistent, password-protected account and
-    no course. Lets a student keep their progress across devices and browsers
-    without needing an instructor or a course code."""
-    __mapper_args__ = {
-        'polymorphic_identity': 'self-study-student',
-    }
 
 
 class CourseInstructor(User):
@@ -233,10 +237,11 @@ def login():
                     flash('Invalid username or password.')
                     return redirect(url_for('authroutes.login'))
 
-            elif user_type == 'self-study-student':
+            elif user_type == 'student-account':
+                ## Persistent student account: authenticate by password.
                 username = request.form.get('username')
                 password = request.form.get('password')
-                user = session.query(SelfStudyStudent).filter_by(username=username).first()
+                user = session.query(CourseStudent).filter_by(username=username).first()
 
                 canLogin = (user is not None) and user.check_password(password)
 
@@ -247,13 +252,6 @@ def login():
             elif user_type == 'course-student':
                 username = request.form.get('username')
                 course_id = request.form.get('course_id')
-                user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
-
-
-
-
-                ## TODO: User cannot be in more than one course. May have to change this later.
-
 
                 ## Ensure that course_id exists
                 course = session.query(Course).filter_by(name=course_id).first()
@@ -261,10 +259,20 @@ def login():
                     flash('Could not find a course with ID ' + course_id)
                     return redirect(url_for('authroutes.login'))
 
+                ## If this username belongs to a password-protected account, the
+                ## passwordless course-code path must not log in as them (that
+                ## would bypass their password). Send them to the Student account
+                ## login instead.
+                existing = session.query(CourseStudent).filter_by(username=username).first()
+                if existing is not None and existing.password_hash:
+                    flash('That username has a password. Please use the "Student account" login instead.')
+                    return redirect(url_for('authroutes.login'))
+
+                ## TODO: User cannot be in more than one course. May have to change this later.
+                user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
                 canLogin = user is not None
-                ## If user did not already exist, create a new user
+                ## If user did not already exist, create a new (passwordless) student enrolled in the course
                 if user is None:
-                    # Create a new user
                     user = CourseStudent(username=username, course_id=course_id)
                     try:
                         session.add(user)
@@ -274,8 +282,8 @@ def login():
                         flash('User {username} already exists.'.format(username=username))
                         session.rollback()
                         canLogin = False
-                        
-                
+
+
             elif user_type == 'anonymous-student':
                 ## This should really never happen, but just in case
                 tries_remaining = 10
@@ -344,13 +352,15 @@ def signup():
 
 @authroutes.route('/signup-student', methods=['GET', 'POST'])
 def signup_student():
-    """Create a self-study student account: a persistent, password-protected
-    account for a learner who is not part of a course."""
+    """Create a persistent, password-protected student account. Optionally
+    enroll in a course at the same time by supplying a course code; the student
+    can also join a course later from their home page."""
     if request.method == 'POST':
         with Session() as session:
             username = request.form.get('username')
             password = request.form.get('password')
             confirm_password = request.form.get('confirm_password')
+            course_code = (request.form.get('course_id') or '').strip()
 
             if not username or not password:
                 flash('Username and password are required.')
@@ -365,13 +375,45 @@ def signup_student():
                 flash(f'Username {username} is already taken. Please choose another one.')
                 return render_template('auth/signup_student.html')
 
-            user = SelfStudyStudent(username=username)
+            ## Optional enrollment: only accept a course code that exists.
+            course_id = None
+            if course_code:
+                course = session.query(Course).filter_by(name=course_code).first()
+                if course is None:
+                    flash('Could not find a course with ID ' + course_code)
+                    return render_template('auth/signup_student.html')
+                course_id = course_code
+
+            user = CourseStudent(username=username, course_id=course_id)
             user.set_password(password)
             session.add(user)
             session.commit()
             login_user(user)
             return redirect(url_for('index'))
     return render_template('auth/signup_student.html')
+
+
+@authroutes.route('/join-course', methods=['POST'])
+@login_required
+def join_course():
+    """Let a logged-in student enroll in a course by course code. Used by
+    persistent students who signed up without a course."""
+    if not isinstance(current_user, CourseStudent):
+        abort(403)
+
+    course_code = (request.form.get('course_id') or '').strip()
+    with Session() as session:
+        course = session.query(Course).filter_by(name=course_code).first()
+        if course is None:
+            flash('Could not find a course with ID ' + course_code)
+            return redirect(url_for('index'))
+
+        student = session.query(CourseStudent).filter_by(username=current_user.username).first()
+        if student is not None:
+            student.course_id = course_code
+            session.commit()
+            flash(f'You have joined the course {course_code}.')
+    return redirect(url_for('index'))
 
 
 

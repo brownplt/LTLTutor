@@ -9,6 +9,19 @@
     <!-- The number of misconceptions needed before review -->
     {% set threshold = 5 %}
 
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <div class="d-flex justify-content-between align-items-center mt-3 mb-3 flex-wrap">
         <div class="d-flex align-items-center">
             {% if num_logs > 0 %}
@@ -21,6 +34,24 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- Join a Course (persistent students not yet in a course) -->
+    {% if can_join_course %}
+    <div class="card border-info mb-4">
+        <div class="card-body">
+            <h6 class="mb-2">Join a course</h6>
+            <p class="text-muted mb-2">
+                Have a course code from your instructor? Enter it to see your course's assigned exercises.
+            </p>
+            <form action="{{ url_for('authroutes.join_course') }}" method="POST" class="form-inline">
+                <label class="sr-only" for="join-course-code">Course code</label>
+                <input type="text" id="join-course-code" name="course_id" class="form-control mr-2 mb-2"
+                       placeholder="Course code" required>
+                <button type="submit" class="btn btn-primary mb-2">Join course</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Course Exercises Section -->
     {% if course_exercises and course_exercises|length > 0 %}

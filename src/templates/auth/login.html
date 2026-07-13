@@ -91,30 +91,30 @@
         </div>
 
         <hr class="my-2">
-        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseSelfStudy" role="button"
-            aria-expanded="false" aria-controls="collapseSelfStudy">
-            Personal study account
+        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseStudentAccount" role="button"
+            aria-expanded="false" aria-controls="collapseStudentAccount">
+            Student account
         </p>
-        <div class="collapse" id="collapseSelfStudy">
+        <div class="collapse" id="collapseStudentAccount">
             <form action="/login" method="POST">
                 <p class="text-muted">
-                    Studying on your own, without a course? Log in to a personal account to keep your
-                    progress across devices and browsers.
-                    Don't have one yet? <a href="/signup-student" class="btn btn-outline-primary">Create a study account</a>
+                    A student account keeps your progress across devices and browsers &mdash; with or
+                    without a course. Log in with your username and password.
+                    Don't have one yet? <a href="/signup-student" class="btn btn-outline-primary">Create a student account</a>
                 </p>
-                <input type="hidden" name="user_type" value="self-study-student">
+                <input type="hidden" name="user_type" value="student-account">
                 <input type="hidden" name="next" value="{{ next_page }}">
 
                 <div class="form-group row">
-                    <label for="selfstudy-username" class="col-sm-2 col-form-label">Username:</label>
+                    <label for="studentacct-username" class="col-sm-2 col-form-label">Username:</label>
                     <div class="col-sm-10">
-                        <input type="text" id="selfstudy-username" name="username" class="form-control" required>
+                        <input type="text" id="studentacct-username" name="username" class="form-control" required>
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="selfstudy-password" class="col-sm-2 col-form-label">Password:</label>
+                    <label for="studentacct-password" class="col-sm-2 col-form-label">Password:</label>
                     <div class="col-sm-10">
-                        <input type="password" id="selfstudy-password" name="password" class="form-control" required>
+                        <input type="password" id="studentacct-password" name="password" class="form-control" required>
                     </div>
                 </div>
 

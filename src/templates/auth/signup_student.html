@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}LTL Tutor: Create a study account{% endblock %}
+{% block title %}LTL Tutor: Create a student account{% endblock %}
 
 {% block navbar %}{% endblock %}
 
 {% block content %}
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <h1 class="text-center mb-4">Create a study account</h1>
+                <h1 class="text-center mb-4">Create a student account</h1>
 
                 <div class="alert alert-secondary" role="alert">
-                    A personal study account lets you practice on your own — without a course —
-                    and keeps your progress across devices and browsers. Choose a username and
-                    password you'll remember; there is currently no way to recover a forgotten password.
+                    A student account keeps your progress across devices and browsers. Choose a
+                    username and password you'll remember; there is currently no way to recover a
+                    forgotten password. If you're in a course you can add its course code now, or
+                    join a course later from your home page.
                 </div>
                 {% with messages = get_flashed_messages() %}
                 {% if messages %}
@@ -41,6 +42,12 @@
                     <div class="form-group">
                         <label for="confirm_password">Confirm Password:</label>
                         <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="course_id">Course code <span class="text-muted">(optional)</span>:</label>
+                        <input type="text" id="course_id" name="course_id" class="form-control"
+                               placeholder="Leave blank if you're not in a course">
                     </div>
 
                     <input type="submit" value="Create account" class="btn btn-primary">
