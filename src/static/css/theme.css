@@ -5,8 +5,7 @@
    corners, warm non-blue palette. Green/red are reserved for correctness only.
 
    Loaded AFTER bootstrap.css and common.css so its overrides win. Colors are
-   driven by CSS custom properties; single light theme by design — the token
-   layer keeps adding a dark theme later a contained change.
+   driven by CSS custom properties; single light theme by design.
    ========================================================================== */
 
 /* ---- Tokens: LIGHT ------------------------------------------------------- */
