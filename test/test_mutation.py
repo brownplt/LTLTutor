@@ -7,10 +7,10 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 
 # Mock spot module to avoid import error
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 sys.modules['spot'] = MagicMock()
 
-from ltlnode import parse_ltl_string
+from ltlnode import parse_ltl_string, LTLNode
 import codebook
 
 
@@ -55,12 +55,42 @@ class TestConceptualMutator(unittest.TestCase):
             ("(l U (q -> (F s)))", "((l U q) -> (F s))"),
             ("(l U (q -> (G s)))", "((l U q) -> (G s))"),
             ("((X (l & r)))", "((X l) & r)"),
-            ("(X (X (l & r)))", "(X (l & r))"),
-            ("(X (X (X (l & r))))", "(X (l & r))"),
         ]
         self.apply_and_check_misconception(
             codebook.MisconceptionCode.BadStateIndex, test_cases
         )
+
+        # X-chains are mutated by randomly adding or removing 1-2 Nexts
+        # (clamped to at least one), so accept every valid chain length.
+        random_result_cases = [
+            (
+                "(X (X (l & r)))",  # 2 Nexts -> 1, 3, or 4
+                [
+                    "(X (l & r))",
+                    "(X (X (X (l & r))))",
+                    "(X (X (X (X (l & r)))))",
+                ],
+            ),
+            (
+                "(X (X (X (l & r))))",  # 3 Nexts -> 1, 2, 4, or 5
+                [
+                    "(X (l & r))",
+                    "(X (X (l & r)))",
+                    "(X (X (X (X (l & r)))))",
+                    "(X (X (X (X (X (l & r))))))",
+                ],
+            ),
+        ]
+        for input, expected_outputs in random_result_cases:
+            for i in range(10):  # Run each test 10 times
+                with self.subTest(input=input, iteration=i):
+                    ast = parse_ltl_string(input)
+                    result = str(
+                        codebook.applyMisconception(
+                            ast, codebook.MisconceptionCode.BadStateIndex
+                        ).node
+                    )
+                    self.assertIn(result, expected_outputs)
 
     def test_bad_state_quantification(self):
         test_cases = [
@@ -112,21 +142,30 @@ class TestConceptualMutator(unittest.TestCase):
         """
         Ensure distractor generation can apply a misconception at different valid
         rewrite sites (not only the first match).
+
+        getAllApplicableMisconceptions drops mutations that are semantically
+        equivalent to the original via LTLNode.equiv, which needs SPOT. Under
+        the suite's mocked spot module the equivalence check returns a truthy
+        MagicMock, silently filtering out every mutation — so substitute
+        syntactic equality, which gives the same answers real SPOT would for
+        these candidates (neither F(F a) nor G(G a) is equivalent to G(F a)).
         """
         ast = parse_ltl_string("G(F(a))")
         results_seen = set()
 
-        for i in range(NUM_DIVERSITY_ITERATIONS):
-            with self.subTest(iteration=i):
-                all_results = codebook.getAllApplicableMisconceptions(ast)
-                bq_results = [
-                    str(result.node)
-                    for result in all_results
-                    if result.misconception == codebook.MisconceptionCode.BadStateQuantification
-                ]
-                self.assertEqual(len(bq_results), 1)
-                self.assertIn(bq_results[0], {"(F (F a))", "(G (G a))"})
-                results_seen.add(bq_results[0])
+        with patch.object(LTLNode, "equiv",
+                          staticmethod(lambda f1, f2: str(f1) == str(f2))):
+            for i in range(NUM_DIVERSITY_ITERATIONS):
+                with self.subTest(iteration=i):
+                    all_results = codebook.getAllApplicableMisconceptions(ast)
+                    bq_results = [
+                        str(result.node)
+                        for result in all_results
+                        if result.misconception == codebook.MisconceptionCode.BadStateQuantification
+                    ]
+                    self.assertEqual(len(bq_results), 1)
+                    self.assertIn(bq_results[0], {"(F (F a))", "(G (G a))"})
+                    results_seen.add(bq_results[0])
 
         self.assertGreater(
             len(results_seen),
