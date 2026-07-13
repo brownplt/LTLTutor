@@ -78,7 +78,8 @@
                     </h5>
                     {% else %}
                     <h5 id="{{ qindex }}question_text" class="card-title mb-2 actualQuestion"
-                        style="white-space: pre-wrap;">{{ q.question}}
+                        style="white-space: pre-wrap;"
+                        data-translation-mode="{{ q.translation_mode | default('') }}">{{ q.question}}
                     </h5>
                     <div class="row mb-2 ml-2">
                         {% if q.type == "englishtoltl" %}

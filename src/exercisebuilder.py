@@ -7,7 +7,8 @@ import ltlnode
 import random
 import re
 import math
-import ltltoeng
+import ltltoeng_prose
+import ltltoeng_contextualized
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
 
@@ -556,16 +557,15 @@ class ExerciseBuilder:
 
         ## First generate a large pool from spot randltl
         pool_size = 2*num_questions
-        question_answers = spotutils.gen_rand_ltl(atoms = literals, 
-                                                  tree_size = tree_size, 
-                                                  ltl_priorities = self.ltl_priorities, 
+        question_answers = spotutils.gen_rand_ltl(atoms = literals,
+                                                  tree_size = tree_size,
+                                                  ltl_priorities = self.ltl_priorities,
                                                   num_formulae = pool_size)
-        
+
         ## Augment with template-generated formulas for pattern-specific misconceptions
         ## This helps ensure we get formulas that can actually be mutated with these misconceptions
         template_formulas = self.generate_template_formulas(literals, num_templates=max(1, num_questions // 4))
         question_answers.extend(template_formulas)
-        
 
         def formula_choice_metric(formula):
 
@@ -592,7 +592,17 @@ class ExerciseBuilder:
             if kind == self.TRACESATMC:
                 question = self.build_tracesat_mc_question(answer)
             elif kind == self.ENGLISHTOLTL:
-                question = self.build_english_to_ltl_question(answer)
+                # A/B test: 50/50 abstract vs. contextualized framing. The
+                # contextualized arm reuses the same formula with literals
+                # renamed onto the lights theme, so the two conditions differ
+                # only in framing, not in formula structure.
+                question = None
+                if random.random() < 0.5:
+                    ctx_answer = self.gen_contextualized_answer(answer)
+                    if ctx_answer is not None:
+                        question = self.build_english_to_ltl_question(ctx_answer, contextualized=True)
+                if question is None:
+                    question = self.build_english_to_ltl_question(answer)
             elif kind == self.TRACESATYN:
                 question = self.build_tracesat_yn_question(answer)
 
@@ -635,16 +645,39 @@ class ExerciseBuilder:
 
     
     def gen_nl_question(self, formula):
-
         as_node = ltlnode.parse_ltl_string(formula)
-        formula_eng = as_node.__to_english__()
-        if formula_eng is None or formula_eng == "":
+        result = ltltoeng_prose.translate(as_node)
+        if not result or result.strip() == "":
             return None
-        
-        formula_eng_corrected = ltltoeng.correct_grammar(formula_eng)
-        ### If there are multiple '.' in a row, replace with a single '.'
-        formula_eng_corrected = re.sub(r'\.{2,}', '.', formula_eng_corrected)
-        return ltltoeng.finalize_sentence(formula_eng_corrected)
+        return result
+
+
+    def gen_contextualized_answer(self, formula):
+        """Rename *formula*'s literals onto the lights theme.
+
+        Returns the renamed formula string, or None if it cannot be themed
+        (parse failure or more distinct literals than the theme has lights).
+        """
+        try:
+            as_node = ltlnode.parse_ltl_string(formula)
+        except Exception:
+            return None
+        remapped = ltltoeng_contextualized.remap_to_theme(as_node)
+        return str(remapped) if remapped is not None else None
+
+
+    def gen_nl_question_contextualized(self, formula):
+        """Generate a contextualized English question using the lights theme.
+
+        Expects the formula's literals to already match the theme (see
+        gen_contextualized_answer). Returns None if translation fails.
+        """
+        LIGHTS_THEME = ltltoeng_contextualized.THEMES["lights"]
+        as_node = ltlnode.parse_ltl_string(formula)
+        result = ltltoeng_contextualized.translate(as_node, LIGHTS_THEME)
+        if not result or result.strip() == "":
+            return None
+        return result
 
 
     def _weighted_sample_without_replacement(self, items, weight_fn, k):
@@ -746,13 +779,22 @@ class ExerciseBuilder:
 
         return final_options
 
-    def build_english_to_ltl_question(self, answer):
-        
+    def build_english_to_ltl_question(self, answer, contextualized=False):
+
         options = self.get_options_with_misconceptions_as_formula(answer)
         if options is None:
             return None
 
-        question = self.gen_nl_question(answer)
+        if contextualized:
+            question = self.gen_nl_question_contextualized(answer)
+            translation_mode = "contextualized"
+            # Fall back to abstract if contextualized translation fails
+            if question is None or question == "":
+                question = self.gen_nl_question(answer)
+                translation_mode = "abstract"
+        else:
+            question = self.gen_nl_question(answer)
+            translation_mode = "abstract"
 
         if question is None or question == "":
             print("Question generation failed unexpectedly.")
@@ -761,7 +803,8 @@ class ExerciseBuilder:
         return {
             "question": question,
             "type": self.ENGLISHTOLTL,
-            "options": options
+            "options": options,
+            "translation_mode": translation_mode
         }
 
     def build_tracesat_mc_question(self, answer):

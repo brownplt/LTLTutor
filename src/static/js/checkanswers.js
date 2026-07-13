@@ -435,6 +435,10 @@ async function englishtoltl_getfeedback(button) {
     let correct = show_feedback(parent_node, QUESTION_TYPE);
     lockQuestionInteractions(parent_node);
 
+    // Read A/B test condition (abstract vs. contextualized)
+    let question_text_el = parent_node.querySelector('.actualQuestion');
+    let translation_mode = question_text_el ? (question_text_el.dataset.translationMode || '') : '';
+
     let data = {
         selected_option: selected_radio.value,
         correct_option: correct_option,
@@ -443,7 +447,8 @@ async function englishtoltl_getfeedback(button) {
         question_text: question_text,
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
-        exercise: getExerciseName()
+        exercise: getExerciseName(),
+        translation_mode: translation_mode
     }
 
     let response = await postFeedback(data, QUESTION_TYPE);

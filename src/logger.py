@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -52,6 +52,7 @@ class StudentResponse(Base):
     mp_class = Column(String)
     exercise = Column(String)
     course = Column(String, default="")
+    translation_mode = Column(String, default="")
 
 
 class GeneratedExercise(Base):
@@ -114,6 +115,22 @@ class Logger:
         if SENTENCE_PAIR_RATING_TABLE not in self.inspector.get_table_names():
             Base.metadata.tables[SENTENCE_PAIR_RATING_TABLE].create(self.engine)
 
+        self._ensure_student_response_schema()
+
+    def _ensure_student_response_schema(self):
+        """Add newly introduced columns to student_responses if they are missing.
+
+        create_all only creates missing tables; on an existing deployment the
+        table predates these columns, so they have to be added explicitly.
+        """
+        existing_columns = {col['name'] for col in self.inspector.get_columns(STUDENT_RESPONSE_TABLE)}
+
+        with self.engine.begin() as connection:
+            if 'translation_mode' not in existing_columns:
+                connection.execute(
+                    text(f"ALTER TABLE {STUDENT_RESPONSE_TABLE} ADD COLUMN translation_mode VARCHAR DEFAULT ''")
+                )
+
     def record(self, log):
         with self.Session() as session:
             print("Recording log")
@@ -132,7 +149,7 @@ class Logger:
             return {row.ltl for row in rows if row.ltl}
 
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course):
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course, translation_mode=""):
 
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
@@ -154,9 +171,9 @@ class Logger:
 
         ## We still want to log the response if there are no misconceptions
         if misconceptions == None or len(misconceptions) == 0:
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
                                   misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
             self.record(log)
 
 
@@ -165,9 +182,9 @@ class Logger:
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
 
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(), 
+            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
                                   misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course)
+                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
             self.record(log)
 
     

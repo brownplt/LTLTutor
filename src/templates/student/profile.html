@@ -6,6 +6,65 @@
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.2"></script>
+    <style>
+        .misconception-scale {
+            position: relative;
+            height: 0.65rem;
+            overflow: visible;
+            background: #e9ecef;
+            border-radius: 999px;
+        }
+
+        .misconception-scale-center {
+            position: absolute;
+            top: -0.2rem;
+            bottom: -0.2rem;
+            left: 50%;
+            width: 2px;
+            background: #6c757d;
+            transform: translateX(-1px);
+        }
+
+        .misconception-scale-evidence {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+        }
+
+        .misconception-scale-evidence-absent {
+            background: #218c8d;
+        }
+
+        .misconception-scale-evidence-present {
+            background: #b14b76;
+        }
+
+        .misconception-scale-marker {
+            position: absolute;
+            top: 50%;
+            width: 0.9rem;
+            height: 0.9rem;
+            border: 2px solid #343a40;
+            border-radius: 50%;
+            background: #fff;
+            transform: translate(-50%, -50%);
+        }
+
+        .misconception-scale-labels {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            column-gap: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .misconception-scale-labels span:nth-child(2) {
+            text-align: center;
+        }
+
+        .misconception-scale-labels span:last-child {
+            text-align: right;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -69,20 +128,36 @@
                     <div class="card-body">
                         <h5 class="card-title">Misconception Profile</h5>
                         <small class="text-muted d-block mb-3">
-                            The tutor's inferred probabilities based on your answers (higher = more evidence to revisit that topic).
-                            These estimates help choose useful practice questions and may change as you answer more questions.
+                            These estimates summarize the tutor's current evidence. A value of 0.5 means the tutor is uncertain
+                            and keeps the misconception in normal practice rotation. Values closer to 0 indicate stronger evidence
+                            that the misconception is absent; values closer to 1 indicate stronger evidence that it is present.
+                            Estimates may change as you answer more questions.
                         </small>
                         {% if misconception_snapshot %}
+                            <div class="misconception-scale-labels text-muted mb-3" aria-hidden="true">
+                                <span><small>0<br>Evidence of absence</small></span>
+                                <span><small>0.5<br>Uncertain</small></span>
+                                <span><small>1<br>Evidence of presence</small></span>
+                            </div>
                             {% for m in misconception_snapshot %}
-                            <div class="mb-2">
+                            {% set pct = m.weight * 100 %}
+                            <div class="mb-3">
                                 <div class="d-flex justify-content-between">
                                     <small>{{ m.name }}</small>
                                     <small class="text-muted">{{ "%.2f"|format(m.weight) }}</small>
                                 </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar {% if m.weight >= 0.5 %}bg-danger{% else %}bg-success{% endif %}"
-                                         role="progressbar" style="width: {{ m.weight * 100 }}%;"
-                                         aria-valuenow="{{ (m.weight * 100)|round }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="misconception-scale mt-1"
+                                     role="meter" aria-valuemin="0" aria-valuemax="1" aria-valuenow="{{ "%.2f"|format(m.weight) }}"
+                                     aria-label="{{ m.name }}: {{ "%.2f"|format(m.weight) }}; {% if m.weight < 0.5 %}evidence leans toward absence{% elif m.weight > 0.5 %}evidence leans toward presence{% else %}uncertain{% endif %}">
+                                    <span class="misconception-scale-center" aria-hidden="true"></span>
+                                    {% if m.weight < 0.5 %}
+                                    <span class="misconception-scale-evidence misconception-scale-evidence-absent"
+                                          style="left: {{ pct }}%; width: {{ 50 - pct }}%;" aria-hidden="true"></span>
+                                    {% elif m.weight > 0.5 %}
+                                    <span class="misconception-scale-evidence misconception-scale-evidence-present"
+                                          style="left: 50%; width: {{ pct - 50 }}%;" aria-hidden="true"></span>
+                                    {% endif %}
+                                    <span class="misconception-scale-marker" style="left: {{ pct }}%;" aria-hidden="true"></span>
                                 </div>
                             </div>
                             {% endfor %}

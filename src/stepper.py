@@ -1,5 +1,5 @@
 from ltlnode import UnaryOperatorNode, BinaryOperatorNode, LiteralNode, parse_ltl_string
-import ltltoeng
+import ltltoeng_prose
 from spotutils import is_trace_satisfied
 import re
 import random
@@ -28,7 +28,7 @@ def getLTLFormulaAsString(node, syntax):
     elif syntax == "English":
         ## We should hopefully never get here. However, 
         ## I'm adding it here to suggest a way forward.
-        return ltltoeng.finalize_sentence(node.__to_english__())
+        return ltltoeng_prose.translate(node)
 
     ## Default to classic syntax
     return str(node)
