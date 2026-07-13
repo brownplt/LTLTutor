@@ -1,5 +1,10 @@
+import ast
 import datetime
+import hashlib
+import json
+import uuid
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -11,6 +16,8 @@ STUDENT_RESPONSE_TABLE = 'student_responses'
 GENERATED_EXERCISE_TABLE = 'generated_exercise'
 ENGLISH_LTL_TABLE = 'english_ltl_pairs'
 SENTENCE_PAIR_RATING_TABLE = 'sentence_pair_ratings'
+MISCONCEPTION_ATTEMPT_TABLE = 'misconception_attempts'
+MISCONCEPTION_OPPORTUNITY_TABLE = 'misconception_opportunities'
 
 
 def get_db_uri():
@@ -53,6 +60,38 @@ class StudentResponse(Base):
     exercise = Column(String)
     course = Column(String, default="")
     translation_mode = Column(String, default="")
+
+
+class MisconceptionAttempt(Base):
+    """One answer submission, independent of legacy per-code response rows."""
+    __tablename__ = MISCONCEPTION_ATTEMPT_TABLE
+    id = Column(String, primary_key=True)
+    user_id = Column(String, index=True)
+    timestamp = Column(DateTime, index=True)
+    question_id = Column(String, index=True)
+    question_type = Column(String)
+    correct_answer = Column(Boolean)
+    selected_option = Column(String)
+    correct_option = Column(String)
+    option_count = Column(Integer)
+    exercise = Column(String)
+    course = Column(String, default="")
+    policy_version = Column(String)
+    question_options = Column(String)
+
+
+class MisconceptionOpportunity(Base):
+    """Auditable evidence for one misconception exposed in one attempt."""
+    __tablename__ = MISCONCEPTION_OPPORTUNITY_TABLE
+    id = Column(Integer, primary_key=True)
+    attempt_id = Column(String, index=True)
+    user_id = Column(String, index=True)
+    timestamp = Column(DateTime, index=True)
+    misconception = Column(String, index=True)
+    observation = Column(String)
+    evidence_strength = Column(Float)
+    probe_type = Column(String)
+    policy_version = Column(String)
 
 
 class GeneratedExercise(Base):
@@ -149,7 +188,83 @@ class Logger:
             return {row.ltl for row in rows if row.ltl}
 
     
-    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course, translation_mode=""):
+    @staticmethod
+    def _parse_misconceptions(value):
+        """Normalize misconception metadata from HTML dataset or JSON values."""
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple)):
+            return [str(code) for code in value]
+        if not isinstance(value, str):
+            return []
+        try:
+            parsed = ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            try:
+                parsed = json.loads(value)
+            except (TypeError, ValueError):
+                return []
+        return [str(code) for code in parsed] if isinstance(parsed, (list, tuple)) else []
+
+    @staticmethod
+    def _is_modeled_code(code):
+        from codebook import MisconceptionCode
+        parsed = MisconceptionCode.from_string(code)
+        return parsed is not None and parsed != MisconceptionCode.Syntactic
+
+    def _build_opportunity_events(self, attempt, options, _selected_codes):
+        """Build v1 option-aware observations without treating ambiguity as mastery."""
+        from misconceptionmodel import MODEL_VERSION
+
+        occurrences = {}
+        selected_option_codes = []
+        for option in options:
+            codes = [
+                code for code in self._parse_misconceptions(option.get('misconceptions'))
+                if self._is_modeled_code(code)
+            ]
+            if str(option.get('value', '')) == str(attempt.selected_option):
+                selected_option_codes = codes
+            if not codes:
+                continue
+            probe_type = "merged" if len(codes) > 1 else "direct"
+            for code in codes:
+                occurrences.setdefault(code, []).append((codes, probe_type))
+
+        option_count = max(1, len(options))
+        events = []
+        for code, probes in occurrences.items():
+            if code in selected_option_codes:
+                # Positive strength comes from the option actually selected,
+                # even if a more direct option for this code was also shown.
+                codes = selected_option_codes
+                probe_type = "merged" if len(codes) > 1 else "direct"
+                observation = "positive"
+                strength = 1.0 / len(codes)
+            else:
+                # Duplicate representations are one opportunity. For negative
+                # evidence, use the most direct displayed probe.
+                codes, probe_type = min(probes, key=lambda probe: len(probe[0]))
+                if attempt.correct_answer:
+                    observation = "negative"
+                    strength = (1.0 - (1.0 / option_count)) / len(codes)
+                else:
+                    observation = "ambiguous"
+                    strength = 0.0
+
+            events.append(MisconceptionOpportunity(
+                attempt_id=attempt.id,
+                user_id=attempt.user_id,
+                timestamp=attempt.timestamp,
+                misconception=code,
+                observation=observation,
+                evidence_strength=strength,
+                probe_type=probe_type,
+                policy_version=MODEL_VERSION,
+            ))
+        return events
+
+    def logStudentResponse(self, userId, misconceptions, question_text, question_options, correct_answer, questiontype, mp_class, exercise, course, translation_mode="", selected_option="", correct_option="", attempt_id=None):
 
         if not isinstance(userId, str):
             raise ValueError("userId should be a string")
@@ -169,23 +284,71 @@ class Logger:
         if not isinstance(course, str):
             raise ValueError("course should be a string")
 
-        ## We still want to log the response if there are no misconceptions
-        if misconceptions == None or len(misconceptions) == 0:
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
-                                  misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
-            self.record(log)
+        timestamp = datetime.datetime.now()
+        legacy_logs = []
+        if misconceptions is None or len(misconceptions) == 0:
+            legacy_logs.append(StudentResponse(user_id=userId, timestamp=timestamp,
+                                               misconception="", question_text=question_text, question_options=question_options, correct_answer=correct_answer,
+                                               question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode))
 
-
-
-        for misconception in misconceptions:
+        for misconception in misconceptions or []:
             if not isinstance(misconception, str):
                 raise ValueError("misconception should be a string")
+            legacy_logs.append(StudentResponse(user_id=userId, timestamp=timestamp,
+                                               misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
+                                               question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode))
 
-            log = StudentResponse(user_id=userId, timestamp=datetime.datetime.now(),
-                                  misconception=misconception, question_text=question_text, question_options=question_options, correct_answer=correct_answer,
-                                  question_type=questiontype, mp_class=mp_class, exercise=exercise, course=course, translation_mode=translation_mode)
-            self.record(log)
+        try:
+            options = json.loads(question_options)
+            if not isinstance(options, list):
+                options = []
+        except (TypeError, ValueError):
+            options = []
+
+        from misconceptionmodel import MODEL_VERSION
+        question_fingerprint = json.dumps(
+            {"type": questiontype, "text": question_text, "options": options},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        stable_attempt_id = (
+            hashlib.sha256(f"{userId}\0{attempt_id}".encode("utf-8")).hexdigest()
+            if attempt_id else str(uuid.uuid4())
+        )
+        attempt = MisconceptionAttempt(
+            id=stable_attempt_id,
+            user_id=userId,
+            timestamp=timestamp,
+            question_id=hashlib.sha256(question_fingerprint.encode("utf-8")).hexdigest(),
+            question_type=questiontype,
+            correct_answer=correct_answer,
+            selected_option=selected_option,
+            correct_option=correct_option,
+            option_count=len(options),
+            exercise=exercise,
+            course=course,
+            policy_version=MODEL_VERSION,
+            question_options=question_options,
+        )
+        opportunities = self._build_opportunity_events(attempt, options, misconceptions or [])
+
+        # One transaction prevents a partial attempt from disagreeing with its
+        # opportunities or with the legacy classroom reports.
+        with self.Session() as session:
+            if session.get(MisconceptionAttempt, attempt.id) is not None:
+                return
+            session.add(attempt)
+            session.add_all(opportunities)
+            session.add_all(legacy_logs)
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                # A concurrent retry may win after both requests passed the
+                # check above. Treat only that duplicate-attempt race as an
+                # idempotent success; re-raise unrelated integrity failures.
+                if session.get(MisconceptionAttempt, attempt.id) is None:
+                    raise
 
     
     def getUserLogs(self, userId, lookback_days=30):
@@ -196,6 +359,20 @@ class Logger:
             lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
             logs = session.query(StudentResponse).filter(StudentResponse.user_id == userId, StudentResponse.timestamp >= lookback_date).all()
             return logs
+
+    def getUserMisconceptionOpportunities(self, userId, lookback_days=30):
+        """Return versioned option-aware misconception evidence for a learner."""
+        if not isinstance(userId, str):
+            raise ValueError("userId should be a string")
+
+        from misconceptionmodel import MODEL_VERSION
+        with self.Session() as session:
+            lookback_date = datetime.datetime.now() - datetime.timedelta(days=lookback_days)
+            return session.query(MisconceptionOpportunity).filter(
+                MisconceptionOpportunity.user_id == userId,
+                MisconceptionOpportunity.timestamp >= lookback_date,
+                MisconceptionOpportunity.policy_version == MODEL_VERSION,
+            ).order_by(MisconceptionOpportunity.timestamp).all()
 
 
     def recordGeneratedExercise(self, userId, exercise_data, exercise_name, complexity=None):

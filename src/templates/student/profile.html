@@ -173,7 +173,7 @@
         <!-- Misconception Trends Summary -->
         {% if misconception_trends %}
         <h3 class="mt-5">Misconception Trends Summary</h3>
-        <p class="text-muted">Based on Bayesian Knowledge Tracing analysis comparing your recent (48h) vs. historical performance.</p>
+        <p class="text-muted">Based on the direction of explicit misconception opportunities in the last 48 hours.</p>
         <div class="row">
             {% for misconception, trend in misconception_trends.items() %}
             {% if trend.score != 0 or misconception_weights_over_time[misconception]|length > 0 %}
@@ -213,9 +213,9 @@
 
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
         <p class="text-muted">
-            This chart shows how your misconception likelihood has evolved over time using
-            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a>
-            combined with spaced repetition principles.
+            This chart shows the tutor's uncalibrated evidence score after each question that
+            explicitly exposed a misconception. It is an adaptive practice signal, not a probability.
+            Older evidence gradually moves back toward the uncertain midpoint.
         </p>
         <canvas id="allMisconceptionsChart"></canvas>
         <script>

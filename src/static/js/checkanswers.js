@@ -24,6 +24,19 @@ function getQuestionOptions(parentNode) {
     }));
 }
 
+function getAttemptId(parentNode) {
+    // Persist one client-generated id on the question card so a retried POST is
+    // idempotent while a genuinely repeated question remains a new attempt.
+    if (!parentNode.dataset.attemptId) {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            parentNode.dataset.attemptId = window.crypto.randomUUID();
+        } else {
+            parentNode.dataset.attemptId = 'attempt-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+        }
+    }
+    return parentNode.dataset.attemptId;
+}
+
 
 function getSelectedRadio(parentNode) {
     let selectedRadio =  parentNode.querySelector('input[type=radio]:checked');
@@ -322,7 +335,8 @@ async function tracesatisfaction_mc_getfeedback(button) {
         exercise: getExerciseName(),
         // The trace the student selected, so the server can explain why it
         // fails the formula.
-        trace: selected_radio.value.trim()
+        trace: selected_radio.value.trim(),
+        attempt_id: getAttemptId(parent_node)
     }
     let response = await postFeedback(data, QUESTION_TYPE);
     displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
@@ -355,7 +369,8 @@ async function tracesatisfaction_yn_getfeedback(button) {
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
         exercise: getExerciseName(),
         // The question's trace, so the server can explain the correct verdict.
-        trace: getQuestionTrace(parent_node).trim()
+        trace: getQuestionTrace(parent_node).trim(),
+        attempt_id: getAttemptId(parent_node)
     }
     let response = await postFeedback(data, QUESTION_TYPE);
     displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
@@ -448,7 +463,8 @@ async function englishtoltl_getfeedback(button) {
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
         exercise: getExerciseName(),
-        translation_mode: translation_mode
+        translation_mode: translation_mode,
+        attempt_id: getAttemptId(parent_node)
     }
 
     let response = await postFeedback(data, QUESTION_TYPE);

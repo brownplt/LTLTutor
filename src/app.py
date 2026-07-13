@@ -342,7 +342,8 @@ def index():
     num_logs = len(logs)
     num_correct = len([log for log in logs if str(log.correct_answer).lower() == 'true'])
 
-    exercise_builder = exercisebuilder.ExerciseBuilder(logs)
+    misconception_opportunities = answer_logger.getUserMisconceptionOpportunities(userId=userId, lookback_days=365)
+    exercise_builder = exercisebuilder.ExerciseBuilder(logs, misconception_opportunities=misconception_opportunities)
     model = exercise_builder.get_model()
     misconception_weights = model['misconception_weights']
     misconception_count = model['misconception_count']
@@ -877,7 +878,8 @@ def loganswer(questiontype):
     answer_logger.logStudentResponse(userId = userId, misconceptions = misconceptions, question_text = question_text,
                                       question_options = question_options, correct_answer = isCorrect,
                                       questiontype=questiontype, mp_class = mp_class, exercise = exercise, course = courseId,
-                                      translation_mode = translation_mode)
+                                      translation_mode = translation_mode, selected_option=student_selection,
+                                      correct_option=correct_answer, attempt_id=data.get('attempt_id'))
     
 
     if questiontype == "english_to_ltl":
@@ -1095,9 +1097,10 @@ def newexercise():
         exercise_name = "Exercise"
 
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
+    misconception_opportunities = answer_logger.getUserMisconceptionOpportunities(userId=userId, lookback_days=365)
 
     complexity = answer_logger.getComplexity(userId=userId)
-    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity, syntax = syntax_choice)
+    exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, misconception_opportunities=misconception_opportunities, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, misconception_opportunities=misconception_opportunities, complexity=complexity, syntax = syntax_choice)
 
     ### TODO: Should exercise involve only the literals the user has encountered?
     ## This block sits below the builder construction because the number of
