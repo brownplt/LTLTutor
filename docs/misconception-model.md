@@ -34,7 +34,11 @@ cataloged misconception displayed by the question:
 A negative observation is therefore created only when that misconception was
 actually exposed. Overall correctness never updates unrelated misconceptions.
 For focused trace yes/no questions, the one coded incorrect verdict is the
-explicit probe and a correct verdict supplies negative evidence for its code.
+explicit probe and a correct "No" supplies negative evidence for its code.
+The generator first chooses that target using the scheduling policy, then
+independently chooses a positive or diagnostic-negative instance with equal
+probability. Positive instances keep "Yes" from disappearing as a correct
+answer but carry no misconception code, so an incorrect "No" is ambiguous.
 
 The v1 score sequentially adds documented positive or negative log-evidence,
 caps the result away from certainty, and decays stale log-evidence toward the
@@ -64,9 +68,20 @@ misconceptions more often. Operator-pool scaling is deterministic,
 non-compounding, monotonic, and never enables an operator whose base priority is
 zero. Multiple-choice questions select at most three conceptual distractors
 even when more would fit under the global option cap, so their evidence scores
-still affect exposure in smaller candidate sets. Final selection prefers candidates carrying explicit applicable
-misconception codes; operator scaling is only a way to improve the candidate
-pool.
+still affect exposure in smaller candidate sets. Final selection prefers
+candidates carrying explicit applicable misconception codes; operator scaling
+is only a way to improve the candidate pool.
+
+## Trust boundary
+
+The browser supplies `correct`, selected-option misconception codes, and the
+displayed `question_options`, following the application's pre-existing pattern
+of rendering the answer key into the DOM. Version 1 validates and normalizes
+that metadata but cannot independently reconstruct every randomized question.
+Because adaptive scheduling now consumes these events, deployments should
+treat the evidence tables as pedagogical adaptation data rather than secure
+assessment records. Moving question instances and answer verification fully
+server-side is a separate hardening task.
 
 ## Historical data and versions
 

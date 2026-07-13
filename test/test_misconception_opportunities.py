@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
+from sqlalchemy.exc import IntegrityError
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
 sys.modules['spot'] = MagicMock()
@@ -29,12 +30,22 @@ class TestOpportunityExtraction(unittest.TestCase):
             user_id='student',
             timestamp=datetime.datetime(2026, 7, 12, 12, 0, 0),
             correct_answer=False,
+            selected_option='',
         )
         self.g = str(MisconceptionCode.ImplicitG)
         self.f = str(MisconceptionCode.ImplicitF)
         self.syntax = str(MisconceptionCode.Syntactic)
 
     def events(self, options, selected_codes):
+        selected_set = set(selected_codes)
+        selected = next(
+            (
+                candidate for candidate in options
+                if set(self.logger._parse_misconceptions(candidate['misconceptions'])) == selected_set
+            ),
+            None,
+        )
+        self.attempt.selected_option = selected['value'] if selected else ''
         return {
             event.misconception: event
             for event in self.logger._build_opportunity_events(
@@ -65,6 +76,14 @@ class TestOpportunityExtraction(unittest.TestCase):
         self.assertEqual(events[self.g].probe_type, 'merged')
         self.assertEqual(events[self.g].evidence_strength, 0.5)
         self.assertEqual(events[self.f].evidence_strength, 0.5)
+
+    def test_selected_merged_option_wins_over_also_displayed_direct_probe(self):
+        events = self.events(
+            [option(self.g), option(self.g, self.f), option()],
+            [self.g, self.f],
+        )
+        self.assertEqual(events[self.g].probe_type, 'merged')
+        self.assertEqual(events[self.g].evidence_strength, 0.5)
 
     def test_syntactic_control_is_not_a_modeled_opportunity(self):
         events = self.events([option(self.syntax), option()], [self.syntax])
@@ -131,6 +150,61 @@ class TestOpportunityPersistence(unittest.TestCase):
             ).one()
             self.assertEqual(attempt.option_count, 0)
             self.assertEqual(session.query(MisconceptionOpportunity).count(), 0)
+
+    def test_concurrent_duplicate_integrity_error_is_idempotent(self):
+        logger = Logger.__new__(Logger)
+        session = MagicMock()
+        session.__enter__.return_value = session
+        session.__exit__.return_value = False
+        session.get.side_effect = [None, object()]
+        session.commit.side_effect = IntegrityError(
+            'INSERT misconception_attempts', {}, Exception('duplicate')
+        )
+        logger.Session = MagicMock(return_value=session)
+
+        logger.logStudentResponse(
+            userId='student',
+            misconceptions=[],
+            question_text='G a',
+            question_options=json.dumps([option()]),
+            correct_answer=True,
+            questiontype='trace_satisfaction_yn',
+            mp_class='',
+            exercise='exercise',
+            course='course',
+            selected_option='correct',
+            correct_option='correct',
+            attempt_id='racing-attempt',
+        )
+
+        session.rollback.assert_called_once_with()
+
+    def test_unrelated_integrity_error_is_not_hidden(self):
+        logger = Logger.__new__(Logger)
+        session = MagicMock()
+        session.__enter__.return_value = session
+        session.__exit__.return_value = False
+        session.get.side_effect = [None, None]
+        session.commit.side_effect = IntegrityError(
+            'INSERT misconception_attempts', {}, Exception('other constraint')
+        )
+        logger.Session = MagicMock(return_value=session)
+
+        with self.assertRaises(IntegrityError):
+            logger.logStudentResponse(
+                userId='student',
+                misconceptions=[],
+                question_text='G a',
+                question_options=json.dumps([option()]),
+                correct_answer=True,
+                questiontype='trace_satisfaction_yn',
+                mp_class='',
+                exercise='exercise',
+                course='course',
+                selected_option='correct',
+                correct_option='correct',
+                attempt_id='broken-attempt',
+            )
 
 
 if __name__ == '__main__':

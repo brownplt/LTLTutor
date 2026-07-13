@@ -4,6 +4,7 @@ import hashlib
 import json
 import uuid
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -211,38 +212,45 @@ class Logger:
         parsed = MisconceptionCode.from_string(code)
         return parsed is not None and parsed != MisconceptionCode.Syntactic
 
-    def _build_opportunity_events(self, attempt, options, selected_codes):
+    def _build_opportunity_events(self, attempt, options, _selected_codes):
         """Build v1 option-aware observations without treating ambiguity as mastery."""
         from misconceptionmodel import MODEL_VERSION
 
         occurrences = {}
+        selected_option_codes = []
         for option in options:
             codes = [
                 code for code in self._parse_misconceptions(option.get('misconceptions'))
                 if self._is_modeled_code(code)
             ]
+            if str(option.get('value', '')) == str(attempt.selected_option):
+                selected_option_codes = codes
             if not codes:
                 continue
             probe_type = "merged" if len(codes) > 1 else "direct"
             for code in codes:
                 occurrences.setdefault(code, []).append((codes, probe_type))
 
-        selected_codes = {code for code in selected_codes if self._is_modeled_code(code)}
         option_count = max(1, len(options))
         events = []
         for code, probes in occurrences.items():
-            # Duplicate representations of the same code are one opportunity;
-            # use the most direct displayed probe for evidence strength.
-            codes, probe_type = min(probes, key=lambda probe: len(probe[0]))
-            if code in selected_codes:
+            if code in selected_option_codes:
+                # Positive strength comes from the option actually selected,
+                # even if a more direct option for this code was also shown.
+                codes = selected_option_codes
+                probe_type = "merged" if len(codes) > 1 else "direct"
                 observation = "positive"
                 strength = 1.0 / len(codes)
-            elif attempt.correct_answer:
-                observation = "negative"
-                strength = (1.0 - (1.0 / option_count)) / len(codes)
             else:
-                observation = "ambiguous"
-                strength = 0.0
+                # Duplicate representations are one opportunity. For negative
+                # evidence, use the most direct displayed probe.
+                codes, probe_type = min(probes, key=lambda probe: len(probe[0]))
+                if attempt.correct_answer:
+                    observation = "negative"
+                    strength = (1.0 - (1.0 / option_count)) / len(codes)
+                else:
+                    observation = "ambiguous"
+                    strength = 0.0
 
             events.append(MisconceptionOpportunity(
                 attempt_id=attempt.id,
@@ -332,7 +340,15 @@ class Logger:
             session.add(attempt)
             session.add_all(opportunities)
             session.add_all(legacy_logs)
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                # A concurrent retry may win after both requests passed the
+                # check above. Treat only that duplicate-attempt race as an
+                # idempotent success; re-raise unrelated integrity failures.
+                if session.get(MisconceptionAttempt, attempt.id) is None:
+                    raise
 
     
     def getUserLogs(self, userId, lookback_days=30):

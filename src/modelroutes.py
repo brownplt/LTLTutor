@@ -5,6 +5,7 @@ from logger import Logger
 import json
 import datetime
 import exercisebuilder
+import misconceptionmodel
 from collections import Counter
 
 
@@ -295,8 +296,8 @@ def profile_export():
         "misconception_evidence_scores": snapshot['misconception_snapshot'],
         "misconception_model": {
             "kind": "uncalibrated_evidence_score",
-            "policy_version": "option-evidence-v1",
-            "prior": 0.5,
+            "policy_version": misconceptionmodel.MODEL_VERSION,
+            "prior": misconceptionmodel.PRIOR_SCORE,
         },
     }
 

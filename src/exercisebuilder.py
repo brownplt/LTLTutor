@@ -25,6 +25,11 @@ class ExerciseBuilder:
     ## (exploration floor), no matter how well the student does on it.
     QUESTION_TYPE_FLOOR = 0.15
 
+    # Trace yes/no questions first choose a misconception to target, then
+    # independently choose whether to show a positive or diagnostic-negative
+    # instance. Keeping this at 0.5 prevents a learnable answer-key bias.
+    TRACESAT_YES_PROBABILITY = 0.5
+
     ## A multiple-choice question shows at most this many options total
     ## (1 correct + up to 5 distractors).
     MAX_TOTAL_OPTIONS = 6
@@ -710,16 +715,20 @@ class ExerciseBuilder:
                 )
                 return self._misconception_selection_weight(score)
 
-            formula = random.choices(
+            probe_formula = random.choices(
                 candidates,
                 weights=[candidate_weight(candidate) for candidate in candidates],
                 k=1,
             )[0]
-            yesIsCorrect = formula['isCorrect']
-            formula_asString = self.toSpotSyntax(formula['option'])
-            if yesIsCorrect: 
+            misconceptions = probe_formula['misconceptions']
+            yesIsCorrect = random.random() < self.TRACESAT_YES_PROBABILITY
+            if yesIsCorrect:
+                # Positive instances balance the answer key but are not a
+                # diagnostic opportunity for the selected misconception. A
+                # wrong "No" therefore remains ambiguous (no coded option).
                 potential_trace_choices = spotutils.generate_accepted_traces(parenthesized_answer)
             else:
+                formula_asString = self.toSpotSyntax(probe_formula['option'])
                 potential_trace_choices = spotutils.generate_traces(f_accepted=formula_asString, f_rejected=parenthesized_answer)
 
 
@@ -729,7 +738,6 @@ class ExerciseBuilder:
 
 
                 feedbackString = f"The trace is accepted by the formula <code>{option_in_correct_syntax}</code>, but not by the formula <code>{correct_option_in_correct_syntax}</code>."
-            misconceptions = formula['misconceptions']
 
         potential_trace_choices = [exerciseprocessor.canonicalizeSpotTrace(t) for t in potential_trace_choices]
         potential_trace_choices = list(dict.fromkeys(potential_trace_choices))
@@ -742,7 +750,7 @@ class ExerciseBuilder:
 
         ## THink about this -- how can we give feedback here!
         yes_misconceptions = [] if yesIsCorrect else misconceptions
-        no_misconceptions = misconceptions if yesIsCorrect else []
+        no_misconceptions = []
 
         options = [
 
@@ -787,6 +795,9 @@ class ExerciseBuilder:
                 else 0.0
                 for event in recent_events
             ]
+            # Ambiguous probes deliberately count in the denominator: a recent
+            # opportunity that taught us nothing should weaken, not erase, the
+            # directional trend signal.
             trend_score = (sum(directional) / len(directional)) if directional else 0.0
             has_recent_data = bool(recent_events)
             trend_label = self._get_trend_label(trend_score)
