@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}LTL Tutor: Create a study account{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <h1 class="text-center mb-4">Create a study account</h1>
+
+                <div class="alert alert-secondary" role="alert">
+                    A personal study account lets you practice on your own — without a course —
+                    and keeps your progress across devices and browsers. Choose a username and
+                    password you'll remember; there is currently no way to recover a forgotten password.
+                </div>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% endwith %}
+
+                <form action="/signup-student" method="POST" id="studentSignupForm">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password:</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+
+                    <input type="submit" value="Create account" class="btn btn-primary">
+                </form>
+
+                <p class="text-center mt-3">
+                    Already have an account? <a href="/login" class="btn btn-outline-primary">Login here</a>
+                </p>
+            </div>
+        </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    document.getElementById('studentSignupForm').addEventListener('submit', function(e) {
+        const pw = document.getElementById('password').value;
+        const cpw = document.getElementById('confirm_password').value;
+        if (pw !== cpw) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+        }
+    });
+    </script>
+{% endblock %}

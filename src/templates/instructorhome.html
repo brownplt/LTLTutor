@@ -72,6 +72,22 @@
                                 {% endif %}
                             </p>
 
+                            <div class="mt-2 mb-2">
+                                <p class="mb-1"><strong>Student sign-up QR code:</strong></p>
+                                <a href="{{ url_for('authroutes.course_login_qr', course_name=course.name) }}"
+                                   target="_blank" rel="noopener"
+                                   title="Open full size to project or print">
+                                    <img src="{{ url_for('authroutes.course_login_qr', course_name=course.name) }}"
+                                         alt="QR code linking to the student sign-up page for course {{ course.name }}"
+                                         width="140" height="140"
+                                         style="border:1px solid #dee2e6; background:#fff; padding:4px;">
+                                </a>
+                                <p class="text-muted small mb-0">
+                                    Students scan this to open the sign-up page for
+                                    <code>{{ course.name }}</code>. Click the code to enlarge it for projecting or printing.
+                                </p>
+                            </div>
+
                             <div>
                                 <h6>Top misconceptions</h6>
                                 {% if course.top_misconceptions %}
