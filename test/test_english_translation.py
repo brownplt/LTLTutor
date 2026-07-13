@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 sys.modules['spot'] = MagicMock()
 
 from ltlnode import *
+import ltltoeng
 import random
 
 
@@ -28,10 +29,15 @@ class TestEnglishTranslation(unittest.TestCase):
         self.assertEqual(english, "'p'")
     
     def test_negation_simple(self):
-        """Simple negation should be clean"""
+        """Simple negation should be a clean, composable fragment.
+
+        __to_english__ returns lowercase fragments by design;
+        finalize_sentence applies capitalization once at the top level.
+        """
         node = parse_ltl_string("!p")
         english = node.__to_english__()
-        self.assertEqual(english, "Not 'p'")
+        self.assertEqual(english, "not 'p'")
+        self.assertEqual(ltltoeng.finalize_sentence(english), "Not 'p'")
     
     def test_globally_natural_phrasing(self):
         """Globally operator should use natural phrasing"""
@@ -302,19 +308,26 @@ class TestFinalStatePatterns(unittest.TestCase):
         random.seed(42)
     
     def test_final_state_next_pattern(self):
-        """G(p -> X p) should translate to 'once p, it will always hold'"""
+        """G(p -> X p) should say that once p holds, it persists.
+
+        The exact wording comes from a fluency-scored candidate set
+        ("once 'p' is true, it stays true", "once 'p' becomes true, it
+        remains true", ...), so assert the invariant, not one candidate.
+        """
         node = parse_ltl_string("G(p -> X p)")
         english = node.__to_english__()
-        self.assertIn("once", english.lower())
-        self.assertIn("always hold", english.lower())
+        self.assertRegex(english.lower(), r"\b(once|after)\b")
+        self.assertRegex(english.lower(),
+                         r"stays true|remains true|continues to hold|always hold")
         self.assertIn("'p'", english)
-    
+
     def test_final_state_globally_pattern(self):
-        """G(p -> G p) should translate to 'once p, it will always hold'"""
+        """G(p -> G p) should say that once p holds, it persists."""
         node = parse_ltl_string("G(p -> G p)")
         english = node.__to_english__()
-        self.assertIn("once", english.lower())
-        self.assertIn("always hold", english.lower())
+        self.assertRegex(english.lower(), r"\b(once|after)\b")
+        self.assertRegex(english.lower(),
+                         r"stays true|remains true|continues to hold|always hold")
         self.assertIn("'p'", english)
     
     def test_final_state_different_literals_next(self):
@@ -339,10 +352,15 @@ class TestCapitalization(unittest.TestCase):
         random.seed(42)
     
     def test_sentences_start_with_capital(self):
-        """Most sentences should start with a capital letter"""
+        """Finalized sentences should start with a capital letter.
+
+        __to_english__ returns lowercase composable fragments; capitalization
+        is applied exactly once, at the top level, by finalize_sentence —
+        which is what every rendering call site goes through.
+        """
         formulas = [
             "G p",
-            "F p", 
+            "F p",
             "X p",
             "p & q",
             "p | q",
@@ -354,7 +372,7 @@ class TestCapitalization(unittest.TestCase):
         for formula in formulas:
             with self.subTest(formula=formula):
                 node = parse_ltl_string(formula)
-                english = node.__to_english__()
+                english = ltltoeng.finalize_sentence(node.__to_english__())
                 # Should start with capital letter (unless it starts with a quote)
                 if english and not english.startswith("'"):
                     self.assertTrue(
