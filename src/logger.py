@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, Float, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
@@ -114,6 +114,22 @@ class Logger:
 
         if SENTENCE_PAIR_RATING_TABLE not in self.inspector.get_table_names():
             Base.metadata.tables[SENTENCE_PAIR_RATING_TABLE].create(self.engine)
+
+        self._ensure_student_response_schema()
+
+    def _ensure_student_response_schema(self):
+        """Add newly introduced columns to student_responses if they are missing.
+
+        create_all only creates missing tables; on an existing deployment the
+        table predates these columns, so they have to be added explicitly.
+        """
+        existing_columns = {col['name'] for col in self.inspector.get_columns(STUDENT_RESPONSE_TABLE)}
+
+        with self.engine.begin() as connection:
+            if 'translation_mode' not in existing_columns:
+                connection.execute(
+                    text(f"ALTER TABLE {STUDENT_RESPONSE_TABLE} ADD COLUMN translation_mode VARCHAR DEFAULT ''")
+                )
 
     def record(self, log):
         with self.Session() as session:
