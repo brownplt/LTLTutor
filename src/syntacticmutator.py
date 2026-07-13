@@ -136,9 +136,15 @@ def changeBinaryOperator(node : BinaryOperatorNode):
     
         # Choose a random operator from the list of candidate operators
         newOperator = random.choice(candidatebinops)
-    
-        # Create a new node with the new operator
-        newNode = binopclasses[candidatebinops.index(newOperator)](node.left, node.right)
+
+        # Create a new node with the new operator.
+        # NOTE: use `newOperator` directly. The previous code did
+        # `binopclasses[candidatebinops.index(newOperator)]`, which indexed the
+        # *full* class list with a position from the *candidate* list. Because
+        # the current operator is removed from the candidate list, that index is
+        # off-by-position: it could yield the SAME operator (no mutation) and
+        # could never reach the last operator class. See test_syntacticmutator_pbt.
+        newNode = newOperator(node.left, node.right)
         return newNode
 
 
@@ -156,8 +162,9 @@ def changeUnaryOperator(node : UnaryOperatorNode):
     # Choose a random operator from the list of candidate operators
     newOperator = random.choice(candidateunops)
 
-    # Create a new node with the new operator
-    newNode = unopclasses[candidateunops.index(newOperator)](node.operand)
+    # Create a new node with the new operator. (See changeBinaryOperator: use
+    # newOperator directly rather than re-indexing the full subclass list.)
+    newNode = newOperator(node.operand)
     return newNode
 
 
