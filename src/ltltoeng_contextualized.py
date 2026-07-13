@@ -6,17 +6,21 @@ rules when framed in concrete, familiar terms rather than abstract symbols.
 
 This module translates LTL formulas using a concrete "theme" — a mapping from
 abstract proposition letters to real-world descriptions.  The default theme is
-a 3-light panel (red, green, blue), but custom themes can be supplied.
+a panel of four colored lights (blue, amber, purple, cyan).  The color names
+are chosen so that each literal is the color's first letter AND stays inside
+the tutor's exercise-literal pool, which deliberately avoids letters that look
+like LTL operators (r, g, f, u, x, w, m).
 
 Public API
 ----------
     translate(node, theme=None) -> str
+    remap_to_theme(node, theme=None) -> node or None
     THEMES: dict of built-in theme names -> Theme objects
 
 Example:
-    node = parse_ltl_string("G(r -> F g)")
+    node = parse_ltl_string("G(b -> F a)")
     translate(node, theme=THEMES["lights"])
-    # => "Whenever the red light turns on, then eventually the green light is on."
+    # => "Whenever the blue light turns on, then eventually the amber light is on."
 """
 
 from __future__ import annotations
@@ -79,16 +83,18 @@ THEMES: Dict[str, Theme] = {}
 
 THEMES["lights"] = Theme(
     name="Light Panel",
-    description="A panel with three colored lights: red, green, and blue.",
+    description="A panel with four colored lights: blue, amber, purple, and cyan.",
     literals={
-        "r": ("the red light is on",    "the red light is off"),
-        "g": ("the green light is on",  "the green light is off"),
-        "b": ("the blue light is on",   "the blue light is off"),
+        "b": ("the blue light is on",    "the blue light is off"),
+        "a": ("the amber light is on",   "the amber light is off"),
+        "p": ("the purple light is on",  "the purple light is off"),
+        "c": ("the cyan light is on",    "the cyan light is off"),
     },
     event_form={
-        "r": ("the red light turns on",    "the red light turns off"),
-        "g": ("the green light turns on",  "the green light turns off"),
-        "b": ("the blue light turns on",   "the blue light turns off"),
+        "b": ("the blue light turns on",    "the blue light turns off"),
+        "a": ("the amber light turns on",   "the amber light turns off"),
+        "p": ("the purple light turns on",  "the purple light turns off"),
+        "c": ("the cyan light turns on",    "the cyan light turns off"),
     },
 )
 
@@ -487,7 +493,7 @@ def _t_until(node: ltlnode.UntilNode, theme: Theme) -> str:
 
     l = _t(l_node, theme)
     r = _t(r_node, theme)
-    return f"{l} must continue until {r}"
+    return f"it must remain the case that {l} until {r}"
 
 
 # ---------------------------------------------------------------------------
@@ -514,3 +520,52 @@ def translate(node: ltlnode.LTLNode, theme: Optional[Theme] = None) -> str:
     if result and result[-1] not in ".!?":
         result += "."
     return result
+
+
+def collect_literals(node: ltlnode.LTLNode) -> set:
+    """Return the set of literal names appearing in *node*."""
+    if isinstance(node, ltlnode.LiteralNode):
+        return {node.value}
+    if isinstance(node, ltlnode.UnaryOperatorNode):
+        return collect_literals(node.operand)
+    if isinstance(node, ltlnode.BinaryOperatorNode):
+        return collect_literals(node.left) | collect_literals(node.right)
+    return set()
+
+
+def _rename_literals(node: ltlnode.LTLNode, mapping: Dict[str, str]) -> None:
+    """Rename literals in *node* in place according to *mapping*."""
+    if isinstance(node, ltlnode.LiteralNode):
+        node.value = mapping.get(node.value, node.value)
+    elif isinstance(node, ltlnode.UnaryOperatorNode):
+        _rename_literals(node.operand, mapping)
+    elif isinstance(node, ltlnode.BinaryOperatorNode):
+        _rename_literals(node.left, mapping)
+        _rename_literals(node.right, mapping)
+
+
+def remap_to_theme(node: ltlnode.LTLNode, theme: Optional[Theme] = None) -> Optional[ltlnode.LTLNode]:
+    """Rename *node*'s literals (in place) onto *theme*'s literals.
+
+    This lets the same formula be posed either abstractly or contextualized,
+    so an abstract-vs-contextualized comparison varies only the framing.
+
+    Literals already named after a theme literal keep their name; the rest are
+    assigned the remaining theme literals deterministically (sorted formula
+    literals, theme declaration order).  Returns the node, or None if the
+    formula has more distinct literals than the theme can name.
+    """
+    if theme is None:
+        theme = THEMES["lights"]
+
+    lits = collect_literals(node)
+    if len(lits) > len(theme.literals):
+        return None
+
+    mapping = {lit: lit for lit in lits if lit in theme.literals}
+    free_theme_lits = [t for t in theme.literals if t not in mapping.values()]
+    unmapped = sorted(lit for lit in lits if lit not in mapping)
+    mapping.update(zip(unmapped, free_theme_lits))
+
+    _rename_literals(node, mapping)
+    return node
