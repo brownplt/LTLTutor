@@ -21,9 +21,6 @@ class StubBuilder(ExerciseBuilder):
         super().__init__([])
         self._fixed_weights = weights
 
-    def aggregateLogs(self, bucketsizeinhours=1):
-        return {}
-
     def calculate_misconception_weights(self, concept_history):
         return self._fixed_weights
 
@@ -39,15 +36,21 @@ class TestSampleMisconceptionOptions(unittest.TestCase):
         options = [opt("A"), opt("B")]
         self.assertIs(builder._sample_misconception_options(options, 4), options)
 
+    def test_selects_a_slate_even_when_every_option_fits_global_cap(self):
+        builder = StubBuilder({c: 0.5 for c in "ABCD"})
+        options = [opt(c) for c in "ABCD"]
+        result = builder._sample_misconception_options(options, 5)
+        self.assertEqual(len(result), builder.MAX_MISCONCEPTION_OPTIONS)
+
     def test_reduces_to_budget_no_dupes(self):
         builder = StubBuilder({c: 0.5 for c in "ABCDEFG"})
         options = [opt(c) for c in "ABCDEFG"]
         random.seed(1)
         result = builder._sample_misconception_options(options, 4)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), builder.MAX_MISCONCEPTION_OPTIONS)
         # every result came from the input, no duplicates
         keys = [o["option"] for o in result]
-        self.assertEqual(len(set(keys)), 4)
+        self.assertEqual(len(set(keys)), len(result))
         for o in result:
             self.assertIn(o, options)
 
@@ -116,6 +119,42 @@ class TestWeightedSampleWithoutReplacement(unittest.TestCase):
         random.seed(0)
         result = builder._weighted_sample_without_replacement(items, lambda x: 0.0, 2)
         self.assertEqual(len(result), 2)
+
+
+class TestMonotonicSchedulingPolicy(unittest.TestCase):
+    def test_implicit_g_high_score_increases_operator_pool_priority(self):
+        code = 'MisconceptionCode.ImplicitG'
+        low = StubBuilder({code: 0.1})
+        high = StubBuilder({code: 0.9})
+        low.set_ltl_priorities()
+        high.set_ltl_priorities()
+        self.assertGreater(high.ltl_priorities['G'], low.ltl_priorities['G'])
+
+    def test_priority_scaling_does_not_compound(self):
+        code = 'MisconceptionCode.ImplicitG'
+        builder = StubBuilder({code: 0.9})
+        builder.set_ltl_priorities()
+        first = dict(builder.ltl_priorities)
+        builder.set_ltl_priorities()
+        self.assertEqual(builder.ltl_priorities, first)
+
+    def test_disabled_release_operator_stays_disabled(self):
+        weights = {'MisconceptionCode.Precedence': 1.0}
+        builder = StubBuilder(weights)
+        builder.set_ltl_priorities()
+        self.assertEqual(builder.ltl_priorities['R'], 0)
+
+    def test_seeded_sampling_targets_high_score_more_often(self):
+        low_seen = high_seen = 0
+        options = [opt('TARGET'), opt('A'), opt('B'), opt('C'), opt('D')]
+        for seed in range(800):
+            random.seed(seed)
+            low = StubBuilder({'TARGET': 0.1, 'A': 0.5, 'B': 0.5, 'C': 0.5, 'D': 0.5})
+            high = StubBuilder({'TARGET': 0.9, 'A': 0.5, 'B': 0.5, 'C': 0.5, 'D': 0.5})
+            low_seen += any(x['option'] == 'TARGET' for x in low._sample_misconception_options(options, 2))
+            random.seed(seed)
+            high_seen += any(x['option'] == 'TARGET' for x in high._sample_misconception_options(options, 2))
+        self.assertGreater(high_seen, low_seen)
 
 
 if __name__ == '__main__':

@@ -109,17 +109,13 @@ class MisconceptionCode(Enum):
         return None
 
     def associatedOperators(self):
-
         TEMPORAL_OPERATORS = [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol, NextNode.symbol]
-        k = random.randint(1, len(TEMPORAL_OPERATORS))
-        TEMPORAL_SUBSET = random.choices(TEMPORAL_OPERATORS, k=k)
 
         if self == MisconceptionCode.Precedence:
             ### All binary operators (ie operator.value for every class that inherits from BinaryOperatorNode) ###
             return [cls.symbol for cls in BinaryOperatorNode.__subclasses__()]
         elif self == MisconceptionCode.BadStateIndex:
-            ## Tricky -- default to a subset of temporally meaningful operators (U, X, G, F) ##
-            return TEMPORAL_SUBSET
+            return TEMPORAL_OPERATORS
         elif self == MisconceptionCode.BadStateQuantification:
             # Applies to responses that mis-use or swap a fan-out operator (F, G, U).
             return [FinallyNode.symbol, GloballyNode.symbol, UntilNode.symbol]
@@ -134,9 +130,7 @@ class MisconceptionCode(Enum):
         elif self == MisconceptionCode.WeakU:
             return [UntilNode.symbol]
         elif self == MisconceptionCode.OtherImplicit:
-            ### TODO: This one is tricky, less meaningful...
-            ## But ensure that Next and Until are present ##
-            return list(set([UntilNode.symbol, NextNode.symbol] + TEMPORAL_SUBSET))
+            return [UntilNode.symbol, NextNode.symbol, FinallyNode.symbol, GloballyNode.symbol]
         #### Ignoring these codes since they have no relevance here ###
         else:
             return []

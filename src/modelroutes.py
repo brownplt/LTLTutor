@@ -18,6 +18,12 @@ def getLogsForUser(userId, lookback_days):
     return logs
 
 
+def getMisconceptionOpportunitiesForUser(userId, lookback_days):
+    return logger.getUserMisconceptionOpportunities(
+        userId=userId, lookback_days=lookback_days
+    )
+
+
 def _coerce_bool(value):
     if isinstance(value, bool):
         return value
@@ -45,7 +51,7 @@ QUESTION_TYPE_LABELS = {
 }
 
 
-def _build_profile_snapshot(uid, logs, lookback_days):
+def _build_profile_snapshot(uid, logs, lookback_days, misconception_opportunities=None):
     """Assemble the adaptive-profile view model shared by the profile page and
     the JSON export. The adaptive state itself (complexity, misconception
     weights, question-type weights) comes from ExerciseBuilder; here we add the
@@ -53,7 +59,9 @@ def _build_profile_snapshot(uid, logs, lookback_days):
     num_logs = len(logs)
     num_correct = len([log for log in logs if _coerce_bool(log.correct_answer)])
 
-    builder = exercisebuilder.ExerciseBuilder(logs)
+    builder = exercisebuilder.ExerciseBuilder(
+        logs, misconception_opportunities=misconception_opportunities or []
+    )
     snapshot = builder.get_profile_snapshot()
 
     # Attach human-readable labels and sort so the most-drilled type is first.
@@ -217,10 +225,13 @@ def profile():
     LOOKBACK_DAYS = 365
     uid = current_user.username
     logs = getLogsForUser(uid, LOOKBACK_DAYS)
+    opportunities = getMisconceptionOpportunitiesForUser(uid, LOOKBACK_DAYS)
 
-    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS)
+    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS, opportunities)
 
-    model = exercisebuilder.ExerciseBuilder(logs).get_model()
+    model = exercisebuilder.ExerciseBuilder(
+        logs, misconception_opportunities=opportunities
+    ).get_model()
     misconception_weights_over_time = model['misconception_weights_over_time']
     misconception_trends = model.get('misconception_trends', {})
 
@@ -258,10 +269,11 @@ def profile_export():
     LOOKBACK_DAYS = 365
     uid = current_user.username
     logs = getLogsForUser(uid, LOOKBACK_DAYS)
-    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS)
+    opportunities = getMisconceptionOpportunitiesForUser(uid, LOOKBACK_DAYS)
+    snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS, opportunities)
 
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "user_id": uid,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "lookback_days": LOOKBACK_DAYS,
@@ -280,7 +292,12 @@ def profile_export():
             {"type": q['type'], "label": q['label'], "weight": q['weight']}
             for q in snapshot['question_type_mix']
         ],
-        "misconception_weights": snapshot['misconception_snapshot'],
+        "misconception_evidence_scores": snapshot['misconception_snapshot'],
+        "misconception_model": {
+            "kind": "uncalibrated_evidence_score",
+            "policy_version": "option-evidence-v1",
+            "prior": 0.5,
+        },
     }
 
     body = json.dumps(payload, indent=2, sort_keys=False)

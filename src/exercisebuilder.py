@@ -9,6 +9,7 @@ import re
 import math
 import ltltoeng_prose
 import ltltoeng_contextualized
+import misconceptionmodel
 from syntacticmutator import applyRandomMutationNotEquivalentTo
 
 
@@ -27,11 +28,10 @@ class ExerciseBuilder:
     ## A multiple-choice question shows at most this many options total
     ## (1 correct + up to 5 distractors).
     MAX_TOTAL_OPTIONS = 6
-    ## Every applicable misconception keeps at least this much sampling weight,
-    ## so a resolved/unseen misconception can still surface occasionally and
-    ## its weight can be measured back down.
-    DISTRACTOR_WEIGHT_FLOOR = 0.25
-
+    # Keep the conceptual-distractor slate selective even when every applicable
+    # distractor would fit under MAX_TOTAL_OPTIONS. Otherwise low-score and
+    # high-score misconceptions appear equally often in smaller candidate sets.
+    MAX_MISCONCEPTION_OPTIONS = 3
     COMPLEXITY_MIN = 3
     COMPLEXITY_MAX = 12
     COMPLEXITY_WINDOW = 10
@@ -40,8 +40,9 @@ class ExerciseBuilder:
     COMPLEXITY_STEP_DOWN_ACCURACY = 0.45
 
 
-    def __init__(self, userLogs, complexity=5, syntax="Classic"):
+    def __init__(self, userLogs, complexity=5, syntax="Classic", misconception_opportunities=None):
         self.userLogs = userLogs
+        self.misconception_opportunities = misconception_opportunities or []
         self.numUserLogs = len(userLogs)
 
         self.DEFAULT_WEIGHT = 0.7
@@ -86,156 +87,30 @@ class ExerciseBuilder:
         return str(node)
 
 
-    def aggregateLogs(self, bucketsizeinhours=1):
-
-        concept_history = defaultdict(list)
-
-        # Create an empty dictionary to store the buckets
-        buckets = defaultdict(lambda: defaultdict(int))
-
-        # Iterate over the log entries
-        for log in self.userLogs:
-            timestamp = log.timestamp
-            # Calculate the bucket for the log entry
-            bucket = timestamp.replace(minute=0, second=0, microsecond=0)
-            bucket += datetime.timedelta(hours=(timestamp.hour % bucketsizeinhours))
-
-            # Add the log entry to the corresponding bucket
-            misconception = log.misconception
-            buckets[bucket][misconception] += 1
-
-        # Organize misconceptions by bucket and sort by date
-        for bucket, misconceptions in buckets.items():
-            for misconception, frequency in misconceptions.items():
-                concept_history[misconception].append((bucket, frequency))
-        
-
-        # For all concepts, add them at 0 frequency to all buckets where they are missing
-
-        # I want a list of all MisconceptionCode from enum MisconceptionCode
-        all_misconceptions = [str(m) for m in MisconceptionCode]
-
-        for misconception in all_misconceptions:
-            if misconception not in concept_history:
-                concept_history[misconception] = []
-
-        # Make sure we are not adding any misconceptions that are not in the codebook
-        to_return = { k : v for k, v in concept_history.items() if k in all_misconceptions}
-
-        return to_return
-
-
-   
-    def calculate_misconception_weights(self, concept_history):
-        """
-        Calculate weights for each misconception using an approach inspired by
-        Bayesian Knowledge Tracing (BKT) combined with spaced repetition principles.
-        
-        References:
-        - Corbett, A.T. & Anderson, J.R. (1994). Knowledge tracing: Modeling the
-          acquisition of procedural knowledge. User Modeling and User-Adapted
-          Interaction, 4(4), 253-278. https://doi.org/10.1007/BF01099821
-        - Pavlik, P.I. & Anderson, J.R. (2008). Using a model to compute the optimal
-          schedule of practice. Journal of Experimental Psychology: Applied, 14(2),
-          101-117. https://doi.org/10.1037/1076-898X.14.2.101
-        
-        The model considers:
-        1. Recency: Exponential decay based on spacing effect research (Ebbinghaus)
-        2. Frequency: Log-scaled to prevent extreme values from dominating
-        3. Trend: Bayesian-style update comparing recent vs historical performance
-        4. Drilling: Spaced repetition boost for persistent misconceptions
-        """
-        weights = {}
-        default_weight = 0.5
-        
-        # BKT-inspired parameters
-        # P(L0): Initial probability of having the misconception
-        prior_probability = 0.5
-        # P(T): Transition probability - likelihood of state change per observation
-        # In standard BKT: P(L_n|obs) = P(L_{n-1}) * (1 - P(T)) + (1 - P(L_{n-1})) * P(G)
-        # We adapt this for misconceptions where evidence increases belief
-        transition_rate = 0.1
-        # Decay half-life based on spacing effect research (~24h for short-term)
-        recency_half_life_hours = 24
-        # Drilling threshold (spaced repetition trigger)
-        drilling_threshold = 3
-        # Recent window for trend analysis
-        recent_window_hours = 48
-        # Log scale divisor for frequency normalization
-        log_scale_divisor = 3
-        # Weight combination factors:
-        # BKT weight factor - how much the probabilistic estimate contributes
-        bkt_weight_factor = 0.4
-        # Frequency weight factor - how much the frequency-based estimate contributes
-        frequency_weight_factor = 0.6
-        
-        # Pre-calculate decay constant: ln(2) / half-life
-        decay_constant = -math.log(2) / recency_half_life_hours
-        
-        now = datetime.datetime.now()
-        
-        for concept, entries in concept_history.items():
-            if not entries:
-                weights[concept] = default_weight
+    def aggregate_misconception_evidence(self):
+        """Group explicit opportunity events by conceptual misconception."""
+        codes = misconceptionmodel.modeled_codes(MisconceptionCode)
+        history = {code: [] for code in codes}
+        for event in self.misconception_opportunities:
+            if getattr(event, 'policy_version', misconceptionmodel.MODEL_VERSION) != misconceptionmodel.MODEL_VERSION:
                 continue
-                
-            entries.sort()  # Sort by date
-            
-            # BKT-style sequential update for misconception probability
-            p_misconception = prior_probability
-            recency_weighted_sum = 0
-            recent_count = 0
-            total_count = 0
-            
-            for date, frequency in entries:
-                hours_ago = (now - date).total_seconds() / 3600
-                
-                # Exponential decay factor (Ebbinghaus forgetting curve inspired)
-                decay_factor = math.exp(decay_constant * hours_ago)
-                recency_weighted_sum += frequency * decay_factor
-                total_count += frequency
-                
-                # Adapted BKT update: evidence of misconception increases belief
-                # Standard BKT: P(L_n) = P(L_{n-1}) + (1 - P(L_{n-1})) * P(T)
-                # We scale by evidence strength (frequency * recency)
-                evidence_strength = min(1.0, frequency * decay_factor)
-                p_misconception = p_misconception + (1 - p_misconception) * transition_rate * evidence_strength
-                p_misconception = min(0.95, p_misconception)  # Cap to avoid certainty
-                
-                # Track recent occurrences for drilling
-                if hours_ago <= recent_window_hours:
-                    recent_count += frequency
-            
-            # Calculate trend using comparative analysis
-            trend_score, _ = self._calculate_trend(entries, now)
-            
-            # Combine BKT probability with frequency-based weight
-            base_weight = math.log1p(recency_weighted_sum) / log_scale_divisor
-            
-            # Trend adjustment: Bayesian-style evidence weighting
-            # Positive trend (worsening) increases weight, negative (improving) decreases
-            trend_adjustment = trend_score * 0.2
-            
-            # Spaced repetition drilling boost for persistent misconceptions
-            drilling_boost = 0
-            if recent_count >= drilling_threshold:
-                # Boost proportional to recent frequency, capped at 0.3
-                drilling_boost = min(0.3, recent_count * 0.05)
-            
-            # Final weight combines BKT probability with frequency-based estimate
-            # bkt_weight_factor controls probabilistic contribution
-            # frequency_weight_factor controls frequency-based contribution
-            weight = (p_misconception * bkt_weight_factor) + (default_weight + base_weight) * frequency_weight_factor
-            weight += trend_adjustment + drilling_boost
-            
-            # Sigmoid squashing to bound output between 0 and 1
-            weights[concept] = 1 / (1 + math.exp(-(weight - 0.5)))
+            code = getattr(event, 'misconception', None)
+            if code in history:
+                history[code].append(event)
+        for events in history.values():
+            events.sort(key=lambda event: event.timestamp)
+        return history
 
-        return weights
+    def calculate_misconception_weights(self, evidence_history, now=None):
+        """Return bounded, uncalibrated evidence scores for each misconception."""
+        return {
+            concept: misconceptionmodel.calculate_evidence_score(events, now=now)
+            for concept, events in evidence_history.items()
+        }
 
     def _full_misconception_weights(self):
         """
-        Misconception weights over the student's full log history, memoized for
+        Misconception evidence scores over explicit opportunities, memoized for
         this builder's lifetime. userLogs is fixed once the builder is created,
         so the weights don't change within a generation pass, and computing them
         is O(#logs). Callers that need weights over a *partial* history (e.g.
@@ -243,8 +118,13 @@ class ExerciseBuilder:
         calculate_misconception_weights directly instead.
         """
         if self._misconception_weights_cache is None:
-            self._misconception_weights_cache = self.calculate_misconception_weights(self.aggregateLogs())
+            history = self.aggregate_misconception_evidence()
+            self._misconception_weights_cache = self.calculate_misconception_weights(history)
         return self._misconception_weights_cache
+
+    def _misconception_selection_weight(self, score):
+        """Practice policy kept separate from the inferred evidence score."""
+        return misconceptionmodel.scheduling_weight(score)
 
     def _log_is_correct(self, log):
         """
@@ -357,70 +237,6 @@ class ExerciseBuilder:
         self.complexity = max(self.COMPLEXITY_MIN, min(self.COMPLEXITY_MAX, self.complexity))
         return self.complexity
     
-    def _calculate_trend(self, entries, now, window_hours=48):
-        """
-        Calculate the trend of misconception frequency.
-        Returns a tuple (trend_score, has_recent_data) where:
-        - trend_score: positive if worsening, negative if improving, 0 if stable
-        - has_recent_data: True if there's data within the recent window
-        
-        If no data is within the recent/older windows, uses relative time-based
-        splitting to compare the most recent half of data with the older half.
-        """
-        if len(entries) < 2:
-            # Single entry - new misconception
-            if len(entries) == 1:
-                return (0.25, True)  # Slight positive to indicate it exists but no trend yet
-            return (0, False)
-        
-        # Sort entries by date (oldest first)
-        sorted_entries = sorted(entries, key=lambda x: x[0])
-        
-        # First, try the absolute time window approach
-        recent_sum = 0
-        recent_count = 0
-        older_sum = 0
-        older_count = 0
-        
-        for date, frequency in sorted_entries:
-            hours_ago = (now - date).total_seconds() / 3600
-            if hours_ago <= window_hours:
-                recent_sum += frequency
-                recent_count += 1
-            elif hours_ago <= window_hours * 2:
-                older_sum += frequency
-                older_count += 1
-        
-        # If we have data in both windows, use absolute time comparison
-        if recent_count > 0 and older_count > 0:
-            recent_avg = recent_sum / recent_count
-            older_avg = older_sum / older_count
-            max_avg = max(recent_avg, older_avg)
-            if max_avg == 0:
-                return (0, True)
-            trend = (recent_avg - older_avg) / max_avg
-            return (max(-1, min(1, trend)), True)
-        
-        # If only recent data exists, it's a new or returning misconception
-        if recent_count > 0 and older_count == 0:
-            return (0.25, True)  # Slight positive - new activity
-        
-        # No data in recent windows - use relative comparison of all data
-        # Split entries into two halves (recent half vs older half)
-        mid = len(sorted_entries) // 2
-        older_half = sorted_entries[:mid]
-        recent_half = sorted_entries[mid:]
-        
-        older_avg = sum(f for _, f in older_half) / len(older_half)
-        recent_avg = sum(f for _, f in recent_half) / len(recent_half)
-        
-        max_avg = max(recent_avg, older_avg)
-        if max_avg == 0:
-            return (0, False)
-        
-        trend = (recent_avg - older_avg) / max_avg
-        return (max(-1, min(1, trend)), False)
-
     def operatorToSpot(self, operator):
         if operator in ["&", "&&"]:
             return "and"
@@ -459,7 +275,9 @@ class ExerciseBuilder:
         for m, weight in misconception_weights.items():
             misconception = MisconceptionCode.from_string(m)
             if misconception and misconception.needsTemplateGeneration() and weight > weight_threshold:
-                template_misconceptions.append((misconception, weight))
+                template_misconceptions.append((
+                    misconception, self._misconception_selection_weight(weight)
+                ))
         
         # If no misconceptions are above threshold, don't generate any templates
         if not template_misconceptions:
@@ -492,35 +310,23 @@ class ExerciseBuilder:
         return template_formulas
 
     def set_ltl_priorities(self):
-
-        def scale(weight):
-            return 2 * weight if weight > 0.5 else 2 * (1 - weight)
-
         misconception_weights = self._full_misconception_weights()
-
+        scores_by_operator = defaultdict(list)
         for m, weight in misconception_weights.items():
-
             misconception = MisconceptionCode.from_string(m)
-
             if misconception is None:
                 continue
+            for operator in misconception.associatedOperators():
+                operator = self.operatorToSpot(operator)
+                if operator in self.ltl_priorities:
+                    scores_by_operator[operator].append(weight)
 
-            associatedOperators = misconception.associatedOperators()
-            associatedOperators = [self.operatorToSpot(operator) for operator in associatedOperators]
-
-
-
-            for operator in associatedOperators:
-
-                if operator in self.ltl_priorities.keys():
-
-                    ## Geometric scale, perhaps not the right function.
-                    ## TODO: Consult about the correct function to change weights here
-                    ## This is where ML comes in.
-                    
-                    oldval = self.ltl_priorities[operator]
-                    newval = round(oldval * scale(weight))
-                    self.ltl_priorities[operator] = newval
+        # Always scale from immutable defaults so shared operators do not
+        # compound, and use max so raising any associated misconception cannot
+        # lower the operator's pool priority. A zero base remains zero.
+        for operator, scores in scores_by_operator.items():
+            base = spotutils.DEFAULT_LTL_PRIORITIES[operator]
+            self.ltl_priorities[operator] = round(base * (0.5 + max(scores)))
 
 
     def choose_question_kind(self):
@@ -709,6 +515,7 @@ class ExerciseBuilder:
         floor so resolved/unseen misconceptions still occasionally appear).
         Returns the list unchanged when it already fits.
         """
+        budget = min(budget, self.MAX_MISCONCEPTION_OPTIONS)
         if len(options) <= budget:
             return options
 
@@ -719,7 +526,7 @@ class ExerciseBuilder:
             ## An option merged from several misconceptions is weighted by its
             ## most-salient (highest-weight) code.
             raw = max((weights_by_code.get(c, 0.5) for c in codes), default=0.5)
-            return self.DISTRACTOR_WEIGHT_FLOOR + raw
+            return self._misconception_selection_weight(raw)
 
         return self._weighted_sample_without_replacement(options, option_weight, budget)
 
@@ -881,8 +688,33 @@ class ExerciseBuilder:
             ### We can't get a potential misconception here, so we skip generation here.
             return None
         else:
-            ## Choose a random option
-            formula = random.choice(formulae)
+            # A yes/no question is useful misconception evidence only when it
+            # is built from one of the coded incorrect formulas. Select those
+            # candidates monotonically by the practice policy instead of
+            # uniformly or from the uncoded correct/control options.
+            weights_by_code = self._full_misconception_weights()
+            candidates = [
+                candidate for candidate in formulae
+                if not candidate['isCorrect'] and any(
+                    MisconceptionCode.from_string(code) not in (None, MisconceptionCode.Syntactic)
+                    for code in candidate.get('misconceptions', [])
+                )
+            ]
+            if not candidates:
+                return None
+
+            def candidate_weight(candidate):
+                score = max(
+                    (weights_by_code.get(code, 0.5) for code in candidate['misconceptions']),
+                    default=0.5,
+                )
+                return self._misconception_selection_weight(score)
+
+            formula = random.choices(
+                candidates,
+                weights=[candidate_weight(candidate) for candidate in candidates],
+                k=1,
+            )[0]
             yesIsCorrect = formula['isCorrect']
             formula_asString = self.toSpotSyntax(formula['option'])
             if yesIsCorrect: 
@@ -937,31 +769,26 @@ class ExerciseBuilder:
         
 
     def get_model(self):
-
-        concept_history = self.aggregateLogs()
-        misconception_weights_over_time = { k : [] for k in concept_history.keys()}
-        misconception_weights = {}
+        evidence_history = self.aggregate_misconception_evidence()
+        misconception_weights_over_time = {key: [] for key in evidence_history}
         misconception_trends = {}
-
-        ## Buckets is a dictionary where keys are misconceptions and values are lists of tuples (timestamp, frequency) 
-        misconception_weights = self.calculate_misconception_weights(concept_history)
+        misconception_weights = self.calculate_misconception_weights(evidence_history)
+        now = datetime.datetime.now()
         misconception_count = 0
 
-        now = datetime.datetime.now()
-
-        for misconception in concept_history:
-
-
-            buckets_for_misconception = concept_history[misconception]
-
-
-
-            ## Sort the buckets by date
-            buckets_for_misconception.sort(key=lambda x: x[0])
-            n = len(buckets_for_misconception)
-
-            # Calculate trend for this misconception
-            trend_score, has_recent_data = self._calculate_trend(buckets_for_misconception, now)
+        for misconception, events in evidence_history.items():
+            recent_events = [
+                event for event in events
+                if (now - event.timestamp).total_seconds() <= 48 * 3600
+            ]
+            directional = [
+                event.evidence_strength if event.observation == 'positive'
+                else -event.evidence_strength if event.observation == 'negative'
+                else 0.0
+                for event in recent_events
+            ]
+            trend_score = (sum(directional) / len(directional)) if directional else 0.0
+            has_recent_data = bool(recent_events)
             trend_label = self._get_trend_label(trend_score)
             misconception_trends[misconception] = {
                 "score": trend_score,
@@ -969,23 +796,18 @@ class ExerciseBuilder:
                 "has_recent_data": has_recent_data
             }
 
-            for i in range(n):
-                time_bucket, frequency = buckets_for_misconception[i]
-                misconception_count += frequency
-
-                sub_history = { misconception : buckets_for_misconception[:i+1]}
-
-
-
-                weight = self.calculate_misconception_weights(sub_history)
-                to_append = {
-                    "time" :time_bucket, 
-                    "weight": weight[misconception]
-                }
-
-                
-                #to_append = (time_bucket, weight[misconception])
-                misconception_weights_over_time[misconception].append(to_append)
+            for index, event in enumerate(events):
+                prefix = {misconception: events[:index + 1]}
+                score = self.calculate_misconception_weights(
+                    prefix, now=event.timestamp
+                )[misconception]
+                misconception_weights_over_time[misconception].append({
+                    "time": event.timestamp,
+                    "weight": score,
+                    "observation": event.observation,
+                })
+                if event.observation == 'positive':
+                    misconception_count += 1
 
         return {
             "misconception_weights": misconception_weights,
