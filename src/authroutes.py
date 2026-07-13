@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, current_app
+from flask import Flask, render_template, request, redirect, url_for, flash, current_app, Response
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Session, sessionmaker, Mapped, mapped_column
@@ -65,11 +65,23 @@ class User(UserMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String, unique=True)
     type: Mapped[str] = mapped_column(String)
+    # Optional credential. Populated for accounts that authenticate with a
+    # password (instructors, and persistent student accounts); anonymous
+    # students and quick course-code students leave it NULL.
+    password_hash: Mapped[str] = mapped_column(String, nullable=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'user',
         'polymorphic_on': type
     }
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
 
 class AnonymousStudent(User):
@@ -79,24 +91,30 @@ class AnonymousStudent(User):
 
 
 class CourseStudent(User):
+    """A student account, identified by its (globally unique) username. The two
+    fields below are optional and independent:
+
+      * course_id     — set when the student is enrolled in a course (via a
+                        course code at login/signup, or by joining one later).
+      * password_hash — (inherited from User) set for a persistent account the
+                        student can log back into from any device. A course-code
+                        student with no password is quick to create but is bound
+                        to the browser/device it was created in.
+
+    So the same type covers a quick passwordless course-code student, a
+    persistent password-protected student, and any combination (e.g. a
+    persistent account that is also enrolled in a course)."""
     __mapper_args__ = {
         'polymorphic_identity': 'course-student',
     }
 
-    course_id: Mapped[str] = mapped_column(String, nullable=True) 
+    course_id: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class CourseInstructor(User):
     __mapper_args__ = {
         'polymorphic_identity': 'course-instructor',
     }
-    password_hash: Mapped[str] = mapped_column(String, nullable=True)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
 
 
 def login_required_as_courseinstructor(f):
@@ -219,38 +237,18 @@ def login():
                     flash('Invalid username or password.')
                     return redirect(url_for('authroutes.login'))
 
-            elif user_type == 'course-student':
+            elif user_type == 'student-account':
+                ## Persistent student account: authenticate by password.
                 username = request.form.get('username')
-                course_id = request.form.get('course_id')
-                user = session.query(CourseStudent).filter_by(username=username, course_id=course_id).first()
+                password = request.form.get('password')
+                user = session.query(CourseStudent).filter_by(username=username).first()
 
+                canLogin = (user is not None) and user.check_password(password)
 
-
-
-                ## TODO: User cannot be in more than one course. May have to change this later.
-
-
-                ## Ensure that course_id exists
-                course = session.query(Course).filter_by(name=course_id).first()
-                if course is None:
-                    flash('Could not find a course with ID ' + course_id)
+                if not canLogin:
+                    flash('Invalid username or password.')
                     return redirect(url_for('authroutes.login'))
 
-                canLogin = user is not None
-                ## If user did not already exist, create a new user
-                if user is None:
-                    # Create a new user
-                    user = CourseStudent(username=username, course_id=course_id)
-                    try:
-                        session.add(user)
-                        session.commit()
-                        canLogin = user is not None
-                    except Exception as e:
-                        flash('User {username} already exists.'.format(username=username))
-                        session.rollback()
-                        canLogin = False
-                        
-                
             elif user_type == 'anonymous-student':
                 ## This should really never happen, but just in case
                 tries_remaining = 10
@@ -277,10 +275,14 @@ def login():
                 flash('Login failed. Please try again.')
                 return redirect(url_for('authroutes.login'))
     elif request.method == 'GET':
-        user_type = request.args.get('user_type', '')
+        # A course code no longer logs a student in on its own — it enrolls a
+        # new, password-protected account. Old course links (?course_id=...)
+        # therefore lead to sign-up, where the code is applied.
         course_id = request.args.get('course_id', '')
+        if course_id:
+            return redirect(url_for('authroutes.signup_student', course_id=course_id))
         next_page = _get_safe_next_param()
-        return render_template('auth/login.html', user_type=user_type, course_id=course_id, next_page=next_page)
+        return render_template('auth/login.html', next_page=next_page)
     else:
         return "Invalid request method.", 400
 
@@ -317,6 +319,73 @@ def signup():
     return render_template('auth/signup.html')
 
 
+@authroutes.route('/signup-student', methods=['GET', 'POST'])
+def signup_student():
+    """Create a persistent, password-protected student account. Optionally
+    enroll in a course at the same time by supplying a course code; the student
+    can also join a course later from their home page."""
+    if request.method == 'POST':
+        with Session() as session:
+            username = request.form.get('username')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+            course_code = (request.form.get('course_id') or '').strip()
+
+            if not username or not password:
+                flash('Username and password are required.')
+                return render_template('auth/signup_student.html', course_id=course_code)
+
+            if password != confirm_password:
+                flash('Passwords do not match. Please try again.')
+                return render_template('auth/signup_student.html', course_id=course_code)
+
+            existing_user = session.query(User).filter_by(username=username).first()
+            if existing_user:
+                flash(f'Username {username} is already taken. Please choose another one.')
+                return render_template('auth/signup_student.html', course_id=course_code)
+
+            ## Optional enrollment: only accept a course code that exists.
+            course_id = None
+            if course_code:
+                course = session.query(Course).filter_by(name=course_code).first()
+                if course is None:
+                    flash('Could not find a course with ID ' + course_code)
+                    return render_template('auth/signup_student.html', course_id=course_code)
+                course_id = course_code
+
+            user = CourseStudent(username=username, course_id=course_id)
+            user.set_password(password)
+            session.add(user)
+            session.commit()
+            login_user(user)
+            return redirect(url_for('index'))
+    # GET: a course code may be supplied by a QR / shared link to pre-fill the form.
+    return render_template('auth/signup_student.html', course_id=request.args.get('course_id', ''))
+
+
+@authroutes.route('/join-course', methods=['POST'])
+@login_required
+def join_course():
+    """Let a logged-in student enroll in a course by course code. Used by
+    persistent students who signed up without a course."""
+    if not isinstance(current_user, CourseStudent):
+        abort(403)
+
+    course_code = (request.form.get('course_id') or '').strip()
+    with Session() as session:
+        course = session.query(Course).filter_by(name=course_code).first()
+        if course is None:
+            flash('Could not find a course with ID ' + course_code)
+            return redirect(url_for('index'))
+
+        student = session.query(CourseStudent).filter_by(username=current_user.username).first()
+        if student is not None:
+            student.course_id = course_code
+            session.commit()
+            flash(f'You have joined the course {course_code}.')
+    return redirect(url_for('index'))
+
+
 
 
 @authroutes.route('/register-course', methods=['GET', 'POST'])
@@ -343,11 +412,37 @@ def register_exercise():
             session.add(course)
             session.commit()
 
-            login_link = url_for('authroutes.login', user_type='course-student', course_id=course.name, _external=True)
+            signup_link = url_for('authroutes.signup_student', course_id=course.name, _external=True)
 
-            flash(f'Course <code>{coursename}</code> registered successfully. <br><br> You can share it with students via the course code <code>{course.name}</code> or the link <code>{login_link}</code> <br><br>This link will also be available in your instructor dashboard.')
+            flash(f'Course <code>{coursename}</code> registered successfully. <br><br> Students join by creating an account at the sign-up link <code>{signup_link}</code> (the course code <code>{course.name}</code> is filled in for them) or with the course code directly. <br><br>This link, along with a scannable QR code, will also be available in your instructor dashboard.')
             return redirect(url_for('authroutes.register_exercise'))
     return render_template('instructorhome.html')
+
+
+@authroutes.route('/course/<course_name>/qr.svg')
+@login_required_as_courseinstructor
+def course_login_qr(course_name):
+    """Serve a QR code (SVG) encoding the student sign-up link for a course.
+    Restricted to the instructor who owns the course. Students scan it to open
+    the sign-up page with the course code pre-filled, and create a
+    password-protected account enrolled in the course."""
+    import io
+    import segno
+
+    with Session() as session:
+        course = session.query(Course).filter_by(name=course_name).first()
+        if course is None or course.owner != current_user.username:
+            abort(404)
+
+    signup_link = url_for(
+        'authroutes.signup_student',
+        course_id=course_name,
+        _external=True,
+    )
+    qr = segno.make(signup_link, error='m')
+    buf = io.BytesIO()
+    qr.save(buf, kind='svg', scale=6, border=2)
+    return Response(buf.getvalue(), mimetype='image/svg+xml')
 
 
 def retrieve_course_data(course_name) -> Course:

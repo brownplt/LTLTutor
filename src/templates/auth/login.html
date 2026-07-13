@@ -61,32 +61,48 @@
 
 
 
-        <p class="lead toggle-arrow {% if course_id %} {% else %}collapsed{% endif %}" data-toggle="collapse" href="#collapseCourseCode" role="button"
-            aria-expanded="{{ 'true' if course_id else 'false' }}" aria-controls="collapseCourseCode">
+        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseCourseCode" role="button"
+            aria-expanded="false" aria-controls="collapseCourseCode">
             Have a course code?
         </p>
-        <div class="collapse{% if course_id %} show highlight-section{% endif %}" id="collapseCourseCode">
-            <form action="/login" method="POST">
+        <div class="collapse" id="collapseCourseCode">
+            <p class="text-muted">
+                Joining a course? Create a student account and enter your instructor's course code
+                during sign-up. Your progress stays with your account &mdash; and only you, with your
+                password, can log in as you.
+            </p>
+            <a href="/signup-student" class="btn btn-primary">Create a student account</a>
+        </div>
 
-                <p class="text-muted"> If you are using this tutor as part of a course, you can login as a student using
-                    your instructor-provided username and course code. </p>
-                <input type="hidden" name="user_type" value="course-student">
+        <hr class="my-2">
+        <p class="lead toggle-arrow collapsed" data-toggle="collapse" href="#collapseStudentAccount" role="button"
+            aria-expanded="false" aria-controls="collapseStudentAccount">
+            Student account
+        </p>
+        <div class="collapse" id="collapseStudentAccount">
+            <form action="/login" method="POST">
+                <p class="text-muted">
+                    A student account keeps your progress across devices and browsers &mdash; with or
+                    without a course. Log in with your username and password.
+                    Don't have one yet? <a href="/signup-student" class="btn btn-outline-primary">Create a student account</a>
+                </p>
+                <input type="hidden" name="user_type" value="student-account">
                 <input type="hidden" name="next" value="{{ next_page }}">
 
                 <div class="form-group row">
-                    <label for="username-student" class="col-sm-2 col-form-label">Username:</label>
+                    <label for="studentacct-username" class="col-sm-2 col-form-label">Username:</label>
                     <div class="col-sm-10">
-                        <input type="text" id="username-student" name="username" class="form-control" required>
+                        <input type="text" id="studentacct-username" name="username" class="form-control" required>
                     </div>
                 </div>
                 <div class="form-group row">
-                    <label for="course_id" class="col-sm-2 col-form-label">Course:</label>
+                    <label for="studentacct-password" class="col-sm-2 col-form-label">Password:</label>
                     <div class="col-sm-10">
-                        <input type="text" id="course_id" name="course_id" class="form-control" required value="{{ course_id }}">
+                        <input type="password" id="studentacct-password" name="password" class="form-control" required>
                     </div>
                 </div>
 
-                <input type="submit" value="Login as a Student" class="btn btn-primary">
+                <input type="submit" value="Login" class="btn btn-primary">
             </form>
         </div>
 
