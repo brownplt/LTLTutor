@@ -29,6 +29,7 @@ from authroutes import (
     retrieve_course_data,
     get_owned_courses,
     login_required_as_courseinstructor,
+    CourseInstructor,
     getUserCourse,
     get_course_students,
     get_exercises_for_course,
@@ -280,7 +281,16 @@ def getUserName():
 def getUserId():
     return current_user.id
 
-    
+
+@app.context_processor
+def inject_nav_flags():
+    """Expose is_instructor to every template so the navbar can show instructor-only links."""
+    try:
+        is_instructor = current_user.is_authenticated and isinstance(current_user, CourseInstructor)
+    except Exception:
+        is_instructor = False
+    return {'is_instructor': is_instructor}
+
 
 @app.template_filter('flatten')
 def flatten(lst):

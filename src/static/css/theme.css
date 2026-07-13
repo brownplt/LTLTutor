@@ -69,7 +69,7 @@ code, pre, .mono, kbd { font-family: var(--font-mono); }
   padding-top: .6rem; padding-bottom: .6rem;
 }
 .navbar.bg-light { background-color: color-mix(in srgb, var(--paper) 90%, transparent) !important; }
-/* specificity matches Bootstrap's .navbar-light .navbar-brand so it wins in dark mode too */
+/* lists .navbar-light .navbar-brand explicitly to out-specify Bootstrap's own rule */
 .navbar-light .navbar-brand, .navbar-brand {
   font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
   color: var(--ink); font-size: 1.02rem;
@@ -175,8 +175,8 @@ code, pre, .mono, kbd { font-family: var(--font-mono); }
 .input-group > .form-control { border-right: 0; }
 
 /* ---- Code / formula blocks (highlight.js themed to tokens) -------------- */
-/* highlight.js default.min.css hardcodes a light code theme; retheme it so
-   formulas match the surface (and don't glow white in dark mode). */
+/* highlight.js default.min.css hardcodes its own code theme; retheme it so
+   formulas match the surface. */
 pre { background: transparent; color: var(--ink); }
 .hljs, pre code.hljs { background: var(--surface-2) !important; color: var(--ink); border-radius: var(--r-sm); }
 .hljs-keyword { color: var(--brand-strong); font-weight: 700; }  /* G F X U → operators */
