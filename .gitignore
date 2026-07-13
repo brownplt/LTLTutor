@@ -40,6 +40,8 @@ secret.key
 *.log
 # Ignore cache files
 .cache/
+# Ignore Hypothesis (property-based testing) example database
+.hypothesis/
 # Ignore compiled templates
 *.pyc
 # Ignore compiled translations
