@@ -29,6 +29,7 @@ from authroutes import (
     retrieve_course_data,
     get_owned_courses,
     login_required_as_courseinstructor,
+    CourseInstructor,
     getUserCourse,
     get_course_students,
     get_exercises_for_course,
@@ -280,7 +281,27 @@ def getUserName():
 def getUserId():
     return current_user.id
 
-    
+
+# Endpoints that render an active exercise. The top-bar LTL-syntax setting is
+# locked on these pages so a student can't switch syntax mid-exercise (the
+# exercise was already rendered — and its answers logged — in one syntax).
+EXERCISE_ENDPOINTS = {'exercise', 'exercise_predefined_get', 'newexercise'}
+
+
+@app.context_processor
+def inject_nav_flags():
+    """Expose nav flags to every template: is_instructor (show instructor-only
+    links) and in_exercise (lock the top-bar LTL-syntax setting)."""
+    try:
+        is_instructor = current_user.is_authenticated and isinstance(current_user, CourseInstructor)
+    except Exception:
+        is_instructor = False
+    try:
+        in_exercise = request.endpoint in EXERCISE_ENDPOINTS
+    except Exception:
+        in_exercise = False
+    return {'is_instructor': is_instructor, 'in_exercise': in_exercise}
+
 
 @app.template_filter('flatten')
 def flatten(lst):

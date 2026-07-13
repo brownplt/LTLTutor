@@ -1,6 +1,18 @@
 <div class="d-flex justify-content-between align-items-center py-1 px-2 bg-light border-bottom small text-muted">
     <span>Version {% include 'version.html' %}</span>
-    <span id="userid_field">{{uid}}</span>
+    <div class="d-flex align-items-center">
+        <label for="topbarSyntaxSelect" class="mb-0 mr-2 text-muted">
+            LTL syntax{% if in_exercise %} <span class="font-italic">(locked during exercise)</span>{% endif %}
+        </label>
+        <select id="topbarSyntaxSelect" class="form-control form-control-sm d-inline-block mr-3"
+            style="width:auto;"
+            {% if in_exercise %}disabled title="Finish or leave this exercise to change the LTL syntax"{% endif %}>
+            <option value="Classic">Classic</option>
+            <option value="Forge">Forge</option>
+            <option value="Electrum">Electrum</option>
+        </select>
+        <span id="userid_field">{{uid}}</span>
+    </div>
 </div>
 
 <!-- Navbar -->
@@ -21,29 +33,18 @@
             </li>
 
 
-            <!-- Combined Dropdown for Generate Exercise and Syntax Choice -->
+            <!-- Syntax choice now lives in the top bar as a global setting. -->
             <li class="nav-item">
-                <a class="nav-link" href="/exercise/generate" >Generate Exercise</a>
+                <a class="nav-link" href="/exercise/generate">Generate Exercise</a>
             </li>
 
-
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle"  id="generateExerciseDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                   (<span id="currentLtlSyntax">Classic</span> syntax)
-                </a>
-                <div class="dropdown-menu" aria-labelledby="generateExerciseDropdown">
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Classic')">Generate Exercise (Classic syntax)</a>
-                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Forge')">Generate Exercise (Forge syntax)</a>
-                    <a class="dropdown-item" href="/exercise/generate" onclick="setLtlSyntax('Electrum')">Generate Exercise (Electrum syntax)</a>
-                </div>
-            </li>
-
+            {% if is_instructor %}
             <li class="nav-item">
                 <a class="nav-link" href="/instructor/home" aria-expanded="false">
                     Instructor Dashboard
                 </a>
             </li>
+            {% endif %}
 
             {% if uid %}
             <li class="nav-item dropdown">
@@ -84,36 +85,60 @@
     </div>
 </nav>
 
-<!-- JavaScript to set the ltlsyntax cookie -->
+<!-- Global LTL-syntax setting (top bar). Persisted in the ltlsyntax cookie and read server-side. -->
 <script>
-    // Function to get the value of a cookie by name
-    function setLtlSyntax(syntax) {
-        document.cookie = "ltlsyntax=" + syntax + "; path=/";
-        document.getElementById('currentLtlSyntax').innerText = syntax;
-    }
+    (function () {
+        var SYNTAXES = ['Classic', 'Forge', 'Electrum'];
 
-    // Function to get the value of a cookie by name
-    function getCookie(name) {
-        let cookieArr = document.cookie.split(";");
-        for (let i = 0; i < cookieArr.length; i++) {
-            let cookiePair = cookieArr[i].split("=");
-            if (name == cookiePair[0].trim()) {
-                return decodeURIComponent(cookiePair[1]);
+        function getCookie(name) {
+            var cookieArr = document.cookie.split(";");
+            for (var i = 0; i < cookieArr.length; i++) {
+                var pair = cookieArr[i].split("=");
+                if (name === pair[0].trim()) {
+                    return decodeURIComponent(pair[1]);
+                }
             }
+            return null;
         }
-        return null;
-    }
 
-    // Set the initial value of the dropdown based on the cookie
-    document.addEventListener('DOMContentLoaded', (event) => {
-        let currentSyntax = getCookie('ltlsyntax');
-        if (currentSyntax) {
-            document.getElementById('currentLtlSyntax').innerText = currentSyntax;
+        function writeSyntaxCookie(syntax) {
+            document.cookie = "ltlsyntax=" + syntax + "; path=/";
         }
-        else {
-            setLtlSyntax('Classic');
-        }
-    });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var current = getCookie('ltlsyntax');
+            if (!current || SYNTAXES.indexOf(current) === -1) {
+                current = 'Classic';
+                writeSyntaxCookie(current);
+            }
+
+            var topSelect = document.getElementById('topbarSyntaxSelect');
+            if (!topSelect) { return; }
+            topSelect.value = current;
+
+            // Locked during an active exercise: show the current syntax, wire up nothing.
+            if (topSelect.disabled) { return; }
+
+            // The /ltl reference page has its own in-page selector; keep the two in sync.
+            var pageSelect = document.getElementById('ltlSyntaxSelect');
+
+            topSelect.addEventListener('change', function () {
+                writeSyntaxCookie(this.value);
+                if (pageSelect && pageSelect.value !== this.value) {
+                    pageSelect.value = this.value;
+                    pageSelect.dispatchEvent(new Event('change'));
+                }
+            });
+
+            if (pageSelect) {
+                pageSelect.addEventListener('change', function () {
+                    if (topSelect.value !== this.value) {
+                        topSelect.value = this.value;
+                    }
+                });
+            }
+        });
+    })();
     </script>
 
 <!-- Generic Modal -->
