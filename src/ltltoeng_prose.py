@@ -6,6 +6,14 @@ requirements document.  A single LTL formula may become multiple short
 sentences connected by discourse connectives ("After that point, ...",
 "Suppose that ...", "This applies every time ...").
 
+Composition discipline
+----------------------
+Only literals translate to noun-like fragments (``'p'``); every other node
+translates to a full clause with its own verb.  Templates therefore only
+append verbs ("holds", "occurs", "must eventually follow") to literal
+operands, and embed anything else via ``_clause`` inside a clause-safe
+frame ("it must eventually be the case that ...").
+
 Public API
 ----------
     translate(node) -> str
@@ -27,7 +35,7 @@ def _lit(node: ltlnode.LTLNode) -> str:
     if isinstance(node, ltlnode.LiteralNode):
         return f"'{node.value}'"
     # Fallback: translate the subtree inline.
-    return _inner(node, _Ctx())
+    return _inner(node, _Ctx(inline=True))
 
 
 def _is_lit(node: ltlnode.LTLNode) -> bool:
@@ -101,6 +109,32 @@ class _Ctx:
         )
 
 
+def _clause(node: ltlnode.LTLNode, ctx: _Ctx) -> str:
+    """Return a full clause (subject + verb) for *node*.
+
+    Literals get an explicit verb; negated literals get "does not hold";
+    everything else already translates to a clause.
+    """
+    if _is_lit(node):
+        return f"{_lit(node)} holds"
+    if isinstance(node, ltlnode.NotNode) and _is_lit(node.operand):
+        return f"{_lit(node.operand)} does not hold"
+    # Embedded clauses drop the deontic "must" that top-level templates use:
+    # "'p' holds at all times", not "'p' must hold at all times".
+    if isinstance(node, ltlnode.GloballyNode) and _is_lit(node.operand):
+        return f"{_lit(node.operand)} holds at all times"
+    if isinstance(node, ltlnode.FinallyNode) and _is_lit(node.operand):
+        return f"{_lit(node.operand)} eventually occurs"
+    return _inner(node, ctx.child(inline=True))
+
+
+def _occurs(node: ltlnode.LTLNode, ctx: _Ctx) -> str:
+    """Like _clause, but with event phrasing for literals ("'p' occurs")."""
+    if _is_lit(node):
+        return f"{_lit(node)} occurs"
+    return _clause(node, ctx)
+
+
 # ---------------------------------------------------------------------------
 # Complexity heuristic
 # ---------------------------------------------------------------------------
@@ -135,7 +169,9 @@ def _inner(node: ltlnode.LTLNode, ctx: _Ctx) -> str:
 
     # --- Literal -----------------------------------------------------------
     if isinstance(node, ltlnode.LiteralNode):
-        return f"'{node.value}'"
+        if ctx.inline:
+            return f"'{node.value}'"
+        return f"'{node.value}' holds"
 
     # --- Not ---------------------------------------------------------------
     if isinstance(node, ltlnode.NotNode):
@@ -186,13 +222,13 @@ def _translate_not(node: ltlnode.NotNode, ctx: _Ctx) -> str:
 
     # !(F p) => "'p' never occurs."
     if isinstance(inner, ltlnode.FinallyNode):
-        target = _inner(inner.operand, ctx.child(inline=True))
-        return f"{target} never occurs"
+        if _is_lit(inner.operand):
+            return f"{_lit(inner.operand)} never occurs"
+        return f"it is never the case that {_clause(inner.operand, ctx)}"
 
     # !(G p) => "it is not always the case that 'p' holds"
     if isinstance(inner, ltlnode.GloballyNode):
-        target = _inner(inner.operand, ctx.child(inline=True))
-        return f"it is not always the case that {target} holds"
+        return f"it is not always the case that {_clause(inner.operand, ctx)}"
 
     # !!p => p  (double negation)
     if isinstance(inner, ltlnode.NotNode):
@@ -200,27 +236,31 @@ def _translate_not(node: ltlnode.NotNode, ctx: _Ctx) -> str:
 
     # !(p & q) => De Morgan
     if isinstance(inner, ltlnode.AndNode):
-        l = _inner(inner.left, ctx.child(inline=True))
-        r = _inner(inner.right, ctx.child(inline=True))
-        return f"not both {l} and {r}"
+        if _is_lit(inner.left) and _is_lit(inner.right):
+            return f"not both {_lit(inner.left)} and {_lit(inner.right)}"
+        l = _clause(inner.left, ctx)
+        r = _clause(inner.right, ctx)
+        return f"it is not the case that both of the following hold: {l}, and {r}"
 
     # !(p | q) => De Morgan
     if isinstance(inner, ltlnode.OrNode):
-        l = _inner(inner.left, ctx.child(inline=True))
-        r = _inner(inner.right, ctx.child(inline=True))
-        return f"neither {l} nor {r}"
+        if _is_lit(inner.left) and _is_lit(inner.right):
+            return f"neither {_lit(inner.left)} nor {_lit(inner.right)}"
+        l = _clause(inner.left, ctx)
+        r = _clause(inner.right, ctx)
+        return f"neither of the following holds: {l}, nor {r}"
 
     # !(p -> q)
     if isinstance(inner, ltlnode.ImpliesNode):
-        l = _inner(inner.left, ctx.child(inline=True))
-        r = _inner(inner.right, ctx.child(inline=True))
-        return f"{l} holds, but {r} does not"
+        l = _clause(inner.left, ctx)
+        if _is_lit(inner.right):
+            return f"{l}, but {_lit(inner.right)} does not hold"
+        return f"{l}, but it is not the case that {_clause(inner.right, ctx)}"
 
     # Generic negation
     if _is_lit(inner):
         return f"'{inner.value}' does not hold"
-    target = _inner(inner, ctx.child(inline=True))
-    return f"it is not the case that {target}"
+    return f"it is not the case that {_clause(inner, ctx)}"
 
 
 # --- AND ------------------------------------------------------------------
@@ -228,13 +268,19 @@ def _translate_not(node: ltlnode.NotNode, ctx: _Ctx) -> str:
 def _translate_and(node: ltlnode.AndNode, ctx: _Ctx) -> str:
     # !p & !q  => neither ... nor
     if isinstance(node.left, ltlnode.NotNode) and isinstance(node.right, ltlnode.NotNode):
-        ll = _inner(node.left.operand, ctx.child(inline=True))
-        rr = _inner(node.right.operand, ctx.child(inline=True))
-        return f"neither {ll} nor {rr}"
+        if _is_lit(node.left.operand) and _is_lit(node.right.operand):
+            l = _lit(node.left.operand)
+            r = _lit(node.right.operand)
+            return f"neither {l} nor {r}" + (" holds" if not ctx.inline else "")
 
-    l = _inner(node.left, ctx.child(inline=True))
-    r = _inner(node.right, ctx.child(inline=True))
-    return f"both {l} and {r}"
+    if _is_lit(node.left) and _is_lit(node.right):
+        l = _lit(node.left)
+        r = _lit(node.right)
+        return f"both {l} and {r}" + (" hold" if not ctx.inline else "")
+
+    l = _clause(node.left, ctx)
+    r = _clause(node.right, ctx)
+    return f"both of the following hold: {l}, and {r}"
 
 
 # --- OR -------------------------------------------------------------------
@@ -242,66 +288,79 @@ def _translate_and(node: ltlnode.AndNode, ctx: _Ctx) -> str:
 def _translate_or(node: ltlnode.OrNode, ctx: _Ctx) -> str:
     # !p | !q  => not both ... and
     if isinstance(node.left, ltlnode.NotNode) and isinstance(node.right, ltlnode.NotNode):
-        ll = _inner(node.left.operand, ctx.child(inline=True))
-        rr = _inner(node.right.operand, ctx.child(inline=True))
-        return f"not both {ll} and {rr}"
+        if _is_lit(node.left.operand) and _is_lit(node.right.operand):
+            ll = _lit(node.left.operand)
+            rr = _lit(node.right.operand)
+            return f"not both {ll} and {rr}" + (" hold" if not ctx.inline else "")
 
-    l = _inner(node.left, ctx.child(inline=True))
-    r = _inner(node.right, ctx.child(inline=True))
-    return f"either {l} or {r}"
+    if _is_lit(node.left) and _is_lit(node.right):
+        l = _lit(node.left)
+        r = _lit(node.right)
+        return f"either {l} or {r}" + (" holds" if not ctx.inline else "")
+
+    l = _clause(node.left, ctx)
+    r = _clause(node.right, ctx)
+    return f"at least one of the following holds: {l}, or {r}"
 
 
 # --- IMPLIES --------------------------------------------------------------
 
 def _translate_implies(node: ltlnode.ImpliesNode, ctx: _Ctx) -> str:
-    l = _inner(node.left, ctx.child(inline=True))
-    r = _inner(node.right, ctx.child(inline=True))
-
     # p -> !q  (exclusion)
     if isinstance(node.right, ltlnode.NotNode):
-        rr = _inner(node.right.operand, ctx.child(inline=True))
         if _is_lit(node.left) and _is_lit(node.right.operand):
-            return f"{l} excludes {rr}"
-        return f"if {l} holds, then {rr} does not"
+            return f"{_lit(node.left)} excludes {_lit(node.right.operand)}"
+        l = _clause(node.left, ctx)
+        rr = node.right.operand
+        if _is_lit(rr):
+            return f"if {l}, then {_lit(rr)} does not hold"
+        return f"if {l}, then it is not the case that {_clause(rr, ctx)}"
 
     # !p -> q  (unless)
     if isinstance(node.left, ltlnode.NotNode):
-        ll = _inner(node.left.operand, ctx.child(inline=True))
-        return f"{r} unless {ll}"
+        ll = _clause(node.left.operand, ctx)
+        r = _clause(node.right, ctx)
+        return f"{r}, unless {ll}"
 
     # (p & q) -> r
     if isinstance(node.left, ltlnode.AndNode):
-        pl = _inner(node.left.left, ctx.child(inline=True))
-        pr = _inner(node.left.right, ctx.child(inline=True))
+        pl = _clause(node.left.left, ctx)
+        pr = _clause(node.left.right, ctx)
+        r = _clause(node.right, ctx)
         return f"if both {pl} and {pr}, then {r}"
 
     # (p | q) -> r
     if isinstance(node.left, ltlnode.OrNode):
-        pl = _inner(node.left.left, ctx.child(inline=True))
-        pr = _inner(node.left.right, ctx.child(inline=True))
+        pl = _clause(node.left.left, ctx)
+        pr = _clause(node.left.right, ctx)
+        r = _clause(node.right, ctx)
         return f"if either {pl} or {pr}, then {r}"
 
     # p -> (q & r)
     if isinstance(node.right, ltlnode.AndNode):
-        rl = _inner(node.right.left, ctx.child(inline=True))
-        rr = _inner(node.right.right, ctx.child(inline=True))
-        return f"if {l} holds, then both {rl} and {rr} follow"
+        l = _clause(node.left, ctx)
+        rl = _clause(node.right.left, ctx)
+        rr = _clause(node.right.right, ctx)
+        return f"if {l}, then both {rl} and {rr}"
 
     # p -> (q | r)
     if isinstance(node.right, ltlnode.OrNode):
-        rl = _inner(node.right.left, ctx.child(inline=True))
-        rr = _inner(node.right.right, ctx.child(inline=True))
-        return f"if {l} holds, then either {rl} or {rr}"
+        l = _clause(node.left, ctx)
+        rl = _clause(node.right.left, ctx)
+        rr = _clause(node.right.right, ctx)
+        return f"if {l}, then either {rl} or {rr}"
 
-    return f"if {l} holds, then {r}"
+    l = _clause(node.left, ctx)
+    r = _clause(node.right, ctx)
+    return f"if {l}, then {r}"
 
 
 # --- EQUIVALENCE ----------------------------------------------------------
 
 def _translate_equivalence(node: ltlnode.EquivalenceNode, ctx: _Ctx) -> str:
-    l = _inner(node.left, ctx.child(inline=True))
-    r = _inner(node.right, ctx.child(inline=True))
-    return f"{l} holds exactly when {r} holds"
+    l = _clause(node.left, ctx)
+    r = _clause(node.right, ctx)
+    return f"{l} exactly when {r}"
 
 
 # --- GLOBALLY -------------------------------------------------------------
@@ -311,8 +370,9 @@ def _translate_globally(node: ltlnode.GloballyNode, ctx: _Ctx) -> str:
 
     # G(!p)  => "'p' never holds."
     if isinstance(inner, ltlnode.NotNode):
-        target = _inner(inner.operand, ctx.child("globally", inline=True))
-        return f"{target} never holds"
+        if _is_lit(inner.operand):
+            return f"{_lit(inner.operand)} never holds"
+        return f"at no point is it the case that {_clause(inner.operand, ctx)}"
 
     # G(p -> ...) patterns
     if isinstance(inner, ltlnode.ImpliesNode):
@@ -326,65 +386,71 @@ def _translate_globally(node: ltlnode.GloballyNode, ctx: _Ctx) -> str:
                 lit = _lit(left)
                 return f"once {lit} becomes true, it remains true forever"
 
+        whenever = _clause(left, ctx.child("globally"))
+
         # -- G(p -> F q):  response pattern
         if isinstance(right, ltlnode.FinallyNode):
             # G((p U q) -> F r)
             if isinstance(left, ltlnode.UntilNode):
-                p = _inner(left.left, ctx.child("globally", inline=True))
-                q = _inner(left.right, ctx.child("globally", inline=True))
-                r = _inner(right.operand, ctx.child("globally", inline=True))
+                p = _clause(left.left, ctx.child("globally"))
+                q = _occurs(left.right, ctx.child("globally"))
+                r = _clause(right.operand, ctx.child("globally"))
                 return _join_sentences(
-                    f"suppose {p} holds continuously until {q} occurs",
-                    f"then {r} must eventually follow",
+                    f"suppose {p} continuously, until {q}",
+                    f"then it must eventually be the case that {r}",
                     "this applies every time such a situation arises",
                 )
 
-            lhs = _inner(left, ctx.child("globally", inline=True))
-            rhs = _inner(right.operand, ctx.child("globally", inline=True))
-            return f"whenever {lhs} holds, {rhs} must eventually follow"
+            if _is_lit(right.operand):
+                return f"whenever {whenever}, {_lit(right.operand)} must eventually follow"
+            rhs = _clause(right.operand, ctx.child("globally"))
+            return f"whenever {whenever}, it must eventually be the case that {rhs}"
 
         # -- G(p -> X(F q)):  bounded response
         if isinstance(right, ltlnode.NextNode) and isinstance(right.operand, ltlnode.FinallyNode):
-            lhs = _inner(left, ctx.child("globally", inline=True))
-            rhs = _inner(right.operand.operand, ctx.child("globally", inline=True))
-            return f"whenever {lhs} holds, starting from the very next step, {rhs} is guaranteed to eventually occur"
+            target = right.operand.operand
+            if _is_lit(target):
+                return f"whenever {whenever}, starting from the very next step, {_lit(target)} is guaranteed to eventually occur"
+            rhs = _clause(target, ctx.child("globally"))
+            return f"whenever {whenever}, starting from the very next step, it is guaranteed that eventually, {rhs}"
 
         # -- G(p -> X q):  immediate response (not same literal)
         if isinstance(right, ltlnode.NextNode):
-            lhs = _inner(left, ctx.child("globally", inline=True))
-            rhs = _inner(right.operand, ctx.child("globally", inline=True))
-            return f"whenever {lhs} holds, {rhs} must hold in the very next step"
+            target = right.operand
+            if _is_lit(target):
+                return f"whenever {whenever}, {_lit(target)} must hold in the very next step"
+            rhs = _clause(target, ctx.child("globally"))
+            return f"whenever {whenever}, then in the very next step, {rhs}"
 
         # -- G(p -> (q U r)):  chain precedence
         if isinstance(right, ltlnode.UntilNode):
-            lhs = _inner(left, ctx.child("globally", inline=True))
-            ul = _inner(right.left, ctx.child("globally", inline=True))
-            ur = _inner(right.right, ctx.child("globally", inline=True))
-            return f"whenever {lhs} holds, {ul} must hold until {ur} occurs"
+            ul = _clause(right.left, ctx.child("globally"))
+            ur = _occurs(right.right, ctx.child("globally"))
+            return f"whenever {whenever}, it must remain the case that {ul} until {ur}"
 
         # -- G(p -> (F q & F r)):  chain response
         if isinstance(right, ltlnode.AndNode):
             if isinstance(right.left, ltlnode.FinallyNode) and isinstance(right.right, ltlnode.FinallyNode):
-                lhs = _inner(left, ctx.child("globally", inline=True))
-                rl = _inner(right.left.operand, ctx.child("globally", inline=True))
-                rr = _inner(right.right.operand, ctx.child("globally", inline=True))
-                return f"whenever {lhs} holds, both {rl} and {rr} are guaranteed to eventually occur (though not necessarily at the same time)"
+                rl = _occurs(right.left.operand, ctx.child("globally"))
+                rr = _occurs(right.right.operand, ctx.child("globally"))
+                return f"whenever {whenever}, two things are guaranteed to eventually happen (though not necessarily at the same time): {rl}, and {rr}"
 
         # -- G(p -> q):  generic rule
-        lhs = _inner(left, ctx.child("globally", inline=True))
-        rhs = _inner(right, ctx.child("globally", inline=True))
-        return f"whenever {lhs} holds, {rhs} must also hold"
+        if _is_lit(right):
+            return f"whenever {whenever}, {_lit(right)} must also hold"
+        rhs = _clause(right, ctx.child("globally"))
+        return f"whenever {whenever}, it must also be the case that {rhs}"
 
     # G(F p)  => recurrence / infinitely often
     if isinstance(inner, ltlnode.FinallyNode):
         fi = inner.operand
         # G(F(p & q))
-        if isinstance(fi, ltlnode.AndNode):
-            l = _inner(fi.left, ctx.child("globally", inline=True))
-            r = _inner(fi.right, ctx.child("globally", inline=True))
-            return f"both {l} and {r} must occur together infinitely often"
-        target = _inner(fi, ctx.child("globally", inline=True))
-        return f"{target} must occur infinitely often"
+        if isinstance(fi, ltlnode.AndNode) and _is_lit(fi.left) and _is_lit(fi.right):
+            return f"both {_lit(fi.left)} and {_lit(fi.right)} must occur together infinitely often"
+        if _is_lit(fi):
+            return f"{_lit(fi)} must occur infinitely often"
+        target = _clause(fi, ctx.child("globally"))
+        return f"it must be the case infinitely often that {target}"
 
     # G(G(...)) => idempotent
     if isinstance(inner, ltlnode.GloballyNode):
@@ -392,19 +458,23 @@ def _translate_globally(node: ltlnode.GloballyNode, ctx: _Ctx) -> str:
 
     # G(p & q) / G(p | q) - simple
     if isinstance(inner, ltlnode.AndNode):
-        l = _inner(inner.left, ctx.child("globally", inline=True))
-        r = _inner(inner.right, ctx.child("globally", inline=True))
-        return f"at all times, both {l} and {r} must hold"
+        if _is_lit(inner.left) and _is_lit(inner.right):
+            return f"at all times, both {_lit(inner.left)} and {_lit(inner.right)} must hold"
+        l = _clause(inner.left, ctx.child("globally"))
+        r = _clause(inner.right, ctx.child("globally"))
+        return f"at all times, both of the following must hold: {l}, and {r}"
 
     if isinstance(inner, ltlnode.OrNode):
-        l = _inner(inner.left, ctx.child("globally", inline=True))
-        r = _inner(inner.right, ctx.child("globally", inline=True))
-        return f"at all times, either {l} or {r} must hold"
+        if _is_lit(inner.left) and _is_lit(inner.right):
+            return f"at all times, either {_lit(inner.left)} or {_lit(inner.right)} must hold"
+        l = _clause(inner.left, ctx.child("globally"))
+        r = _clause(inner.right, ctx.child("globally"))
+        return f"at all times, at least one of the following must hold: {l}, or {r}"
 
     # G(literal) or G(complex)
-    target = _inner(inner, ctx.child("globally", inline=True))
     if _is_lit(inner):
-        return f"{target} must hold at all times"
+        return f"{_lit(inner)} must hold at all times"
+    target = _clause(inner, ctx.child("globally"))
     return f"at all times, {target}"
 
 
@@ -423,76 +493,87 @@ def _translate_finally(node: ltlnode.FinallyNode, ctx: _Ctx) -> str:
 
         # F(G(!p))
         if isinstance(gi, ltlnode.NotNode):
-            target = _inner(gi.operand, ctx.child("finally", inline=True))
-            return f"eventually, a point is reached after which {target} never holds again"
+            if _is_lit(gi.operand):
+                return f"eventually, a point is reached after which {_lit(gi.operand)} never holds again"
+            target = _clause(gi.operand, ctx.child("finally"))
+            return f"eventually, a point is reached after which it is never again the case that {target}"
 
         # F(G(p -> F q))
         if isinstance(gi, ltlnode.ImpliesNode) and isinstance(gi.right, ltlnode.FinallyNode):
-            lhs = _inner(gi.left, ctx.child("finally", inline=True))
-            rhs = _inner(gi.right.operand, ctx.child("finally", inline=True))
+            lhs = _clause(gi.left, ctx.child("finally"))
+            if _is_lit(gi.right.operand):
+                follow = f"{_lit(gi.right.operand)} must eventually follow"
+            else:
+                follow = f"it must eventually be the case that {_clause(gi.right.operand, ctx.child('finally'))}"
             return _join_sentences(
                 "eventually, a stable regime is reached",
-                f"after that point, whenever {lhs} holds, {rhs} must eventually follow",
+                f"after that point, whenever {lhs}, {follow}",
             )
 
         # F(G(p -> q))  generic stable rule
         if isinstance(gi, ltlnode.ImpliesNode):
-            lhs = _inner(gi.left, ctx.child("finally", inline=True))
-            rhs = _inner(gi.right, ctx.child("finally", inline=True))
+            lhs = _clause(gi.left, ctx.child("finally"))
+            if _is_lit(gi.right):
+                also = f"{_lit(gi.right)} must also hold"
+            else:
+                also = f"it must also be the case that {_clause(gi.right, ctx.child('finally'))}"
             return _join_sentences(
                 "eventually, a stable regime is reached",
-                f"after that point, whenever {lhs} holds, {rhs} must also hold",
+                f"after that point, whenever {lhs}, {also}",
             )
 
         # F(G(p & q))
-        if isinstance(gi, ltlnode.AndNode):
-            l = _inner(gi.left, ctx.child("finally", inline=True))
-            r = _inner(gi.right, ctx.child("finally", inline=True))
-            return f"eventually, both {l} and {r} become true and remain true forever"
+        if isinstance(gi, ltlnode.AndNode) and _is_lit(gi.left) and _is_lit(gi.right):
+            return f"eventually, both {_lit(gi.left)} and {_lit(gi.right)} become true and remain true forever"
 
         # F(G p) generic persistence / stability
-        target = _inner(gi, ctx.child("finally", inline=True))
-        return f"eventually, {target} becomes true and remains true forever"
+        if _is_lit(gi):
+            return f"eventually, {_lit(gi)} becomes true and remains true forever"
+        target = _clause(gi, ctx.child("finally"))
+        return f"eventually, it permanently becomes the case that {target}"
 
     # F(!p)
     if isinstance(inner, ltlnode.NotNode):
-        target = _inner(inner.operand, ctx.child("finally", inline=True))
-        return f"eventually, {target} will cease to hold"
+        if _is_lit(inner.operand):
+            return f"eventually, {_lit(inner.operand)} will cease to hold"
+        return f"eventually, {_clause(inner, ctx.child('finally'))}"
 
     # F(p & G q)  or  F(G q & p)  -  persistence after trigger
     if isinstance(inner, ltlnode.AndNode):
         l, r = inner.left, inner.right
-        if isinstance(r, ltlnode.GloballyNode):
-            trigger = _inner(l, ctx.child("finally", inline=True))
-            persist = _inner(r.operand, ctx.child("finally", inline=True))
+        if isinstance(r, ltlnode.GloballyNode) or isinstance(l, ltlnode.GloballyNode):
+            g_node, trigger_node = (r, l) if isinstance(r, ltlnode.GloballyNode) else (l, r)
+            trigger = _occurs(trigger_node, ctx.child("finally"))
+            if _is_lit(g_node.operand):
+                persist = f"{_lit(g_node.operand)} holds forever"
+            else:
+                persist = f"it is always the case that {_clause(g_node.operand, ctx.child('finally'))}"
             return _join_sentences(
-                f"eventually, {trigger} occurs",
-                f"from that point on, {persist} holds forever",
-            )
-        if isinstance(l, ltlnode.GloballyNode):
-            trigger = _inner(r, ctx.child("finally", inline=True))
-            persist = _inner(l.operand, ctx.child("finally", inline=True))
-            return _join_sentences(
-                f"eventually, {trigger} occurs",
-                f"from that point on, {persist} holds forever",
+                f"eventually, {trigger}",
+                f"from that point on, {persist}",
             )
         # F(p & q) simple simultaneity
-        ll = _inner(l, ctx.child("finally", inline=True))
-        rr = _inner(r, ctx.child("finally", inline=True))
-        return f"eventually, both {ll} and {rr} will be true at the same time"
+        if _is_lit(l) and _is_lit(r):
+            return f"eventually, both {_lit(l)} and {_lit(r)} will be true at the same time"
+        ll = _clause(l, ctx.child("finally"))
+        rr = _clause(r, ctx.child("finally"))
+        return f"eventually, both of the following hold at the same time: {ll}, and {rr}"
 
     # F(p -> G q)  trigger-to-permanence
     if isinstance(inner, ltlnode.ImpliesNode) and isinstance(inner.right, ltlnode.GloballyNode):
-        trigger = _inner(inner.left, ctx.child("finally", inline=True))
-        result = _inner(inner.right.operand, ctx.child("finally", inline=True))
-        return f"eventually, once {trigger} holds, {result} will hold forever after"
+        trigger = _clause(inner.left, ctx.child("finally"))
+        if _is_lit(inner.right.operand):
+            result = f"{_lit(inner.right.operand)} will hold forever after"
+        else:
+            result = f"it will forever after be the case that {_clause(inner.right.operand, ctx.child('finally'))}"
+        return f"eventually, once {trigger}, {result}"
 
     # F(literal)
     if _is_lit(inner):
         return f"{_lit(inner)} must eventually occur"
 
     # Generic F(...)
-    target = _inner(inner, ctx.child("finally", inline=True))
+    target = _clause(inner, ctx.child("finally"))
     return f"eventually, {target}"
 
 
@@ -512,16 +593,18 @@ def _translate_next(node: ltlnode.NextNode, ctx: _Ctx) -> str:
 
     # X(p U q) => "starting from the next step, ..."
     if steps == 1 and isinstance(core, ltlnode.UntilNode):
-        l = _inner(core.left, ctx.child("next", inline=True))
-        r = _inner(core.right, ctx.child("next", inline=True))
-        return f"starting from the next step, {l} holds until {r} occurs"
+        l = _clause(core.left, ctx.child("next"))
+        r = _occurs(core.right, ctx.child("next"))
+        return f"starting from the next step, it must remain the case that {l} until {r}"
 
     # X(F q) => "starting from the next step, q must eventually occur"
     if steps == 1 and isinstance(core, ltlnode.FinallyNode):
-        target = _inner(core.operand, ctx.child("next", inline=True))
-        return f"starting from the next step, {target} must eventually occur"
+        if _is_lit(core.operand):
+            return f"starting from the next step, {_lit(core.operand)} must eventually occur"
+        target = _clause(core.operand, ctx.child("next"))
+        return f"starting from the next step, it must eventually be the case that {target}"
 
-    target = _inner(core, ctx.child("next", inline=True))
+    target = _clause(core, ctx.child("next"))
 
     if steps == 1:
         return f"in the very next step, {target}"
@@ -535,26 +618,31 @@ def _translate_until(node: ltlnode.UntilNode, ctx: _Ctx) -> str:
 
     # (G p) U (F q) => obligation until release
     if isinstance(l_node, ltlnode.GloballyNode) and isinstance(r_node, ltlnode.FinallyNode):
-        l = _inner(l_node.operand, ctx.child("until", inline=True))
-        r = _inner(r_node.operand, ctx.child("until", inline=True))
+        if _is_lit(l_node.operand):
+            obligation = f"{_lit(l_node.operand)} must hold continuously at all times"
+        else:
+            obligation = f"it must continuously be the case that {_clause(l_node.operand, ctx.child('until'))}"
+        release = _occurs(r_node.operand, ctx.child("until"))
         return _join_sentences(
-            f"{l} must hold continuously at all times",
-            f"this obligation persists until {r} eventually occurs",
+            obligation,
+            f"this obligation persists until eventually, {release}",
         )
 
     # (p U q) U r => nested until
     if isinstance(l_node, ltlnode.UntilNode):
-        p = _inner(l_node.left, ctx.child("until", inline=True))
-        q = _inner(l_node.right, ctx.child("until", inline=True))
-        r = _inner(r_node, ctx.child("until", inline=True))
+        p = _clause(l_node.left, ctx.child("until"))
+        q = _occurs(l_node.right, ctx.child("until"))
+        r = _occurs(r_node, ctx.child("until"))
         return _join_sentences(
-            f"first, {p} holds until {q} occurs",
-            f"that whole phase lasts until {r} occurs",
+            f"first, it must remain the case that {p} until {q}",
+            f"that whole phase lasts until {r}",
         )
 
-    l = _inner(l_node, ctx.child("until", inline=True))
-    r = _inner(r_node, ctx.child("until", inline=True))
-    return f"{l} must hold until {r} occurs"
+    if _is_lit(l_node) and _is_lit(r_node):
+        return f"{_lit(l_node)} must hold until {_lit(r_node)} occurs"
+    l = _clause(l_node, ctx.child("until"))
+    r = _occurs(r_node, ctx.child("until"))
+    return f"it must remain the case that {l} until {r}"
 
 
 # ---------------------------------------------------------------------------
