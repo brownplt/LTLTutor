@@ -17,10 +17,15 @@ Public API
     remap_to_theme(node, theme=None) -> node or None
     THEMES: dict of built-in theme names -> Theme objects
 
+All phrasing is strictly state-based ("the blue light is on"), never
+event-based ("the blue light turns on"): a bare LTL literal holds in every
+state where it is true, not only on a false->true transition, so edge
+phrasing would describe a different formula than the one being asked.
+
 Example:
     node = parse_ltl_string("G(b -> F a)")
     translate(node, theme=THEMES["lights"])
-    # => "Whenever the blue light turns on, then eventually the amber light is on."
+    # => "Whenever the blue light is on, then eventually the amber light is on."
 """
 
 from __future__ import annotations
@@ -38,19 +43,20 @@ import ltlnode
 class Theme:
     """Maps abstract literals to concrete descriptions.
 
+    Phrases must be STATE descriptions ("the blue light is on"), never
+    events ("the blue light turns on"): an LTL literal is true in every
+    state where it holds, not only on a transition, so event phrasing
+    would misstate when rules trigger.
+
     Attributes:
         name:        Human-readable theme name.
         description: One-line description of the scenario.
         literals:    Maps literal names to (positive_phrase, negative_phrase).
-                     e.g. {"p": ("the red light is on", "the red light is off")}
-        event_form:  Maps literal names to an "event" phrasing for triggers.
-                     e.g. {"p": ("the red light turns on", "the red light turns off")}
-                     Falls back to the positive/negative phrase if not provided.
+                     e.g. {"b": ("the blue light is on", "the blue light is off")}
     """
     name: str
     description: str
     literals: Dict[str, tuple[str, str]]  # lit -> (positive, negative)
-    event_form: Dict[str, tuple[str, str]] = field(default_factory=dict)  # lit -> (becomes_true, becomes_false)
 
     def positive(self, lit: str) -> str:
         if lit in self.literals:
@@ -61,18 +67,6 @@ class Theme:
         if lit in self.literals:
             return self.literals[lit][1]
         return f"'{lit}' does not hold"
-
-    def event_on(self, lit: str) -> str:
-        """Event phrasing for when the literal becomes true."""
-        if lit in self.event_form:
-            return self.event_form[lit][0]
-        return self.positive(lit)
-
-    def event_off(self, lit: str) -> str:
-        """Event phrasing for when the literal becomes false."""
-        if lit in self.event_form:
-            return self.event_form[lit][1]
-        return self.negative(lit)
 
 
 # ---------------------------------------------------------------------------
@@ -89,12 +83,6 @@ THEMES["lights"] = Theme(
         "a": ("the amber light is on",   "the amber light is off"),
         "p": ("the purple light is on",  "the purple light is off"),
         "c": ("the cyan light is on",    "the cyan light is off"),
-    },
-    event_form={
-        "b": ("the blue light turns on",    "the blue light turns off"),
-        "a": ("the amber light turns on",   "the amber light turns off"),
-        "p": ("the purple light turns on",  "the purple light turns off"),
-        "c": ("the cyan light turns on",    "the cyan light turns off"),
     },
 )
 
@@ -306,7 +294,7 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
         if isinstance(right, (ltlnode.NextNode, ltlnode.GloballyNode)):
             if _same_literal(left, right.operand):
                 lit = left.value
-                return f"once {theme.event_on(lit)}, it stays that way forever"
+                return f"once {theme.positive(lit)}, it stays that way forever"
 
         # G(p -> F q) — response
         if isinstance(right, ltlnode.FinallyNode):
@@ -319,25 +307,25 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
                     f"then eventually, {r}",
                     "this rule applies every time",
                 )
-            trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
-            response = theme.positive(right.operand.value) if isinstance(right.operand, ltlnode.LiteralNode) else _t(right.operand, theme)
+            trigger = _t(left, theme)
+            response = _t(right.operand, theme)
             return f"whenever {trigger}, then eventually {response}"
 
         # G(p -> X(F q)) — bounded response
         if isinstance(right, ltlnode.NextNode) and isinstance(right.operand, ltlnode.FinallyNode):
-            trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
-            response = theme.positive(right.operand.operand.value) if isinstance(right.operand.operand, ltlnode.LiteralNode) else _t(right.operand.operand, theme)
+            trigger = _t(left, theme)
+            response = _t(right.operand.operand, theme)
             return f"whenever {trigger}, starting from the very next step, eventually {response}"
 
         # G(p -> X q) — immediate response
         if isinstance(right, ltlnode.NextNode):
-            trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
+            trigger = _t(left, theme)
             response = _t(right.operand, theme)
             return f"whenever {trigger}, then {response} in the very next step"
 
         # G(p -> (q U r)) — chain precedence
         if isinstance(right, ltlnode.UntilNode):
-            trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
+            trigger = _t(left, theme)
             held = _t(right.left, theme)
             goal = _t(right.right, theme)
             return f"whenever {trigger}, it must remain the case that {held} until {goal}"
@@ -346,13 +334,13 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
         if (isinstance(right, ltlnode.AndNode)
                 and isinstance(right.left, ltlnode.FinallyNode)
                 and isinstance(right.right, ltlnode.FinallyNode)):
-            trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
-            ra = theme.event_on(right.left.operand.value) if isinstance(right.left.operand, ltlnode.LiteralNode) else _t(right.left.operand, theme)
-            rb = theme.event_on(right.right.operand.value) if isinstance(right.right.operand, ltlnode.LiteralNode) else _t(right.right.operand, theme)
-            return f"whenever {trigger}, two things must eventually happen: {ra}, and {rb}"
+            trigger = _t(left, theme)
+            ra = _t(right.left.operand, theme)
+            rb = _t(right.right.operand, theme)
+            return f"whenever {trigger}, two things must eventually be true: {ra}, and {rb}"
 
         # G(p -> q) — generic
-        trigger = theme.event_on(left.value) if isinstance(left, ltlnode.LiteralNode) else _t(left, theme)
+        trigger = _t(left, theme)
         consequence = _t(right, theme)
         return f"whenever {trigger}, it must be the case that {consequence}"
 
@@ -361,8 +349,6 @@ def _t_globally(node: ltlnode.GloballyNode, theme: Theme) -> str:
         fi = inner.operand
         if isinstance(fi, ltlnode.AndNode):
             return f"it must keep being the case, over and over forever, that {_t(fi.left, theme)} and {_t(fi.right, theme)}"
-        if isinstance(fi, ltlnode.LiteralNode):
-            return f"{theme.event_on(fi.value)} must keep happening over and over, forever"
         target = _t(fi, theme)
         return f"it must keep being the case, over and over forever, that {target}"
 
@@ -395,17 +381,10 @@ def _t_finally(node: ltlnode.FinallyNode, theme: Theme) -> str:
     if isinstance(inner, ltlnode.GloballyNode):
         gi = inner.operand
 
-        # F(G(!p))
-        if isinstance(gi, ltlnode.NotNode) and isinstance(gi.operand, ltlnode.LiteralNode):
-            return _join(
-                f"eventually, {theme.event_off(gi.operand.value)}",
-                f"and from that point on, {theme.event_on(gi.operand.value)} never happens again",
-            )
-
         # F(G(p -> F q))
         if isinstance(gi, ltlnode.ImpliesNode) and isinstance(gi.right, ltlnode.FinallyNode):
-            trigger = theme.event_on(gi.left.value) if isinstance(gi.left, ltlnode.LiteralNode) else _t(gi.left, theme)
-            response = theme.positive(gi.right.operand.value) if isinstance(gi.right.operand, ltlnode.LiteralNode) else _t(gi.right.operand, theme)
+            trigger = _t(gi.left, theme)
+            response = _t(gi.right.operand, theme)
             return _join(
                 "eventually, the system stabilizes",
                 f"from that point on, whenever {trigger}, then eventually {response}",
@@ -418,10 +397,6 @@ def _t_finally(node: ltlnode.FinallyNode, theme: Theme) -> str:
         # F(G p) — generic persistence
         target = _t(gi, theme)
         return f"eventually, {target}, and it stays that way forever"
-
-    # F(!p)
-    if isinstance(inner, ltlnode.NotNode) and isinstance(inner.operand, ltlnode.LiteralNode):
-        return f"eventually, {theme.event_off(inner.operand.value)}"
 
     # F(p & G q) / F(G q & p) — persistence after trigger
     if isinstance(inner, ltlnode.AndNode):
@@ -438,13 +413,9 @@ def _t_finally(node: ltlnode.FinallyNode, theme: Theme) -> str:
 
     # F(p -> G q) — trigger to permanence
     if isinstance(inner, ltlnode.ImpliesNode) and isinstance(inner.right, ltlnode.GloballyNode):
-        trigger = theme.event_on(inner.left.value) if isinstance(inner.left, ltlnode.LiteralNode) else _t(inner.left, theme)
+        trigger = _t(inner.left, theme)
         result = _t(inner.right.operand, theme)
         return f"eventually, once {trigger}, then {result} forever after"
-
-    # F(literal)
-    if isinstance(inner, ltlnode.LiteralNode):
-        return f"eventually, {theme.event_on(inner.value)}"
 
     return f"eventually, {_t(inner, theme)}"
 
@@ -475,10 +446,10 @@ def _t_until(node: ltlnode.UntilNode, theme: Theme) -> str:
     # (G p) U (F q)
     if isinstance(l_node, ltlnode.GloballyNode) and isinstance(r_node, ltlnode.FinallyNode):
         l = _t(l_node.operand, theme)
-        r_event = theme.event_on(r_node.operand.value) if isinstance(r_node.operand, ltlnode.LiteralNode) else _t(r_node.operand, theme)
+        r = _t(r_node.operand, theme)
         return _join(
             f"it must stay the case that {l}",
-            f"this continues until eventually {r_event}",
+            f"this continues until eventually {r}",
         )
 
     # (p U q) U r
@@ -506,7 +477,7 @@ def translate(node: ltlnode.LTLNode, theme: Optional[Theme] = None) -> str:
     Args:
         node:  LTL formula AST node.
         theme: A Theme mapping literals to concrete descriptions.
-               Defaults to the "lights" theme (red/green/blue lights).
+               Defaults to the "lights" theme (blue/amber/purple/cyan).
 
     Returns:
         A capitalized, period-terminated English paragraph.

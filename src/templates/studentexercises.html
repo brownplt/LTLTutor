@@ -221,12 +221,6 @@
 
                                         <div class="question-meta small">
                                             <span class="badge badge-light">{{ question.question_type }}</span>
-                                            {% if question.score is not none %}
-                                            <span class="badge badge-primary">Score {{ question.score }}</span>
-                                            {% endif %}
-                                            {% if question.option_count > 0 %}
-                                            <span class="badge badge-info">{{ question.correct_option_count }}/{{ question.option_count }} correct</span>
-                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -259,9 +253,9 @@
                                                 <div class="option-item">
                                                     <div class="d-flex justify-content-between align-items-start flex-wrap">
                                                         <span class="option-text">{{ option.option_text }}</span>
-                                                        <span class="badge {% if option.is_correct %}badge-success{% else %}badge-danger{% endif %}">
-                                                            {% if option.is_correct %}Correct{% else %}Distractor{% endif %}
-                                                        </span>
+                                                        {% if option.is_correct %}
+                                                        <span class="badge badge-success">Correct</span>
+                                                        {% endif %}
                                                     </div>
 
                                                     {% if option.generated_from_formula %}
