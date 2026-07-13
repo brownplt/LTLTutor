@@ -38,28 +38,8 @@
         </p>
         <div class="row">
 
-            <!-- Complexity level -->
-            <div class="col-md-4 mb-3">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Difficulty Level</h5>
-                        <p class="display-4 mb-0">{{ complexity }}<small class="text-muted" style="font-size: 1.5rem;">/{{ complexity_max }}</small></p>
-                        <span class="badge badge-info">{{ complexity_band }}</span>
-                        <div class="progress mt-3" style="height: 8px;">
-                            {% set pct = ((complexity - complexity_min) / (complexity_max - complexity_min) * 100) if complexity_max > complexity_min else 0 %}
-                            <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;"
-                                 aria-valuenow="{{ complexity }}" aria-valuemin="{{ complexity_min }}" aria-valuemax="{{ complexity_max }}"></div>
-                        </div>
-                        <small class="text-muted d-block mt-2">
-                            Goes up when your recent accuracy is high, down when you struggle.
-                            Ranges from {{ complexity_min }} to {{ complexity_max }}.
-                        </small>
-                    </div>
-                </div>
-            </div>
-
             <!-- Question-type mix -->
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">Question Mix</h5>
@@ -83,14 +63,14 @@
                 </div>
             </div>
 
-            <!-- Misconception snapshot -->
-            <div class="col-md-4 mb-3">
+            <!-- Misconception profile -->
+            <div class="col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Misconception Snapshot</h5>
+                        <h5 class="card-title">Misconception Profile</h5>
                         <small class="text-muted d-block mb-3">
-                            The tutor's current estimate of which misconceptions you hold (higher = more likely).
-                            These drive the wrong answers you see.
+                            The tutor's inferred probabilities based on your answers (higher = more evidence to revisit that topic).
+                            These estimates help choose useful practice questions and may change as you answer more questions.
                         </small>
                         {% if misconception_snapshot %}
                             {% for m in misconception_snapshot %}
@@ -292,4 +272,11 @@
             });
         });
         </script>
+
+        <p class="text-muted text-center mt-5 mb-3">
+            <small>
+                Tutor exercise setting: {{ complexity }} on an internal scale from
+                {{ complexity_min }} to {{ complexity_max }}. This controls question generation and is not an assessment of your ability.
+            </small>
+        </p>
 {% endblock %}
