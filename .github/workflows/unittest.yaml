@@ -19,7 +19,12 @@ jobs:
       run: |
         docker build -t ltltutor .
 
-    # Step 3: Run tests inside the Docker container
+    # Step 3: Run tests inside the Docker container. Test-only dependencies
+    # (hypothesis, for the property-based tests) are installed at run time so
+    # they stay out of the production image. Installed by name rather than via
+    # test/requirements.txt because the container's working directory (/src)
+    # differs from where the repo is copied, so a relative path doesn't resolve;
+    # the pin is kept in sync with test/requirements.txt.
     - name: Run tests in Docker container
       run: |
-        docker run --rm ltltutor /bin/bash -c "source /venv/bin/activate && python -m unittest discover -s test -p 'test_*.py'"
+        docker run --rm ltltutor /bin/bash -c "source /venv/bin/activate && pip install 'hypothesis>=6,<7' && python -m unittest discover -s test -p 'test_*.py'"

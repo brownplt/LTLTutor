@@ -29,6 +29,7 @@ from authroutes import (
     retrieve_course_data,
     get_owned_courses,
     login_required_as_courseinstructor,
+    CourseInstructor,
     getUserCourse,
     get_course_students,
     get_exercises_for_course,
@@ -280,7 +281,27 @@ def getUserName():
 def getUserId():
     return current_user.id
 
-    
+
+# Endpoints that render an active exercise. The top-bar LTL-syntax setting is
+# locked on these pages so a student can't switch syntax mid-exercise (the
+# exercise was already rendered — and its answers logged — in one syntax).
+EXERCISE_ENDPOINTS = {'exercise', 'exercise_predefined_get', 'newexercise'}
+
+
+@app.context_processor
+def inject_nav_flags():
+    """Expose nav flags to every template: is_instructor (show instructor-only
+    links) and in_exercise (lock the top-bar LTL-syntax setting)."""
+    try:
+        is_instructor = current_user.is_authenticated and isinstance(current_user, CourseInstructor)
+    except Exception:
+        is_instructor = False
+    try:
+        in_exercise = request.endpoint in EXERCISE_ENDPOINTS
+    except Exception:
+        in_exercise = False
+    return {'is_instructor': is_instructor, 'in_exercise': in_exercise}
+
 
 @app.template_filter('flatten')
 def flatten(lst):
@@ -815,14 +836,12 @@ def loganswer(questiontype):
     userId = getUserName()
     courseId = getUserCourse(userId)
     mp_class = ""
-    mp_formula_literals = []
     # If response has a mp_class field, log it
     if MP_FORMULA_KEY in data:
 
         ## TODO: For this classification, we need to ensure we are in classic syntax.
         to_classify = str(parse_ltl_string(data[MP_FORMULA_KEY]))
         mp_class = spotutils.get_mana_pneulli_class(to_classify)
-        mp_formula_literals = exerciseprocessor.getFormulaLiterals(to_classify)
 
     exercise = ""
     if EXERCISE_KEY in data:
@@ -873,15 +892,36 @@ def loganswer(questiontype):
             to_return['contained'] = fgen.correctAnswerContained()
             to_return['disjoint'] = fgen.disjoint()
             to_return['equivalent'] = fgen.equivalent()
-            
 
+            # The counterexample words distinguish the two answers, so they range
+            # over the combined alphabet. Expand each state across the union of
+            # both formulas' literals so every state shows a full valuation
+            # (no bare spot "1" tautology states, no states missing a variable).
+            ce_literals = (exerciseprocessor.getFormulaLiterals(correct_answer_spot_syntax)
+                           | exerciseprocessor.getFormulaLiterals(student_selection_spot_syntax))
 
-            to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(mp_formula_literals)) for w in fgen.getCEWords()]
+            to_return['cewords'] = [exerciseprocessor.expandSpotTrace(w, literals=list(ce_literals)) for w in fgen.getCEWords()]
             to_return['trace_data'] = [exerciseprocessor.traceToRenderData(sr) for sr in to_return['cewords']]
         return json.dumps(to_return)
     elif questiontype == "trace_satisfaction_yn" or questiontype == "trace_satisfaction_mc":
+        to_return = {}
         if not isCorrect:
-            return { "message": "No further feedback currently available for Trace Satisfaction exercises." } 
+            # Evaluate the question formula at every state of the relevant trace
+            # (the question trace for y/n, the student's selected trace for mc) so
+            # the client can mark each state with whether the formula holds from it.
+            trace = (data.get('trace') or '').strip()
+            formula = (data.get(MP_FORMULA_KEY) or '').strip()
+            if trace and formula:
+                try:
+                    node = parse_ltl_string(formula)
+                    per_step = traceSatisfactionPerStep(node=node, trace=trace, syntax='Classic')
+                    to_return['state_satisfaction'] = (
+                        [bool(s.satisfied) for s in per_step.prefix_states]
+                        + [bool(s.satisfied) for s in per_step.cycle_states]
+                    )
+                except Exception:
+                    pass
+        return json.dumps(to_return)
     else:
         return { "message": "INVALID QUESTION TYPE!!." }
     return { "message": "No further feedback." }
@@ -1048,29 +1088,38 @@ def newexercise():
 
 
 
-    ### TODO: Should exercise involve only the literals the user has encountered? And a different # of literals
-    literals_pool = list("abcdehijknpqstvz")
-    num_literals = random.randint(2, 4)
-    LITERALS = random.sample(literals_pool, num_literals)
-    num_questions = random.randint(3, 8)
-
-    
     try:
         exercise_name = "Exercise " + generate_new_name()
     except Exception as e:
         print("Error generating exercise name:", e)
         exercise_name = "Exercise"
-    
+
     user_logs = answer_logger.getUserLogs(userId=userId, lookback_days=30)
 
-    complexity = answer_logger.getComplexity(userId=userId)       
+    complexity = answer_logger.getComplexity(userId=userId)
     exercise_builder = exercisebuilder.ExerciseBuilder(user_logs, syntax = syntax_choice) if complexity == None else exercisebuilder.ExerciseBuilder(user_logs, complexity=complexity, syntax = syntax_choice)
+
+    ### TODO: Should exercise involve only the literals the user has encountered?
+    ## This block sits below the builder construction because the number of
+    ## atomic propositions scales with the student's complexity band:
+    ## fewer literals while they are finding their feet, more once they're cruising.
+    literals_pool = list("abcdehijknpqstvz")
+    if exercise_builder.complexity <= 5:
+        num_literals = random.randint(2, 3)
+    elif exercise_builder.complexity >= 9:
+        num_literals = random.randint(3, 4)
+    else:
+        num_literals = random.randint(2, 4)
+    LITERALS = random.sample(literals_pool, num_literals)
+    num_questions = random.randint(3, 8)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)
     data = exerciseprocessor.change_traces_to_render_data(data, literals = LITERALS)
 
-    answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name)
+    ## build_exercise may have stepped complexity up or down; persist it so the
+    ## next generated exercise picks the new value up.
+    answer_logger.recordGeneratedExercise(userId, json.dumps(data), exercise_name = exercise_name, complexity = exercise_builder.complexity)
 
     return render_template(
         'exercise.html',

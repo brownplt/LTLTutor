@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>Rate English Paraphrases</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+{% block title %}Rate English Paraphrases{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block container_class %}{% endblock %}
+
+{% block head %}
     <style>
         mark {
             padding: 0.2rem;
@@ -58,11 +58,9 @@
             color: #6c757d;
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    {% include 'navbar.html' %}
-
+{% block content %}
     <div class="container my-4">
         <div class="d-flex align-items-center mb-3">
             <h3 class="mb-0">How Similar Are These English Sentences?</h3>
@@ -139,7 +137,9 @@
             </div>
         {% endif %}
     </div>
-</body>
+{% endblock %}
+
+{% block scripts %}
 <script>
     function toggleUnsure(isChecked) {
         const slider = document.getElementById('likertRange');
@@ -153,4 +153,4 @@
         }
     }
 </script>
-</html>
+{% endblock %}

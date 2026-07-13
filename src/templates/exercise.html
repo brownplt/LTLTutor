@@ -1,40 +1,25 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>LTL Tutor</title>
+{% block container_class %}container-lg{% endblock %}
 
+{% block head %}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
-    <!-- Include Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-    <!-- Include Bootstrap JS and jQuery -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
     <script src="{{ url_for('static', filename='js/tracerenderer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/eulerdiagram.js') }}"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="{{ url_for('static', filename='js/ltlhljs.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
     <script src="{{ url_for('static', filename='js/checkanswers.js') }}"></script>
     <script>
         hljs.registerLanguage('ltl', ltlSyntaxDefs);
         hljs.highlightAll();
     </script>
+{% endblock %}
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-</head>
-
-<body>
-    <div class="container-lg">
-        {% include 'navbar.html' %}
-
+{% block content %}
         <div id="questions">
             {% for q in questions %}
             {%set qindex = loop.index %}
@@ -142,20 +127,13 @@
                         Answer</button>
                     <!-- TODO: Disable this, and then re-enable -->
                     <button class="btn btn-primary next" disabled>Next Question</button>
-                    
+
 
                 </div>
             </div>
             {% endfor %}
         </div>
 
-        <script>
-            function enableNextButton(checkAnswerButton) {
-                var parent = checkAnswerButton.parentNode;
-                var nextButton = parent.getElementsByClassName('next')[0];
-                nextButton.disabled = false;
-            }
-        </script>
         <div id="feedback">
 
         </div>
@@ -184,8 +162,16 @@
                 </div>
             </div>
         </div>
-    </div>
+{% endblock %}
 
+{% block scripts %}
+    <script>
+        function enableNextButton(checkAnswerButton) {
+            var parent = checkAnswerButton.parentNode;
+            var nextButton = parent.getElementsByClassName('next')[0];
+            nextButton.disabled = false;
+        }
+    </script>
 
     <script>
         $(document).ready(function () {
@@ -266,8 +252,4 @@
             });
         });
     </script>
-
-    {% include 'footer.html' %}
-</body>
-
-</html>
+{% endblock %}

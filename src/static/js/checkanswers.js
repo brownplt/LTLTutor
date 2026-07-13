@@ -40,11 +40,64 @@ function getCorrectRadio(parent_node) {
 
 function getGeneratedFromFormulaIfExists(radioButton) {
 
+    // The template pads the attribute (data-generatedfromformula=" {{ ... }} "),
+    // so trim before use. The value is already rendered server-side in the
+    // exercise's selected LTL syntax (Classic / Forge / Electrum).
     let formula = radioButton.dataset.generatedfromformula;
-    if (formula) {
-        return formula;
+    if (formula && formula.trim()) {
+        return formula.trim();
     }
     return null;
+}
+
+// Escape text before injecting into innerHTML. LTL formulas contain <, >, &
+// (e.g. "d <-> t", "a & b"), which would otherwise be mis-parsed as markup.
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// --- Accessible answer marking ---------------------------------------------
+// Correctness is never signalled by color alone (WCAG 1.4.1). A marked option
+// gets an icon + text badge and a shape cue (inset accent bar via CSS), with
+// color only reinforcing them — mirroring the ✓/✗ marks inside the trace SVGs.
+var ANSWER_MARKS = {
+    correct: { containerClass: 'answer-correct', badgeClass: 'answer-badge-correct', icon: '✓', text: 'Correct answer' },
+    wrong:   { containerClass: 'answer-wrong',   badgeClass: 'answer-badge-wrong',   icon: '✗', text: 'Your answer' }
+};
+
+function _optionContainer(radio) {
+    return radio.closest('.trace-option-item') || radio.parentNode.parentNode;
+}
+
+function clearAnswerMark(radio) {
+    let container = _optionContainer(radio);
+    container.classList.remove('answer-correct', 'answer-wrong', 'bg-success', 'bg-danger');
+    let badge = container.querySelector('.answer-badge');
+    if (badge) {
+        badge.remove();
+    }
+}
+
+function markAnswerOption(radio, kind) {
+    let spec = ANSWER_MARKS[kind];
+    if (!spec || !radio) {
+        return;
+    }
+    let container = _optionContainer(radio);
+    container.classList.add(spec.containerClass);
+
+    if (container.querySelector('.answer-badge')) {
+        return; // already badged; don't duplicate
+    }
+    let badge = document.createElement('span');
+    badge.className = 'answer-badge ' + spec.badgeClass;
+    badge.innerHTML = "<span class='answer-badge-icon' aria-hidden='true'>" + spec.icon + "</span> " + spec.text;
+
+    let label = radio.closest('.trace-option-label') || container;
+    label.insertBefore(badge, label.firstChild);
 }
 
 // Prevent users from changing their answer after seeing feedback
@@ -65,9 +118,7 @@ function show_feedback(parent_node, question_type) {
 
     let all_radios = parent_node.querySelectorAll('input[type=radio]');
     Array.from(all_radios).forEach(radio => {
-        //radio.parentNode.style.outline = "none";
-        radio.parentNode.parentNode.classList.remove("bg-success");
-        radio.parentNode.parentNode.classList.remove("bg-danger");
+        clearAnswerMark(radio);
     });
     let selected_radio = getSelectedRadio(parent_node);
 
@@ -91,12 +142,10 @@ function show_feedback(parent_node, question_type) {
 
         // selected_radio.parentNode.style.outline = "2px solid green";
 
-        selected_radio.parentNode.parentNode.classList.add("bg-success");
-
-        
+        markAnswerOption(selected_radio, 'correct');
 
         // Add a message to the feedback div
-        feedback_div.innerHTML = "<p> Correct answer! 🎉🥳 Great job! </p>";
+        feedback_div.innerHTML = "<p>✓ Correct answer! 🎉🥳 Great job! </p>";
         feedback_div.classList.add('alert');
         feedback_div.classList.add('alert-success');
         feedback_div.classList.remove('alert-secondary');
@@ -108,57 +157,87 @@ function show_feedback(parent_node, question_type) {
             correctCountElement.innerText = currentCount + 1;
         }
         catch (error) {
-            console.err("Something went wrong. Could not increment correctness count.");
+            console.error("Something went wrong. Could not increment correctness count.");
         }
     }
     else {
 
+        function getStepperFormHtml(formula, trace, label) {
+            return `
+                    <form action="/stepper" method="post" target="_blank" class="d-inline-block mr-2 mt-2">
+                        <input type="hidden" name="formula" value='${formula}'>
+                        <input type="hidden" name="trace" value='${trace}'>
+                        <button type="submit" class="btn btn-outline-primary btn-stepper">
+                            ${label}<i class="fas fa-external-link-alt ml-2 small" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                    `;
+        }
+
         function getTraceStepperButtonHtml() {
-            if (question_type == "trace_satisfaction_yn" || question_type == "trace_satisfaction_mc") {
-                var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
-                var qtrace = (question_type == "trace_satisfaction_yn") ? getQuestionTrace(parent_node) : getSelectedRadio(parent_node).value;
-                
-                
-                // TODO: There is a sort of bug here! The trace being passed is not alwayts the correct one!
-                var fv = `
-                        <form action="/stepper" method="post" target="_blank">
-                            <input type="hidden" name="formula" value='${formulaForStepper}'>
-                            <input type="hidden" name="trace" value='${qtrace}'>
-                            <button type="submit" class="btn btn-secondary">Step through the trace and your answer.</button>
-                        </form>
-                        `
-                return fv;
+            var formulaForStepper = get_formula_for_MP_Classification(parent_node, question_type);
+            var buttons = "";
+            if (question_type == "trace_satisfaction_yn") {
+                buttons = getStepperFormHtml(formulaForStepper, getQuestionTrace(parent_node).trim(),
+                    "Step through this trace and the formula");
+            } else if (question_type == "trace_satisfaction_mc") {
+                // The selected trace violates the question formula; the correct
+                // trace satisfies it. Offer both pairings, clearly labeled.
+                buttons = getStepperFormHtml(formulaForStepper, getSelectedRadio(parent_node).value.trim(),
+                        "See why the trace you selected does not satisfy this formula")
+                    + getStepperFormHtml(formulaForStepper, getCorrectRadio(parent_node).value.trim(),
+                        "See why the correct trace satisfies this formula");
             }
-            return "";
+            if (!buttons) {
+                return "";
+            }
+            // Interactive stepper opens in a new tab, so frame it as an optional
+            // deeper dive presented after the explanation.
+            return "<p class='fb-actions-label mb-1'>Want to see it step by step?</p>" + buttons;
         }
 
 
 
-        correct_radio.parentNode.parentNode.classList.add("bg-success");
-        selected_radio.parentNode.parentNode.classList.add("bg-danger");
+        markAnswerOption(correct_radio, 'correct');
+        markAnswerOption(selected_radio, 'wrong');
 
         misconception_string = selected_radio.dataset.misconceptions.replace(/'/g, '"');
-        // Add a message to the feedback div
-        feedback_div.innerHTML = "<p>That's not correct 😕 Don't worry, keep trying! The correct answer is highlighted in green (i.e: <code>" + correct_option + "</code> )" +  getTraceStepperButtonHtml() +  "</p>";
-        feedback_div.classList.add('alert');
-        feedback_div.classList.remove('alert-success');
-        feedback_div.classList.add('alert-secondary');
 
-
-        // Check if parent_node has a child of class 'predeterminedfeedback'
         let predetermined_feedback = parent_node.querySelector('.predeterminedfeedback');
-
         let selectedAnswerFormula = getGeneratedFromFormulaIfExists(selected_radio);
         let correctAnswerFormula = getGeneratedFromFormulaIfExists(correct_radio);
 
+        // The options themselves carry "✓ Correct answer" / "✗ Your answer"
+        // badges, so the verdict stays short instead of restating them.
+        let verdictHtml = "<p>That's not correct 😕 Don't worry, keep trying!</p>";
 
+        let hintHtml = "";
         if (predetermined_feedback) {
-            predetermined_feedback = predetermined_feedback.innerHTML;
-            feedback_div.innerHTML += "<p>" + predetermined_feedback + "</p>";
+            hintHtml += "<p>" + predetermined_feedback.innerHTML + "</p>";
         }
         if (selectedAnswerFormula && correctAnswerFormula) {
-            feedback_div.innerHTML += "<p> Hint: The option you selected satisfies : <pre class='language-ltl'><code>" + selectedAnswerFormula + "</code></pre> but not <pre class='language-ltl'><code>" +  correctAnswerFormula + "</code></pre></p>";
+            // Formulas are already in the exercise's selected syntax; render them
+            // as inline chips inside the sentence rather than as block code.
+            hintHtml +=
+                "<div class='ltl-hint mt-2'>" +
+                    "<span class='ltl-hint-badge'>Hint</span>" +
+                    "The trace you selected satisfies <code class='ltl-formula'>" + escapeHtml(selectedAnswerFormula) + "</code>, " +
+                    "but not the formula in question, <code class='ltl-formula'>" + escapeHtml(correctAnswerFormula) + "</code>." +
+                "</div>";
         }
+
+        // Assemble as ordered sections so the async per-state trace explanation
+        // (added by displayTraceSatFeedback for tracesat questions) lands between
+        // the verdict and the hint. Reading order: verdict → per-state trace →
+        // hint → action buttons (the interactive stepper, presented last).
+        feedback_div.innerHTML =
+            "<div class='fb-verdict'>" + verdictHtml + "</div>" +
+            "<div class='fb-perstate'></div>" +
+            "<div class='fb-hint'>" + hintHtml + "</div>" +
+            "<div class='fb-actions'>" + getTraceStepperButtonHtml() + "</div>";
+        feedback_div.classList.add('alert');
+        feedback_div.classList.remove('alert-success');
+        feedback_div.classList.add('alert-secondary');
 
         // Render any trace diagrams in the feedback (e.g. misconception explainers)
         if (typeof TraceRenderer !== 'undefined') {
@@ -178,7 +257,7 @@ function show_feedback(parent_node, question_type) {
             let currentCount = parseInt(incorrectCountElement.innerText);
             incorrectCountElement.innerText = currentCount + 1;
         } catch (error) {
-            console.err("Something went wrong. Could not modify correctness count.");
+            console.error("Something went wrong. Could not modify correctness count.");
         }
     }
 
@@ -240,9 +319,13 @@ async function tracesatisfaction_mc_getfeedback(button) {
         question_text: question_text,
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
-        exercise: getExerciseName()
+        exercise: getExerciseName(),
+        // The trace the student selected, so the server can explain why it
+        // fails the formula.
+        trace: selected_radio.value.trim()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
+    displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
 }
 
 
@@ -270,9 +353,69 @@ async function tracesatisfaction_yn_getfeedback(button) {
         question_text: question_text,
         question_options: question_options,
         formula_for_mp_class: get_formula_for_MP_Classification(parent_node, QUESTION_TYPE),
-        exercise: getExerciseName()
+        exercise: getExerciseName(),
+        // The question's trace, so the server can explain the correct verdict.
+        trace: getQuestionTrace(parent_node).trim()
     }
     let response = await postFeedback(data, QUESTION_TYPE);
+    displayTraceSatFeedback(response, parent_node, QUESTION_TYPE);
+}
+
+// Renders per-state satisfaction feedback for trace satisfaction questions:
+// the relevant trace (the question's trace for y/n, the student's selected
+// trace for mc) redrawn with each state marked ✓/✗ for whether the formula
+// holds from that state onward.
+function displayTraceSatFeedback(response, parent_node, question_type) {
+    if (!response || response.error || !Array.isArray(response.state_satisfaction)
+        || response.state_satisfaction.length === 0 || typeof TraceRenderer === 'undefined') {
+        return;
+    }
+
+    let marks = response.state_satisfaction;
+    let satisfies = marks[0];
+
+    // Reuse the trace data already rendered in the question DOM.
+    let traceDiv;
+    if (question_type === "trace_satisfaction_yn") {
+        traceDiv = parent_node.querySelector('.trace-diagram');
+    } else {
+        let selected = parent_node.querySelector('input[type=radio]:checked');
+        let item = selected ? selected.closest('li') : null;
+        traceDiv = item ? item.querySelector('.trace-diagram') : null;
+    }
+    if (!traceDiv || !traceDiv.dataset.trace) {
+        return;
+    }
+
+    let traceData;
+    try {
+        traceData = JSON.parse(traceDiv.dataset.trace);
+    } catch (e) {
+        return;
+    }
+    let numStates = (traceData.prefix || []).length + (traceData.cycle || []).length;
+    if (numStates !== marks.length) {
+        return;
+    }
+
+    let subject = (question_type === "trace_satisfaction_yn") ? "This trace" : "The trace you selected";
+    let verdict = satisfies
+        ? subject + " <strong>does</strong> satisfy the formula."
+        : subject + " does <strong>not</strong> satisfy the formula.";
+
+    let el = document.createElement('div');
+    el.innerHTML = "<p>" + verdict +
+        " Each state below is marked with whether the formula holds from that state onward" +
+        " (<span style='color:#198754;font-weight:700'>✓</span> holds," +
+        " <span style='color:#dc3545;font-weight:700'>✗</span> fails)." +
+        " A trace satisfies the formula exactly when it holds from the very first state.</p>" +
+        "<div class='tracesat-feedback-trace'></div>";
+    // Slot into the ordered .fb-perstate placeholder (between the verdict and the
+    // hint), falling back to appending if the layout containers aren't present.
+    let slot = document.querySelector('#feedback .fb-perstate') || document.querySelector('#feedback');
+    slot.appendChild(el);
+
+    TraceRenderer.render(el.querySelector('.tracesat-feedback-trace'), traceData, { stateMarks: marks });
 }
 
 async function englishtoltl_getfeedback(button) {
@@ -309,10 +452,10 @@ async function englishtoltl_getfeedback(button) {
     }
 
     let response = await postFeedback(data, QUESTION_TYPE);
-    displayServerResponse(response);
+    displayServerResponse(response, selected_radio.value, correct_option);
 }
 
-function displayServerResponse(response) {
+function displayServerResponse(response, selected_formula, correct_formula) {
 
     let feedback_div = document.querySelector('#feedback');
     // First, parse the response.
@@ -329,14 +472,10 @@ function displayServerResponse(response) {
     //     return response.message;
     // }
 
-    // TODO: Fix this to allow for different response feedback.
-
     let disjoint = response.disjoint;
     let subsumed = response.subsumed;
     let contained = response.contained;
     let equivalent = response.equivalent;
-
-    // TODO: Switch on equivalent
 
     let cewords = response.cewords;
     let traceDataList = response.trace_data;
@@ -345,52 +484,45 @@ function displayServerResponse(response) {
     let ce_trace = (cewords.length > 0) ? cewords[r] : null;
     let ce_trace_data = (cewords.length > 0) ? traceDataList[r] : null;
 
-
-    ce_trace_img = "<div id='generated_ltl_trace'></div> <br> Alt Trace: " + ce_trace;
-
     var feedback_string = "";
 
     if (!ce_trace) {
         console.log("Could not generate a counterexample trace.")
     }
 
-    if (equivalent) {
+    let relation = equivalent ? 'equivalent'
+        : disjoint ? 'disjoint'
+        : subsumed ? 'subsumed'
+        : contained ? 'contained'
+        : 'overlap';
+
+    if (relation === 'equivalent') {
         feedback_string += "Your selection is equivalent to the correct answer, meaning that it allows the same set of traces. However, the correct answer may represent a better way of expressing the solution.";
     }
-    else if (disjoint) {
-        feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
-
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
-        }
-
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/disjoint.png' alt='Euler diagram of two disjoint sets: a green set (representing the correct answer) and a red set (representing your answer).' > ";
-
-    }
-    else if (subsumed) {
-        feedback_string += "Your selection is more restrictive than the correct answer.";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies the correct answer, but not your selection: " + ce_trace_img;
-        }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/subsumes.png' alt='Euler diagram of a green set (representing the correct answer) subsuming a red set (representing your answer).' >  ";
-
-
-    }
-    else if (contained) {
-        feedback_string += "Your selection is more permissive than the correct answer. ";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
-        }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/contained.png' alt='Euler diagram of a green set (representing the correct answer) being subsumed by a red set (representing your answer).' > ";
-
-    }
     else {
-        feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
-        if (ce_trace) {
-            feedback_string += "Here is a trace that satisfies your selection, but not the correct answer: " + ce_trace_img;
+        if (relation === 'disjoint') {
+            feedback_string += "There are no possible traces that satisfy both the correct answer and your selection. ";
         }
-        feedback_string += "<br> <img class='img-fluid ' style='max-height: 400px; width: auto;' src='/static/img/overlap.png' alt='Euler diagram of two overlapping, but not contained sets: a green set (representing the correct answer) and a red set (representing your answer).' >  ";
+        else if (relation === 'subsumed') {
+            feedback_string += "Your selection is more restrictive than the correct answer. ";
+        }
+        else if (relation === 'contained') {
+            feedback_string += "Your selection is more permissive than the correct answer. ";
+        }
+        else {
+            feedback_string += "Your selection allows some traces accepted by the correct answer, but also permits other traces. ";
+        }
+
+        if (ce_trace) {
+            // For 'subsumed' the counterexample goes the other way around.
+            let ce_direction = (relation === 'subsumed')
+                ? "the correct answer, but not your selection"
+                : "your selection, but not the correct answer";
+            feedback_string += "Here is a trace that satisfies " + ce_direction + ": <div id='generated_ltl_trace'></div>";
+        }
     }
+
+    feedback_string += "<div id='answer_relationship_diagram' class='mt-2'></div>";
 
     let responseAsHTMLElement = document.createElement('div');
     responseAsHTMLElement.innerHTML = feedback_string;
@@ -401,6 +533,14 @@ function displayServerResponse(response) {
         TraceRenderer.render(traceElement, ce_trace_data);
     }
 
+    let diagramElement = document.getElementById('answer_relationship_diagram');
+    if (diagramElement && typeof EulerDiagram !== 'undefined') {
+        EulerDiagram.render(diagramElement, relation, {
+            correctLabel: correct_formula,
+            yourLabel: selected_formula,
+            showTraceDot: !!ce_trace
+        });
+    }
 }
 
 async function postFeedback(data, questiontype) {

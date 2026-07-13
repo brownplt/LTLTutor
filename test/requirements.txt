@@ -1,0 +1,6 @@
+# Test-only dependencies (not needed to run the app). Install locally with:
+#   pip install -r test/requirements.txt
+# CI installs the same pin by name inside the Docker container (see
+# .github/workflows/unittest.yaml) because the container's working directory
+# makes this relative path unresolvable; keep the two in sync.
+hypothesis>=6,<7

@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL → English</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-</head>
-<body>
-    <div class="container">
-        {% include 'navbar.html' %}
+{% extends 'base.html' %}
+
+{% block title %}LTL → English{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
 
         <div class="card shadow-sm mt-4 mb-4">
             <div class="card-header bg-primary text-white">
@@ -94,8 +89,9 @@
                 {% endif %}
             </div>
         </div>
-    </div>
+{% endblock %}
 
+{% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('ltl-to-eng-feedback-form');
@@ -296,8 +292,4 @@
             }
         });
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+{% endblock %}

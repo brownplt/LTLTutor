@@ -1,21 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor: Choose Syntax</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-</head>
+{% block title %}LTL Tutor: Choose Syntax{% endblock %}
 
-<body>
-    <div class="container mt-4">
-        {% include 'navbar.html' %}
+{% block container_class %}container mt-4{% endblock %}
+
+{% block content %}
 
         <div class="card mt-4 shadow-sm">
             <div class="card-body text-center">
@@ -34,9 +23,4 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {% include 'footer.html' %}
-</body>
-
-</html>
+{% endblock %}

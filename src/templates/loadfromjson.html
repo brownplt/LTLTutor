@@ -1,23 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-</head>
+{% block footer %}{% endblock %}
 
-<body>
-
-    
-    <div class="container mt-4">
-
-        {% include 'navbar.html' %}
+{% block content %}
 
         <h5> Load an Exercise from JSON</h5>
         <form id="exerciseForm" action="/exercise/predefined" method="post">
@@ -43,7 +28,9 @@
                 </div>
             </div>
         </form>
-    </div>
+{% endblock %}
+
+{% block scripts %}
     <script>
         function changeAction() {
             var form = document.getElementById('exerciseForm');
@@ -51,8 +38,4 @@
             form.action = '/exercise/' + select.value;
         }
     </script>
-
-
-</body>
-
-</html>
+{% endblock %}

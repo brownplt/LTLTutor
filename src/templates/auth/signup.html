@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>LTL Tutor: Signup</title>
+{% extends 'base.html' %}
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-</head>
-<body>
-    <div class="container">
+{% block title %}LTL Tutor: Signup{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <h1 class="text-center mb-4">Signup</h1>
@@ -55,9 +49,9 @@
                 </p>
             </div>
         </div>
-    </div>
-    {% include 'footer.html' %}
+{% endblock %}
 
+{% block scripts %}
     <script>
     document.getElementById('signupForm').addEventListener('submit', function(e) {
         const pw = document.getElementById('password').value;
@@ -68,5 +62,4 @@
         }
     });
     </script>
-</body>
-</html>
+{% endblock %}

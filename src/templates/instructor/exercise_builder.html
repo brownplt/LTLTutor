@@ -1,16 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor: {{ 'Edit' if exercise else 'Create' }} Exercise</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+{% block title %}LTL Tutor: {{ 'Edit' if exercise else 'Create' }} Exercise{% endblock %}
+
+{% block container_class %}container mt-4{% endblock %}
+
+{% block head %}
     <style>
         .question-card {
             border-left: 4px solid #007bff;
@@ -71,11 +65,9 @@
             min-height: 1.3rem;
         }
     </style>
-</head>
+{% endblock %}
 
-<body>
-    <div class="container mt-4">
-        {% include 'navbar.html' %}
+{% block content %}
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -122,7 +114,7 @@
                                 <select class="form-control" id="course" name="course">
                                     <option value="">-- Not assigned --</option>
                                     {% for course_name in course_names %}
-                                    <option value="{{ course_name }}" 
+                                    <option value="{{ course_name }}"
                                             {{ 'selected' if exercise and exercise.course == course_name else '' }}>
                                         {{ course_name }}
                                     </option>
@@ -195,7 +187,7 @@
 
                     <input type="hidden" id="exercise_json" name="exercise_json"
                            value="{{ exercise.exercise_json | tojson | safe if exercise and exercise.exercise_json else '[]' }}">
-                    
+
                     <div class="btn-group btn-block mb-3">
                         <button type="submit" id="saveExerciseBtn" class="btn btn-success">
                             {{ 'Update' if exercise else 'Create' }} Exercise
@@ -372,10 +364,9 @@
                 </div>
             </div>
         </form>
-    </div>
+{% endblock %}
 
-    {% include 'footer.html' %}
-
+{% block scripts %}
     <script>
     // State
     let questions = [];
@@ -1263,6 +1254,4 @@
             .replace(/\r/g, '\\r');
     }
     </script>
-</body>
-
-</html>
+{% endblock %}

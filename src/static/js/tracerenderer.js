@@ -88,6 +88,61 @@ var TraceRenderer = (function () {
         return t.charAt(0) === '¬' || t.charAt(0) === '!';
     }
 
+    // Reconstruct a single state's SPOT syntax (e.g. "d & !e") from its tokens.
+    // A state with no literals is the tautology, written "1" in SPOT.
+    function _spotState(state) {
+        var lits = [];
+        for (var j = 0; j < state.tokens.length; j++) {
+            var t = state.tokens[j];
+            var name = (t.text || '').replace(/^[¬!]\s*/, '').trim();
+            if (!name) continue;
+            lits.push((t.negated ? '!' : '') + name);
+        }
+        return lits.length ? lits.join(' & ') : '1';
+    }
+
+    // Reconstruct the full trace in SPOT's word syntax, e.g.
+    // "!d & e; d & e; cycle{d & !e}", from the rendered states.
+    function _spotSyntax(states, prefixLen) {
+        var prefixParts = [];
+        var cycleParts = [];
+        for (var i = 0; i < states.length; i++) {
+            (i < prefixLen ? prefixParts : cycleParts).push(_spotState(states[i]));
+        }
+        var cycleStr = cycleParts.length ? 'cycle{' + cycleParts.join('; ') + '}' : '';
+        if (prefixParts.length && cycleStr) {
+            return prefixParts.join('; ') + '; ' + cycleStr;
+        }
+        return prefixParts.join('; ') || cycleStr;
+    }
+
+    // Natural-language description of the trace, used as the SVG's aria-label
+    // so screen readers get the actual trace content rather than a generic label.
+    // Ends with the exact SPOT word syntax so it is also available as alt text.
+    function _describeStates(states, prefixLen, marks) {
+        var parts = [];
+        for (var i = 0; i < states.length; i++) {
+            var words = [];
+            for (var j = 0; j < states[i].tokens.length; j++) {
+                var t = states[i].tokens[j];
+                words.push(t.negated ? 'not ' + t.text.replace(/^[¬!]\s*/, '') : t.text);
+            }
+            var part = 'state ' + i + ': ' + (words.join(', ') || 'any values');
+            if (marks) {
+                part += marks[i] ? ' (formula holds from here)' : ' (formula fails from here)';
+            }
+            parts.push(part);
+        }
+        var desc = 'Trace diagram with ' + states.length + ' states';
+        if (prefixLen < states.length) {
+            desc += (prefixLen === 0)
+                ? ', all repeating forever'
+                : ', states ' + prefixLen + ' onward repeating forever';
+        }
+        return desc + '. ' + parts.join('; ') + '.'
+            + ' In SPOT trace syntax: ' + _spotSyntax(states, prefixLen) + '.';
+    }
+
     var CFG = {
         font: '13px SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
         padX: 14,
@@ -114,6 +169,8 @@ var TraceRenderer = (function () {
         tokenNegText: '#c05f0e',
         indexFont: '11px SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
         indexTextFill: '#667085',
+        markSatFill: '#198754',
+        markUnsatFill: '#dc3545',
         currentBadgeFill: '#d97706',
         currentBadgeText: '#ffffff',
         currentBadgeH: 16,
@@ -127,11 +184,16 @@ var TraceRenderer = (function () {
     /**
      * @param {HTMLElement} container  DOM element to render into (contents replaced).
      * @param {Object}      traceData  { prefix: [{label}], cycle: [{label}] }
-     * @param {Object}      [options]  { highlightIndex: number|null }
+     * @param {Object}      [options]  { highlightIndex: number|null,
+     *                                   stateMarks: boolean[]|null }
+     *                      stateMarks marks each state with ✓/✗ (e.g. whether a
+     *                      formula holds from that state onward); its length must
+     *                      match the number of states or it is ignored.
      */
     function render(container, traceData, options) {
         options = options || {};
         var hlIdx = (options.highlightIndex != null) ? options.highlightIndex : -1;
+        var marks = Array.isArray(options.stateMarks) ? options.stateMarks : null;
         var prefix = traceData.prefix || [];
         var cycle = traceData.cycle || [];
         var availableWidth = _getAvailableWidth(container);
@@ -212,8 +274,11 @@ var TraceRenderer = (function () {
             gap = Math.max(CFG.gapMin, CFG.gap - Math.floor((totalW - availableWidth) / (states.length - 1)));
         }
 
+        if (marks && marks.length !== states.length) {
+            marks = null;
+        }
         var showStateIndices = (hlIdx >= 0);
-        var topBandH = showStateIndices ? (CFG.currentBadgeH + 10) : 0;
+        var topBandH = (showStateIndices || marks) ? (CFG.currentBadgeH + 10) : 0;
 
         // Horizontal layout
         var x = CFG.marginX;
@@ -247,7 +312,7 @@ var TraceRenderer = (function () {
             'width': '100%',
             'preserveAspectRatio': 'xMinYMin meet',
             'role': 'img',
-            'aria-label': 'Trace diagram with ' + states.length + ' states'
+            'aria-label': _describeStates(states, prefix.length, marks)
         });
         svg.style.display = 'block';
         svg.style.width = '100%';
@@ -295,18 +360,26 @@ var TraceRenderer = (function () {
             var g = _el('g', {});
             var stateFill = (hl ? CFG.hlFill : (s.isCycle ? CFG.cycleFill : CFG.prefixFill));
 
-            if (showStateIndices) {
+            if (showStateIndices || marks) {
+                var topText = showStateIndices ? 's' + s.gi : '';
+                var topFill = hl ? CFG.hlStroke : CFG.indexTextFill;
+                var topWeight = hl ? '700' : '500';
+                if (marks) {
+                    topText += (topText ? ' ' : '') + (marks[i] ? '✓' : '✗');
+                    topFill = marks[i] ? CFG.markSatFill : CFG.markUnsatFill;
+                    topWeight = '700';
+                }
                 var idxLabel = _el('text', {
                     'x': s.x + s.w / 2,
                     'y': s.y - 8,
                     'text-anchor': 'middle',
                     'dominant-baseline': 'central',
-                    'fill': hl ? CFG.hlStroke : CFG.indexTextFill,
+                    'fill': topFill,
                     'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
-                    'font-size': '11',
-                    'font-weight': hl ? '700' : '500'
+                    'font-size': marks ? '13' : '11',
+                    'font-weight': topWeight
                 });
-                idxLabel.textContent = 's' + s.gi;
+                idxLabel.textContent = topText;
                 g.appendChild(idxLabel);
             }
 

@@ -1,36 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LTL Tutor</title>
+{% block footer %}{% endblock %}
 
+{% block head %}
     <!-- Include Chart.js (already present) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.2"></script>
+{% endblock %}
 
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="{{ url_for('static', filename='js/common-functionality.js') }}"></script>
-    <meta name="description" content="Learn Linear Temporal Logic (LTL) with this interactive tutor.">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-
-</head>
-
-<body>
-
-    <div class="container">
-        {% include 'navbar.html' %}
+{% block content %}
 
 
         <div class="mt-4 mb-4">
             <h1 class="text-center">Your Profile</h1>
             <p class="text-center">
-            In the last {{lookback_days}} days, you have 
+            In the last {{lookback_days}} days, you have
             answered <span class="font-weight-bolder"> {{num_correct}} out of {{num_answered}} </span> question(s) correctly.
             </p>
         </div>
@@ -39,11 +23,77 @@
         <div class="btn-group btn-group-lg d-flex justify-content-center" role="group">
             <a href="/view/logs" class="btn btn-secondary">View Logs</a>
             <a href="/view/generatedexercises" class="btn btn-secondary">View Generated Exercises</a>
+            <a href="/profile/export" class="btn btn-outline-secondary" download>Export Profile (JSON)</a>
         </div>
 
 
 
         <hr>
+
+        <!-- Adaptive Profile: the state the exercise engine uses to adapt -->
+        <h3 class="mt-5">Your Adaptive Profile</h3>
+        <p class="text-muted">
+            This is the current state the tutor uses to tailor your questions.
+            Answer more questions and it updates automatically.
+        </p>
+        <div class="row">
+
+            <!-- Question-type mix -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Question Mix</h5>
+                        <small class="text-muted d-block mb-3">
+                            How often each question type comes up. Types you miss more are drilled more.
+                        </small>
+                        {% for q in question_type_mix %}
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between">
+                                <small>{{ q.label }}</small>
+                                <small class="text-muted">{{ "%.0f"|format(q.weight * 100) }}%</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-secondary" role="progressbar"
+                                     style="width: {{ q.weight * 100 }}%;"
+                                     aria-valuenow="{{ (q.weight * 100)|round }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Misconception profile -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Misconception Profile</h5>
+                        <small class="text-muted d-block mb-3">
+                            The tutor's inferred probabilities based on your answers (higher = more evidence to revisit that topic).
+                            These estimates help choose useful practice questions and may change as you answer more questions.
+                        </small>
+                        {% if misconception_snapshot %}
+                            {% for m in misconception_snapshot %}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small>{{ m.name }}</small>
+                                    <small class="text-muted">{{ "%.2f"|format(m.weight) }}</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar {% if m.weight >= 0.5 %}bg-danger{% else %}bg-success{% endif %}"
+                                         role="progressbar" style="width: {{ m.weight * 100 }}%;"
+                                         aria-valuenow="{{ (m.weight * 100)|round }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted"><em>Answer a few questions to build your profile.</em></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
 
         <!-- Misconception Trends Summary -->
         {% if misconception_trends %}
@@ -88,8 +138,8 @@
 
         <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
         <p class="text-muted">
-            This chart shows how your misconception likelihood has evolved over time using 
-            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a> 
+            This chart shows how your misconception likelihood has evolved over time using
+            <a href="https://doi.org/10.1007/BF01099821" target="_blank" rel="noopener noreferrer" aria-label="Read about Bayesian Knowledge Tracing research paper">Bayesian Knowledge Tracing</a>
             combined with spaced repetition principles.
         </p>
         <canvas id="allMisconceptionsChart"></canvas>
@@ -102,7 +152,7 @@
                 {% endfor %}
             };
 
-            
+
             // Find the latest timestamp to compute "days ago"
             let latestTimestamp = 0;
             for (const weights of Object.values(misconceptionData)) {
@@ -222,6 +272,11 @@
             });
         });
         </script>
-    </div>
-</body>
-</html>
+
+        <p class="text-muted text-center mt-5 mb-3">
+            <small>
+                Tutor exercise setting: {{ complexity }} on an internal scale from
+                {{ complexity_min }} to {{ complexity_max }}. This controls question generation and is not an assessment of your ability.
+            </small>
+        </p>
+{% endblock %}
