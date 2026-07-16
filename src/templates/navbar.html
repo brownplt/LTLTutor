@@ -124,6 +124,9 @@
 
             topSelect.addEventListener('change', function () {
                 writeSyntaxCookie(this.value);
+                if (window.LtlSyntax) {
+                    window.LtlSyntax.apply(this.value);
+                }
                 if (pageSelect && pageSelect.value !== this.value) {
                     pageSelect.value = this.value;
                     pageSelect.dispatchEvent(new Event('change'));

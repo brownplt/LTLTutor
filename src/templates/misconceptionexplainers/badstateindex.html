@@ -4,12 +4,12 @@
       <span class="badge badge-pill badge-primary float-right">Review</span>
     </h4>
     <p class="card-text"> 
-      Some learners mistakenly believe that the next (<code>X</code>) operator in LTL can apply to multiple states or 
-      spread its effect across a range of states. However, this is not true. The <code>X</code> operator is very precise: 
+      Some learners mistakenly believe that the next ({{ ltl_code('X p', operator_only=True) }}) operator in LTL can apply to multiple states or
+      spread its effect across a range of states. However, this is not true. The {{ ltl_code('X p', operator_only=True) }} operator is very precise:
       it applies strictly to the immediate next state and nothing else.
       <br><br>
-      For example, the formula <code>X (X p)</code> means that <code>p</code> holds two states from now. It does not 
-      imply anything about <code>p</code> holding in the current state, the immediate next state, or any state beyond 
+      For example, the formula {{ ltl_code('X (X p)') }} means that {{ ltl_code('p') }} holds two states from now. It does not
+      imply anything about {{ ltl_code('p') }} holding in the current state, the immediate next state, or any state beyond
       the two-step distance specified.
       <br><br>
       Another way to think of this is that the next operator does not fan out its effect;

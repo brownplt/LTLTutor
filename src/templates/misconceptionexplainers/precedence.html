@@ -12,17 +12,16 @@
         <br>
         In the absence of parentheses, it is important to be wary of operator precedence and associativity rules.
         <ul >
-            <li > Unary operators (<code>X</code>, <code>F</code>, <code>G</code>, <code>!</code>)
+            <li > Unary operators ({{ ltl_code('X p', operator_only=True) }}, {{ ltl_code('F p', operator_only=True) }}, {{ ltl_code('G p', operator_only=True) }}, {{ ltl_code('!p', operator_only=True) }})
                  have the highest precedence and will bind tightly to the formula that immediately follows them.
             </li>
 
-            <li > Binary operators (<code>&</code>,<code>|</code>,<code>-></code>,<code><-></code>,<code>U</code>)
+            <li > Binary operators ({{ ltl_code('p & q', operator_only=True) }},{{ ltl_code('p | q', operator_only=True) }},{{ ltl_code('p -> q', operator_only=True) }},{{ ltl_code('p <-> q', operator_only=True) }},{{ ltl_code('p U q', operator_only=True) }})
                 are left associative. This means that in expressions involving multiple operators, the operations are grouped from left to right. <br>
-                For instance, an expression like <code>a | b & c -> d</code> would be interpreted as <code>((a | b) & c) -> d</code>.
+                For instance, an expression like <code>a | b &amp; c -&gt; d</code> would be interpreted as <code>((a | b) &amp; c) -&gt; d</code>.
             </li>
         </ul>
 
       </p>
     </div>
   </div>
-  

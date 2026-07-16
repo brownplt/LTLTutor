@@ -2,7 +2,12 @@ from flask import Flask, render_template, request, Blueprint, jsonify, redirect,
 from flask_login import login_required, current_user
 
 
-from ltlnode import parse_ltl_string, SUPPORTED_SYNTAXES
+from ltlnode import (
+    parse_ltl_string,
+    SUPPORTED_SYNTAXES,
+    render_ltl_in_syntax,
+)
+from ltltemplate import render_ltl_code
 from codebook import getAllApplicableMisconceptions
 import os
 import json
@@ -141,12 +146,7 @@ def _render_formula_in_syntax(formula, syntax_choice):
         node = parse_ltl_string(formula)
     except Exception:
         return formula
-
-    if syntax_choice == "Forge":
-        return node.__forge__()
-    if syntax_choice == "Electrum":
-        return node.__electrum__()
-    return str(node)
+    return render_ltl_in_syntax(node, syntax_choice)
 
 
 def _convert_questions_to_syntax(questions, syntax_choice):
@@ -320,6 +320,7 @@ def fromjson_filter(s):
         return []
 
 app.jinja_env.filters['fromjson'] = fromjson_filter
+app.jinja_env.globals["ltl_code"] = render_ltl_code
 
 
 sk = os.environ.get('SECRET_KEY')

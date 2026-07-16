@@ -488,4 +488,34 @@ def parse_ltl_string(s):
     return root
 
 
+def render_ltl_in_syntax(node, syntax):
+    """Render an LTL AST using a supported tutor syntax."""
+    if syntax == "Forge":
+        return node.__forge__()
+    if syntax == "Electrum":
+        return node.__electrum__()
+    return node.__str__()
 
+
+def get_ltl_syntax_variants(formula, operator_only=False):
+    """Return parser-derived Classic, Forge, and Electrum renderings.
+
+    With ``operator_only=True``, each value is the root operator token. This
+    supports prose such as "the EVENTUALLY operator" without separately
+    encoding the syntax vocabulary in a template or browser script.
+    """
+    parsed = parse_ltl_string(formula)
+    operator_types = (UnaryOperatorNode, BinaryOperatorNode)
+    if operator_only and not isinstance(parsed, operator_types):
+        raise ValueError("operator_only requires a root operator")
+
+    result = {}
+    for syntax_name in SUPPORTED_SYNTAXES:
+        rendered = render_ltl_in_syntax(parsed, syntax_name)
+        if operator_only:
+            inner = rendered[1:-1]
+            tokens = inner.split()
+            operator_index = 0 if isinstance(parsed, UnaryOperatorNode) else 1
+            rendered = tokens[operator_index]
+        result[syntax_name] = rendered
+    return result

@@ -8,22 +8,21 @@
       
       <p class="card-text mt-3">
 
-        You may think that if <code>x</code> is always true,
-        the formula <code>x U y</code> ("x until y") is always satisfied, 
-        even if <code>y</code> is never true. 
+        You may think that if {{ ltl_code('x') }} is always true,
+        the formula {{ ltl_code('x U y') }} ("x until y") is always satisfied,
+        even if {{ ltl_code('y') }} is never true.
 
         <br><br>
         
-        In reality, <code>x U y</code> states two things:
+        In reality, {{ ltl_code('x U y') }} states two things:
         <ul>
-          <li> <code>x</code> holds at every moment in time until <code>y</code> becomes true.
-            This means the <code>x</code> must be true at the current state.
+          <li> {{ ltl_code('x') }} holds at every moment in time until {{ ltl_code('y') }} becomes true.
+            This means the {{ ltl_code('x') }} must be true at the current state.
           </li>
-          <li> <code>y</code> will eventually become true at some point in the future.</li>
+          <li> {{ ltl_code('y') }} will eventually become true at some point in the future.</li>
         </ul>
-        What this means is that if <code>y</code> never becomes true, 
-        then <code>x U y</code> is false, regardless of whether <code>x</code> holds for all preceding moments.
+        What this means is that if {{ ltl_code('y') }} never becomes true,
+        then {{ ltl_code('x U y') }} is false, regardless of whether {{ ltl_code('x') }} holds for all preceding moments.
       </p>
     </div>
   </div>
-  

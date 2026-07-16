@@ -220,3 +220,26 @@ class TestNextButtonDisabledUntilAnswer:
         # Select a radio
         page.locator(".question:visible input[type=radio]").first.check()
         expect(check_btn).to_be_enabled()
+
+
+class TestMisconceptionExplainerSyntax:
+    """Static explainer formulas follow the learner's syntax preference."""
+
+    def test_top_bar_updates_syntax_aware_code(self, page, base_url):
+        page.goto(f"{base_url}/ltl")
+        page.evaluate("""() => {
+            const code = document.createElement('code');
+            code.id = 'syntax-aware-test-formula';
+            code.className = 'ltl-syntax';
+            code.dataset.classic = '(G (F p))';
+            code.dataset.forge = '(ALWAYS (EVENTUALLY p))';
+            code.dataset.electrum = '(ALWAYS (EVENTUALLY p))';
+            document.body.appendChild(code);
+            window.LtlSyntax.apply('Classic');
+        }""")
+
+        page.locator("#topbarSyntaxSelect").select_option("Forge")
+        expect(page.locator("#syntax-aware-test-formula")).to_have_text("(ALWAYS (EVENTUALLY p))")
+
+        page.locator("#topbarSyntaxSelect").select_option("Classic")
+        expect(page.locator("#syntax-aware-test-formula")).to_have_text("(G (F p))")
