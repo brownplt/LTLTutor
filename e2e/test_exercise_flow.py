@@ -223,23 +223,30 @@ class TestNextButtonDisabledUntilAnswer:
 
 
 class TestMisconceptionExplainerSyntax:
-    """Static explainer formulas follow the learner's syntax preference."""
+    """Inline .ltlformula fragments follow the learner's syntax preference."""
 
-    def test_top_bar_updates_syntax_aware_code(self, page, base_url):
+    def test_top_bar_updates_ltlformula_code(self, logged_in_page, base_url):
+        # /ltl (rather than the explainer-hosting home page) keeps the test
+        # deterministic: which explainer the home page shows depends on the
+        # learner's misconception history.
+        page = logged_in_page
         page.goto(f"{base_url}/ltl")
         page.evaluate("""() => {
             const code = document.createElement('code');
             code.id = 'syntax-aware-test-formula';
-            code.className = 'ltl-syntax';
-            code.dataset.classic = '(G (F p))';
-            code.dataset.forge = '(ALWAYS (EVENTUALLY p))';
-            code.dataset.electrum = '(ALWAYS (EVENTUALLY p))';
+            code.className = 'ltlformula';
+            code.textContent = 'G (F (p U (X q)))';
             document.body.appendChild(code);
-            window.LtlSyntax.apply('Classic');
+            window.LtlSyntax.apply(window.LtlSyntax.selected());
         }""")
 
+        formula = page.locator("#syntax-aware-test-formula")
+
         page.locator("#topbarSyntaxSelect").select_option("Forge")
-        expect(page.locator("#syntax-aware-test-formula")).to_have_text("(ALWAYS (EVENTUALLY p))")
+        expect(formula).to_have_text("ALWAYS (EVENTUALLY (p UNTIL (NEXT_STATE q)))")
+
+        page.locator("#topbarSyntaxSelect").select_option("Electrum")
+        expect(formula).to_have_text("ALWAYS (EVENTUALLY (p UNTIL (AFTER q)))")
 
         page.locator("#topbarSyntaxSelect").select_option("Classic")
-        expect(page.locator("#syntax-aware-test-formula")).to_have_text("(G (F p))")
+        expect(formula).to_have_text("G (F (p U (X q)))")

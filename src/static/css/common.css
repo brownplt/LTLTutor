@@ -71,8 +71,11 @@
     background-color: #fff3cd;
     border-radius: 999px;
 }
-/* Neutral monospace chip so formulas read as code, not Bootstrap's pink <code>. */
-.ltl-formula {
+/* Neutral monospace chip so formulas read as code, not Bootstrap's pink <code>.
+   .ltlformula additionally opts the element into top-bar syntax switching
+   (see common-functionality.js). */
+.ltl-formula,
+.ltlformula {
     padding: 0.1em 0.4em;
     font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
     font-size: 0.9em;

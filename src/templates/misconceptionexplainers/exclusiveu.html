@@ -4,20 +4,20 @@
       <span class="badge badge-pill badge-primary float-right">Refutation</span>
     </h4>
     <p class="card-text">
-      You might think that {{ ltl_code('x U y') }} (Until) is satisfied only when both the right subterm {{ ltl_code('y') }}
-      and the negation of the left subterm {{ ltl_code('x') }} hold true.
+      You might think that <code class="ltlformula">x U y</code> (Until) is satisfied only when both the right subterm <code class="ltlformula">y</code> 
+      and the negation of the left subterm <code class="ltlformula">x</code> hold true. 
       However, the "Until" operator is more permissive than this.
-      In fact, it only requires that {{ ltl_code('x') }} holds true at every step until {{ ltl_code('y') }}
-      becomes true. Once {{ ltl_code('y') }} holds, it doesn't matter whether {{ ltl_code('x') }} is true or false.
+      In fact, it only requires that <code class="ltlformula">x</code> holds true at every step until <code class="ltlformula">y</code>
+      becomes true. Once <code class="ltlformula">y</code> holds, it doesn't matter whether <code class="ltlformula">x</code> is true or false.
 
       <br>
-      To put it another way: {{ ltl_code('y') }} eventually becomes true at some point in the future, and <i>until</i>
-      that moment, {{ ltl_code('x') }} must continuously hold true.
-      This does not require {{ ltl_code('x') }} to stop being true at the same time that {{ ltl_code('y') }} becomes true.
+      To put it another way: <code class="ltlformula">y</code> eventually becomes true at some point in the future, and <i>until</i>
+      that moment, <code class="ltlformula">x</code> must continuously hold true. 
+      This does not require <code class="ltlformula">x</code> to stop being true at the same time that <code class="ltlformula">y</code> becomes true.
       <br>
-      For example, consider the following trace that satisfies the formula {{ ltl_code('x U y') }}, even though {{ ltl_code('x') }} is true at the same time as {{ ltl_code('y') }}:
+      For example, consider the following trace that satisfies the formula <code class="ltlformula">x U y</code>, even though <code class="ltlformula">x</code> is true at the same time as <code class="ltlformula">y</code>:
       <div class="trace-diagram" data-trace='{"prefix": [{"label": "x\u2003\u00acy"}, {"label": "x\u2003y"}], "cycle": [{"label": "\u00acx\u2003\u00acy"}]}'></div>
-      This shows that {{ ltl_code('x') }} can still hold true when {{ ltl_code('y') }} is satisfied, as long as {{ ltl_code('x') }} holds up until {{ ltl_code('y') }} does.
+      This shows that <code class="ltlformula">x</code> can still hold true when <code class="ltlformula">y</code> is satisfied, as long as <code class="ltlformula">x</code> holds up until <code class="ltlformula">y</code> does.
     </p>
   </div>
 </div>

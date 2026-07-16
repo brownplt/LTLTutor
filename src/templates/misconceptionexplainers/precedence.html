@@ -5,23 +5,25 @@
         <span class="badge badge-pill badge-primary float-right">Tip</span>
       </h4>
       <p class="card-text">
-        It may be the case that you are unsure about the precedence and associativity 
-        rules of operators in LTL formulas, and realy on parentheses alone to resolve any ambiguities. 
+        It may be the case that you are unsure about the precedence and associativity
+        rules of operators in LTL formulas, and rely on parentheses alone to resolve any ambiguities.
         However, this is a misconception that can lead to confusion and misinterpretation of formulas.
         LTL follows strict rules regarding operator precedence and associativity. 
         <br>
         In the absence of parentheses, it is important to be wary of operator precedence and associativity rules.
         <ul >
-            <li > Unary operators ({{ ltl_code('X p', operator_only=True) }}, {{ ltl_code('F p', operator_only=True) }}, {{ ltl_code('G p', operator_only=True) }}, {{ ltl_code('!p', operator_only=True) }})
+            <li > Unary operators (<code class="ltlformula">X</code>, <code class="ltlformula">F</code>, <code class="ltlformula">G</code>, <code class="ltlformula">!</code>)
                  have the highest precedence and will bind tightly to the formula that immediately follows them.
             </li>
 
-            <li > Binary operators ({{ ltl_code('p & q', operator_only=True) }},{{ ltl_code('p | q', operator_only=True) }},{{ ltl_code('p -> q', operator_only=True) }},{{ ltl_code('p <-> q', operator_only=True) }},{{ ltl_code('p U q', operator_only=True) }})
-                are left associative. This means that in expressions involving multiple operators, the operations are grouped from left to right. <br>
-                For instance, an expression like <code>a | b &amp; c -&gt; d</code> would be interpreted as <code>((a | b) &amp; c) -&gt; d</code>.
+            <li > Binary operators bind from tightest to loosest in the order
+                <code class="ltlformula">&amp;</code>, <code class="ltlformula">|</code>, <code class="ltlformula">U</code>, <code class="ltlformula">-&gt;</code>, <code class="ltlformula">&lt;-&gt;</code>,
+                and repeated uses of the same operator are grouped from left to right. <br>
+                For instance, an expression like <code class="ltlformula">a | b &amp; c -&gt; d</code> would be interpreted as <code class="ltlformula">(a | (b &amp; c)) -&gt; d</code>.
             </li>
         </ul>
 
       </p>
     </div>
   </div>
+  
