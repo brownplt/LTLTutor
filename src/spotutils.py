@@ -217,28 +217,36 @@ def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
         # string here rather than reusing a shared constant.
         return ','.join(f'{k}={v}' for k, v in d.items())
 
-    ltl_priorities_string = to_priority_string(ltl_priorities)
-
-    # simplify=3 (randltl's own default level) rewrites away redundant
-    # nestings like F G F G d that read absurdly when rendered as English.
-    # randltl's default seed is 0, and we build a fresh generator per call,
-    # so without an explicit seed every call would yield the same sequence.
-    f = spot.randltl(atoms, tree_size=tree_size, ltl_priorities = ltl_priorities_string,
-                     simplify=3, seed=random.randrange(2**30))
+    def new_generator():
+        # simplify=3 (randltl's own default level) rewrites away redundant
+        # nestings like F G F G d that read absurdly when rendered as English.
+        # randltl's default seed is 0, and we build a fresh generator per
+        # call, so without an explicit seed every call would yield the same
+        # sequence.  The priority string is rebuilt each time (see above).
+        return spot.randltl(atoms, tree_size=tree_size,
+                            ltl_priorities=to_priority_string(ltl_priorities),
+                            simplify=3, seed=random.randrange(2**30))
 
     # Simplification can collapse a formula to a constant (skip those and
     # keep drawing) or rewrite it into W/M/R/xor, which the tutor cannot
     # parse or display (rewrite those back into the tutor's operator set).
+    # Keep drawing until the requested batch is filled; a generator only
+    # yields distinct formulas, so when it exhausts the unique-formula space
+    # at this tree size, reseed a fresh one (duplicates across generators
+    # are acceptable — callers ask for a pool, not a set).  The draw budget
+    # is a safety net against pathologically tiny formula spaces.
+    f = new_generator()
     formulae = []
-    for _ in range(num_formulae * 10):
+    for _ in range(max(num_formulae * 50, 500)):
         if len(formulae) >= num_formulae:
             break
         try:
             candidate = next(f)
         except StopIteration:
-            break
+            candidate = None
         if candidate is None:
-            break
+            f = new_generator()
+            continue
         if candidate.is_tt() or candidate.is_ff():
             continue
         candidate = _rewrite_to_tutor_grammar(candidate)
