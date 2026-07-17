@@ -117,6 +117,9 @@
             document.cookie = "ltlsyntax=" + syntax + "; path=/";
 
             updateSyntaxExamples(syntax);
+            if (window.LtlSyntax) {
+                window.LtlSyntax.apply(syntax);
+            }
         }
 
         // Function to get the value of a cookie by name

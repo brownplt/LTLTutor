@@ -6,17 +6,17 @@
       </h4>
       <p class="card-text">
 
-        It may be the case that you believe the <code>F</code> (finally) operator implicitly applies at some state, 
+        It may be the case that you believe the <code class="ltlformula">F</code> (finally) operator implicitly applies at some state, 
         meaning it will automatically trigger at a particular point in time. 
 
-        However, the <code>F</code> operator has a different meaning in LTL.
-        It asserts that <code>p</code> will eventually be true, but it doesn't specify when. 
+        However, the <code class="ltlformula">F</code> operator has a different meaning in LTL.
+        It asserts that <code class="ltlformula">p</code> will eventually be true, but it doesn't specify when. 
 
         <br>
-        What <em>is</em> required is that <code>p</code> becomes true at least once in any future state, 
+        What <em>is</em> required is that <code class="ltlformula">p</code> becomes true at least once in any future state, 
         including potentially the present state.
-        Importantly, <code> F p</code> doesn't specify when <code>p</code> will become true, only that it will 
-        definitely become true. Thus both these traces satisfy <code>F p</code>:
+        Importantly, <code class="ltlformula"> F p</code> doesn't specify when <code class="ltlformula">p</code> will become true, only that it will 
+        definitely become true. Thus both these traces satisfy <code class="ltlformula">F p</code>:
 
 
         <div class="trace-diagram" data-trace='{"prefix": [{"label": "\u00acp"}], "cycle": [{"label": "p"}]}'></div>

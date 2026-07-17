@@ -251,7 +251,7 @@ class UntilNode(BinaryOperatorNode):
         return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
     
     def __electrum__(self):
-        return f"({self.left.__forge__()} UNTIL {self.right.__forge__()})"
+        return f"({self.left.__electrum__()} UNTIL {self.right.__electrum__()})"
 
 
 class NextNode(UnaryOperatorNode):
@@ -486,6 +486,5 @@ def parse_ltl_string(s):
     root = listener.getRootFormula()
 
     return root
-
 
 

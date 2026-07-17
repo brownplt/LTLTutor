@@ -220,3 +220,33 @@ class TestNextButtonDisabledUntilAnswer:
         # Select a radio
         page.locator(".question:visible input[type=radio]").first.check()
         expect(check_btn).to_be_enabled()
+
+
+class TestMisconceptionExplainerSyntax:
+    """Inline .ltlformula fragments follow the learner's syntax preference."""
+
+    def test_top_bar_updates_ltlformula_code(self, logged_in_page, base_url):
+        # /ltl (rather than the explainer-hosting home page) keeps the test
+        # deterministic: which explainer the home page shows depends on the
+        # learner's misconception history.
+        page = logged_in_page
+        page.goto(f"{base_url}/ltl")
+        page.evaluate("""() => {
+            const code = document.createElement('code');
+            code.id = 'syntax-aware-test-formula';
+            code.className = 'ltlformula';
+            code.textContent = 'G (F (p U (X q)))';
+            document.body.appendChild(code);
+            window.LtlSyntax.apply(window.LtlSyntax.selected());
+        }""")
+
+        formula = page.locator("#syntax-aware-test-formula")
+
+        page.locator("#topbarSyntaxSelect").select_option("Forge")
+        expect(formula).to_have_text("ALWAYS (EVENTUALLY (p UNTIL (NEXT_STATE q)))")
+
+        page.locator("#topbarSyntaxSelect").select_option("Electrum")
+        expect(formula).to_have_text("ALWAYS (EVENTUALLY (p UNTIL (AFTER q)))")
+
+        page.locator("#topbarSyntaxSelect").select_option("Classic")
+        expect(formula).to_have_text("G (F (p U (X q)))")
