@@ -127,10 +127,13 @@
                 });
 
                 if (response.ok) {
-                    // Hide the modal on success
                     $(`#ltlToEngRaterModal-${qindex}`).modal('hide');
+                    const ack = document.getElementById(`unclear-ack-${qindex}`);
+                    if (ack) {
+                        ack.classList.remove('d-none');
+                    }
                 } else {
-                    console.log('Failed to submit feedback. Please try again.');
+                    alert('Failed to submit feedback. Please try again.');
                 }
             } catch (error) {
                 console.error('Error submitting feedback:', error);
