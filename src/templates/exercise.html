@@ -86,6 +86,9 @@
                             <button type="button" class="btn btn-link text-primary p-0" data-toggle="modal" data-target="#ltlToEngRaterModal-{{ qindex }}">
                                 Is this English sentence confusing or unclear?
                             </button>
+                            <p id="unclear-ack-{{ qindex }}" class="w-100 text-muted mb-0 mt-1 d-none" role="status">
+                                <small>Thank you for your feedback. Please answer with your best-guess interpretation of the sentence.</small>
+                            </p>
                             {% include 'ltltoengrater.html' %}
                         {% endif %}
                     </div>
