@@ -124,6 +124,38 @@ code, pre, .mono, kbd { font-family: var(--font-mono); }
 .btn-link { color: var(--accent-strong); font-weight: 600; }
 .btn-link:hover { color: var(--accent); }
 
+/* Passive escape hatch under an English stem: deliberately quiet, since a
+   student only reaches for it when stuck. Underlined rather than colored:
+   --ink-3 is only 4.17:1 on --surface (under AA for small text), and color
+   alone would violate WCAG 1.4.1. Color returns on hover/focus.
+   .btn.unclear-flag (0,2,0) outranks .btn's 700 and .btn-link's 600 (0,1,0)
+   whatever the source order, so no !important is needed. */
+.unclear-flag-row { margin-top: .25rem; margin-bottom: 1.15rem; }
+.btn.unclear-flag {
+  color: var(--ink-2);
+  font-weight: 400;
+  font-size: .8125rem;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 2px;
+}
+.btn.unclear-flag:hover, .btn.unclear-flag:focus {
+  color: var(--accent-strong);
+  text-decoration-color: currentColor;
+}
+/* The global focus ring is a :where() rule and so carries zero specificity;
+   Bootstrap's .btn:focus { outline: 0 } outranks it on any button. Restate it
+   here at (0,3,0) so keyboard users get the ring, not just a color shift. */
+.btn.unclear-flag:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.unclear-ack { color: var(--ink-2); font-size: .8125rem; margin-top: .25rem; }
+
+/* Scenario + letter key above an English stem. Subordinate to the rule, but
+   --ink-2 (8:1) rather than the text-muted --ink-3 (4.17:1, under AA here):
+   the key is the only place the letters in the options are defined, so it has
+   to stay legible. */
+.question-setup { color: var(--ink-2); font-size: .9375rem; line-height: 1.55; }
+
 /* ---- Cards: flat, hard-edged, structural borders ------------------------ */
 .card {
   background: var(--surface);

@@ -489,16 +489,17 @@ class ExerciseBuilder:
         """Generate a contextualized English question using the given theme.
 
         Expects the formula's literals to already match the theme (see
-        gen_contextualized_answer). Deontic themes get their stance-setting
-        preamble prepended. Returns None if translation fails.
+        gen_contextualized_answer). Returns the rule sentence alone: a
+        deontic theme's stance-setting preamble is returned separately by
+        build_english_to_ltl_question, which hands it to the UI as part of
+        the question prompt rather than the property to formalize. Returns
+        None if translation fails.
         """
         theme = ltltoeng_contextualized.THEMES[theme_name]
         as_node = ltlnode.parse_ltl_string(formula)
         result = ltltoeng_contextualized.translate(as_node, theme)
         if not result or result.strip() == "":
             return None
-        if theme.preamble:
-            result = f"{theme.preamble}\n\n{result}"
         return result
 
 
@@ -638,6 +639,9 @@ class ExerciseBuilder:
         if theme_name is None and contextualized:
             theme_name = "lights"
 
+        preamble = ""
+        rule_noun = ""
+        legend = []
         if theme_name is not None:
             question = self.gen_nl_question_contextualized(answer, theme_name)
             translation_mode = self.THEME_TRANSLATION_MODES[theme_name]
@@ -645,6 +649,21 @@ class ExerciseBuilder:
             if question is None or question == "":
                 question = self.gen_nl_question(answer)
                 translation_mode = "abstract"
+            else:
+                theme = ltltoeng_contextualized.THEMES[theme_name]
+                preamble = theme.preamble
+                rule_noun = theme.rule_noun
+                ## The key ships with the question, not just with the theme:
+                ## a themed sentence is in words while its options are in
+                ## letters, so posing one without the other would ask the
+                ## student to guess the naming as well as read the LTL.
+                ## Options are mutations of this formula and never introduce
+                ## literals of their own, so the answer's literals cover them.
+                legend = [
+                    {"literal": lit, "meaning": phrase}
+                    for lit, phrase in ltltoeng_contextualized.legend(
+                        ltlnode.parse_ltl_string(answer), theme)
+                ]
         else:
             question = self.gen_nl_question(answer)
             translation_mode = "abstract"
@@ -655,6 +674,9 @@ class ExerciseBuilder:
 
         return {
             "question": question,
+            "preamble": preamble,
+            "rule_noun": rule_noun,
+            "legend": legend,
             "type": self.ENGLISHTOLTL,
             "options": options,
             "translation_mode": translation_mode
