@@ -169,17 +169,91 @@ def generate_traces(f_accepted, f_rejected, max_traces=5):
 ### Some are obvious : Implicit G means, add more G
 ### Some are less obvious: eg "BadStateIndex"
 
+# Operators outside the tutor's grammar (ltl.g4).  randltl never emits them
+# (their priorities are zeroed), but SPOT's simplifier can introduce them,
+# e.g. !(a U b) -> !a R !b.
+_NON_GRAMMAR_OPS = (spot.op_W, spot.op_M, spot.op_R, spot.op_Xor)
+
+
+def _in_tutor_grammar(f):
+    if f.kind() in _NON_GRAMMAR_OPS:
+        return False
+    return all(_in_tutor_grammar(child) for child in f)
+
+
+def _rewrite_to_tutor_grammar(f):
+    """Rewrite W/M/R/xor into the tutor's operator set via exact identities.
+
+    These direct identities duplicate at most one operand once; SPOT's own
+    unabbreviate() instead chains R -> W -> U and can triple subterms.
+    Since R only ever arises here from the simplifier normalizing a negated
+    until, !a R !b maps straight back to !(a U b) (the formula constructors
+    cancel the double negations).
+    """
+    f = f.map(_rewrite_to_tutor_grammar)
+    kind = f.kind()
+    if kind == spot.op_R:
+        # a R b == !(!a U !b)
+        return spot.formula.Not(spot.formula.U(
+            spot.formula.Not(f[0]), spot.formula.Not(f[1])))
+    if kind == spot.op_W:
+        # a W b == (a U b) | G a
+        return spot.formula.Or([spot.formula.U(f[0], f[1]),
+                                spot.formula.G(f[0])])
+    if kind == spot.op_M:
+        # a M b == b U (a & b)
+        return spot.formula.U(f[1], spot.formula.And([f[0], f[1]]))
+    if kind == spot.op_Xor:
+        # a xor b == !(a <-> b)
+        return spot.formula.Not(spot.formula.Equiv(f[0], f[1]))
+    return f
+
+
 def gen_rand_ltl(atoms, tree_size, ltl_priorities, num_formulae = 5):
-    
+
     def to_priority_string(d):
+        # SPOT's priority parser tokenizes the string buffer in place,
+        # corrupting the Python string it was handed; always build a fresh
+        # string here rather than reusing a shared constant.
         return ','.join(f'{k}={v}' for k, v in d.items())
 
-    # Need to do the correct kind of manipulation here
-    ltl_priorities_string = to_priority_string(ltl_priorities)
+    def new_generator():
+        # simplify=3 (randltl's own default level) rewrites away redundant
+        # nestings like F G F G d that read absurdly when rendered as English.
+        # randltl's default seed is 0, and we build a fresh generator per
+        # call, so without an explicit seed every call would yield the same
+        # sequence.  The priority string is rebuilt each time (see above).
+        return spot.randltl(atoms, tree_size=tree_size,
+                            ltl_priorities=to_priority_string(ltl_priorities),
+                            simplify=3, seed=random.randrange(2**30))
 
-    f = spot.randltl(atoms, tree_size=tree_size, ltl_priorities = ltl_priorities_string)
-    
-    return [str(next(f)) for _ in range(num_formulae)]
+    # Simplification can collapse a formula to a constant (skip those and
+    # keep drawing) or rewrite it into W/M/R/xor, which the tutor cannot
+    # parse or display (rewrite those back into the tutor's operator set).
+    # Keep drawing until the requested batch is filled; a generator only
+    # yields distinct formulas, so when it exhausts the unique-formula space
+    # at this tree size, reseed a fresh one (duplicates across generators
+    # are acceptable — callers ask for a pool, not a set).  The draw budget
+    # is a safety net against pathologically tiny formula spaces.
+    f = new_generator()
+    formulae = []
+    for _ in range(max(num_formulae * 50, 500)):
+        if len(formulae) >= num_formulae:
+            break
+        try:
+            candidate = next(f)
+        except StopIteration:
+            candidate = None
+        if candidate is None:
+            f = new_generator()
+            continue
+        if candidate.is_tt() or candidate.is_ff():
+            continue
+        candidate = _rewrite_to_tutor_grammar(candidate)
+        if not _in_tutor_grammar(candidate):
+            continue
+        formulae.append(str(candidate))
+    return formulae
 
 
 def is_trivial(formula_str):
