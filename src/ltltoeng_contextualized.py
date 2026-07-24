@@ -137,11 +137,11 @@ THEMES["abac"] = Theme(
     deontic=True,
     # Both of these ride in the question prompt ("You are auditing access to a
     # confidential document. Which of the following LTL formulae best
-    # represents company policy?") rather than above the sentence: the stance
-    # is part of what is being asked, and hoisting it keeps the formalizable
-    # rule the single prominent line in the card body.
+    # represents this policy?") rather than above the sentence: the stance is
+    # part of what is being asked, and hoisting it keeps the formalizable rule
+    # the single prominent line in the card body.
     preamble="You are auditing access to a confidential document.",
-    rule_noun="company policy",
+    rule_noun="this policy",
     literals={
         "d": ("the document is open",            "the document is closed"),
         "c": ("the user's clearance is active",  "the user's clearance is revoked"),
