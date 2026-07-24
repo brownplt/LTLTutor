@@ -35,7 +35,9 @@
                     </div>
                     <p class="mb-0 font-weight-bold">
                         {% if q.type == "englishtoltl" %}
-                            Which of the following LTL formulae best represents this English sentence?
+                            {# A themed arm folds its scenario into the prompt, so the card body is
+                               left with just the key and the one sentence to formalize. #}
+                            {% if q.preamble %}{{ q.preamble }} {% endif %}Which of the following LTL formulae best represents {{ q.rule_noun | default('this English sentence', true) }}?
                         {% elif q.type == "tracesatisfaction_mc" %}
                             Which of the following traces satisfies the following LTL formula?
                         {% elif q.type == "tracesatisfaction_yn" %}
@@ -77,21 +79,32 @@
                         <pre><code class="actualQuestion language-ltl">{{ q.question}}</code></pre>
                     </h5>
                     {% else %}
-                    <h5 id="{{ qindex }}question_text" class="card-title mb-2 actualQuestion"
-                        style="white-space: pre-wrap;"
-                        data-translation-mode="{{ q.translation_mode | default('') }}">{{ q.question}}
-                    </h5>
-                    <div class="row mb-2 ml-2">
-                        {% if q.type == "englishtoltl" %}
-                            <button type="button" class="btn btn-link text-primary p-0" data-toggle="modal" data-target="#ltlToEngRaterModal-{{ qindex }}">
-                                Is this English sentence confusing or unclear?
-                            </button>
-                            <p id="unclear-ack-{{ qindex }}" class="w-100 text-muted mb-0 mt-1 d-none" role="status">
-                                <small>Thank you for your feedback. Please answer with your best-guess interpretation of the sentence.</small>
-                            </p>
-                            {% include 'ltltoengrater.html' %}
+                    {# englishtoltl tightens the gap below the stem so the report control that
+                       follows groups with the sentence rather than heading the answer options. #}
+                    <div id="{{ qindex }}question_text"
+                        class="actualQuestion {% if q.type == 'englishtoltl' %}mb-0{% else %}mb-2{% endif %}"
+                        data-translation-mode="{{ q.translation_mode | default('') }}">
+                        {% if q.legend %}
+                        <ul class="list-unstyled question-setup question-legend mb-2">
+                            {% for entry in q.legend %}
+                            <li><code class="language-ltl">{{ entry.literal }}</code>: {{ entry.meaning }}</li>
+                            {% endfor %}
+                        </ul>
                         {% endif %}
+                        <h5 class="card-title mb-0" style="white-space: pre-wrap;">{{ q.question }}</h5>
                     </div>
+                    {% if q.type == "englishtoltl" %}
+                    <div class="unclear-flag-row">
+                        <button type="button" class="btn btn-link unclear-flag p-0"
+                                data-toggle="modal" data-target="#ltlToEngRaterModal-{{ qindex }}">
+                            Report unclear wording
+                        </button>
+                        <p id="unclear-ack-{{ qindex }}" class="unclear-ack mb-0 d-none" role="status">
+                            Thank you for your feedback. Please answer with your best-guess interpretation of the sentence.
+                        </p>
+                    </div>
+                    {% include 'ltltoengrater.html' %}
+                    {% endif %}
                     {% endif %}
 
                     <ul class="list-group">

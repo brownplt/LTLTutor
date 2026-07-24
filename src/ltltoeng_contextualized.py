@@ -26,6 +26,7 @@ occupancy) would smuggle constraints into the trace semantics.
 Public API
 ----------
     translate(node, theme=None) -> str
+    legend(node, theme=None) -> [(literal, state phrase)]
     remap_to_theme(node, theme=None) -> node or None
     THEMES: dict of built-in theme names -> Theme objects
 
@@ -34,10 +35,20 @@ event-based ("the blue light turns on"): a bare LTL literal holds in every
 state where it is true, not only on a false->true transition, so edge
 phrasing would describe a different formula than the one being asked.
 
+The sentence itself never mentions the letters, but the answer options are
+written in them, so a themed question must be posed together with its key
+(`legend()`): otherwise the exercise also tests whether the student can guess
+that `d` names "the document is open" -- and not, say, the document, which has
+more than one state -- which is a guessing game about naming, not about LTL.
+A key entry names a whole state, never a subject, because that is what a
+literal denotes.
+
 Example:
     node = parse_ltl_string("G(b -> F a)")
     translate(node, theme=THEMES["lights"])
     # => "Whenever the blue light is on, then eventually the amber light is on."
+    legend(node, theme=THEMES["lights"])
+    # => [("b", "the blue light is on"), ("a", "the amber light is on")]
 """
 
 from __future__ import annotations
@@ -65,17 +76,27 @@ class Theme:
         description: One-line description of the scenario.
         literals:    Maps literal names to (positive_phrase, negative_phrase).
                      e.g. {"b": ("the blue light is on", "the blue light is off")}
+                     The positive phrase doubles as the literal's key entry
+                     (see legend), so it must name the state the letter stands
+                     for on its own, out of sentence context.
         deontic:     Phrase the formula as an enforceable rule ("must") rather
                      than a description.  Requires copular literal phrases
                      ("the X is Y") so the modal transform stays grammatical.
-        preamble:    Stance-setting text shown before the sentence (only
-                     meaningful for deontic themes).  Empty = no preamble.
+        preamble:    Stance-setting sentence putting the student in the role of
+                     enforcing the rule (only meaningful for deontic themes).
+                     Empty = no preamble.
+        rule_noun:   What the sentence *is*, as a noun phrase, completing
+                     "...best represents ___?".  Empty falls back to the
+                     generic "this English sentence".  Pairs with preamble:
+                     both belong to the question being asked, not to the
+                     property, so the UI puts them in the question prompt.
     """
     name: str
     description: str
     literals: Dict[str, tuple[str, str]]  # lit -> (positive, negative)
     deontic: bool = False
     preamble: str = ""
+    rule_noun: str = ""
 
     def positive(self, lit: str) -> str:
         if lit in self.literals:
@@ -114,7 +135,13 @@ THEMES["abac"] = Theme(
     name="Document Access Audit",
     description="Auditing access to a confidential document.",
     deontic=True,
-    preamble="You are auditing access to a confidential document. Company policy:",
+    # Both of these ride in the question prompt ("You are auditing access to a
+    # confidential document. Which of the following LTL formulae best
+    # represents company policy?") rather than above the sentence: the stance
+    # is part of what is being asked, and hoisting it keeps the formalizable
+    # rule the single prominent line in the card body.
+    preamble="You are auditing access to a confidential document.",
+    rule_noun="company policy",
     literals={
         "d": ("the document is open",            "the document is closed"),
         "c": ("the user's clearance is active",  "the user's clearance is revoked"),
@@ -636,6 +663,25 @@ def translate(node: ltlnode.LTLNode, theme: Optional[Theme] = None) -> str:
     if result and result[-1] not in ".!?":
         result += "."
     return result
+
+
+def legend(node: ltlnode.LTLNode, theme: Optional[Theme] = None) -> list[tuple[str, str]]:
+    """The key for *node*: (letter, state it stands for) pairs, theme order.
+
+    The sentence is in words and the answer options are in letters, so the
+    student needs the correspondence stated rather than inferred from initials
+    ("d" is the document being *open*, not the document).  Only literals the
+    formula actually uses are listed, so the key never hints at attributes the
+    question does not involve.
+
+    Entries are the plain *state* phrases even for a deontic theme: a letter
+    denotes a state of the world, and the obligation belongs to the policy
+    being asked about, not to the letter.
+    """
+    if theme is None:
+        theme = THEMES["lights"]
+    used = collect_literals(node)
+    return [(lit, theme.literals[lit][0]) for lit in theme.literals if lit in used]
 
 
 def collect_literals(node: ltlnode.LTLNode) -> set:
