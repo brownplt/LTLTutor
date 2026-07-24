@@ -101,8 +101,45 @@ class TestDeonticArm(unittest.TestCase):
         themed = self.builder.gen_contextualized_answer(
             "G(z -> F k)", theme_name="abac")
         q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
-        self.assertTrue(q["question"].startswith(ctx.THEMES["abac"].preamble))
+        ## The stance and the "company policy" noun travel beside the sentence
+        ## rather than inside it: they belong to the question being asked, so
+        ## the UI folds them into the prompt and leaves the sentence alone as
+        ## the one thing to formalize.
+        self.assertEqual(q["preamble"], ctx.THEMES["abac"].preamble)
+        self.assertEqual(q["rule_noun"], ctx.THEMES["abac"].rule_noun)
+        self.assertNotIn(ctx.THEMES["abac"].preamble, q["question"])
         self.assertIn("must", q["question"])
+
+    def test_themed_question_carries_a_key_for_its_letters(self):
+        """A themed sentence is in words while its options are in letters, so
+        the question must state the correspondence: otherwise it also tests
+        whether the student can guess that 'd' means the document is *open*."""
+        for theme_name in ("abac", "lights"):
+            with self.subTest(theme=theme_name):
+                themed = self.builder.gen_contextualized_answer(
+                    "G(z -> F k)", theme_name=theme_name)
+                q = self.builder.build_english_to_ltl_question(
+                    themed, theme_name=theme_name)
+                used = ctx.collect_literals(parse_ltl_string(themed))
+                self.assertEqual({e["literal"] for e in q["legend"]}, used)
+                theme = ctx.THEMES[theme_name]
+                for entry in q["legend"]:
+                    self.assertEqual(entry["meaning"],
+                                     theme.literals[entry["literal"]][0])
+
+    def test_key_omits_letters_the_formula_never_uses(self):
+        """Listing unused attributes would hint at states the question does
+        not involve."""
+        themed = self.builder.gen_contextualized_answer("G(z -> F k)", theme_name="abac")
+        q = self.builder.build_english_to_ltl_question(themed, theme_name="abac")
+        self.assertEqual(len(q["legend"]), 2)
+
+    def test_abstract_arm_has_no_key(self):
+        """Abstract prose already quotes its literals, so there is nothing to
+        look up, and adding a key there would change the control arm."""
+        q = self.builder.build_english_to_ltl_question("G(z -> F k)")
+        self.assertEqual(q["legend"], [])
+        self.assertEqual(q["preamble"], "")
 
     def test_deontic_question_has_no_quoted_literals(self):
         themed = self.builder.gen_contextualized_answer(
