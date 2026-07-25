@@ -254,14 +254,7 @@ function show_feedback(parent_node, question_type) {
 
         // Render any trace diagrams in the feedback (e.g. misconception explainers)
         if (typeof TraceRenderer !== 'undefined') {
-            feedback_div.querySelectorAll('.trace-diagram').forEach(function (el) {
-                if (el.dataset.trace && !el.dataset.rendered) {
-                    try {
-                        TraceRenderer.render(el, JSON.parse(el.dataset.trace));
-                        el.dataset.rendered = 'true';
-                    } catch (e) { /* ignore rendering errors in feedback diagrams */ }
-                }
-            });
+            TraceRenderer.renderAll(feedback_div);
         }
 
         // Increment the incorrect count

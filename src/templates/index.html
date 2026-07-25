@@ -3,6 +3,9 @@
 {% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@1.1.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- The recommended-review card embeds a misconception explainer, and some
+         explainers illustrate the operator with trace diagrams. -->
+    <script src="{{ url_for('static', filename='js/tracerenderer.js') }}"></script>
 {% endblock %}
 
 {% block content %}
@@ -155,5 +158,11 @@
         var exerciseId = document.getElementById('exerciseIdInput').value;
         window.location.href = '/exercise/load/' + exerciseId;
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof TraceRenderer !== 'undefined') {
+            TraceRenderer.renderAll();
+        }
+    });
 </script>
 {% endblock %}
