@@ -194,17 +194,8 @@
 
             const ui_load_timeout_delay = 150;
             function renderTraceDiagrams(container) {
-                $(container).find('.trace-diagram').each(function () {
-                    var el = this;
-                    if (el.dataset.trace && !el.dataset.rendered) {
-                        try {
-                            var data = JSON.parse(el.dataset.trace);
-                            TraceRenderer.render(el, data);
-                            el.dataset.rendered = 'true';
-                        } catch (e) {
-                            console.error('Error rendering trace diagram', e);
-                        }
-                    }
+                $(container).each(function () {
+                    TraceRenderer.renderAll(this);
                 });
             }
 

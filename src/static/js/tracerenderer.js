@@ -501,5 +501,31 @@ var TraceRenderer = (function () {
         container.appendChild(svg);
     }
 
-    return { render: render };
+    /**
+     * Render every not-yet-rendered `.trace-diagram[data-trace]` under `root`.
+     *
+     * Any page that emits trace markup (question options, feedback, the
+     * misconception explainer fragments) needs a pass like this; keeping one
+     * copy here means a new page only has to load this script and call it.
+     *
+     * @param {HTMLElement|Document} [root]  Defaults to the whole document.
+     */
+    function renderAll(root) {
+        var scope = root || document;
+        var nodes = scope.querySelectorAll('.trace-diagram');
+        for (var i = 0; i < nodes.length; i++) {
+            var el = nodes[i];
+            if (!el.dataset.trace || el.dataset.rendered) {
+                continue;
+            }
+            try {
+                render(el, JSON.parse(el.dataset.trace));
+                el.dataset.rendered = 'true';
+            } catch (e) {
+                console.error('Error rendering trace diagram', e);
+            }
+        }
+    }
+
+    return { render: render, renderAll: renderAll };
 })();
