@@ -744,7 +744,11 @@ class ExerciseBuilder:
         parenthesized_answer = self.toSpotSyntax(answer)
     
 
-        feedbackString = "No further feedback is currently available. We recommend stepping through the trace to see where/if it diverges from the formula."
+        # Only the "No" case has a second formula to contrast against, so only it
+        # gets predetermined feedback. When the trace does satisfy the formula the
+        # question carries none: the client already explains that verdict from the
+        # per-state satisfaction marks, and offers the stepper below it.
+        feedbackString = None
         # So no misconceptions forthcoming...
         ## TODO: Should we even generate a question one here?
         if formulae is None:
