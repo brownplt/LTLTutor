@@ -10,6 +10,7 @@ cleanly when SPOT is unavailable.
 """
 
 import os
+import re
 import sys
 import unittest
 
@@ -142,6 +143,52 @@ class TestRenderDataAndHtml(unittest.TestCase):
         # Root 'G a' and atom 'a' both present.
         self.assertIn("(G a)", subs)
         self.assertIn("a", subs)
+
+
+@unittest.skipUnless(SPOT_AVAILABLE, "real SPOT library not available")
+class TestStepperViewData(unittest.TestCase):
+    """The stepper renders one formula tree and re-colours it per step, so the
+    truth vectors have to line up with the data-node-index values in the markup."""
+
+    def test_one_vector_per_trace_state(self):
+        result = stepper.traceSatisfactionPerStep(parse("G a"), "! a; a; cycle{a}", "Classic")
+        data = result.getStepperViewData()
+        self.assertEqual(len(data["steps"]), 3)
+
+    def test_node_indices_are_preorder_and_cover_every_value(self):
+        result = stepper.traceSatisfactionPerStep(parse("(G a) U b"), "! b; cycle{a & b}", "Classic")
+        data = result.getStepperViewData()
+
+        indices = [int(m) for m in re.findall(r'data-node-index="(\d+)"', data["tree_html"])]
+        # Pre-order emission means the indices appear in ascending order, one per node.
+        self.assertEqual(indices, sorted(indices))
+        self.assertEqual(indices, list(range(len(indices))))
+        # Every node in the markup has a truth value at every step, and vice versa.
+        for values in data["steps"]:
+            self.assertEqual(len(values), len(indices))
+
+    def test_values_are_binary_and_match_node_satisfaction(self):
+        result = stepper.traceSatisfactionPerStep(parse("G a"), "! a; cycle{a}", "Classic")
+        data = result.getStepperViewData()
+
+        for values in data["steps"]:
+            self.assertTrue(all(v in (0, 1) for v in values))
+
+        # 'G a' fails at state 0 (a is false there) and holds from state 1 on.
+        self.assertEqual(data["steps"][0][0], 0)
+        self.assertEqual(data["steps"][1][0], 1)
+
+    def test_tree_shape_is_the_same_at_every_step(self):
+        # The view only swaps classes, so a step that changed the tree's shape
+        # would silently mis-colour nodes.
+        result = stepper.traceSatisfactionPerStep(parse("a U (X b)"), "a; ! b; cycle{b}", "Classic")
+        all_states = result.prefix_states + result.cycle_states
+        shapes = {tuple(f for f, _ in state.getAllSubformulae()) for state in all_states}
+        self.assertEqual(len(shapes), 1)
+
+    def test_empty_result_gives_empty_view_data(self):
+        empty = stepper.TraceSatisfactionResult([], [])
+        self.assertEqual(empty.getStepperViewData(), {"tree_html": "", "steps": []})
 
 
 if __name__ == "__main__":

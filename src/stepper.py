@@ -68,14 +68,22 @@ class StepperNode:
     def formulaTreeAsHTML(self):
         return f'<ul class="formula-tree">{self._build_tree_html()}</ul>'
 
-    def _build_tree_html(self):
+    def _build_tree_html(self, counter=None):
+        # data-node-index numbers the nodes in pre-order, the same order
+        # getAllSubformulae walks them, so the stepper can address a node by
+        # its position in a state's truth vector.
+        if counter is None:
+            counter = [0]
+        index = counter[0]
+        counter[0] += 1
+
         sat_class = "tree-sat" if self.satisfied else "tree-unsat"
         escaped = html_module.escape(self.formula)
         children_html = ""
         if self.children:
-            items = "".join(c._build_tree_html() for c in self.children)
+            items = "".join(c._build_tree_html(counter) for c in self.children)
             children_html = f'<ul>{items}</ul>'
-        return f'<li class="{sat_class}"><code>{escaped}</code>{children_html}</li>'
+        return f'<li class="{sat_class}" data-node-index="{index}"><code>{escaped}</code>{children_html}</li>'
 
     def getAllSubformulae(self):
         """Extract all subformulae from this node and its children recursively."""
@@ -121,6 +129,31 @@ class TraceSatisfactionResult:
             "cycle_states": self.cycle_states
         }
     
+    def getStepperViewData(self):
+        """Data for the stepper view: one formula tree, one truth vector per state.
+
+        Every state evaluates the same formula, so the per-state trees are
+        structurally identical and differ only in which nodes are satisfied.
+        Sending the tree once and swapping classes per step lets the view
+        update in place instead of cross-fading a separate copy per state.
+
+        Vector position i corresponds to the node carrying data-node-index="i",
+        since getAllSubformulae and _build_tree_html walk the tree in the same
+        pre-order.
+        """
+        all_states = self.prefix_states + self.cycle_states
+
+        if not all_states:
+            return {"tree_html": "", "steps": []}
+
+        steps = [[1 if satisfied else 0 for _, satisfied in state.getAllSubformulae()]
+                 for state in all_states]
+
+        return {
+            "tree_html": all_states[0].formulaTreeAsHTML,
+            "steps": steps
+        }
+
     def getMatrixView(self):
         """Generate matrix view data for table display."""
         all_states = self.prefix_states + self.cycle_states

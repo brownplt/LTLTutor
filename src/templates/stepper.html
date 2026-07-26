@@ -17,12 +17,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
     <style>
-        #statecontainer {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
         .formula-tree-container,
         .trace-container {
             justify-content: center;
@@ -186,48 +180,16 @@
             font-weight: bold;
         }
 
-        .stepper-container {
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            opacity: 0;
-            transform: translateY(8px);
-            display: none;
-        }
-
-        .stepper-container.active-step {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .stepper-container.leaving-step {
-            display: block;
-            opacity: 0;
-            transform: translateY(-4px);
-        }
-
-        .tree-highlight {
-            box-shadow: 0 0 0 3px #ffe58f;
-            border-radius: 8px;
-            animation: flashHighlight 1s ease;
+        /* The tree keeps its shape across steps — only the sat/unsat classes on
+           its nodes change — so the box is sized once and never resizes as you
+           step, and the scroll position survives. */
+        .formula-tree li > code {
+            transition: background-color 0.12s linear, border-color 0.12s linear, color 0.12s linear;
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .stepper-container {
+            .formula-tree li > code {
                 transition: none;
-            }
-
-            .tree-highlight {
-                animation: none;
-            }
-        }
-
-        @keyframes flashHighlight {
-            0% {
-                box-shadow: 0 0 0 3px #ffe58f;
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 229, 143, 0);
             }
         }
     </style>
@@ -307,14 +269,13 @@
                 </div>
 
                 <div id="statecontainer">
-                    {% for ps in prefixstates + cyclestates %}
-                    {% set step_idx = loop.index0 %}
-                    <div class="container stepper-container">
+                    {% if stepper_tree_html %}
+                    <div class="container" id="stepper-state">
 
                         <div class="formula-tree-container mt-2">
                             <div class="formula-tree-scroll">
                                 <div class="formula-tree-stage">
-                                    {{ ps.formulaTreeAsHTML | safe }}
+                                    {{ stepper_tree_html | safe }}
                                 </div>
                             </div>
                         </div>
@@ -322,17 +283,24 @@
                         <hr>
 
                         <div class="trace-container mt-2">
-                            <div class="trace-svg-container" data-step-index="{{ step_idx }}"></div>
+                            <div class="trace-svg-container"></div>
                             <br>
                             <div class="btn-group d-flex justify-content-center" role="group">
-                                <button class="prev btn btn-primary" title="Previous State"><i
-                                        class="fas fa-arrow-left"></i></button>
-                                <button class="next btn btn-primary" title="Next State"><i
-                                        class="fas fa-arrow-right"></i></button>
+                                <button class="prev btn btn-primary" title="Previous State"
+                                    aria-label="Previous state"><i class="fas fa-arrow-left"
+                                        aria-hidden="true"></i></button>
+                                <button class="next btn btn-primary" title="Next State"
+                                    aria-label="Next state"><i class="fas fa-arrow-right"
+                                        aria-hidden="true"></i></button>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info">
+                        <p><strong>No formula loaded.</strong></p>
+                        <p>Please enter an LTL formula and trace to step through.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             <!-- ================================ -->
@@ -472,173 +440,135 @@
     <script>
         $(document).ready(function () {
 
-            // Trace data for SVG renderer (shared across all stepper steps)
+            // The formula tree is in the page once. Stepping only changes which
+            // of its nodes are satisfied and which trace state is current, so a
+            // step is a class swap plus a highlight move — no re-render, no
+            // reflow, and no input dropped while a transition finishes.
             var traceData = {{ trace_render_data | safe }};
+            var stepValues = {{ stepper_steps | safe }};
 
-            const stepperContainers = Array.from(document.querySelectorAll('.stepper-container'));
+            const stateContainer = document.getElementById('stepper-state');
             const progressLabel = document.getElementById('stepperProgress');
-            const transitionDuration = 250;
             const modal = document.getElementById('exampleModal');
             const stepperTab = document.getElementById('stepper-tab');
-            let currentIndex = 0;
-            let isTransitioning = false;
-            let isStepperActive = true;
 
-            if (!stepperContainers.length) {
+            if (!stateContainer || !stepValues.length) {
                 return;
             }
 
-            function renderTraceForContainer(stepContainer) {
-                if (!stepContainer) {
-                    return;
-                }
+            const traceContainer = stateContainer.querySelector('.trace-svg-container');
+            const treeNodes = Array.from(stateContainer.querySelectorAll('.formula-tree [data-node-index]'));
+            const prevButton = stateContainer.querySelector('.prev');
+            const nextButton = stateContainer.querySelector('.next');
+            const stepCount = stepValues.length;
 
-                const traceContainer = stepContainer.querySelector('.trace-svg-container');
+            let currentIndex = 0;
+            let isStepperActive = true;
+            let pendingResize = false;
+            let resizeTimer = null;
+
+            function renderTrace() {
                 if (!traceContainer) {
                     return;
                 }
-
-                const stepIndex = parseInt(traceContainer.dataset.stepIndex, 10);
                 try {
-                    TraceRenderer.render(traceContainer, traceData, {
-                        highlightIndex: Number.isNaN(stepIndex) ? 0 : stepIndex
-                    });
+                    TraceRenderer.render(traceContainer, traceData, { highlightIndex: currentIndex });
                 } catch (error) {
                     console.error('Failed to render stepper trace diagram', error);
                 }
             }
 
-            stepperContainers.forEach((container, index) => {
-                container.dataset.index = index;
-                container.style.display = 'none';
-            });
+            function applyStep() {
+                const values = stepValues[currentIndex] || [];
 
-            function updateProgress() {
-                if (!progressLabel) {
-                    return;
-                }
-                progressLabel.textContent = `State ${currentIndex + 1} of ${stepperContainers.length}`;
-            }
-
-            function setButtonState() {
-                stepperContainers.forEach((container, index) => {
-                    const prevButton = container.querySelector('.prev');
-                    const nextButton = container.querySelector('.next');
-
-                    if (prevButton) {
-                        prevButton.disabled = index === 0;
+                treeNodes.forEach(function (node) {
+                    const nodeIndex = parseInt(node.getAttribute('data-node-index'), 10);
+                    if (Number.isNaN(nodeIndex) || nodeIndex >= values.length) {
+                        return;
                     }
-                    if (nextButton) {
-                        nextButton.disabled = index === stepperContainers.length - 1;
-                    }
-                });
-            }
-
-            function flashTree(container) {
-                const tree = container.querySelector('.formula-tree-container');
-                if (!tree) {
-                    return;
-                }
-                tree.classList.remove('tree-highlight');
-                // trigger reflow so animation can restart
-                void tree.offsetWidth;
-                tree.classList.add('tree-highlight');
-            }
-
-            function showContainer(newIndex) {
-                if (isTransitioning || newIndex === currentIndex || newIndex < 0 || newIndex >= stepperContainers.length) {
-                    return;
-                }
-
-                isTransitioning = true;
-                const leavingContainer = stepperContainers[currentIndex];
-                const enteringContainer = stepperContainers[newIndex];
-
-                leavingContainer.classList.remove('active-step');
-                leavingContainer.classList.add('leaving-step');
-                enteringContainer.style.display = 'block';
-
-                requestAnimationFrame(() => {
-                    enteringContainer.classList.add('active-step');
-                    enteringContainer.classList.remove('leaving-step');
-                    renderTraceForContainer(enteringContainer);
+                    const satisfied = values[nodeIndex] === 1;
+                    node.classList.toggle('tree-sat', satisfied);
+                    node.classList.toggle('tree-unsat', !satisfied);
                 });
 
-                setTimeout(() => {
-                    leavingContainer.classList.remove('leaving-step');
-                    leavingContainer.style.display = 'none';
-                    isTransitioning = false;
-                }, transitionDuration);
+                // Falls back to a full render if the diagram isn't there to update
+                // (nothing drawn yet, or a render failed earlier).
+                if (traceContainer && !TraceRenderer.setHighlight(traceContainer, currentIndex)) {
+                    renderTrace();
+                }
 
+                if (prevButton) {
+                    prevButton.disabled = currentIndex === 0;
+                }
+                if (nextButton) {
+                    nextButton.disabled = currentIndex === stepCount - 1;
+                }
+                if (progressLabel) {
+                    progressLabel.textContent = `State ${currentIndex + 1} of ${stepCount}`;
+                }
+            }
+
+            function goToStep(newIndex) {
+                if (newIndex === currentIndex || newIndex < 0 || newIndex >= stepCount) {
+                    return;
+                }
                 currentIndex = newIndex;
-                setButtonState();
-                updateProgress();
-                flashTree(enteringContainer);
+                applyStep();
             }
 
-            function goToPrevious() {
-                if (currentIndex > 0) {
-                    showContainer(currentIndex - 1);
-                }
-            }
+            renderTrace();
+            applyStep();
 
-            function goToNext() {
-                if (currentIndex < stepperContainers.length - 1) {
-                    showContainer(currentIndex + 1);
-                }
-            }
-
-            // Initialize first view
-            stepperContainers[0].style.display = 'block';
-            stepperContainers[0].classList.add('active-step');
-            renderTraceForContainer(stepperContainers[0]);
-            flashTree(stepperContainers[0]);
-            setButtonState();
-            updateProgress();
-
-            document.querySelectorAll('.prev').forEach(function (element) {
-                element.addEventListener('click', function (event) {
+            if (prevButton) {
+                prevButton.addEventListener('click', function (event) {
                     event.preventDefault();
-                    goToPrevious();
-                })
-            });
+                    goToStep(currentIndex - 1);
+                });
+            }
 
-            document.querySelectorAll('.next').forEach(function (element) {
-                element.addEventListener('click', function (event) {
+            if (nextButton) {
+                nextButton.addEventListener('click', function (event) {
                     event.preventDefault();
-                    goToNext();
-                })
-            });
+                    goToStep(currentIndex + 1);
+                });
+            }
 
             document.addEventListener('keydown', function (event) {
                 if (!isStepperActive || (modal && $(modal).is(':visible'))) {
                     return;
                 }
-                const tag = event.target.tagName.toLowerCase();
-                if (tag === 'input' || tag === 'textarea') {
+                const tag = (event.target && event.target.tagName || '').toLowerCase();
+                if (tag === 'input' || tag === 'textarea' || tag === 'select') {
                     return;
                 }
                 if (event.key === 'ArrowLeft') {
                     event.preventDefault();
-                    goToPrevious();
+                    goToStep(currentIndex - 1);
                 } else if (event.key === 'ArrowRight') {
                     event.preventDefault();
-                    goToNext();
+                    goToStep(currentIndex + 1);
                 }
             });
 
             $('#stepperTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
                 isStepperActive = event.target === stepperTab;
-                if (isStepperActive) {
-                    renderTraceForContainer(stepperContainers[currentIndex]);
+                // A hidden tab has no width to lay the diagram out against, so a
+                // resize that happened while away is applied on the way back.
+                if (isStepperActive && pendingResize) {
+                    pendingResize = false;
+                    renderTrace();
                 }
             });
 
             window.addEventListener('resize', function () {
+                // The diagram sizes itself to the container, so it does have to be
+                // redrawn on resize — but only once the resize settles.
                 if (!isStepperActive) {
+                    pendingResize = true;
                     return;
                 }
-                renderTraceForContainer(stepperContainers[currentIndex]);
+                window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(renderTrace, 150);
             });
         });
     </script>

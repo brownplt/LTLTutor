@@ -357,28 +357,34 @@ var TraceRenderer = (function () {
         for (i = 0; i < states.length; i++) {
             var s = states[i];
             var hl = (s.gi === hlIdx);
-            var g = _el('g', {});
-            var stateFill = (hl ? CFG.hlFill : (s.isCycle ? CFG.cycleFill : CFG.prefixFill));
+            var baseFill = (s.isCycle ? CFG.cycleFill : CFG.prefixFill);
+            var g = _el('g', { 'data-state-index': String(s.gi) });
 
             if (showStateIndices || marks) {
                 var topText = showStateIndices ? 's' + s.gi : '';
                 var topFill = hl ? CFG.hlStroke : CFG.indexTextFill;
                 var topWeight = hl ? '700' : '500';
-                if (marks) {
-                    topText += (topText ? ' ' : '') + (marks[i] ? '✓' : '✗');
-                    topFill = marks[i] ? CFG.markSatFill : CFG.markUnsatFill;
-                    topWeight = '700';
-                }
-                var idxLabel = _el('text', {
+                var labelAttrs = {
                     'x': s.x + s.w / 2,
                     'y': s.y - 8,
                     'text-anchor': 'middle',
                     'dominant-baseline': 'central',
-                    'fill': topFill,
                     'font-family': 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace',
                     'font-size': marks ? '13' : '11',
-                    'font-weight': topWeight
-                });
+                    'class': 'trc-state-label'
+                };
+                if (marks) {
+                    topText += (topText ? ' ' : '') + (marks[i] ? '✓' : '✗');
+                    topFill = marks[i] ? CFG.markSatFill : CFG.markUnsatFill;
+                    topWeight = '700';
+                    // Mark colors carry meaning of their own, so setHighlight
+                    // leaves them alone.
+                    labelAttrs['data-marked'] = '1';
+                }
+                labelAttrs['fill'] = topFill;
+                labelAttrs['font-weight'] = topWeight;
+
+                var idxLabel = _el('text', labelAttrs);
                 idxLabel.textContent = topText;
                 g.appendChild(idxLabel);
             }
@@ -387,18 +393,28 @@ var TraceRenderer = (function () {
                 'x': s.x, 'y': s.y,
                 'width': s.w, 'height': boxH,
                 'rx': CFG.radius, 'ry': CFG.radius,
-                'fill': stateFill,
+                'fill': hl ? CFG.hlFill : baseFill,
                 'stroke': hl ? CFG.hlStroke : CFG.stroke,
-                'stroke-width': hl ? CFG.hlWidth : CFG.strokeW
+                'stroke-width': hl ? CFG.hlWidth : CFG.strokeW,
+                'class': 'trc-state-rect',
+                'data-base-fill': baseFill
             }));
 
-            if (hl) {
+            // When a state is highlighted at all, every state gets a badge and
+            // only the current one is shown, so moving the highlight later is a
+            // visibility toggle rather than a re-render.
+            if (showStateIndices) {
                 var badgeText = 'CURRENT';
                 var badgeW = Math.max(52, Math.ceil(_textWidth(badgeText, CFG.indexFont)) + 12);
                 var badgeX = s.x + (s.w - badgeW) / 2;
                 var badgeY = s.y - CFG.currentBadgeH - 2;
+                var badge = _el('g', { 'class': 'trc-current-badge' });
 
-                g.appendChild(_el('rect', {
+                if (!hl) {
+                    badge.style.display = 'none';
+                }
+
+                badge.appendChild(_el('rect', {
                     'x': badgeX,
                     'y': badgeY,
                     'width': badgeW,
@@ -419,7 +435,8 @@ var TraceRenderer = (function () {
                     'font-weight': '700'
                 });
                 badgeLabel.textContent = badgeText;
-                g.appendChild(badgeLabel);
+                badge.appendChild(badgeLabel);
+                g.appendChild(badge);
             }
 
             if (useVertical && s.tokens.length > 1) {
@@ -502,6 +519,54 @@ var TraceRenderer = (function () {
     }
 
     /**
+     * Move the "current state" highlight on an already-rendered diagram.
+     *
+     * Only works on a diagram rendered with a `highlightIndex`, since that is
+     * what reserves room for the badge. Nothing is created, removed or
+     * measured, so the diagram never changes size and the page never reflows —
+     * which is the point: stepping through a trace should not redraw it.
+     *
+     * @param {HTMLElement} container  the element `render` drew into
+     * @param {number}      index      global state index to highlight
+     * @returns {boolean}   false if there is no diagram to update
+     */
+    function setHighlight(container, index) {
+        if (!container) {
+            return false;
+        }
+
+        var groups = container.querySelectorAll('g[data-state-index]');
+        if (!groups.length) {
+            return false;
+        }
+
+        for (var i = 0; i < groups.length; i++) {
+            var g = groups[i];
+            var hl = (parseInt(g.getAttribute('data-state-index'), 10) === index);
+
+            var rect = g.querySelector('.trc-state-rect');
+            if (rect) {
+                rect.setAttribute('fill', hl ? CFG.hlFill : (rect.getAttribute('data-base-fill') || CFG.prefixFill));
+                rect.setAttribute('stroke', hl ? CFG.hlStroke : CFG.stroke);
+                rect.setAttribute('stroke-width', hl ? CFG.hlWidth : CFG.strokeW);
+            }
+
+            var label = g.querySelector('.trc-state-label');
+            if (label && !label.hasAttribute('data-marked')) {
+                label.setAttribute('fill', hl ? CFG.hlStroke : CFG.indexTextFill);
+                label.setAttribute('font-weight', hl ? '700' : '500');
+            }
+
+            var badge = g.querySelector('.trc-current-badge');
+            if (badge) {
+                badge.style.display = hl ? '' : 'none';
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Render every not-yet-rendered `.trace-diagram[data-trace]` under `root`.
      *
      * Any page that emits trace markup (question options, feedback, the
@@ -527,5 +592,5 @@ var TraceRenderer = (function () {
         }
     }
 
-    return { render: render, renderAll: renderAll };
+    return { render: render, setHighlight: setHighlight, renderAll: renderAll };
 })();
