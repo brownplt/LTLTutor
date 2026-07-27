@@ -1151,29 +1151,31 @@ def ltlstepper():
         syntax_choice = 'Classic'
 
     empty_trace_data = json.dumps({"prefix": [], "cycle": []})
+    empty_steps = json.dumps([])
 
     if request.method == 'GET':
-        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
+        return render_template('stepper.html', uid = getUserName(), error="", prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data, stepper_tree_html="", stepper_steps=empty_steps)
 
     if request.method == 'POST':
         ltl = request.form.get('formula')
         trace = request.form.get('trace')
         if ltl == "" or trace == "":
             error="Please enter an LTL formula and a trace."
-        
+
     try:
         node = parse_ltl_string(ltl)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
+        return render_template('stepper.html', uid = getUserName(), error="Invalid LTL formula " + ltl, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data, stepper_tree_html="", stepper_steps=empty_steps)
 
     try:
         result = traceSatisfactionPerStep(node = node, trace = trace, syntax = syntax_choice)
     except:
-        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data)
-    
+        return render_template('stepper.html', uid = getUserName(), error="Invalid trace " + trace, prefixstates=[], cyclestates=[], matrix_data={"subformulae": [], "matrix": [], "rows": []}, trace_render_data=empty_trace_data, stepper_tree_html="", stepper_steps=empty_steps)
+
     matrix_data = result.getMatrixView()
+    stepper_view = result.getStepperViewData()
     trace_render_data = json.dumps(getTraceRenderData(trace))
-    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, matrix_data=matrix_data, trace_render_data=trace_render_data)
+    return render_template('stepper.html', uid = getUserName(), error="", prefixstates=result.prefix_states, cyclestates=result.cycle_states, formula = ltl, trace=trace, matrix_data=matrix_data, trace_render_data=trace_render_data, stepper_tree_html=stepper_view["tree_html"], stepper_steps=json.dumps(stepper_view["steps"]))
 
 
 ##### Eng LTL Logging Routes ###
