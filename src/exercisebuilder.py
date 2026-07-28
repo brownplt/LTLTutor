@@ -21,9 +21,27 @@ class ExerciseBuilder:
     ENGLISHTOLTL = "englishtoltl"
     QUESTION_TYPES = [TRACESATMC, TRACESATYN, ENGLISHTOLTL]
 
-    ## No question type's selection probability ever drops below this
-    ## (exploration floor), no matter how well the student does on it.
-    QUESTION_TYPE_FLOOR = 0.15
+    ## The question types group into two families, one per skill practised:
+    ## reading a trace against a formula, and formalizing English into LTL.
+    ## What sits below a family is a presentation variant of the same skill
+    ## (multiple-choice vs yes/no; and, inside english-to-LTL, the abstract /
+    ## lights / abac framings chosen in build_exercise). So selection is
+    ## hierarchical: adapt between families, then draw a variant uniformly.
+    ## Treating the two trace variants as peers of english-to-LTL instead gave
+    ## the trace skill two shares of the mass to english-to-LTL's one -- 2/3 of
+    ## questions with no history at all, and up to 85% once the floor bound the
+    ## rest, which left each english-to-LTL framing at 5% of what a student saw.
+    TRACESAT_FAMILY = "tracesatisfaction"
+    ENGLISHTOLTL_FAMILY = "englishtoltl_family"
+    QUESTION_FAMILIES = {
+        TRACESAT_FAMILY: [TRACESATMC, TRACESATYN],
+        ENGLISHTOLTL_FAMILY: [ENGLISHTOLTL],
+    }
+
+    ## No family's selection probability ever drops below this (exploration
+    ## floor), no matter how well the student does on it. With two families
+    ## this bounds adaptation to a 30/70 swing either way.
+    QUESTION_FAMILY_FLOOR = 0.3
 
     # Trace yes/no questions first choose a misconception to target, then
     # independently choose whether to show a positive or diagnostic-negative
@@ -60,6 +78,7 @@ class ExerciseBuilder:
         self.syntax = syntax
 
         self._distinct_answers_cache = None
+        self._question_family_weights_cache = None
         self._question_type_weights_cache = None
         self._misconception_weights_cache = None
 
@@ -170,53 +189,89 @@ class ExerciseBuilder:
         self._distinct_answers_cache = answers
         return answers
 
-    def calculate_question_type_weights(self):
-        """
-        Selection weights per question type, biased toward the types the
-        student gets wrong. Uses a Laplace-smoothed error rate
-        (incorrect + 1) / (attempts + 2), so with no history every type gets
-        0.5 and selection is uniform. After normalization, a floor guarantees
-        every type keeps at least QUESTION_TYPE_FLOOR probability.
-        """
-        if self._question_type_weights_cache is not None:
-            return self._question_type_weights_cache
+    @classmethod
+    def family_of(cls, question_type):
+        """The family a question type belongs to, or None if unrecognized."""
+        for family, subtypes in cls.QUESTION_FAMILIES.items():
+            if question_type in subtypes:
+                return family
+        return None
 
-        counts = {qtype: {"attempts": 0, "incorrect": 0} for qtype in self.QUESTION_TYPES}
+    def calculate_question_family_weights(self):
+        """
+        Selection weights per question family, biased toward the family the
+        student gets wrong. Attempts are pooled across a family's subtypes,
+        then scored by a Laplace-smoothed error rate
+        (incorrect + 1) / (attempts + 2), so with no history every family gets
+        0.5 and selection is an even split. After normalization, a floor
+        guarantees every family keeps at least QUESTION_FAMILY_FLOOR
+        probability.
+
+        Pooling rather than scoring each subtype separately is deliberate: a
+        yes/no trace question is guessable at 50% and a multiple-choice one at
+        ~17%, so their raw error rates are not comparable, and reading a trace
+        is one skill either way.
+        """
+        if self._question_family_weights_cache is not None:
+            return self._question_family_weights_cache
+
+        counts = {family: {"attempts": 0, "incorrect": 0} for family in self.QUESTION_FAMILIES}
         for answer in self._distinct_answers():
-            qtype = getattr(answer, 'question_type', None)
-            if qtype not in counts:
+            family = self.family_of(getattr(answer, 'question_type', None))
+            if family is None:
                 continue
-            counts[qtype]["attempts"] += 1
+            counts[family]["attempts"] += 1
             if not self._log_is_correct(answer):
-                counts[qtype]["incorrect"] += 1
+                counts[family]["incorrect"] += 1
 
         error_rates = {
-            qtype: (c["incorrect"] + 1) / (c["attempts"] + 2)
-            for qtype, c in counts.items()
+            family: (c["incorrect"] + 1) / (c["attempts"] + 2)
+            for family, c in counts.items()
         }
         total = sum(error_rates.values())
-        normalized = {qtype: rate / total for qtype, rate in error_rates.items()}
+        normalized = {family: rate / total for family, rate in error_rates.items()}
 
-        ## Apply the exploration floor: floored types get exactly the floor and
-        ## the remaining mass is split proportionally among the rest. Repeat in
-        ## case the rescaling pushes another type under the floor.
+        ## Apply the exploration floor: floored families get exactly the floor
+        ## and the remaining mass is split proportionally among the rest.
+        ## Repeat in case the rescaling pushes another family under the floor.
         result = dict(normalized)
         floored = set()
         for _ in range(len(result)):
-            low = {k for k, v in result.items() if k not in floored and v < self.QUESTION_TYPE_FLOOR}
+            low = {k for k, v in result.items() if k not in floored and v < self.QUESTION_FAMILY_FLOOR}
             if not low:
                 break
             floored |= low
             free_keys = [k for k in result if k not in floored]
-            free_mass = 1.0 - self.QUESTION_TYPE_FLOOR * len(floored)
+            free_mass = 1.0 - self.QUESTION_FAMILY_FLOOR * len(floored)
             free_total = sum(normalized[k] for k in free_keys)
             for k in floored:
-                result[k] = self.QUESTION_TYPE_FLOOR
+                result[k] = self.QUESTION_FAMILY_FLOOR
             for k in free_keys:
                 if free_total > 0:
                     result[k] = normalized[k] * free_mass / free_total
                 else:
                     result[k] = free_mass / len(free_keys)
+
+        self._question_family_weights_cache = result
+        return result
+
+    def calculate_question_type_weights(self):
+        """
+        Per-type selection probabilities: each family's weight split evenly
+        across its subtypes, since a subtype is a presentation variant of the
+        same skill rather than a thing to drill separately. Drawing a type
+        from these marginals is the same as picking a family and then a
+        variant within it.
+        """
+        if self._question_type_weights_cache is not None:
+            return self._question_type_weights_cache
+
+        family_weights = self.calculate_question_family_weights()
+        result = {
+            qtype: family_weights[family] / len(subtypes)
+            for family, subtypes in self.QUESTION_FAMILIES.items()
+            for qtype in subtypes
+        }
 
         self._question_type_weights_cache = result
         return result
@@ -433,19 +488,17 @@ class ExerciseBuilder:
         # sort questions by score
         chosen_questions = sorted(questions, key=lambda x: x['score'], reverse=True)
 
-        # Now choose the question with the highest metric, that is of each type from the chosen_questions
-        highest_ltl_to_eng = next((q for q in chosen_questions if q['type'] == self.ENGLISHTOLTL), None)
-        highest_trace_sat_mc = next((q for q in chosen_questions if q['type'] == self.TRACESATMC), None)
-        highest_trace_sat_yn = next((q for q in chosen_questions if q['type'] == self.TRACESATYN), None)
-
-
+        # Seed the exercise with the highest-scoring question of each *family*,
+        # so both skills are always practised, and fill the rest by score
+        # alone. Reserving a slot per subtype instead pinned every short
+        # exercise to one-of-each: at the low end of num_questions that is the
+        # whole exercise, so the selection weights chose nothing at all.
         final_choices = []
-        if highest_ltl_to_eng is not None:
-            final_choices.append(highest_ltl_to_eng)
-        if highest_trace_sat_mc is not None:
-            final_choices.append(highest_trace_sat_mc)
-        if highest_trace_sat_yn is not None:
-            final_choices.append(highest_trace_sat_yn)
+        for family in self.QUESTION_FAMILIES:
+            best = next((q for q in chosen_questions
+                         if self.family_of(q['type']) == family), None)
+            if best is not None:
+                final_choices.append(best)
 
         remaining = num_questions - len(final_choices)
         if remaining > 0:
