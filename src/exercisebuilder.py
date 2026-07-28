@@ -491,8 +491,9 @@ class ExerciseBuilder:
         # Seed the exercise with the highest-scoring question of each *family*,
         # so both skills are always practised, and fill the rest by score
         # alone. Reserving a slot per subtype instead pinned every short
-        # exercise to one-of-each: at the low end of num_questions that is the
-        # whole exercise, so the selection weights chose nothing at all.
+        # exercise to one-of-each: callers ask for a handful of questions, so
+        # that reservation was most of the exercise and the selection weights
+        # were left choosing almost none of it.
         final_choices = []
         for family in self.QUESTION_FAMILIES:
             best = next((q for q in chosen_questions
@@ -968,7 +969,10 @@ class ExerciseBuilder:
           - complexity: the current difficulty level and its band, plus bounds
           - misconception_snapshot: per-misconception weights the distractor
             sampler uses now (the enum prefix stripped), most-likely first
-          - question_type_weights: the selection weights per question type
+          - question_family_weights: the selection weights per skill, which is
+            the level selection actually adapts at
+          - question_type_weights: those weights split evenly across each
+            family's presentation variants
 
         Pure w.r.t. the builder's logs (no SPOT, no DB), so it is safe to call
         from a request handler and straightforward to unit-test."""
@@ -985,6 +989,7 @@ class ExerciseBuilder:
             "complexity_max": self.COMPLEXITY_MAX,
             "complexity_band": self._complexity_band(),
             "misconception_snapshot": misconception_snapshot,
+            "question_family_weights": self.calculate_question_family_weights(),
             "question_type_weights": self.calculate_question_type_weights(),
         }
 

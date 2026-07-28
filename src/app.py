@@ -1118,7 +1118,9 @@ def newexercise():
     else:
         num_literals = random.randint(2, 4)
     LITERALS = random.sample(literals_pool, num_literals)
-    num_questions = random.randint(3, 8)
+    ## Kept narrow on purpose: an exercise is a sitting, and one that can be
+    ## anywhere from 3 to 8 questions makes that sitting an unknown length.
+    num_questions = random.randint(4, 6)
 
     data = exercise_builder.build_exercise(literals = LITERALS, num_questions = num_questions)
     data = exerciseprocessor.randomize_questions(data)

@@ -97,15 +97,18 @@
         </p>
         <div class="row">
 
-            <!-- Question-type mix -->
+            <!-- Question mix, by skill: selection adapts per skill, and each
+                 skill's formats (multiple choice vs yes/no) split its share
+                 evenly, so listing formats separately would show two bars that
+                 are equal by construction. -->
             <div class="col-md-6 mb-3">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">Question Mix</h5>
                         <small class="text-muted d-block mb-3">
-                            How often each question type comes up. Types you miss more are drilled more.
+                            How often each skill comes up. Skills you miss more are drilled more.
                         </small>
-                        {% for q in question_type_mix %}
+                        {% for q in question_family_mix %}
                         <div class="mb-2">
                             <div class="d-flex justify-content-between">
                                 <small>{{ q.label }}</small>
@@ -211,15 +214,26 @@
         {% endif %}
 
 
-        <h3 class="mt-5">Estimated Misconceptions Over Time</h3>
-        <p class="text-muted">
-            This chart shows the tutor's uncalibrated evidence score after each question that
-            explicitly exposed a misconception. It is an adaptive practice signal, not a probability.
-            Older evidence gradually moves back toward the uncertain midpoint.
-        </p>
-        <canvas id="allMisconceptionsChart"></canvas>
+        <!-- Collapsed by default: the chart is the most detailed thing on the
+             page and the least glanceable, so it sits behind a disclosure and
+             leaves the summary cards above as what the page opens on. -->
+        <h3 class="mt-5">
+            <button class="btn btn-link heading-toggle toggle-arrow collapsed" type="button"
+                    data-toggle="collapse" data-target="#misconceptionsOverTime"
+                    aria-expanded="false" aria-controls="misconceptionsOverTime">
+                Estimated Misconceptions Over Time
+            </button>
+        </h3>
+        <div class="collapse" id="misconceptionsOverTime">
+            <p class="text-muted">
+                This chart shows the tutor's uncalibrated evidence score after each question that
+                explicitly exposed a misconception. It is an adaptive practice signal, not a probability.
+                Older evidence gradually moves back toward the uncertain midpoint.
+            </p>
+            <canvas id="allMisconceptionsChart"></canvas>
+        </div>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function buildMisconceptionsChart() {
             // Prepare data for all misconceptions
             const misconceptionData = {
                 {% for misconception, weights in misconception_weights_over_time.items() %}
@@ -345,6 +359,14 @@
                     }
                 }
             });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chart.js measures the canvas as it constructs the chart, and the
+            // canvas starts inside a collapsed (display: none) container,
+            // which would size it to zero. Build it the first time the section
+            // is opened instead -- .one() so reopening doesn't rebuild it.
+            $('#misconceptionsOverTime').one('shown.bs.collapse', buildMisconceptionsChart);
         });
         </script>
 

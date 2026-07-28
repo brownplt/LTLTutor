@@ -150,6 +150,34 @@ code, pre, .mono, kbd { font-family: var(--font-mono); }
 .btn.unclear-flag:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .unclear-ack { color: var(--ink-2); font-size: .8125rem; margin-top: .25rem; }
 
+/* A section heading that opens and closes its own content. It is a real
+   <button> inside the <h3> so it is focusable and operable from the keyboard,
+   with Bootstrap's button chrome stripped back to the heading's own type: the
+   rotating .toggle-arrow triangle is the affordance, so nothing here depends
+   on color to say it is interactive. */
+.btn.heading-toggle {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+  text-align: left;
+  white-space: normal;
+}
+/* box-shadow: none drops Bootstrap's .btn:focus glow, which is its own default
+   blue rather than the theme's and, being :focus rather than :focus-visible,
+   stayed painted around the heading after a mouse click. */
+.btn.heading-toggle:hover, .btn.heading-toggle:focus {
+  color: inherit;
+  text-decoration: none;
+  box-shadow: none;
+}
+/* Same (0,3,0) restatement as above: .btn:focus { outline: 0 } would otherwise
+   leave this control with no visible focus at all for keyboard users. */
+.btn.heading-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
 /* Scenario + letter key above an English stem. Subordinate to the rule, but
    --ink-2 (8:1) rather than the text-muted --ink-3 (4.17:1, under AA here):
    the key is the only place the letters in the options are defined, so it has
