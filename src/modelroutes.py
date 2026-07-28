@@ -51,6 +51,14 @@ QUESTION_TYPE_LABELS = {
     exercisebuilder.ExerciseBuilder.ENGLISHTOLTL: "English to LTL",
 }
 
+# Selection adapts per skill, not per presentation variant, so the profile page
+# shows the mix at this level; the per-type weights are a fixed even split of
+# these and are kept for the export.
+QUESTION_FAMILY_LABELS = {
+    exercisebuilder.ExerciseBuilder.TRACESAT_FAMILY: "Trace satisfaction",
+    exercisebuilder.ExerciseBuilder.ENGLISHTOLTL_FAMILY: "English to LTL",
+}
+
 
 def _build_profile_snapshot(uid, logs, lookback_days, misconception_opportunities=None):
     """Assemble the adaptive-profile view model shared by the profile page and
@@ -65,7 +73,7 @@ def _build_profile_snapshot(uid, logs, lookback_days, misconception_opportunitie
     )
     snapshot = builder.get_profile_snapshot()
 
-    # Attach human-readable labels and sort so the most-drilled type is first.
+    # Attach human-readable labels and sort so the most-drilled entry is first.
     raw_type_weights = snapshot['question_type_weights']
     question_type_mix = [
         {
@@ -74,6 +82,16 @@ def _build_profile_snapshot(uid, logs, lookback_days, misconception_opportunitie
             "weight": raw_type_weights.get(qtype, 0.0),
         }
         for qtype in sorted(raw_type_weights, key=raw_type_weights.get, reverse=True)
+    ]
+
+    raw_family_weights = snapshot['question_family_weights']
+    question_family_mix = [
+        {
+            "family": family,
+            "label": QUESTION_FAMILY_LABELS.get(family, family),
+            "weight": raw_family_weights.get(family, 0.0),
+        }
+        for family in sorted(raw_family_weights, key=raw_family_weights.get, reverse=True)
     ]
 
     accuracy = (num_correct / num_logs) if num_logs else None
@@ -89,6 +107,7 @@ def _build_profile_snapshot(uid, logs, lookback_days, misconception_opportunitie
         "complexity_max": snapshot['complexity_max'],
         "complexity_band": snapshot['complexity_band'],
         "misconception_snapshot": snapshot['misconception_snapshot'],
+        "question_family_mix": question_family_mix,
         "question_type_mix": question_type_mix,
     }
 
@@ -249,7 +268,7 @@ def profile():
         complexity_max=snapshot['complexity_max'],
         complexity_band=snapshot['complexity_band'],
         misconception_snapshot=snapshot['misconception_snapshot'],
-        question_type_mix=snapshot['question_type_mix'],
+        question_family_mix=snapshot['question_family_mix'],
         misconception_weights_over_time=misconception_weights_over_time,
         misconception_trends=misconception_trends,
         lookback_days=LOOKBACK_DAYS,
@@ -264,7 +283,8 @@ def profile_export():
     """Download the student's current adaptive profile as a JSON snapshot.
 
     Includes the exact values the exercise engine uses to adapt: complexity,
-    per-misconception weights, and question-type selection weights. Timestamps
+    per-misconception weights, and the selection weights per question family
+    and per question type. Timestamps
     are UTC ISO-8601. Excludes the over-time chart series to keep the file small
     and focused on the current state."""
     LOOKBACK_DAYS = 365
@@ -274,7 +294,7 @@ def profile_export():
     snapshot = _build_profile_snapshot(uid, logs, LOOKBACK_DAYS, opportunities)
 
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "user_id": uid,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "lookback_days": LOOKBACK_DAYS,
@@ -289,6 +309,15 @@ def profile_export():
             "max": snapshot['complexity_max'],
             "band": snapshot['complexity_band'],
         },
+        ## Selection adapts at the family level and splits a family's weight
+        ## evenly across its types, so question_type_weights is derivable from
+        ## question_family_weights. Both are exported: the per-type weights are
+        ## what a question is actually drawn with, and dropping the field would
+        ## break consumers of schema_version 2.
+        "question_family_weights": [
+            {"family": q['family'], "label": q['label'], "weight": q['weight']}
+            for q in snapshot['question_family_mix']
+        ],
         "question_type_weights": [
             {"type": q['type'], "label": q['label'], "weight": q['weight']}
             for q in snapshot['question_type_mix']
